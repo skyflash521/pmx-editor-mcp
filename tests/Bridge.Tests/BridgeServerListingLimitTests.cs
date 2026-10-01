@@ -95,6 +95,15 @@ namespace PmxEditorMcp.Bridge.Tests
                             + "\"length\":0,\"start\":[0,0,0],\"end\":[0,0,0]}").Length)
                 },
                 {
+                    "model_find_parts",
+                    new Listing(
+                        new[] { "count" },
+                        "0".Length,
+                        "parts",
+                        ("{\"vertexRuns\":[{\"start\":0,\"count\":0}],\"vertexCount\":0,\"faceCount\":0,"
+                            + "\"min\":[0,0,0],\"max\":[0,0,0]}").Length)
+                },
+                {
                     "view_pick_screen_point",
                     new Listing(
                         new[] { "count" },

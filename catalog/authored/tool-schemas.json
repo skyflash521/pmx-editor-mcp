@@ -7134,6 +7134,131 @@
       }
     },
     {
+      "tool": "model_find_parts",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "weldDistance",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "offset",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "limit",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 1
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "count",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "parts",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "vertexRuns",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "members": [
+                      {
+                        "name": "start",
+                        "origin": "hostOutput",
+                        "shape": "number"
+                      },
+                      {
+                        "name": "count",
+                        "origin": "hostOutput",
+                        "shape": "number"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "vertexCount",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "faceCount",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "min",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                },
+                {
+                  "name": "max",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "shape": "number"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "nextOffset",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_find_referrers",
       "branches": [
         {

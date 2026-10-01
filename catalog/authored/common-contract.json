@@ -415,6 +415,11 @@
       "duty": "指した材質の面が使う頂点の位置を、重なりなく昇順で返す。材質は indices・range・all・selected のどれか1つで指す。モデルも画面の選択も変えない。offset と limit で切り出し、切り出す前の件数を total に、切り出した位置を vertexIndices に返す。runs に真を渡すと、連続した位置を start と count の組にまとめて vertexIndices の代わりに vertexRuns に返し、total・offset・limit・nextOffset はその組の数で数える。値の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。"
     },
     {
+      "tool": "model_find_parts",
+      "branching": false,
+      "duty": "materialIndices に並べた材質の面を、頂点を共有するか位置の近い頂点を持つものどうしでつないだ部品(パーツ・離れた塊)に分けて返す。別々の部品が重なっていないか、同じ位置の頂点でつながった層がないか、いくつの離れた塊からできているかの確認に使う。モデルも画面の選択も変えない。面が頂点を共有していれば同じ部品で、別々の頂点でも距離が weldDistance 以内なら同じ部品にし、近い頂点の連なりを辿ってつながるものも1つの部品になる。距離は座標の直線距離で、ちょうど weldDistance のものもつなぐ。weldDistance を省くか0にすると位置の同じ頂点だけをつなぐ。指した材質の面だけを使い、ほかの材質の面は部品をつながない。count に部品の数を返し、parts は頂点の数の多い順(同じ数は頂点の位置が最も小さい部品が先)に並べる。部品ごとに、vertexRuns に頂点の位置を昇順に連なりごとの start と count の組で、vertexCount に頂点の数、faceCount に面の数、min と max に頂点の座標の各軸の最小と最大を返す。offset と limit で parts を切り出し、応答の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。1件も収まらなければ response_too_large になる。"
+    },
+    {
       "tool": "model_find_referrers",
       "branching": false,
       "duty": "指した要素を指している要素を数えて返す。detail が count なら指す側の種類ごとの件数を referrers へ並べ、指される側が複数ならどれか1つでも指されていれば1つに畳む。countPerTarget なら指される側1件ごとの位置 index と件数 referrers を targets へ、indices なら referrerKind で名指した1種類の位置を referrerIndices へ並べる。referrerKind と runs は indices のときだけ渡せる。countPerTarget と indices だけは offset と limit で切り出し、切り出す前の件数を total に添え、応答の枠に収まるまで減らして警告を添え(収まらなければ response_too_large)、残りがあれば次の offset に渡す nextOffset を返す。runs に真を渡すと、連続した位置を start と count の組にまとめて referrerIndices の代わりに referrerRuns に返し、total・offset・limit・nextOffset はその組の数で数える。指す側と見る項目は、頂点へ face・material・morph(頂点・UV・追加 UV)・softBody(ピン・アンカー)、材質へ morph(材質)・softBody、ボーンへ vertex(4つの枠)・bone(親・付与親・表示先・IK のターゲット・リンク)・morph(ボーン)・node(ボーン項目)・body、モーフへ morph(グループ・フリップ)・node(モーフ項目)、剛体へ joint(AとB)・morph(インパルス)・softBody。面の位置はモデル全体の通し番号。表示枠は model_list_nodes が並べる枠だけを数える。材質を指さない材質モーフのオフセットは全材質を指す。minWeight は kind が bone のときだけ渡せ、これより大きい重みの枠だけを数える。0では重み0の枠を数えず、負の値で数える。"

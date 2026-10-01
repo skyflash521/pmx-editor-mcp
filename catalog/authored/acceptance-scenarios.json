@@ -17236,6 +17236,601 @@
           }
         }
       ]
+    },
+    {
+      "id": 23,
+      "title": "離れた部品と同じ位置の頂点でつながる部品の分け方",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 7
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 7
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  1,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  1,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  10,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  11,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  10,
+                  1,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 7
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "material",
+            "operation": "new",
+            "count": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "partFaceA",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "partFaceA"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 1,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "partFaceA"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "partFaceB",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "partFaceB"
+              }
+            ],
+            "value": {
+              "vertex1": 1,
+              "vertex2": 3,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "partFaceB"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "partFaceC",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "partFaceC"
+              }
+            ],
+            "value": {
+              "vertex1": 4,
+              "vertex2": 5,
+              "vertex3": 6
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "partFaceC"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_parts",
+          "arguments": {
+            "materialIndices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 2
+              },
+              {
+                "path": "parts.0.vertexCount",
+                "equals": 4
+              },
+              {
+                "path": "parts.0.faceCount",
+                "equals": 2
+              },
+              {
+                "path": "parts.0.vertexRuns.0.start",
+                "equals": 0
+              },
+              {
+                "path": "parts.0.vertexRuns.0.count",
+                "equals": 4
+              },
+              {
+                "path": "parts.0.min",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "parts.0.max",
+                "equals": [
+                  1,
+                  1,
+                  0
+                ]
+              },
+              {
+                "path": "parts.1.vertexCount",
+                "equals": 3
+              },
+              {
+                "path": "parts.1.faceCount",
+                "equals": 1
+              },
+              {
+                "path": "parts.1.vertexRuns.0.start",
+                "equals": 4
+              },
+              {
+                "path": "parts.1.vertexRuns.0.count",
+                "equals": 3
+              },
+              {
+                "path": "nextOffset",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_parts",
+          "arguments": {
+            "materialIndices": [
+              0
+            ],
+            "limit": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 2
+              },
+              {
+                "path": "parts.0.vertexCount",
+                "equals": 4
+              },
+              {
+                "path": "nextOffset",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_parts",
+          "arguments": {
+            "materialIndices": [
+              0
+            ],
+            "offset": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 2
+              },
+              {
+                "path": "parts.0.vertexCount",
+                "equals": 3
+              },
+              {
+                "path": "nextOffset",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_parts",
+          "arguments": {
+            "materialIndices": [
+              1
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INDEX_OUT_OF_RANGE"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              4
+            ],
+            "values": [
+              {
+                "position": [
+                  3,
+                  1,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_parts",
+          "arguments": {
+            "materialIndices": [
+              0
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_parts",
+          "arguments": {
+            "materialIndices": [
+              0
+            ],
+            "weldDistance": 2
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 1
+              },
+              {
+                "path": "parts.0.vertexCount",
+                "equals": 7
+              },
+              {
+                "path": "parts.0.faceCount",
+                "equals": 3
+              },
+              {
+                "path": "parts.0.vertexRuns.0.start",
+                "equals": 0
+              },
+              {
+                "path": "parts.0.vertexRuns.0.count",
+                "equals": 7
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              4
+            ],
+            "values": [
+              {
+                "position": [
+                  1,
+                  1,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_parts",
+          "arguments": {
+            "materialIndices": [
+              0
+            ],
+            "weldDistance": 0
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "count",
+                "equals": 1
+              },
+              {
+                "path": "parts.0.vertexCount",
+                "equals": 7
+              },
+              {
+                "path": "parts.0.faceCount",
+                "equals": 3
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }
