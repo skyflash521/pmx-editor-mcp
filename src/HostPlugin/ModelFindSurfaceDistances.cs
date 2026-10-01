@@ -19,6 +19,12 @@ namespace PmxEditorMcp
 
         public const string DistanceThresholdsName = "distanceThresholds";
 
+        public const string SideByName = "sideBy";
+
+        public const string NormalSide = "normal";
+
+        public const string RayParitySide = "rayParity";
+
         public const string DistributionName = "distribution";
 
         public const string LimitName = "limit";
@@ -62,6 +68,7 @@ namespace PmxEditorMcp
                 SurfaceMaterialIndicesName,
                 DistanceLimitName,
                 DistanceThresholdsName,
+                SideByName,
             };
             methods.Add(ToolName, edit.Read(known, Run));
         }
@@ -93,6 +100,19 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
             }
 
+            string sideBy = NormalSide;
+            if (context.Params.ContainsKey(SideByName)
+                && !ComposedInput.TryChoice(
+                    context,
+                    SideByName,
+                    new[] { NormalSide, RayParitySide },
+                    out sideBy,
+                    out code,
+                    out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
             SurfaceTree tree = SurfaceTree.Of(model, surface);
             if (tree == null)
             {
@@ -105,7 +125,19 @@ namespace PmxEditorMcp
             foreach (int at in new SortedSet<int>(chosen))
             {
                 V3 position = model.Vertex[at].Position;
-                measures.Add(new Measure(at, position, tree.Nearest(Vec.Of(position), reach)));
+                Hit hit = tree.Nearest(Vec.Of(position), reach);
+                if (hit != null && sideBy == RayParitySide)
+                {
+                    double away = Math.Abs(hit.Signed);
+                    hit = new Hit(
+                        hit.Point,
+                        away > 0 && tree.IsInside(Vec.Of(position)) ? -away : away,
+                        hit.Front,
+                        hit.Corners,
+                        hit.Barycentric);
+                }
+
+                measures.Add(new Measure(at, position, hit));
             }
 
             Dictionary<string, object> value = Summary(measures, limit.HasValue, thresholds);

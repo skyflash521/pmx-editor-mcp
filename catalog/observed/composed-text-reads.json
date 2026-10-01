@@ -35,6 +35,7 @@
     {"tool": "model_find_referrers", "input": "detail", "choices": ["count", "countPerTarget", "indices"], "basis": "ModelFindReferrers.cs が Details にない名前を断る。"},
     {"tool": "model_find_referrers", "input": "kind", "choices": ["vertex", "material", "bone", "morph", "body"], "basis": "ModelFindReferrers.cs の TryTargetKind が ReferenceEdges.TargetKinds にない名前を断る。"},
     {"tool": "model_find_referrers", "input": "referrerKind", "choices": ["vertex", "face", "material", "bone", "morph", "node", "body", "joint", "softBody"], "basis": "ModelFindReferrers.cs が kind を指す ReferenceEdges の辺の ReferrerKind にない名前を断る。並べたのは ReferenceEdges.cs の辺の指す側の種類のすべて。"},
+    {"tool": "model_find_surface_distances", "input": "sideBy", "choices": ["normal", "rayParity"], "basis": "ModelFindSurfaceDistances.cs が ComposedInput.TryChoice で normal と rayParity にない名前を断る。"},
     {"tool": "model_insert_elements", "input": "kind", "choices": ["vertex", "face", "material", "bone", "ikLink", "morph", "morphOffset", "node", "nodeItem", "body", "joint", "softBody", "softBodyAnchor"], "basis": "ElementScope.cs が ElementKinds.TryResolve で ElementKinds の表にない名前を断る。"},
     {"tool": "model_insert_elements", "input": "operation", "choices": ["new", "clone"], "basis": "ModelInsertElements.cs が Operations にない名前を断る。"},
     {"tool": "model_insert_elements", "input": "variant", "choices": ["vertex", "uv", "uvA1", "uvA2", "uvA3", "uvA4", "bone", "material", "group", "flip", "impulse"], "basis": "ModelInsertElements.cs が Variants にない名前を断る。"},

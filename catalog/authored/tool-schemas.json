@@ -7259,6 +7259,12 @@
                   "minimum": 0
                 }
               }
+            },
+            {
+              "name": "sideBy",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [
