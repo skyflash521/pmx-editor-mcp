@@ -28,6 +28,14 @@ namespace PmxEditorMcp
 
         public const string ProjectOntoSurface = "projectOntoSurface";
 
+        public const string PushOutOfSurface = "pushOutOfSurface";
+
+        public const string MarginName = "margin";
+
+        public const string SpreadRadiusName = "spreadRadius";
+
+        public const string RemainingName = "remaining";
+
         /// <summary>まとめる距離のしきい値を受け取る入力の名前。</summary>
         public const string ThresholdName = "threshold";
 
@@ -60,10 +68,26 @@ namespace PmxEditorMcp
         /// </summary>
         public const string AddedName = "added";
 
+        private const double Tolerance = 1e-9;
+
+        private const double RoundingSlack = 1d / (1 << 22);
+
+        private static readonly KeyValuePair<string, string[]>[] SurfaceInputs =
+        {
+            new KeyValuePair<string, string[]>(
+                ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
+                new[] { ProjectOntoSurface, PushOutOfSurface }),
+            new KeyValuePair<string, string[]>(OffsetName, new[] { ProjectOntoSurface }),
+            new KeyValuePair<string, string[]>(
+                ModelFindSurfaceDistances.DistanceLimitName, new[] { ProjectOntoSurface }),
+            new KeyValuePair<string, string[]>(MarginName, new[] { PushOutOfSurface }),
+            new KeyValuePair<string, string[]>(SpreadRadiusName, new[] { PushOutOfSurface }),
+        };
+
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
         {
-            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface }; }
+            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface, PushOutOfSurface }; }
         }
 
         /// <summary>受け取れる軸。スキーマが並べる順。</summary>
@@ -98,6 +122,8 @@ namespace PmxEditorMcp
                 ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
                 OffsetName,
                 ModelFindSurfaceDistances.DistanceLimitName,
+                MarginName,
+                SpreadRadiusName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -148,23 +174,24 @@ namespace PmxEditorMcp
             }
 
             IList<IPXVertex> picked = chosen.Select(at => model.Vertex[at]).ToList();
-            if (string.Equals(operation, ProjectOntoSurface, StringComparison.Ordinal))
-            {
-                return Projected(context, model, picked);
-            }
-
-            string[] projecting =
-            {
-                ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
-                OffsetName,
-                ModelFindSurfaceDistances.DistanceLimitName,
-            };
-            string unwanted = projecting.FirstOrDefault(context.Params.ContainsKey);
-            if (unwanted != null)
+            KeyValuePair<string, string[]> unwanted = SurfaceInputs.FirstOrDefault(
+                input => context.Params.ContainsKey(input.Key)
+                    && !input.Value.Contains(operation, StringComparer.Ordinal));
+            if (unwanted.Key != null)
             {
                 return ComposedEditResult.Refuse(
                     ToolEnvelope.InvalidArgument,
-                    unwanted + " は " + ProjectOntoSurface + " のときだけ渡せる。");
+                    unwanted.Key + " は " + string.Join("・", unwanted.Value) + " のときだけ渡せる。");
+            }
+
+            if (string.Equals(operation, PushOutOfSurface, StringComparison.Ordinal))
+            {
+                return PushedOut(context, model, picked);
+            }
+
+            if (string.Equals(operation, ProjectOntoSurface, StringComparison.Ordinal))
+            {
+                return Projected(context, model, picked);
             }
 
             switch (operation)
@@ -275,6 +302,196 @@ namespace PmxEditorMcp
             return Answer(moves.Count, 0, 0, None(model), new[] { ElementKinds.Vertex });
         }
 
+        private static ComposedEditResult PushedOut(
+            McpMethodContext context, IPXPmx model, IList<IPXVertex> picked)
+        {
+            string code;
+            string message;
+            List<int> surface;
+            float margin = 0f;
+            float spreadRadius = 0f;
+            if (!ModelFindSurfaceDistances.TryMaterials(
+                    context,
+                    model,
+                    ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
+                    out surface,
+                    out code,
+                    out message)
+                || (context.Params.ContainsKey(MarginName)
+                    && !ComposedInput.TryFloat(
+                        context,
+                        MarginName,
+                        PushOutOfSurface,
+                        new[] { PushOutOfSurface },
+                        0f,
+                        ComposedInput.NoCeiling,
+                        out margin,
+                        out code,
+                        out message))
+                || (context.Params.ContainsKey(SpreadRadiusName)
+                    && !ComposedInput.TryFloat(
+                        context,
+                        SpreadRadiusName,
+                        PushOutOfSurface,
+                        new[] { PushOutOfSurface },
+                        0f,
+                        ComposedInput.NoCeiling,
+                        out spreadRadius,
+                        out code,
+                        out message)))
+            {
+                return ComposedEditResult.Refuse(code ?? ToolEnvelope.InvalidArgument, message);
+            }
+
+            SurfaceGeometry.SurfaceTree tree =
+                SurfaceGeometry.SurfaceTree.Of(model, surface);
+            if (tree == null)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.NotApplicable,
+                    ModelFindSurfaceDistances.SurfaceMaterialIndicesName
+                        + " の材質に面積のある面が1つも無い。");
+            }
+
+            IList<IPXVertex> each = picked.Distinct(ReferenceComparer<IPXVertex>.Instance).ToList();
+            SurfaceGeometry.Vec[] spots = each
+                .Select(vertex => SurfaceGeometry.Vec.Of(vertex.Position))
+                .ToArray();
+            SurfaceGeometry.Vec[] away = new SurfaceGeometry.Vec[each.Count];
+            double[] need = new double[each.Count];
+            bool[] pushing = new bool[each.Count];
+            bool[] fixedAt = new bool[each.Count];
+            for (int at = 0; at < each.Count; at++)
+            {
+                SurfaceGeometry.Hit hit = tree.Nearest(spots[at], double.PositiveInfinity);
+                if (hit == null)
+                {
+                    fixedAt[at] = true;
+                    continue;
+                }
+
+                SurfaceGeometry.Vec toward = hit.Point - spots[at];
+                double apart = toward.Length;
+                if (apart <= Tolerance)
+                {
+                    fixedAt[at] = true;
+                }
+                else if (tree.IsInside(spots[at]))
+                {
+                    away[at] = toward * (1d / apart);
+                    need[at] = apart + margin;
+                    pushing[at] = true;
+                }
+                else if (apart < margin - Tolerance)
+                {
+                    away[at] = toward * (-1d / apart);
+                    need[at] = margin - apart;
+                    pushing[at] = true;
+                }
+            }
+
+            SurfaceGeometry.Vec[] moves = new SurfaceGeometry.Vec[each.Count];
+            if (spreadRadius > 0f)
+            {
+                double reach = spreadRadius;
+                Func<double, double> window = gap =>
+                    Math.Max(0d, (Math.Exp(-2d * gap * gap / (reach * reach)) - Math.Exp(-2d)) / (1d - Math.Exp(-2d)));
+                double[] total = new double[each.Count];
+                double[] others = new double[each.Count];
+                SurfaceGeometry.Vec[] pull = new SurfaceGeometry.Vec[each.Count];
+                for (int at = 0; at < each.Count; at++)
+                {
+                    if (fixedAt[at])
+                    {
+                        continue;
+                    }
+
+                    total[at] = 1d;
+                    pull[at] = pushing[at] ? away[at] * need[at] : default(SurfaceGeometry.Vec);
+                }
+
+                SurfaceGeometry.ForEachNear(
+                    spots,
+                    spreadRadius,
+                    (at, other) =>
+                    {
+                        if (fixedAt[at] || fixedAt[other])
+                        {
+                            return;
+                        }
+
+                        double weight = window((spots[at] - spots[other]).Length);
+                        total[at] += weight;
+                        if (pushing[other])
+                        {
+                            pull[at] = pull[at] + (away[other] * need[other] * weight);
+                            others[at] += weight * need[other] * away[other].Dot(away[at]);
+                        }
+                    });
+
+                double[] own = new double[each.Count];
+                for (int at = 0; at < each.Count; at++)
+                {
+                    own[at] = pushing[at] && others[at] >= 0d
+                        ? need[at] * total[at] / (need[at] + others[at])
+                        : 0d;
+                }
+
+                double[] scale = own.ToArray();
+                SurfaceGeometry.ForEachNear(
+                    spots,
+                    spreadRadius,
+                    (at, other) => scale[at] = Math.Max(scale[at], own[other] * window((spots[at] - spots[other]).Length)));
+                for (int at = 0; at < each.Count; at++)
+                {
+                    moves[at] = fixedAt[at] ? default(SurfaceGeometry.Vec) : pull[at] * (scale[at] / total[at]);
+                }
+            }
+            else
+            {
+                for (int at = 0; at < each.Count; at++)
+                {
+                    moves[at] = away[at] * need[at];
+                }
+            }
+
+            int changed = 0;
+            int remaining = 0;
+            for (int at = 0; at < each.Count; at++)
+            {
+                SurfaceGeometry.Vec moved = spots[at] + moves[at];
+                V3 was = each[at].Position;
+                V3 now = new V3((float)moved.X, (float)moved.Y, (float)moved.Z);
+                if (now.X != was.X || now.Y != was.Y || now.Z != was.Z)
+                {
+                    each[at].Position = now;
+                    changed++;
+                }
+
+                remaining += Cleared(tree, SurfaceGeometry.Vec.Of(now), margin) ? 0 : 1;
+            }
+
+            return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex }, remaining);
+        }
+
+        private static bool Cleared(SurfaceGeometry.SurfaceTree tree, SurfaceGeometry.Vec at, double margin)
+        {
+            SurfaceGeometry.Hit hit = tree.Nearest(at, double.PositiveInfinity);
+            if (hit == null)
+            {
+                return true;
+            }
+
+            double slack = RoundingSlack * Math.Max(1d, Math.Max(Math.Abs(at.X), Math.Max(Math.Abs(at.Y), Math.Abs(at.Z))));
+            double apart = (hit.Point - at).Length;
+            if (apart <= slack)
+            {
+                return !(margin > 0d);
+            }
+
+            return !tree.IsInside(at) && apart >= margin - slack;
+        }
+
         private static ComposedEditResult Aligned(
             IPXPmx model, IList<IPXVertex> picked, string axis)
         {
@@ -382,7 +599,8 @@ namespace PmxEditorMcp
             int removed,
             int faces,
             IDictionary<string, object> added,
-            IList<string> rewritten = null)
+            IList<string> rewritten = null,
+            int? remaining = null)
         {
             Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
             {
@@ -391,6 +609,10 @@ namespace PmxEditorMcp
                 { RemovedFacesName, faces },
                 { AddedName, added },
             };
+            if (remaining.HasValue)
+            {
+                value[RemainingName] = remaining.Value;
+            }
 
             return rewritten == null
                 ? ComposedEditResult.Complete(value)

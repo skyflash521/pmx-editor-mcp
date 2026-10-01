@@ -6512,6 +6512,24 @@
               "bounds": {
                 "minimum": 0
               }
+            },
+            {
+              "name": "margin",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "spreadRadius",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
             }
           ],
           "choices": [
@@ -6561,6 +6579,11 @@
                 "shape": "number"
               }
             ]
+          },
+          {
+            "name": "remaining",
+            "origin": "hostOutput",
+            "shape": "number"
           }
         ]
       }

@@ -112,6 +112,27 @@ namespace PmxEditorMcp
         /// </summary>
         public static IList<int>[] Within(IList<Vec> points, double radius)
         {
+            List<int>[] found = new List<int>[points.Count];
+            for (int at = 0; at < found.Length; at++)
+            {
+                found[at] = new List<int>();
+            }
+
+            ForEachNear(points, radius, (at, other) => found[at].Add(other));
+            foreach (List<int> near in found)
+            {
+                near.Sort();
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// <paramref name="radius"/> 以内にある自分以外の点の組を、向きごとに <paramref name="visit"/> へ渡す。
+        /// 並びは決まらない。有限でない点は組にならない。
+        /// </summary>
+        public static void ForEachNear(IList<Vec> points, double radius, Action<int, int> visit)
+        {
             double cell = Math.Max(radius, 1e-9);
             Dictionary<CellKey, List<int>> cells = new Dictionary<CellKey, List<int>>();
             for (int at = 0; at < points.Count; at++)
@@ -132,11 +153,8 @@ namespace PmxEditorMcp
                 held.Add(at);
             }
 
-            IList<int>[] found = new IList<int>[points.Count];
             for (int at = 0; at < points.Count; at++)
             {
-                List<int> near = new List<int>();
-                found[at] = near;
                 if (!IsFinite(points[at]))
                 {
                     continue;
@@ -155,16 +173,17 @@ namespace PmxEditorMcp
                                 continue;
                             }
 
-                            near.AddRange(held.Where(
-                                other => other != at && (points[at] - points[other]).Length <= radius));
+                            foreach (int other in held)
+                            {
+                                if (other != at && (points[at] - points[other]).Length <= radius)
+                                {
+                                    visit(at, other);
+                                }
+                            }
                         }
                     }
                 }
-
-                near.Sort();
             }
-
-            return found;
         }
 
         private static bool IsFinite(Vec at)

@@ -18112,6 +18112,720 @@
           }
         }
       ]
+    },
+    {
+      "id": 25,
+      "title": "面の中と面の近くにある頂点の押し出し",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 8
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 8
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  4,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  0,
+                  4
+                ]
+              },
+              {
+                "position": [
+                  0.5,
+                  1,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  -0.125,
+                  2,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  -1,
+                  1,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  1,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 8
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "material",
+            "operation": "new",
+            "count": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "pushFaceBase",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "pushFaceBase"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 1,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "pushFaceBase"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "pushFaceSide",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "pushFaceSide"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 1,
+              "vertex3": 3
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "pushFaceSide"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "pushFaceBack",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "pushFaceBack"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 2,
+              "vertex3": 3
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "pushFaceBack"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "pushFaceSlant",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "pushFaceSlant"
+              }
+            ],
+            "value": {
+              "vertex1": 1,
+              "vertex2": 2,
+              "vertex3": 3
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "pushFaceSlant"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "pushOutOfSurface",
+            "indices": [
+              4,
+              5,
+              6,
+              7
+            ],
+            "surfaceMaterialIndices": [
+              0
+            ],
+            "margin": 0.25
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 2
+              },
+              {
+                "path": "remaining",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              4,
+              5,
+              6,
+              7
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  -0.25,
+                  1,
+                  1
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  -0.25,
+                  2,
+                  1
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  -1,
+                  1,
+                  1
+                ]
+              },
+              {
+                "path": "items.3.position",
+                "equals": [
+                  0,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              4,
+              5,
+              6,
+              7
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0.5,
+                  1,
+                  1
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  -0.125,
+                  2,
+                  1
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  -1,
+                  1,
+                  1
+                ]
+              },
+              {
+                "path": "items.3.position",
+                "equals": [
+                  0,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              4,
+              5,
+              6,
+              7
+            ],
+            "values": [
+              {
+                "position": [
+                  0.5,
+                  1,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  -0.5,
+                  1,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  3.5,
+                  1,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  -1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 4
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "pushOutOfSurface",
+            "indices": [
+              4,
+              5,
+              6,
+              7
+            ],
+            "surfaceMaterialIndices": [
+              0
+            ],
+            "margin": 0.25,
+            "spreadRadius": 2
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 3
+              },
+              {
+                "path": "remaining",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              4,
+              6
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  -0.25,
+                  1,
+                  1
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  3.5,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "pushOutOfSurface",
+            "indices": [
+              4
+            ],
+            "surfaceMaterialIndices": [
+              0
+            ],
+            "margin": 0.25,
+            "spreadRadius": 2
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 0
+              },
+              {
+                "path": "remaining",
+                "equals": 0
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "pushOutOfSurface",
+            "indices": [
+              4
+            ],
+            "surfaceMaterialIndices": [
+              1
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INDEX_OUT_OF_RANGE"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "align",
+            "indices": [
+              4
+            ],
+            "axis": "x",
+            "margin": 0.25
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        }
+      ]
     }
   ]
 }

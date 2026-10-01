@@ -49,14 +49,14 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(2, value[Changed]);
             Assert.Equal(0, value[Remaining]);
-            Assert.True(upper.Position.Y >= 1.05f - Tolerance);
-            Assert.True(lower.Position.Y >= 1.05f - Tolerance);
-            Assert.Equal(upper.Position.Y - 0.9f, lower.Position.Y - 0.8f, 4);
-            Assert.Equal(0.1f, upper.Position.Y - lower.Position.Y, 4);
-            Assert.Equal(0.2f, upper.Position.X, 4);
-            Assert.Equal(0.1f, upper.Position.Z, 4);
-            Assert.Equal(0.2f, lower.Position.X, 4);
-            Assert.Equal(0.1f, lower.Position.Z, 4);
+            Assert.True(At(upper).Y >= 1.05f - Tolerance);
+            Assert.True(At(lower).Y >= 1.05f - Tolerance);
+            Assert.Equal(At(upper).Y - 0.9f, At(lower).Y - 0.8f, 4);
+            Assert.Equal(0.1f, At(upper).Y - At(lower).Y, 4);
+            Assert.Equal(0.2f, At(upper).X, 4);
+            Assert.Equal(0.1f, At(upper).Z, 4);
+            Assert.Equal(0.2f, At(lower).X, 4);
+            Assert.Equal(0.1f, At(lower).Z, 4);
         }
 
         [Theory]
@@ -77,12 +77,12 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(2, value[Changed]);
             Assert.Equal(0, value[Remaining]);
-            Assert.True(towardX.Position.X >= 1.1f - Tolerance);
-            Assert.Equal(0.1f, towardX.Position.Y, 4);
-            Assert.Equal(0.2f, towardX.Position.Z, 4);
-            Assert.True(towardNegativeZ.Position.Z <= -1.1f + Tolerance);
-            Assert.Equal(-0.2f, towardNegativeZ.Position.X, 4);
-            Assert.Equal(0.3f, towardNegativeZ.Position.Y, 4);
+            Assert.True(At(towardX).X >= 1.1f - Tolerance);
+            Assert.Equal(0.1f, At(towardX).Y, 4);
+            Assert.Equal(0.2f, At(towardX).Z, 4);
+            Assert.True(At(towardNegativeZ).Z <= -1.1f + Tolerance);
+            Assert.Equal(-0.2f, At(towardNegativeZ).X, 4);
+            Assert.Equal(0.3f, At(towardNegativeZ).Y, 4);
         }
 
         [Fact]
@@ -97,9 +97,9 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(1, value[Changed]);
             Assert.Equal(0, value[Remaining]);
-            Assert.True(near.Position.X >= 1.1f - Tolerance);
-            Assert.Equal(0.1f, near.Position.Y, 4);
-            Assert.Equal(0.2f, near.Position.Z, 4);
+            Assert.True(At(near).X >= 1.1f - Tolerance);
+            Assert.Equal(0.1f, At(near).Y, 4);
+            Assert.Equal(0.2f, At(near).Z, 4);
         }
 
         [Fact]
@@ -112,7 +112,7 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(1, value[Changed]);
             Assert.Equal(0, value[Remaining]);
-            Assert.True(inside.Position.X >= 1f - Tolerance);
+            Assert.True(At(inside).X >= 1f - Tolerance);
         }
 
         [Fact]
@@ -148,7 +148,7 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(1, value[Changed]);
             Assert.Equal(0, value[Remaining]);
-            Assert.True(picked.Position.Y >= 1.05f - Tolerance);
+            Assert.True(At(picked).Y >= 1.05f - Tolerance);
             AssertAt(0.2f, 0.9f, 0.1f, left);
             AssertAt(0.2f, 0.8f, 0.1f, leftDeeper);
         }
@@ -166,15 +166,15 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(Margin, 0.05),
                 ComposedEditFixture.Given(SpreadRadius, 1.0)));
 
-            float pushedInside = inside.Position.Y - 0.9f;
-            float pushedWithin = within.Position.Y - 1.5f;
+            float pushedInside = At(inside).Y - 0.9f;
+            float pushedWithin = At(within).Y - 1.5f;
             Assert.Equal(2, value[Changed]);
             Assert.Equal(0, value[Remaining]);
-            Assert.True(inside.Position.Y >= 1.05f - Tolerance);
+            Assert.True(At(inside).Y >= 1.05f - Tolerance);
             Assert.True(pushedWithin > Tolerance);
             Assert.True(pushedWithin < pushedInside - Tolerance);
-            Assert.Equal(0.2f, within.Position.X, 4);
-            Assert.Equal(0.1f, within.Position.Z, 4);
+            Assert.Equal(0.2f, At(within).X, 4);
+            Assert.Equal(0.1f, At(within).Z, 4);
             AssertAt(0.2f, 3f, 0.1f, beyond);
         }
 
@@ -200,7 +200,7 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(1, value[Changed]);
             Assert.Equal(0, value[Remaining]);
-            Assert.True(inside.Position.Y >= 1.05f - Tolerance);
+            Assert.True(At(inside).Y >= 1.05f - Tolerance);
             AssertAt(0.2f, 1.5f, 0.1f, neighbour);
         }
 
@@ -224,8 +224,75 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, value[Remaining]);
             foreach (IPXVertex vertex in column)
             {
-                Assert.True(vertex.Position.Y >= 1.05f - Tolerance);
+                Assert.True(At(vertex).Y >= 1.05f - Tolerance);
             }
+        }
+
+        [Fact]
+        public void APickedVertexThatTheSpreadCarriesIntoTheSurfaceIsCountedAsRemaining()
+        {
+            Cube(false, false);
+            IPXVertex inside = Vertex(0f, 0.5f, 0f);
+            IPXVertex outside = Vertex(0f, -1.1f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Push(
+                new[] { inside, outside },
+                ComposedEditFixture.Given(Margin, 0.05),
+                ComposedEditFixture.Given(SpreadRadius, 4.0)));
+
+            Assert.Equal(2, value[Changed]);
+            Assert.True(At(inside).Y >= 1.05f - Tolerance);
+            Assert.True(At(outside).Y > -1f);
+            Assert.Equal(1, value[Remaining]);
+        }
+
+        [Fact]
+        public void AShallowVertexBeyondTheRadiusIsPushedOnlyByItsOwnDepth()
+        {
+            Cube(false, false);
+            IPXVertex deep = Vertex(0.9f, 0.1f, 0.2f);
+            IPXVertex shallow = Vertex(-0.99f, 0.1f, 0.2f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Push(
+                new[] { deep, shallow },
+                ComposedEditFixture.Given(SpreadRadius, 1.0)));
+
+            Assert.Equal(2, value[Changed]);
+            Assert.Equal(0, value[Remaining]);
+            Assert.True(At(deep).X >= 1f - Tolerance);
+            Assert.Equal(-1.0f, At(shallow).X, 4);
+        }
+
+        [Fact]
+        public void TwoVerticesOnEitherSideOfTheRadiusEdgeAtTheSameDepthMoveByTheSameAmount()
+        {
+            Cube(false, false);
+            IPXVertex centre = Vertex(0f, 0.9f, 0f);
+            IPXVertex nearby = Vertex(-0.3f, 1.2f, 0f);
+            IPXVertex inner = Vertex(0.495f, 0.9f, 0f);
+            IPXVertex outer = Vertex(0.505f, 0.9f, 0f);
+
+            ComposedEditFixture.Value(Push(
+                new[] { centre, nearby, inner, outer },
+                ComposedEditFixture.Given(Margin, 0.05),
+                ComposedEditFixture.Given(SpreadRadius, 0.5)));
+
+            Assert.Equal(At(inner).Y - 0.9f, At(outer).Y - 0.9f, 3);
+        }
+
+        [Fact]
+        public void AThinBoxWhereTheNeighboursPushAgainstEachOtherDoesNotThrowTheFarVertexAway()
+        {
+            Box(false, false, 0f, 0.1f);
+            IPXVertex up = Vertex(0f, 0.06f, 0f);
+            IPXVertex down = Vertex(0f, 0.0399f, 0.02f);
+            IPXVertex side = Vertex(0.96f, 0.05f, 0f);
+
+            ComposedEditFixture.Value(Push(
+                new[] { up, down, side },
+                ComposedEditFixture.Given(SpreadRadius, 1.0)));
+
+            Assert.InRange(At(side).X, 1f - Tolerance, 1.1f);
         }
 
         [Fact]
@@ -242,7 +309,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, value[Changed]);
             Assert.Equal(1, value[Remaining]);
             AssertAt(0.2f, 1f, 0.1f, onSurface);
-            Assert.True(inside.Position.X >= 1.1f - Tolerance);
+            Assert.True(At(inside).X >= 1.1f - Tolerance);
         }
 
         [Fact]
@@ -369,27 +436,38 @@ namespace PmxEditorMcp.Tests
         private object[] Indices(params IPXVertex[] picked)
         {
             return picked
-                .Select(vertex => (object)_fixture.Model.Vertex.IndexOf(vertex))
+                .Select(vertex => (object)_fixture.Model.Vertex.IndexOf(_fixture.Now(vertex)))
                 .ToArray();
         }
 
-        private static void AssertAt(float x, float y, float z, IPXVertex given)
+        private V3 At(IPXVertex given)
         {
-            Assert.Equal(x, given.Position.X);
-            Assert.Equal(y, given.Position.Y);
-            Assert.Equal(z, given.Position.Z);
+            return _fixture.Now(given).Position;
+        }
+
+        private void AssertAt(float x, float y, float z, IPXVertex given)
+        {
+            Assert.Equal(x, At(given).X);
+            Assert.Equal(y, At(given).Y);
+            Assert.Equal(z, At(given).Z);
         }
 
         private void Cube(bool inwardNormals, bool reversedWinding)
+        {
+            Box(inwardNormals, reversedWinding, -1f, 1f);
+        }
+
+        private void Box(bool inwardNormals, bool reversedWinding, float bottom, float top)
         {
             IPXVertex[] corners = new IPXVertex[8];
             for (int at = 0; at < 8; at++)
             {
                 float x = (at & 1) == 0 ? -1f : 1f;
-                float y = (at & 2) == 0 ? -1f : 1f;
+                float y = (at & 2) == 0 ? bottom : top;
                 float z = (at & 4) == 0 ? -1f : 1f;
                 corners[at] = Vertex(x, y, z);
-                corners[at].Normal = inwardNormals ? new V3(-x, -y, -z) : new V3(x, y, z);
+                float facing = (at & 2) == 0 ? -1f : 1f;
+                corners[at].Normal = inwardNormals ? new V3(-x, -facing, -z) : new V3(x, facing, z);
             }
 
             int[][] quads =
