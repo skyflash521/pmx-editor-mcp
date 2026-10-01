@@ -104,6 +104,14 @@ namespace PmxEditorMcp.Bridge.Tests
                             + "\"min\":[0,0,0],\"max\":[0,0,0]}").Length)
                 },
                 {
+                    "model_find_coincident_vertices",
+                    new Listing(
+                        new[] { "count", "maxSpread", "overLimitCount" },
+                        "0".Length + "0".Length + "0".Length,
+                        "groups",
+                        "{\"vertices\":[0],\"spread\":0}".Length)
+                },
+                {
                     "view_pick_screen_point",
                     new Listing(
                         new[] { "count" },

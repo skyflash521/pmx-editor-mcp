@@ -125,7 +125,7 @@ namespace PmxEditorMcp
                 shape.Summary(stretchThresholds, bendThresholds));
         }
 
-        private static string Differs(IPXPmx based, IPXPmx model)
+        internal static string Differs(IPXPmx based, IPXPmx model)
         {
             KeyValuePair<string, int[]>[] counts =
             {
@@ -159,7 +159,7 @@ namespace PmxEditorMcp
             return null;
         }
 
-        private static Vec[] Positions(IPXPmx model)
+        internal static Vec[] Positions(IPXPmx model)
         {
             Vec[] made = new Vec[model.Vertex.Count];
             for (int at = 0; at < made.Length; at++)

@@ -410,6 +410,11 @@
       "duty": "指した頂点のウェイトが乗っているボーンを、ボーンごとに集計して返す。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。モデルも画面の選択も変えない。頂点の4つの枠のうち重みが正の枠だけを数え、モデルのボーンの並びに居ないボーンを指す枠は数えず、1つの頂点が同じボーンを複数の枠で持つときはその頂点を1つと数えて重みを足す。count に指した頂点の数を返し、bones に乗っているボーンごとの組を weightSum の大きい順に並べる(同じ値はボーンの位置の小さい順)。組は、ボーンの位置 index・名前 name・そのボーンに重みが乗る指した頂点の数 vertexCount・その頂点の重みの合計 weightSum・頂点ごとの重みの最大 weightMax を持つ。offset と limit で切り出し、切り出す前の件数を total に返し、応答の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。1件も収まらなければ response_too_large を返す。"
     },
     {
+      "tool": "model_find_coincident_vertices",
+      "branching": false,
+      "duty": "指した頂点を、位置の近いものどうしの組(同じ位置の頂点・重なった頂点・ずれた継ぎ目・溶接の候補)に分けて返す。複製との比較で、変形で離れてしまった同じ位置の頂点(分離した継ぎ目・ずれ)の洗い出しにも使う。モデルも複製も画面の選択も変えない。頂点は indices・range・all・selected・materialIndices のどれか1つで指し、materialIndices ではその材質の面が使う頂点を指す。距離が threshold 以内の頂点どうしを組にし、近い頂点の連なりを辿ってつながるものも1つの組にする。距離は座標の直線距離で、ちょうど threshold のものも組にし、0なら位置の同じ頂点だけを組にする。頂点が1つだけの組は返さない。basePmxHandle に変形する前のモデルの複製(model_clone_pmx が出したもの)のハンドルを渡すと、組分けを複製の位置で行い、組の広がりは今の位置で測る。頂点・材質・ボーン・各材質の面の数が複製と違えば invalid_argument になる。count に組の数を返し、組ごとの spread は、組の頂点どうしの今の位置の最大距離(2頂点間の最大)で、maxSpread にその最大を返す。spreadLimit を渡すと、spread がそれを超える組の数を overLimitCount に返す(ちょうどの組は数えない)。groups は spread の大きい順(同じなら頂点の位置が最も小さい組が先)に並べ、組ごとに vertices へ頂点の位置を昇順に返す。組が無ければ maxSpread は返さない。offset と limit で groups を切り出し、応答の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。1件も収まらなければ response_too_large になる。"
+    },
+    {
       "tool": "model_find_material_vertices",
       "branching": false,
       "duty": "指した材質の面が使う頂点の位置を、重なりなく昇順で返す。材質は indices・range・all・selected のどれか1つで指す。モデルも画面の選択も変えない。offset と limit で切り出し、切り出す前の件数を total に、切り出した位置を vertexIndices に返す。runs に真を渡すと、連続した位置を start と count の組にまとめて vertexIndices の代わりに vertexRuns に返し、total・offset・limit・nextOffset はその組の数で数える。値の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。"
