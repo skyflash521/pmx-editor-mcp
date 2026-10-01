@@ -25,7 +25,13 @@ namespace PmxEditorMcp
         /// <summary>視点の上の向きを受け取る入力の名前。</summary>
         public const string UpVectorName = "upVector";
 
+        public const string PerspectiveName = "perspective";
+
         private const int Components = 3;
+
+        private const float PerspectiveLeast = 0.1f;
+
+        private const float PerspectiveMost = 179f;
 
         /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
@@ -40,12 +46,15 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(screen));
             }
 
-            List<string> known = new List<string> { PositionName, TargetName, UpVectorName };
+            List<string> known = new List<string>
+            {
+                PositionName, TargetName, UpVectorName, PerspectiveName,
+            };
             methods.Add(
                 ToolName,
                 screen.Method(
                     known,
-                    ScreenNeeds.View | ScreenNeeds.ModelUntouched,
+                    ScreenNeeds.View | ScreenNeeds.Setting | ScreenNeeds.ModelUntouched,
                     ScreenRefreshKind.None,
                     Run));
         }
@@ -63,35 +72,65 @@ namespace PmxEditorMcp
                     "視点を指すなら " + string.Join("・", names) + " の3つをそろえて渡す。");
             }
 
+            float perspective = 0f;
+            bool narrowed = context.Params.ContainsKey(PerspectiveName);
+            if (narrowed
+                && (!ValueInput.TrySingle(context.Params[PerspectiveName], out perspective)
+                    || perspective < PerspectiveLeast
+                    || perspective > PerspectiveMost))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    PerspectiveName + " は " + PerspectiveLeast + " 以上 " + PerspectiveMost
+                        + " 以下の数でなければならない。");
+            }
+
+            V3 position = new V3(0f, 0f, 0f);
+            V3 target = position;
+            V3 up = position;
+            if (given != 0
+                && (!TrySpot(context, PositionName, out position, out code, out message)
+                    || !TrySpot(context, TargetName, out target, out code, out message)
+                    || !TrySpot(context, UpVectorName, out up, out code, out message)))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
             IPXPmxViewConnector view = (IPXPmxViewConnector)parts.View;
+            IPEViewSettingConnector setting = (IPEViewSettingConnector)parts.Setting;
             Bitmap shot;
-            if (given == 0)
+            if (given == 0 && !narrowed)
             {
                 shot = view.GetClientImage();
             }
             else
             {
-                V3 position;
-                V3 target;
-                V3 up;
-                if (!TrySpot(context, PositionName, out position, out code, out message)
-                    || !TrySpot(context, TargetName, out target, out code, out message)
-                    || !TrySpot(context, UpVectorName, out up, out code, out message))
-                {
-                    return ComposedEditResult.Refuse(code, message);
-                }
-
                 IPEVector3 heldPosition = view.CameraPosition;
                 IPEVector3 heldTarget = view.CameraTarget;
                 IPEVector3 heldUp = view.CameraUpVector;
+                float heldPerspective = narrowed ? setting.Perspective : 0f;
                 try
                 {
-                    view.SetCameraView(target, position, up);
+                    if (narrowed)
+                    {
+                        setting.Perspective = perspective;
+                    }
+
+                    if (given != 0)
+                    {
+                        view.SetCameraView(target, position, up);
+                    }
+
                     view.UpdateView();
                     shot = view.GetClientImage();
                 }
                 finally
                 {
+                    if (narrowed)
+                    {
+                        setting.Perspective = heldPerspective;
+                    }
+
                     view.SetCameraView(heldTarget, heldPosition, heldUp);
                     view.UpdateView();
                 }

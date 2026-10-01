@@ -209,6 +209,7 @@
     {"tool": "motion_set_transform_view_vmd_frame", "input": "frame", "reads": "integer", "least": 0, "most": 2147483647, "basis": "MotionSetTransformViewVmdFrame.cs が0以上で int の範囲の整数として読む。"},
     {"tool": "motion_set_transform_view_vmd_frame", "input": "vmd", "reads": "integer", "least": -9223372036854775808, "most": 9223372036854775807, "basis": "MotionSetTransformViewVmdFrame.cs が long の範囲の整数として読む。"},
     {"tool": "session_release_handle", "input": "handles[]", "reads": "integer", "least": -9223372036854775808, "most": 9223372036854775807, "basis": "HandleRelease.cs が long の範囲の整数として読む。"},
+    {"tool": "view_capture_image", "input": "perspective", "reads": "real", "least": 0.1, "most": 179, "basis": "ViewCaptureImage.cs が0.1以上179以下の単精度の数として読む。"},
     {"tool": "view_capture_image", "input": "position[]", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewCaptureImage.cs の TrySpot が単精度の有限の数として読む。"},
     {"tool": "view_capture_image", "input": "target[]", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewCaptureImage.cs の TrySpot が単精度の有限の数として読む。"},
     {"tool": "view_capture_image", "input": "upVector[]", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewCaptureImage.cs の TrySpot が単精度の有限の数として読む。"},

@@ -43124,6 +43124,16 @@
                 "origin": "hostInput",
                 "shape": "number"
               }
+            },
+            {
+              "name": "perspective",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0.1,
+                "maximum": 179
+              }
             }
           ]
         }

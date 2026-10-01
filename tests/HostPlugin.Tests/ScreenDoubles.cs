@@ -245,18 +245,7 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        public float Perspective
-        {
-            get
-            {
-                throw new NotSupportedException();
-            }
-
-            set
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public float Perspective { get; set; } = 45f;
 
         public PEPlugin.View.AntiAliasingType AAType
         {
@@ -716,12 +705,17 @@ namespace PmxEditorMcp.Tests
         /// <summary>画像を撮った回数。</summary>
         public int Shots { get; private set; }
 
+        public System.Func<float> PerspectiveSource { get; set; }
+
+        public float ShotPerspective { get; private set; }
+
         /// <summary>最後に渡した画像。手放されたかをここで見る。</summary>
         public System.Drawing.Bitmap LastShot { get; private set; }
 
         public System.Drawing.Bitmap GetClientImage()
         {
             ShotFrom = DrawnFrom;
+            ShotPerspective = PerspectiveSource == null ? 0f : PerspectiveSource();
             Shots++;
             if (CannotShoot)
             {

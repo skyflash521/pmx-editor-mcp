@@ -745,6 +745,41 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheImageIsTakenWithTheNarrowerAngleThatWasGiven()
+        {
+            _fixture.Setting.Perspective = 45f;
+
+            Captured(ComposedScreenFixture.Given("perspective", 5.0));
+
+            Assert.Equal(5f, _fixture.View.ShotPerspective);
+            Assert.Equal(45f, _fixture.Setting.Perspective);
+        }
+
+        [Fact]
+        public void TheAngleGoesBackToWhereItWasEvenWhenTheShotFails()
+        {
+            _fixture.Setting.Perspective = 45f;
+            _fixture.View.CannotShoot = true;
+
+            Captured(ComposedScreenFixture.Given("perspective", 5.0));
+
+            Assert.Equal(45f, _fixture.Setting.Perspective);
+        }
+
+        [Theory]
+        [InlineData(0.0)]
+        [InlineData(180.0)]
+        [InlineData(-5.0)]
+        public void AnAngleOutsideTheAllowedRangeIsRefused(double angle)
+        {
+            IDictionary<string, object> envelope = Captured(
+                ComposedScreenFixture.Given("perspective", angle));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+            Assert.Equal(0, _fixture.View.Shots);
+        }
+
+        [Fact]
         public void LeavingOutTheViewpointTakesTheShotFromWhereTheCameraIs()
         {
             _fixture.View.CameraPosition = new V3(5f, 5f, 5f);

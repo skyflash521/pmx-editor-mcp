@@ -25,6 +25,7 @@ namespace PmxEditorMcp.Tests
         {
             _edit = new ComposedEditFixture(_stamps);
             View.Model = Model;
+            View.PerspectiveSource = () => Setting.Perspective;
             Parts.Model = Model;
             TransformView = new FakeTransformView(() => Model.Bone.Count, () => Model.Morph.Count);
         }
