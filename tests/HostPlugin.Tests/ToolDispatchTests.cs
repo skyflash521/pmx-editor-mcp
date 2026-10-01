@@ -22,6 +22,18 @@ namespace PmxEditorMcp.Tests
         /// <summary>ビューごとに実体の分かれる受け手。どのビューの設定かを view で選ぶ。</summary>
         private const string SettingType = "PEPlugin.View.IPEViewSettingConnector";
 
+        private const string TransformViewType = "PEPlugin.View.IPETransformViewConnector";
+
+        private const string SubViewType = "PEPlugin.View.IPESubViewConnector";
+
+        private const string SubShotKey = "PEPlugin.View.IPESubViewConnector.GetClientImage()";
+
+        private const string ResetKey = "PEPlugin.View.IPETransformViewConnector.ResetTransform()";
+
+        private const string TransformShotKey = "PEPlugin.View.IPETransformViewConnector.GetClientImage()";
+
+        private const string MorphValueKey = "PEPlugin.View.IPETransformViewConnector.MorphValue()";
+
         private const string SaveKey = "Sdk.Form.Save(System.String)";
 
         /// <summary>画面を撮る行。返る画像はその呼び出しが作ったものである。</summary>
@@ -116,6 +128,12 @@ namespace PmxEditorMcp.Tests
 
         private readonly FakePmxView _view = new FakePmxView();
 
+        private readonly FakeTransformView _transformView = new FakeTransformView(() => 0, () => 0);
+
+        private readonly FakeSubView _subView = new FakeSubView();
+
+        private int _resets;
+
         private readonly FakeFormConnector _form = new FakeFormConnector();
 
         private Info _info;
@@ -188,6 +206,92 @@ namespace PmxEditorMcp.Tests
 
             Assert.True((bool)envelope["ok"]);
             Assert.Throws<ArgumentException>(() => _shot.Width);
+        }
+
+        [Fact]
+        public void ACallOnAClosedTransformViewIsRefusedAndNotRelayed()
+        {
+            _transformView.Visible = false;
+
+            IDictionary<string, object> envelope = Call("transform_reset", Arguments());
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Equal(0, _resets);
+        }
+
+        [Fact]
+        public void AWriteToAClosedTransformViewIsRefusedAndNotWritten()
+        {
+            _transformView.Visible = false;
+
+            IDictionary<string, object> envelope = Call(
+                "transform_update_morph", Arguments("morphValue", 1.0));
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+            Assert.Equal(0f, _transformView.MorphValue);
+        }
+
+        [Fact]
+        public void AWriteToAnOpenTransformViewIsWritten()
+        {
+            _transformView.Visible = true;
+
+            IDictionary<string, object> envelope = Call(
+                "transform_update_morph", Arguments("morphValue", 1.0));
+
+            Assert.True((bool)envelope["ok"]);
+            Assert.Equal(1f, _transformView.MorphValue);
+        }
+
+        [Fact]
+        public void AReadOfAClosedTransformViewIsRefused()
+        {
+            _transformView.Visible = false;
+
+            IDictionary<string, object> envelope = Call("transform_get_morph", Arguments());
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+        }
+
+        [Fact]
+        public void ACallOnAnOpenTransformViewIsRelayed()
+        {
+            _transformView.Visible = true;
+
+            IDictionary<string, object> envelope = Call("transform_reset", Arguments());
+
+            Assert.True((bool)envelope["ok"]);
+            Assert.Equal(1, _resets);
+        }
+
+        [Fact]
+        public void AShotOfAClosedTransformViewIsRefused()
+        {
+            _transformView.Visible = false;
+
+            IDictionary<string, object> envelope = Call("transform_shot", Arguments());
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+        }
+
+        [Fact]
+        public void AShotOfAClosedSubViewIsRefused()
+        {
+            _subView.Visible = false;
+
+            IDictionary<string, object> envelope = Call("sub_shot", Arguments());
+
+            Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
+        }
+
+        [Fact]
+        public void AShotOfAnOpenSubViewIsTaken()
+        {
+            _subView.Visible = true;
+
+            IDictionary<string, object> envelope = Call("sub_shot", Arguments());
+
+            Assert.True((bool)envelope["ok"]);
         }
 
         [Fact]
@@ -1879,6 +1983,8 @@ namespace PmxEditorMcp.Tests
             {
                 { TargetType, connection => _target },
                 { SettingType, connection => _pmxSetting },
+                { TransformViewType, connection => _transformView },
+                { SubViewType, connection => _subView },
                 { ToolDispatch.ReceiverKey(SettingType, "transformView"), connection => _transformSetting },
                 { ToolDispatch.ReceiverKey(SettingType, "subView"), connection => _subSetting },
             };
@@ -1973,6 +2079,22 @@ namespace PmxEditorMcp.Tests
                         }
                     },
                     {
+                        ResetKey,
+                        (target, arguments) =>
+                        {
+                            _resets++;
+                            return null;
+                        }
+                    },
+                    {
+                        TransformShotKey,
+                        (target, arguments) => new System.Drawing.Bitmap(2, 2)
+                    },
+                    {
+                        SubShotKey,
+                        (target, arguments) => new System.Drawing.Bitmap(2, 2)
+                    },
+                    {
                         ShotKey,
                         (target, arguments) =>
                         {
@@ -2020,6 +2142,12 @@ namespace PmxEditorMcp.Tests
                             ((Target)target).Shifted = (PEPlugin.SDX.V3)arguments[0];
                             return null;
                         }
+                    },
+                    {
+                        MorphValueKey,
+                        (target, arguments) => arguments.Length == 0
+                            ? (object)((FakeTransformView)target).MorphValue
+                            : WriteMorph((FakeTransformView)target, (float)arguments[0])
                     },
                     { PagedKey, (target, arguments) => ((Target)target).Paged },
                     {
@@ -2091,6 +2219,13 @@ namespace PmxEditorMcp.Tests
                 };
 
             return new SdkRelayTable(SdkVersion, Digest, calls, new[] { LostKey });
+        }
+
+        private static object WriteMorph(FakeTransformView view, float value)
+        {
+            view.MorphValue = value;
+
+            return null;
         }
 
         private static object Write(Target target, bool flag)
@@ -2370,6 +2505,42 @@ namespace PmxEditorMcp.Tests
                         new[] { new ToolArgument("indices", typeof(int[])) },
                         new ToolArgument[0],
                         null)
+                },
+                {
+                    "transform_reset",
+                    new ToolCall(
+                        ResetKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Connection, TransformViewType, EditKind.ViewSession),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        null)
+                },
+                {
+                    "sub_shot",
+                    new ToolCall(
+                        SubShotKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Connection, SubViewType, EditKind.Read),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(System.Drawing.Bitmap))
+                },
+                {
+                    "transform_shot",
+                    new ToolCall(
+                        TransformShotKey,
+                        new ToolReceiver(
+                            ToolReceiverKind.Connection, TransformViewType, EditKind.Read),
+                        ToolAccess.Whole(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(System.Drawing.Bitmap))
                 },
                 {
                     "view_shot",
@@ -2777,6 +2948,24 @@ namespace PmxEditorMcp.Tests
                         Set(
                             new ToolField("stuck", WriteDroppingKey, typeof(int)),
                             new ToolField("size", TextHeldSizeKey, typeof(float))))
+                },
+                {
+                    "transform_update_morph",
+                    new ToolFields(
+                        true,
+                        false,
+                        new ToolReceiver(ToolReceiverKind.Connection, TransformViewType, EditKind.ViewSession),
+                        ToolAccess.Whole(),
+                        Set(new ToolField("morphValue", MorphValueKey, typeof(float))))
+                },
+                {
+                    "transform_get_morph",
+                    new ToolFields(
+                        false,
+                        false,
+                        new ToolReceiver(ToolReceiverKind.Connection, TransformViewType, EditKind.Read),
+                        ToolAccess.Whole(),
+                        Set(new ToolField("morphValue", MorphValueKey, typeof(float))))
                 },
                 {
                     "view_get_setting",

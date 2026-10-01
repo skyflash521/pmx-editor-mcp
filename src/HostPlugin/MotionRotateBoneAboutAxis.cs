@@ -76,6 +76,13 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(ToolEnvelope.NotApplicable, "TransformView のコネクタを引けない。");
             }
 
+            if (!view.Visible)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.NotApplicable,
+                    "TransformView が開いていない。" + UiOpenWindow.ToolName + " で開いてから呼ぶ。");
+            }
+
             int chosen = view.SelectedBoneIndex;
             if (!PreconditionGate.TryAccept(PreconditionKind.TransformedBone, chosen, keys.AnyHeld(), out message))
             {

@@ -409,7 +409,11 @@ const OPENED_VIEWS = ["transform", "sub"];
 const VIEW_SESSION = "viewSession";
 
 function needsViews(one) {
-    return one.expect === "viewImage" || one.editKind === VIEW_SESSION || one.afterViews === true;
+    return one.expect === "viewImage"
+        || one.editKind === VIEW_SESSION
+        || one.afterViews === true
+        || /\.View\.(TransformView|SubView)$/.test(one.connectionPath || "")
+        || /_(transform_view|sub_view)_connector$/.test(one.tool || "");
 }
 
 async function editorOf(given) {

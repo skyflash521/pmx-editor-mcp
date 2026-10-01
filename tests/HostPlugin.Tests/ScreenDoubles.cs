@@ -1694,11 +1694,7 @@ namespace PmxEditorMcp.Tests
             set { throw new NotSupportedException(); }
         }
 
-        public bool Visible
-        {
-            get { throw new NotSupportedException(); }
-            set { throw new NotSupportedException(); }
-        }
+        public bool Visible { get; set; } = true;
 
         public System.Drawing.Size Size
         {

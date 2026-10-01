@@ -482,7 +482,7 @@
     {
       "tool": "motion_rotate_bone_about_axis",
       "branching": false,
-      "duty": "TransformView のビューで選んでいるボーンを、axis の向きの軸まわりに angle 度だけ回す。axis は長さを問わず、長さ0は断る。軸と回る向きは motion_bone_rotate と同じく親ボーンの回転を受けたモデルの X・Y・Z 軸で表し、axis が [1,0,0] なら boneRotateXyz の X に angle を渡して回したのと同じになる。いまの回転へ足し込み、置き換えない。回すときは boneRotateXyz へ Z・X・Y の順に重ねて同じ回転になる角度の組を入れて1回で回し、入力欄は元の値へ戻す。回すのに使った角度の組を、入力欄が文字で持つ桁に丸まった値で、rotateXyz に boneRotateXyz と同じ並びで返す。TransformView の一覧でボーンが選ばれていないとき、修飾キーが押されているとき、選ばれているボーンが軸固定のときは断る。IK のリンクの扱いと、ビューと一覧の選択の食い違いは motion_bone_rotate と同じである。"
+      "duty": "TransformView のビューで選んでいるボーンを、axis の向きの軸まわりに angle 度だけ回す。axis は長さを問わず、長さ0は断る。軸と回る向きは motion_bone_rotate と同じく親ボーンの回転を受けたモデルの X・Y・Z 軸で表し、axis が [1,0,0] なら boneRotateXyz の X に angle を渡して回したのと同じになる。いまの回転へ足し込み、置き換えない。回すときは boneRotateXyz へ Z・X・Y の順に重ねて同じ回転になる角度の組を入れて1回で回し、入力欄は元の値へ戻す。回すのに使った角度の組を、入力欄が文字で持つ桁に丸まった値で、rotateXyz に boneRotateXyz と同じ並びで返す。TransformView が開いていないとき、一覧でボーンが選ばれていないとき、修飾キーが押されているとき、選ばれているボーンが軸固定のときは断る。IK のリンクの扱いと、ビューと一覧の選択の食い違いは motion_bone_rotate と同じである。"
     },
     {
       "tool": "motion_set_camera_view",

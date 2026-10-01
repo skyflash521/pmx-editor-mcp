@@ -2579,6 +2579,16 @@
         },
         {
           "kind": "tool",
+          "tool": "editor_open_window",
+          "arguments": {
+            "window": "PmxViewForm.PmxSubView"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
           "tool": "view_get_client_image_sub_view_connector",
           "arguments": {},
           "expect": {

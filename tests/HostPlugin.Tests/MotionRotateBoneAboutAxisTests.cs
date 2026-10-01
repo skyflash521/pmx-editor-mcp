@@ -15,6 +15,7 @@ namespace PmxEditorMcp.Tests
         {
             _fixture.Model.Bone.Add(new FakeBone("足首"));
             _fixture.Model.Bone.Add(new FakeBone("軸固定") { IsFixAxis = true });
+            _fixture.TransformView.Visible = true;
             _fixture.TransformView.SelectedBoneIndex = 0;
             _fixture.TransformView.BoneRotate_XYZ = new V3(1f, 2f, 3f);
         }
@@ -114,6 +115,17 @@ namespace PmxEditorMcp.Tests
         public void ABoneWithAFixedAxisIsRefused()
         {
             _fixture.TransformView.SelectedBoneIndex = 1;
+
+            IDictionary<string, object> envelope = Rotate(new object[] { 1.0, 0.0, 0.0 }, 30.0);
+
+            Assert.Equal(ToolEnvelope.NotApplicable, ComposedScreenFixture.Code(envelope));
+            Assert.Empty(_fixture.TransformView.Rotations);
+        }
+
+        [Fact]
+        public void AClosedTransformViewIsRefused()
+        {
+            _fixture.TransformView.Visible = false;
 
             IDictionary<string, object> envelope = Rotate(new object[] { 1.0, 0.0, 0.0 }, 30.0);
 

@@ -78,6 +78,10 @@ namespace PmxEditorMcp
         /// <summary>ビューごとに実体の分かれる表示設定の受け手の型。</summary>
         public const string ViewSettingType = "PEPlugin.View.IPEViewSettingConnector";
 
+        private const string TransformViewType = "PEPlugin.View.IPETransformViewConnector";
+
+        private const string SubViewType = "PEPlugin.View.IPESubViewConnector";
+
         private const string PmxFilePathRow = "PEPlugin.Pmx.IPXPmx.FilePath()";
 
         private const string PmxConnectorType = "PEPlugin.Pmx.IPXPmxConnector";
@@ -3237,6 +3241,11 @@ namespace PmxEditorMcp
                 object ignored;
                 SdkRelayRefusal refusal;
                 object receiver = Receiver(context, tool.Receiver, null);
+                if (!TryOpened(tool.Receiver, receiver, out refused))
+                {
+                    return;
+                }
+
                 if (!_relay.TryInvoke(
                     field.RowKey,
                     receiver,
@@ -4410,9 +4419,10 @@ namespace PmxEditorMcp
 
             if (access.Kind == ToolAccessKind.Whole)
             {
-                column = new[] { new Spot(null, 0, -1, -1, Receiver(context, receiver, target)) };
+                object whole = Receiver(context, receiver, target);
+                column = new[] { new Spot(null, 0, -1, -1, whole) };
 
-                return true;
+                return TryOpened(receiver, whole, out refused);
             }
 
             if (access.Kind == ToolAccessKind.Element && pointed.ByHandle)
@@ -5605,6 +5615,25 @@ namespace PmxEditorMcp
             }
 
             return found(_connection);
+        }
+
+        private static bool TryOpened(ToolReceiver receiver, object connector, out Refusal refused)
+        {
+            refused = null;
+            string window = string.Equals(receiver.TypeName, TransformViewType, StringComparison.Ordinal)
+                ? "TransformView"
+                : string.Equals(receiver.TypeName, SubViewType, StringComparison.Ordinal) ? "SubView" : null;
+            PEPlugin.View.IPEBaseWindowConnector view = connector as PEPlugin.View.IPEBaseWindowConnector;
+            if (window == null || view == null || view.Visible)
+            {
+                return true;
+            }
+
+            refused = new Refusal(ToolEnvelope.Failure(
+                ToolEnvelope.NotApplicable,
+                window + " が開いていない。" + UiOpenWindow.ToolName + " で開いてから呼ぶ。"));
+
+            return false;
         }
 
         /// <summary>受け手を選ぶために受け取る名前。表示設定の受け手だけがどのビューの設定かを受け取る。</summary>
