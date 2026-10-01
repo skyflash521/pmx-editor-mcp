@@ -42,6 +42,7 @@
     {"tool": "model_insert_elements", "input": "variant", "choices": ["vertex", "uv", "uvA1", "uvA2", "uvA3", "uvA4", "bone", "material", "group", "flip", "impulse"], "basis": "ModelInsertElements.cs が Variants にない名前を断る。"},
     {"tool": "model_mirror_elements", "input": "operation", "choices": ["copyTargets", "mirrorModel"], "basis": "ModelMirrorElements.cs が ComposedOperation.TryTake で Operations にない名前を断る。"},
     {"tool": "model_mirror_elements", "input": "targets[].kind", "choices": ["vertex", "face", "bone", "body", "joint"], "basis": "ModelMirrorElements.cs が Kinds にない名前を断る。"},
+    {"tool": "model_morph_from_moved", "input": "boneMorphName", "minLength": 1, "basis": "ModelMorphFromMoved.cs が空の文字を断る。"},
     {"tool": "model_morph_from_moved", "input": "name", "minLength": 1, "basis": "ModelMorphFromMoved.cs が空の文字を断る。"},
     {"tool": "model_place_elements", "input": "axes", "choices": ["xyz", "x", "y", "z"], "basis": "ModelPlaceElements.cs が ComposedInput.TryChoice で Axes にない名前を断る。"},
     {"tool": "model_place_elements", "input": "operation", "choices": ["alignTo", "translateBy", "rotateBy", "scaleBy"], "basis": "ModelPlaceElements.cs が ComposedOperation.TryTake で Operations にない名前を断る。"},

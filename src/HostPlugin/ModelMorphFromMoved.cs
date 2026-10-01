@@ -20,6 +20,12 @@ namespace PmxEditorMcp
 
         public const string OffsetsName = "offsets";
 
+        public const string BoneMorphNameName = "boneMorphName";
+
+        public const string BoneAddedName = "boneAdded";
+
+        public const string BoneOffsetsName = "boneOffsets";
+
         /// <param name="builder">新しい要素を作る相手を返す。</param>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit, Func<object> builder)
         {
@@ -38,7 +44,7 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            List<string> known = new List<string> { BasePmxHandleName, NameName };
+            List<string> known = new List<string> { BasePmxHandleName, NameName, BoneMorphNameName };
             methods.Add(
                 ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
         }
@@ -69,7 +75,32 @@ namespace PmxEditorMcp
                     ToolEnvelope.InvalidArgument, NameName + " に足すモーフの名前を渡す。");
             }
 
+            string boneMorphName = null;
+            object boneGiven;
+            if (context.Params.TryGetValue(BoneMorphNameName, out boneGiven))
+            {
+                boneMorphName = boneGiven as string;
+                if (string.IsNullOrEmpty(boneMorphName))
+                {
+                    return ComposedEditResult.Refuse(
+                        ToolEnvelope.InvalidArgument,
+                        BoneMorphNameName + " に足すボーンモーフの名前を空でない文字で渡す。");
+                }
+
+                if (string.Equals(boneMorphName, name, StringComparison.Ordinal))
+                {
+                    return ComposedEditResult.Refuse(
+                        ToolEnvelope.InvalidArgument,
+                        BoneMorphNameName + " は " + NameName + " と違う名前を渡す。");
+                }
+            }
+
             IPXPmxBuilder made = (IPXPmxBuilder)builder();
+            if (boneMorphName != null)
+            {
+                return RunBack(model, based, made, name, boneMorphName);
+            }
+
             IPXMorph morph = made.Morph();
             morph.Name = name;
             morph.NameE = string.Empty;
@@ -97,6 +128,95 @@ namespace PmxEditorMcp
                     { AddedName, model.Morph.Count - 1 },
                     { OffsetsName, morph.Offsets.Count },
                 });
+        }
+
+        private static ComposedEditResult RunBack(
+            IPXPmx model, IPXPmx based, IPXPmxBuilder made, string name, string boneMorphName)
+        {
+            IDictionary<IPXBone, int> placed = Placed(model.Bone);
+            V3[] moves = new V3[model.Bone.Count];
+            for (int at = 0; at < moves.Length; at++)
+            {
+                moves[at] = based.Bone[at].Position - model.Bone[at].Position;
+            }
+
+            IPXMorph vertexMorph = made.Morph();
+            vertexMorph.Name = name;
+            vertexMorph.NameE = string.Empty;
+            vertexMorph.Kind = MorphKind.Vertex;
+            IPXMorph boneMorph = made.Morph();
+            boneMorph.Name = boneMorphName;
+            boneMorph.NameE = string.Empty;
+            boneMorph.Kind = MorphKind.Bone;
+            boneMorph.Panel = vertexMorph.Panel;
+            for (int at = 0; at < moves.Length; at++)
+            {
+                int parent;
+                V3 own = moves[at];
+                IPXBone parentBone = model.Bone[at].Parent;
+                if (parentBone != null && placed.TryGetValue(parentBone, out parent))
+                {
+                    own = own - moves[parent];
+                }
+
+                if (own.X == 0f && own.Y == 0f && own.Z == 0f)
+                {
+                    continue;
+                }
+
+                IPXBoneMorphOffset posed = made.BoneMorphOffset();
+                posed.Bone = model.Bone[at];
+                posed.Translation = own;
+                posed.Rotation = new Q(0f, 0f, 0f, 1f);
+                boneMorph.Offsets.Add(posed);
+            }
+
+            for (int at = 0; at < model.Vertex.Count; at++)
+            {
+                IPXVertex vertex = model.Vertex[at];
+                V3 left = based.Vertex[at].Position - vertex.Position;
+                IList<KeyValuePair<IPXBone, float>> shares = VertexWeights.Read(vertex)
+                    .Where(share => share.Value != 0f)
+                    .ToList();
+                if (shares.Count == 0 && vertex.Bone1 != null)
+                {
+                    shares = new[] { new KeyValuePair<IPXBone, float>(vertex.Bone1, 1f) };
+                }
+
+                foreach (KeyValuePair<IPXBone, float> share in shares)
+                {
+                    int bone;
+                    if (placed.TryGetValue(share.Key, out bone))
+                    {
+                        left = left - moves[bone] * share.Value;
+                    }
+                }
+
+                if (left.X == 0f && left.Y == 0f && left.Z == 0f)
+                {
+                    continue;
+                }
+
+                IPXVertexMorphOffset offset = made.VertexMorphOffset();
+                offset.Vertex = vertex;
+                offset.Offset = left;
+                vertexMorph.Offsets.Add(offset);
+            }
+
+            model.Morph.Add(vertexMorph);
+            Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { AddedName, model.Morph.Count - 1 },
+                { OffsetsName, vertexMorph.Offsets.Count },
+            };
+            if (boneMorph.Offsets.Count > 0)
+            {
+                model.Morph.Add(boneMorph);
+                value[BoneAddedName] = model.Morph.Count - 1;
+                value[BoneOffsetsName] = boneMorph.Offsets.Count;
+            }
+
+            return ComposedEditResult.Complete(value);
         }
 
         /// <returns>食い違いを述べる文。食い違いが無ければ null。</returns>

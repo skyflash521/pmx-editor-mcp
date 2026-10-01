@@ -21850,6 +21850,711 @@
           }
         }
       ]
+    },
+    {
+      "id": 31,
+      "title": "動かした結果を、いまの形のまま複製へ戻す頂点モーフとボーンモーフにする",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "bone",
+            "operation": "new",
+            "count": 3
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              {
+                "name": "親",
+                "position": [
+                  0,
+                  1,
+                  0
+                ]
+              },
+              {
+                "name": "子",
+                "position": [
+                  0,
+                  2,
+                  0
+                ],
+                "parent": 0
+              },
+              {
+                "name": "別",
+                "position": [
+                  3,
+                  1,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 3
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.count",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  1,
+                  1
+                ],
+                "bone1": 0,
+                "weight1": 1
+              },
+              {
+                "position": [
+                  0,
+                  1.5,
+                  0
+                ],
+                "bone1": 0,
+                "weight1": 0.25,
+                "bone2": 1,
+                "weight2": 0.75
+              },
+              {
+                "position": [
+                  2,
+                  1,
+                  0
+                ],
+                "bone1": 2,
+                "weight1": 1
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_pmx",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "morphBackBasePmx",
+            "path": "",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0,
+              1
+            ],
+            "values": [
+              {
+                "position": [
+                  0.5,
+                  1.75,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  2,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              {
+                "position": [
+                  0.5,
+                  1.75,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  0.125,
+                  1.5,
+                  0.5
+                ]
+              },
+              {
+                "position": [
+                  1.5,
+                  1,
+                  0.25
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_morph_from_moved",
+          "arguments": {
+            "basePmxHandle": {
+              "$from": "morphBackBasePmx"
+            },
+            "name": "素足_頂点",
+            "boneMorphName": "素足_ボーン"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 0
+              },
+              {
+                "path": "offsets",
+                "equals": 2
+              },
+              {
+                "path": "boneAdded",
+                "equals": 1
+              },
+              {
+                "path": "boneOffsets",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0.5,
+                  1.75,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  0,
+                  2,
+                  1
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  3,
+                  1,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0.5,
+                  1.75,
+                  1
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  0.125,
+                  1.5,
+                  0.5
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  1.5,
+                  1,
+                  0.25
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morphs",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "name",
+              "kind"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              },
+              {
+                "path": "items.0.name",
+                "equals": "素足_頂点"
+              },
+              {
+                "path": "items.0.kind",
+                "equals": "Vertex"
+              },
+              {
+                "path": "items.1.name",
+                "equals": "素足_ボーン"
+              },
+              {
+                "path": "items.1.kind",
+                "equals": "Bone"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morph_offsets",
+          "arguments": {
+            "parentIndices": [
+              0
+            ],
+            "all": true,
+            "fields": [
+              "vertex",
+              "offset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              },
+              {
+                "path": "items.0.vertex",
+                "equals": 1
+              },
+              {
+                "path": "items.0.offset",
+                "equals": [
+                  0,
+                  0.1875,
+                  0.25
+                ]
+              },
+              {
+                "path": "items.1.vertex",
+                "equals": 2
+              },
+              {
+                "path": "items.1.offset",
+                "equals": [
+                  0.5,
+                  0,
+                  -0.25
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morph_offsets",
+          "arguments": {
+            "parentIndices": [
+              1
+            ],
+            "all": true,
+            "fields": [
+              "bone",
+              "translation",
+              "rotation"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              },
+              {
+                "path": "items.0.bone",
+                "equals": 0
+              },
+              {
+                "path": "items.0.translation",
+                "equals": [
+                  -0.5,
+                  -0.75,
+                  0
+                ]
+              },
+              {
+                "path": "items.0.rotation",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              },
+              {
+                "path": "items.1.bone",
+                "equals": 1
+              },
+              {
+                "path": "items.1.translation",
+                "equals": [
+                  0.5,
+                  0.75,
+                  -1
+                ]
+              },
+              {
+                "path": "items.1.rotation",
+                "equals": [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_morph_from_moved",
+          "arguments": {
+            "basePmxHandle": {
+              "$from": "morphBackBasePmx"
+            },
+            "name": "同名",
+            "boneMorphName": "同名"
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morphs",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "morphBackBasePmx"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_pmx",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "morphBackSecondBasePmx",
+            "path": "",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "values": [
+              {
+                "position": [
+                  0.5,
+                  1.75,
+                  2
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_morph_from_moved",
+          "arguments": {
+            "basePmxHandle": {
+              "$from": "morphBackSecondBasePmx"
+            },
+            "name": "頂点だけ_頂点",
+            "boneMorphName": "頂点だけ_ボーン"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 2
+              },
+              {
+                "path": "offsets",
+                "equals": 1
+              },
+              {
+                "path": "boneAdded",
+                "absent": true
+              },
+              {
+                "path": "boneOffsets",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morphs",
+          "arguments": {
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morph_offsets",
+          "arguments": {
+            "parentIndices": [
+              2
+            ],
+            "all": true,
+            "fields": [
+              "vertex",
+              "offset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "items.0.vertex",
+                "equals": 0
+              },
+              {
+                "path": "items.0.offset",
+                "equals": [
+                  0,
+                  0,
+                  -1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0.5,
+                  1.75,
+                  2
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "morphBackSecondBasePmx"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
     }
   ]
 }

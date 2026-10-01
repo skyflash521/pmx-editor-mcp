@@ -13478,6 +13478,12 @@
               "origin": "hostInput",
               "shape": "text",
               "required": true
+            },
+            {
+              "name": "boneMorphName",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ]
         }
@@ -13492,6 +13498,16 @@
           },
           {
             "name": "offsets",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "boneAdded",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "boneOffsets",
             "origin": "hostOutput",
             "shape": "number"
           }
