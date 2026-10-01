@@ -18943,7 +18943,7 @@
             "values": [
               {
                 "path": "ranges.0.start",
-                "equals": 0
+                "equals": 1
               },
               {
                 "path": "ranges.0.count",
@@ -18957,7 +18957,7 @@
           "tool": "model_update_bones",
           "arguments": {
             "indices": [
-              0
+              1
             ],
             "value": {
               "position": [
@@ -19242,7 +19242,7 @@
           "arguments": {
             "operation": "followVertices",
             "indices": [
-              0
+              1
             ],
             "radius": 2,
             "basePmxHandle": {
@@ -19264,7 +19264,7 @@
           "tool": "model_list_bones",
           "arguments": {
             "indices": [
-              0
+              1
             ],
             "fields": [
               "position",
@@ -19306,7 +19306,7 @@
           "tool": "model_list_bones",
           "arguments": {
             "indices": [
-              0
+              1
             ],
             "fields": [
               "position",
