@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
+using Vec = PmxEditorMcp.SurfaceGeometry.Vec;
 
 namespace PmxEditorMcp
 {
@@ -29,6 +30,16 @@ namespace PmxEditorMcp
         public const string ProjectOntoSurface = "projectOntoSurface";
 
         public const string PushOutOfSurface = "pushOutOfSurface";
+
+        public const string FollowGuide = "followGuide";
+
+        public const string GuideIndicesName = "guideIndices";
+
+        public const string ModeName = "mode";
+
+        public const string RigidMode = "rigid";
+
+        public const string InterpolateMode = "interpolate";
 
         public const string MarginName = "margin";
 
@@ -72,7 +83,7 @@ namespace PmxEditorMcp
 
         private const double RoundingSlack = 1d / (1 << 22);
 
-        private static readonly KeyValuePair<string, string[]>[] SurfaceInputs =
+        private static readonly KeyValuePair<string, string[]>[] ScopedInputs =
         {
             new KeyValuePair<string, string[]>(
                 ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
@@ -82,12 +93,19 @@ namespace PmxEditorMcp
                 ModelFindSurfaceDistances.DistanceLimitName, new[] { ProjectOntoSurface }),
             new KeyValuePair<string, string[]>(MarginName, new[] { PushOutOfSurface }),
             new KeyValuePair<string, string[]>(SpreadRadiusName, new[] { PushOutOfSurface }),
+            new KeyValuePair<string, string[]>(GuideIndicesName, new[] { FollowGuide }),
+            new KeyValuePair<string, string[]>(ModelMorphFromMoved.BasePmxHandleName, new[] { FollowGuide }),
         };
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
         {
-            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface, PushOutOfSurface }; }
+            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface, PushOutOfSurface, FollowGuide }; }
+        }
+
+        public static IList<string> Modes
+        {
+            get { return new[] { RigidMode, InterpolateMode }; }
         }
 
         /// <summary>受け取れる軸。スキーマが並べる順。</summary>
@@ -124,6 +142,9 @@ namespace PmxEditorMcp
                 ModelFindSurfaceDistances.DistanceLimitName,
                 MarginName,
                 SpreadRadiusName,
+                GuideIndicesName,
+                ModeName,
+                ModelMorphFromMoved.BasePmxHandleName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -150,6 +171,7 @@ namespace PmxEditorMcp
 
             float threshold;
             string axis;
+            string mode;
             if (!ComposedInput.TryFloat(
                     context,
                     ThresholdName,
@@ -168,13 +190,22 @@ namespace PmxEditorMcp
                     Axes,
                     out axis,
                     out code,
+                    out message)
+                || !ComposedInput.TryChoice(
+                    context,
+                    ModeName,
+                    operation,
+                    new[] { FollowGuide },
+                    Modes,
+                    out mode,
+                    out code,
                     out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
 
             IList<IPXVertex> picked = chosen.Select(at => model.Vertex[at]).ToList();
-            KeyValuePair<string, string[]> unwanted = SurfaceInputs.FirstOrDefault(
+            KeyValuePair<string, string[]> unwanted = ScopedInputs.FirstOrDefault(
                 input => context.Params.ContainsKey(input.Key)
                     && !input.Value.Contains(operation, StringComparer.Ordinal));
             if (unwanted.Key != null)
@@ -187,6 +218,11 @@ namespace PmxEditorMcp
             if (string.Equals(operation, PushOutOfSurface, StringComparison.Ordinal))
             {
                 return PushedOut(context, model, picked);
+            }
+
+            if (string.Equals(operation, FollowGuide, StringComparison.Ordinal))
+            {
+                return Followed(context, model, chosen, mode);
             }
 
             if (string.Equals(operation, ProjectOntoSurface, StringComparison.Ordinal))
@@ -472,6 +508,101 @@ namespace PmxEditorMcp
             }
 
             return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex }, remaining);
+        }
+
+        private static ComposedEditResult Followed(
+            McpMethodContext context, IPXPmx model, IList<int> chosen, string mode)
+        {
+            IPXPmx based;
+            string code;
+            string message;
+            List<int> guides;
+            if (!ModelMorphFromMoved.TryBase(context, out based, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            string differs = ModelCompareShape.Differs(based, model);
+            if (differs != null)
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, differs);
+            }
+
+            if (!ModelFindSurfaceDistances.TryPositions(
+                context, GuideIndicesName, "頂点", model.Vertex.Count, out guides, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            guides = guides.Distinct().ToList();
+            int[] each = chosen.Distinct().ToArray();
+            if (guides.Intersect(each).Any())
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    GuideIndicesName + " の頂点は、動かす頂点に含められない。");
+            }
+
+            Vec[] before = ModelCompareShape.Positions(based);
+            Vec[] now = ModelCompareShape.Positions(model);
+            Func<int, Vec> placed;
+            if (string.Equals(mode, RigidMode, StringComparison.Ordinal))
+            {
+                RigidFit fit = RigidFit.Of(
+                    guides.Select(at => before[at]).ToList(), guides.Select(at => now[at]).ToList());
+                if (fit == null)
+                {
+                    return ComposedEditResult.Refuse(
+                        ToolEnvelope.InvalidArgument,
+                        GuideIndicesName + " は、複製でも今でも一直線に並ばない3つ以上の頂点を指さなければならない。");
+                }
+
+                placed = at => fit.Point(before[at]);
+            }
+            else
+            {
+                placed = at => before[at] + Pulled(before[at], guides, before, now);
+            }
+
+            int changed = 0;
+            foreach (int at in each)
+            {
+                Vec moved = placed(at);
+                V3 was = model.Vertex[at].Position;
+                V3 made = new V3((float)moved.X, (float)moved.Y, (float)moved.Z);
+                if (made.X != was.X || made.Y != was.Y || made.Z != was.Z)
+                {
+                    model.Vertex[at].Position = made;
+                    changed++;
+                }
+            }
+
+            return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex });
+        }
+
+        private static Vec Pulled(Vec at, IList<int> guides, Vec[] before, Vec[] now)
+        {
+            Vec weighted = default(Vec);
+            Vec coincident = default(Vec);
+            double total = 0d;
+            int onGuide = 0;
+            foreach (int guide in guides)
+            {
+                Vec gap = at - before[guide];
+                double squared = gap.Dot(gap);
+                Vec shift = now[guide] - before[guide];
+                if (squared == 0d)
+                {
+                    coincident = coincident + shift;
+                    onGuide++;
+                    continue;
+                }
+
+                weighted = weighted + (shift * (1d / squared));
+                total += 1d / squared;
+            }
+
+            return onGuide > 0 ? coincident * (1d / onGuide) : weighted * (1d / total);
         }
 
         private static bool Cleared(SurfaceGeometry.SurfaceTree tree, SurfaceGeometry.Vec at, double margin)

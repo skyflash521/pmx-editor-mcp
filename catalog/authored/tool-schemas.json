@@ -5411,6 +5411,21 @@
               "bounds": {
                 "minimum": 1
               }
+            },
+            {
+              "name": "radius",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "basePmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ],
           "choices": [
@@ -6530,6 +6545,30 @@
               "bounds": {
                 "minimum": 0
               }
+            },
+            {
+              "name": "guideIndices",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "mode",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
+            },
+            {
+              "name": "basePmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ],
           "choices": [

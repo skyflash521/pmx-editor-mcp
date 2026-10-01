@@ -256,9 +256,22 @@ namespace PmxEditorMcp
             out string code,
             out string message)
         {
+            return TryPositions(
+                context, name, "材質", model.Material.Count, out surface, out code, out message);
+        }
+
+        internal static bool TryPositions(
+            McpMethodContext context,
+            string name,
+            string noun,
+            int count,
+            out List<int> surface,
+            out string code,
+            out string message)
+        {
             surface = new List<int>();
             code = ToolEnvelope.InvalidArgument;
-            string shape = name + " は材質の位置を1つ以上並べた並びでなければならない。";
+            string shape = name + " は" + noun + "の位置を1つ以上並べた並びでなければならない。";
             object given;
             object[] items;
             if (!context.Params.TryGetValue(name, out given)
@@ -280,7 +293,7 @@ namespace PmxEditorMcp
                     return false;
                 }
 
-                if (at < 0 || at >= model.Material.Count)
+                if (at < 0 || at >= count)
                 {
                     code = ToolEnvelope.IndexOutOfRange;
                     message = name + " が並びの外を指している: " + at;

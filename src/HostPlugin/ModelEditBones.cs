@@ -5,6 +5,7 @@ using PEPlugin;
 using PEPlugin.Pmd;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
+using Vec = PmxEditorMcp.SurfaceGeometry.Vec;
 
 namespace PmxEditorMcp
 {
@@ -80,8 +81,12 @@ namespace PmxEditorMcp
         /// <summary>PMDのボーン種別を、いまの設定から決め直す。</summary>
         public const string SetPmdBoneKind = "setPmdBoneKind";
 
+        public const string FollowVertices = "followVertices";
+
         /// <summary>軸を受け取る入力の名前。</summary>
         public const string AxisName = "axis";
+
+        public const string RadiusName = "radius";
 
         /// <summary>IKが辿るリンクの数を受け取る入力の名前。</summary>
         public const string LinkCountName = "linkCount";
@@ -139,6 +144,7 @@ namespace PmxEditorMcp
                     SetLocalAxis,
                     ResetLocalAxis,
                     SetPmdBoneKind,
+                    FollowVertices,
                 };
             }
         }
@@ -170,6 +176,8 @@ namespace PmxEditorMcp
                 TargetNames.Element.Selected,
                 AxisName,
                 LinkCountName,
+                RadiusName,
+                ModelMorphFromMoved.BasePmxHandleName,
             };
             methods.Add(
                 ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
@@ -192,6 +200,7 @@ namespace PmxEditorMcp
             bool vertices = Vertices.Contains(operation, StringComparer.Ordinal);
             string axis;
             int links;
+            float radius;
             if (!TryChosen(context, model, operation, vertices, out chosen, out code, out message)
                 || !ComposedInput.TryChoice(
                     context,
@@ -210,9 +219,32 @@ namespace PmxEditorMcp
                     1,
                     out links,
                     out code,
+                    out message)
+                || !ComposedInput.TryFloat(
+                    context,
+                    RadiusName,
+                    operation,
+                    new[] { FollowVertices },
+                    0f,
+                    ComposedInput.NoCeiling,
+                    out radius,
+                    out code,
                     out message))
             {
                 return ComposedEditResult.Refuse(code, message);
+            }
+
+            bool following = string.Equals(operation, FollowVertices, StringComparison.Ordinal);
+            if (!following && context.Params.ContainsKey(ModelMorphFromMoved.BasePmxHandleName))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    ModelMorphFromMoved.BasePmxHandleName + " を渡せるのは " + FollowVertices + " のときだけである。");
+            }
+
+            if (following)
+            {
+                return Followed(context, model, chosen, radius);
             }
 
             if (vertices)
@@ -323,6 +355,68 @@ namespace PmxEditorMcp
                 default:
                     return Sorted(bone);
             }
+        }
+
+        private static ComposedEditResult Followed(
+            McpMethodContext context, IPXPmx model, IList<int> chosen, float radius)
+        {
+            IPXPmx based;
+            string code;
+            string message;
+            if (!ModelMorphFromMoved.TryBase(context, out based, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            string differs = ModelCompareShape.Differs(based, model);
+            if (differs != null)
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, differs);
+            }
+
+            Vec[] before = ModelCompareShape.Positions(based);
+            Vec[] now = ModelCompareShape.Positions(model);
+            int changed = 0;
+            foreach (int at in chosen.Distinct())
+            {
+                IPXBone bone = model.Bone[at];
+                IPXBone origin = based.Bone[at];
+                Vec centre = Vec.Of(origin.Position);
+                List<Vec> from = new List<Vec>();
+                List<Vec> to = new List<Vec>();
+                for (int vertex = 0; vertex < before.Length; vertex++)
+                {
+                    if ((before[vertex] - centre).Length <= radius)
+                    {
+                        from.Add(before[vertex]);
+                        to.Add(now[vertex]);
+                    }
+                }
+
+                RigidFit fit = RigidFit.Of(from, to);
+                if (fit == null)
+                {
+                    continue;
+                }
+
+                Vec moved = fit.Point(centre);
+                V3 position = new V3((float)moved.X, (float)moved.Y, (float)moved.Z);
+                V3 offset = bone.ToOffset;
+                if (bone.ToBone == null)
+                {
+                    Vec turned = fit.Direction(Vec.Of(origin.ToOffset));
+                    offset = new V3((float)turned.X, (float)turned.Y, (float)turned.Z);
+                }
+
+                if (!Vectors.Same(bone.Position, position) || !Vectors.Same(bone.ToOffset, offset))
+                {
+                    bone.Position = position;
+                    bone.ToOffset = offset;
+                    changed++;
+                }
+            }
+
+            return Answer(new int[0], changed, 0, new[] { ElementKinds.Bone });
         }
 
         private static ComposedEditResult Merged(IPXPmx model, IList<IPXBone> picked)

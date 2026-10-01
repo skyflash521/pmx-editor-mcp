@@ -18826,6 +18826,530 @@
           }
         }
       ]
+    },
+    {
+      "id": 26,
+      "title": "手本の頂点に追従する頂点とボーンの移動",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 6
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "values": [
+              {
+                "position": [
+                  1,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  1,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  0,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  1,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  -1,
+                  2
+                ]
+              },
+              {
+                "position": [
+                  -2,
+                  4,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "bone",
+            "operation": "new",
+            "count": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "value": {
+              "position": [
+                0.25,
+                0.125,
+                0.5
+              ],
+              "toOffset": [
+                2,
+                0,
+                1
+              ]
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_pmx",
+          "arguments": {},
+          "record": {
+            "name": "followBasePmx",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "values": [
+              {
+                "position": [
+                  2,
+                  3,
+                  -2
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  4,
+                  -1
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  3,
+                  -1
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  4,
+                  -2
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 4
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "followGuide",
+            "indices": [
+              4,
+              5
+            ],
+            "guideIndices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "mode": "rigid",
+            "basePmxHandle": {
+              "$from": "followBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              4,
+              5
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  4,
+                  2,
+                  -4
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  3,
+                  7,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              4,
+              5
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  3,
+                  -1,
+                  2
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  -2,
+                  4,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "followGuide",
+            "indices": [
+              4,
+              5
+            ],
+            "guideIndices": [
+              0
+            ],
+            "mode": "interpolate",
+            "basePmxHandle": {
+              "$from": "followBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              4,
+              5
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  4,
+                  2,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  -1,
+                  7,
+                  -1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "followGuide",
+            "indices": [
+              4,
+              5
+            ],
+            "guideIndices": [
+              0,
+              1
+            ],
+            "mode": "rigid",
+            "basePmxHandle": {
+              "$from": "followBasePmx"
+            }
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_bones",
+          "arguments": {
+            "operation": "followVertices",
+            "indices": [
+              0
+            ],
+            "radius": 2,
+            "basePmxHandle": {
+              "$from": "followBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "position",
+              "toOffset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2.5,
+                  3.125,
+                  -1.25
+                ]
+              },
+              {
+                "path": "items.0.toOffset",
+                "equals": [
+                  1,
+                  0,
+                  -2
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bones",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "position",
+              "toOffset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0.25,
+                  0.125,
+                  0.5
+                ]
+              },
+              {
+                "path": "items.0.toOffset",
+                "equals": [
+                  2,
+                  0,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "followBasePmx"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
     }
   ]
 }
