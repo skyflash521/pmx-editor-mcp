@@ -25,7 +25,7 @@
     {"tool": "model_edit_morphs", "input": "name", "minLength": 1, "basis": "ModelEditMorphs.cs が ComposedInput.TryText で空の文字を断る。"},
     {"tool": "model_edit_morphs", "input": "operation", "choices": ["mergeSameName", "mergeSameKind", "mergeSameKindAdd", "groupInto", "flipInto", "splitVertices", "splitVerticesByAxis", "materialFromCurrent", "addOffsets", "vertexMorphFromVertices"], "basis": "ModelEditMorphs.cs が ComposedOperation.TryTake で Operations にない名前を断る。"},
     {"tool": "model_edit_nodes", "input": "operation", "choices": ["registerUnlistedBones", "registerUnlistedMorphs", "registerPickedBones", "registerPickedMorphs", "normalizeExpressionNode"], "basis": "ModelEditNodes.cs が ComposedOperation.TryTake で Operations にない名前を断る。"},
-    {"tool": "model_edit_normals", "input": "operation", "choices": ["average", "averageNear", "fromFaces", "normalize", "flip", "rotate"], "basis": "ModelEditNormals.cs が ComposedOperation.TryTake で Operations にない名前を断る。"},
+    {"tool": "model_edit_normals", "input": "operation", "choices": ["average", "averageNear", "fromFaces", "normalize", "flip", "rotate", "rotateFromBase"], "basis": "ModelEditNormals.cs が ComposedOperation.TryTake で Operations にない名前を断る。"},
     {"tool": "model_edit_uv", "input": "operation", "choices": ["flipU", "flipV", "flipUV", "copy", "projectFromView"], "basis": "ModelEditUv.cs が ComposedOperation.TryTake で Operations にない名前を断る。"},
     {"tool": "model_edit_vertices", "input": "axis", "choices": ["x", "y", "z"], "basis": "ModelEditVertices.cs が ComposedInput.TryChoice で Axes にない名前を断る。"},
     {"tool": "model_edit_vertices", "input": "mode", "choices": ["rigid", "interpolate"], "basis": "ModelEditVertices.cs が ComposedInput.TryChoice で Modes にない名前を断る。"},

@@ -217,6 +217,22 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AVerySlenderFaceWithAreaStillCounts()
+        {
+            V3[] sliver = { new V3(0f, 0f, 0f), new V3(1000f, 0f, 0f), new V3(2000f, 1e-7f, 0f) };
+            int handle = Scene(
+                sliver, sliver.Select(point => Turn(QuarterTurnAboutY, point)).ToArray(), Normals, new[] { 0, 1, 2 });
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Run(handle));
+
+            Assert.Equal(3, value[Changed]);
+            for (int at = 0; at < Normals.Length; at++)
+            {
+                AssertNormal(at, Turn(QuarterTurnAboutY, Normals[at]), Tight);
+            }
+        }
+
+        [Fact]
         public void AVertexUsedByNoFaceKeepsItsNormal()
         {
             V3[] normals = Normals.Concat(new[] { new V3(0f, 0f, 1f) }).ToArray();

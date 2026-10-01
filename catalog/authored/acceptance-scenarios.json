@@ -19350,6 +19350,480 @@
           }
         }
       ]
+    },
+    {
+      "id": 27,
+      "title": "複製からの回転で頂点の法線を追従させる",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 3
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  0,
+                  0
+                ],
+                "normal": [
+                  1,
+                  2,
+                  2
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0,
+                  0
+                ],
+                "normal": [
+                  2,
+                  -1,
+                  2
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  2,
+                  0
+                ],
+                "normal": [
+                  -2,
+                  2,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "material",
+            "operation": "new",
+            "count": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "rotateFace",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotateFace"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 1,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "rotateFace"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_pmx",
+          "arguments": {},
+          "record": {
+            "name": "rotateBasePmx",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  0,
+                  -2
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  2,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_normals",
+          "arguments": {
+            "operation": "rotateFromBase",
+            "all": true,
+            "basePmxHandle": {
+              "$from": "rotateBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "normal"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.normal",
+                "equals": [
+                  2,
+                  2,
+                  -1
+                ]
+              },
+              {
+                "path": "items.1.normal",
+                "equals": [
+                  2,
+                  -1,
+                  -2
+                ]
+              },
+              {
+                "path": "items.2.normal",
+                "equals": [
+                  1,
+                  2,
+                  2
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "normal"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.normal",
+                "equals": [
+                  1,
+                  2,
+                  2
+                ]
+              },
+              {
+                "path": "items.1.normal",
+                "equals": [
+                  2,
+                  -1,
+                  2
+                ]
+              },
+              {
+                "path": "items.2.normal",
+                "equals": [
+                  -2,
+                  2,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  -2,
+                  0,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_normals",
+          "arguments": {
+            "operation": "rotateFromBase",
+            "all": true,
+            "basePmxHandle": {
+              "$from": "rotateBasePmx"
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "all": true,
+            "fields": [
+              "normal"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.normal",
+                "equals": [
+                  -2,
+                  1,
+                  2
+                ]
+              },
+              {
+                "path": "items.1.normal",
+                "equals": [
+                  1,
+                  2,
+                  2
+                ]
+              },
+              {
+                "path": "items.2.normal",
+                "equals": [
+                  -2,
+                  -2,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_normals",
+          "arguments": {
+            "operation": "normalize",
+            "all": true,
+            "basePmxHandle": {
+              "$from": "rotateBasePmx"
+            }
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "rotateBasePmx"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        }
+      ]
     }
   ]
 }

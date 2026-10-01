@@ -6255,6 +6255,12 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "basePmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ],
           "choices": [

@@ -387,7 +387,7 @@
     {
       "tool": "model_edit_normals",
       "branching": false,
-      "duty": "指した頂点の法線を整える。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。average は指した頂点の法線の平均へそろえ、averageNear は threshold に距離のしきい値を渡して、その中にある頂点どうしで平均する。fromFaces はその頂点を使う面の向きの平均を法線にし、normalize は長さを1にそろえ、flip は向きを逆にし、rotate は rotationAxis に軸の向きを、rotationAngle に角を度で渡して、その軸のまわりに法線だけを回す。rotationAxis は長さを持たなければならない。正の角で、軸が X なら +Y を +Z へ回す。changed に変えた頂点の数を返す。"
+      "duty": "指した頂点の法線を整えるか、変形に追従させる。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。average は指した頂点の法線の平均へそろえ、averageNear は threshold に距離のしきい値を渡して、その中にある頂点どうしで平均する。fromFaces はその頂点を使う面の向きの平均を法線にし、normalize は長さを1にそろえ、flip は向きを逆にし、rotate は rotationAxis に軸の向きを、rotationAngle に角を度で渡して、その軸のまわりに法線だけを回す。rotationAxis は長さを持たなければならない。正の角で、軸が X なら +Y を +Z へ回す。rotateFromBase は basePmxHandle に動かす前のモデルの複製のハンドルを渡し、面ごとに、辺と面の法線で決まる座標系の、複製から今への回転を求め、頂点ごとに、その頂点を使う面の回転を面積で重みを付けて平均した回転で、今の法線を回す。法線は変形に追従し、作り込んだ法線の面からのずれは保たれるので、fromFaces で作り直さない。複製か今で面積の無い面は数えず、数える面の無い頂点は動かさない。複製と頂点・材質・ボーン・面の数が違えば断る。basePmxHandle は rotateFromBase のときだけ渡せる。changed に変えた頂点の数を返す。"
     },
     {
       "tool": "model_edit_uv",

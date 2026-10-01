@@ -73,6 +73,7 @@
     {"tool": "model_edit_nodes", "input": "range.count", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
     {"tool": "model_edit_nodes", "input": "range.start", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
     {"tool": "model_edit_nodes", "input": "targetIndices[]", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "ModelEditNodes.cs が ComposedInput.TryIndices で int の範囲の整数として読む。"},
+    {"tool": "model_edit_normals", "input": "basePmxHandle", "reads": "integer", "least": -9223372036854775808, "most": 9223372036854775807, "basis": "ModelMorphFromMoved.cs の TryBase が long の範囲の整数として読む。"},
     {"tool": "model_edit_normals", "input": "indices[]", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
     {"tool": "model_edit_normals", "input": "materialIndices[]", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "ModelEditNormals.cs が ModelFindVertexBounds.TryVertices で int の範囲の整数として読む。"},
     {"tool": "model_edit_normals", "input": "pmxHandle", "reads": "integer", "least": -9223372036854775808, "most": 9223372036854775807, "basis": "ComposedEdit.cs が long の範囲の整数として読む。"},
