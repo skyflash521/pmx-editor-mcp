@@ -363,6 +363,90 @@ namespace PmxEditorMcp.Tests
             Assert.Contains(Iterations, ComposedEditFixture.Message(envelope));
         }
 
+        [Fact]
+        public void ASdefVertexSmoothedInSpaceIntoThreeBonesIsNoLongerSdef()
+        {
+            IList<IPXBone> bones = Bones("一", "二", "三");
+            FakeVertex sdef = SdefVertex(0f, bones[0], bones[1]);
+            Vertex(0f, 0f, 0f, bones[2]);
+
+            ComposedEditFixture.Value(Spatial(1.0, 1, ComposedEditFixture.Given("all", true)));
+
+            Assert.False(_fixture.Now(sdef).SDEF);
+            Near(0.25, Share(sdef, bones[0]));
+            Near(0.25, Share(sdef, bones[1]));
+            Near(0.5, Share(sdef, bones[2]));
+        }
+
+        [Fact]
+        public void ASdefVertexSmoothedInSpaceKeepsSdefWhileItHoldsTheSameTwoBones()
+        {
+            IList<IPXBone> bones = Bones("一", "二");
+            FakeVertex sdef = SdefVertex(0f, bones[0], bones[1]);
+            Vertex(0f, 0f, 0f, bones[0]);
+
+            ComposedEditFixture.Value(Spatial(1.0, 1, ComposedEditFixture.Given("all", true)));
+
+            Assert.True(_fixture.Now(sdef).SDEF);
+            Near(0.75, Share(sdef, bones[0]));
+            Near(0.25, Share(sdef, bones[1]));
+        }
+
+        [Fact]
+        public void ASdefVertexAveragedWithItsNeighboursIntoThreeBonesIsNoLongerSdef()
+        {
+            IList<IPXBone> bones = Bones("一", "二", "三");
+            FakeVertex sdef = SdefVertex(0f, bones[0], bones[1]);
+            Vertex(0.1f, 0f, 0f, bones[2]);
+
+            ComposedEditFixture.Value(Grouped(0.5, ComposedEditFixture.Given("all", true)));
+
+            Assert.False(_fixture.Now(sdef).SDEF);
+            Near(0.5, Share(sdef, bones[2]));
+        }
+
+        [Fact]
+        public void ASdefVertexAveragedIntoThreeBonesIsNoLongerSdef()
+        {
+            IList<IPXBone> bones = Bones("一", "二", "三");
+            FakeVertex sdef = SdefVertex(0f, bones[0], bones[1]);
+            Vertex(9f, 0f, 0f, bones[2]);
+
+            Weights(
+                Operation(ModelEditWeights.Average),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.False(_fixture.Now(sdef).SDEF);
+            Near(0.5, Share(sdef, bones[2]));
+        }
+
+        [Fact]
+        public void ASdefVertexSmoothedAlongTheMeshIntoThreeBonesIsNoLongerSdef()
+        {
+            IList<IPXBone> bones = Bones("一", "二", "三");
+            FakeVertex sdef = SdefVertex(0f, bones[0], bones[1]);
+            FakeVertex second = Vertex(1f, 0f, 0f, bones[2]);
+            FakeVertex third = Vertex(0f, 1f, 0f, bones[2]);
+            Join(sdef, second, third);
+
+            Weights(
+                Operation(ModelEditWeights.Smooth),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(ModelEditWeights.StrengthName, 0.5));
+
+            Assert.False(_fixture.Now(sdef).SDEF);
+            Near(0.5, Share(sdef, bones[2]));
+        }
+
+        private FakeVertex SdefVertex(float x, IPXBone first, IPXBone second)
+        {
+            FakeVertex made = Vertex(x, 0f, 0f, first);
+            Weigh(made, first, 0.5f, second, 0.5f);
+            made.SDEF = true;
+
+            return made;
+        }
+
         private IDictionary<string, object> Spatial(
             double radius, int iterations, params KeyValuePair<string, object>[] given)
         {

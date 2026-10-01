@@ -37,6 +37,10 @@ namespace PmxEditorMcp
 
         public const string FromSurface = "fromSurface";
 
+        public const string SmoothSpatial = "smoothSpatial";
+
+        public const string AverageNear = "averageNear";
+
         public const string FromBoneName = "fromBone";
 
         public const string ToBoneName = "toBone";
@@ -65,6 +69,12 @@ namespace PmxEditorMcp
 
         public const string FalloffFadeName = "fade";
 
+        public const string RadiusName = "radius";
+
+        public const string IterationsName = "iterations";
+
+        public const string ThresholdName = "threshold";
+
         private const int DefaultMaxBones = 4;
 
         /// <summary>変えた頂点の数を返す項目の名前。</summary>
@@ -91,6 +101,8 @@ namespace PmxEditorMcp
                     RepairMissingBone,
                     ReplaceBone,
                     FromSurface,
+                    SmoothSpatial,
+                    AverageNear,
                 };
             }
         }
@@ -126,6 +138,9 @@ namespace PmxEditorMcp
                 MaxBonesName,
                 MinWeightName,
                 FalloffName,
+                RadiusName,
+                IterationsName,
+                ThresholdName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -200,6 +215,14 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
+            float radius;
+            int iterations;
+            float threshold;
+            if (!TrySpatial(context, operation, out radius, out iterations, out threshold, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
             SurfaceInput surface;
             if (!TrySurface(context, model, operation, out surface, out code, out message))
             {
@@ -244,6 +267,18 @@ namespace PmxEditorMcp
                     Surfaced(picked, surface);
                     break;
 
+                case SmoothSpatial:
+                    SmoothedInSpace(picked, radius, iterations);
+                    break;
+
+                case AverageNear:
+                    foreach (IList<IPXVertex> group in VertexClusters.Near(picked, threshold))
+                    {
+                        Aim(group, Averaged(group));
+                    }
+
+                    break;
+
                 default:
                     break;
             }
@@ -253,6 +288,14 @@ namespace PmxEditorMcp
             {
                 VertexWeights.Write(
                     vertex, VertexWeights.Settled(VertexWeights.Read(vertex)));
+                if (vertex.SDEF
+                    && (vertex.Bone1 == null
+                        || vertex.Bone2 == null
+                        || vertex.Bone3 != null
+                        || vertex.Bone4 != null))
+                {
+                    vertex.SDEF = false;
+                }
             }
 
             int changed = 0;
@@ -267,6 +310,61 @@ namespace PmxEditorMcp
                     { ChangedName, changed },
                 },
                 new[] { ScreenRefresh.WeightKind });
+        }
+
+        private static bool TrySpatial(
+            McpMethodContext context,
+            string operation,
+            out float radius,
+            out int iterations,
+            out float threshold,
+            out string code,
+            out string message)
+        {
+            iterations = 0;
+            threshold = 0f;
+            if (!ComposedInput.TryFloat(
+                    context,
+                    RadiusName,
+                    operation,
+                    new[] { SmoothSpatial },
+                    0f,
+                    ComposedInput.NoCeiling,
+                    out radius,
+                    out code,
+                    out message)
+                || !ComposedInput.TryCount(
+                    context,
+                    IterationsName,
+                    operation,
+                    new[] { SmoothSpatial },
+                    1,
+                    out iterations,
+                    out code,
+                    out message)
+                || !ComposedInput.TryFloat(
+                    context,
+                    ThresholdName,
+                    operation,
+                    new[] { AverageNear },
+                    0f,
+                    ComposedInput.NoCeiling,
+                    out threshold,
+                    out code,
+                    out message))
+            {
+                return false;
+            }
+
+            if (string.Equals(operation, SmoothSpatial, StringComparison.Ordinal) && !(radius > 0f))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = RadiusName + " は 0 より大きくなければならない。";
+
+                return false;
+            }
+
+            return true;
         }
 
         private sealed class SurfaceInput
@@ -792,6 +890,59 @@ namespace PmxEditorMcp
             foreach (KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>> made1 in made)
             {
                 VertexWeights.Write(made1.Key, made1.Value);
+            }
+        }
+
+        private static void SmoothedInSpace(IList<IPXVertex> picked, float radius, int iterations)
+        {
+            IList<int>[] near = SurfaceGeometry.Within(
+                picked.Select(vertex => SurfaceGeometry.Vec.Of(vertex.Position)).ToList(), radius);
+            double variance = radius / 2d * (radius / 2d);
+            double[][] pull = new double[picked.Count][];
+            for (int at = 0; at < picked.Count; at++)
+            {
+                SurfaceGeometry.Vec here = SurfaceGeometry.Vec.Of(picked[at].Position);
+                pull[at] = near[at]
+                    .Select(other =>
+                    {
+                        double apart = (SurfaceGeometry.Vec.Of(picked[other].Position) - here).Length;
+
+                        return Math.Exp(-apart * apart / (2d * variance));
+                    })
+                    .ToArray();
+            }
+
+            IList<KeyValuePair<IPXBone, float>>[] current =
+                picked.Select(VertexWeights.Read).ToArray();
+            for (int round = 0; round < iterations; round++)
+            {
+                IList<KeyValuePair<IPXBone, float>>[] next = current.ToArray();
+                for (int at = 0; at < picked.Count; at++)
+                {
+                    if (near[at].Count == 0)
+                    {
+                        continue;
+                    }
+
+                    List<KeyValuePair<IPXBone, float>> mixed =
+                        new List<KeyValuePair<IPXBone, float>>(current[at]);
+                    for (int slot = 0; slot < near[at].Count; slot++)
+                    {
+                        mixed.AddRange(Weighted(current[near[at][slot]], (float)pull[at][slot]));
+                    }
+
+                    next[at] = VertexWeights.Settled(mixed);
+                }
+
+                current = next;
+            }
+
+            for (int at = 0; at < picked.Count; at++)
+            {
+                if (near[at].Count > 0)
+                {
+                    VertexWeights.Write(picked[at], current[at]);
+                }
             }
         }
 

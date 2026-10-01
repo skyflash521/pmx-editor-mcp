@@ -6511,6 +6511,30 @@
                   }
                 }
               ]
+            },
+            {
+              "name": "radius",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "iterations",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 1
+              }
+            },
+            {
+              "name": "threshold",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
             }
           ],
           "choices": [

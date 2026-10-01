@@ -106,6 +106,72 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
+        /// <summary>
+        /// 点ごとに、<paramref name="radius"/> 以内にある自分以外の点の番号を昇順に返す。有限でない点は
+        /// どの点とも組にならない。
+        /// </summary>
+        public static IList<int>[] Within(IList<Vec> points, double radius)
+        {
+            double cell = Math.Max(radius, 1e-9);
+            Dictionary<CellKey, List<int>> cells = new Dictionary<CellKey, List<int>>();
+            for (int at = 0; at < points.Count; at++)
+            {
+                if (!IsFinite(points[at]))
+                {
+                    continue;
+                }
+
+                CellKey key = CellKey.Of(points[at], cell);
+                List<int> held;
+                if (!cells.TryGetValue(key, out held))
+                {
+                    held = new List<int>();
+                    cells[key] = held;
+                }
+
+                held.Add(at);
+            }
+
+            IList<int>[] found = new IList<int>[points.Count];
+            for (int at = 0; at < points.Count; at++)
+            {
+                List<int> near = new List<int>();
+                found[at] = near;
+                if (!IsFinite(points[at]))
+                {
+                    continue;
+                }
+
+                CellKey home = CellKey.Of(points[at], cell);
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        for (int dz = -1; dz <= 1; dz++)
+                        {
+                            List<int> held;
+                            if (!cells.TryGetValue(new CellKey(home.X + dx, home.Y + dy, home.Z + dz), out held))
+                            {
+                                continue;
+                            }
+
+                            near.AddRange(held.Where(
+                                other => other != at && (points[at] - points[other]).Length <= radius));
+                        }
+                    }
+                }
+
+                near.Sort();
+            }
+
+            return found;
+        }
+
+        private static bool IsFinite(Vec at)
+        {
+            return !double.IsNaN(at.X + at.Y + at.Z) && !double.IsInfinity(at.X + at.Y + at.Z);
+        }
+
         private static int Root(Dictionary<int, int> parent, int at)
         {
             while (parent[at] != at)
