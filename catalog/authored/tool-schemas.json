@@ -4591,6 +4591,247 @@
       }
     },
     {
+      "tool": "model_compare_shape",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 0
+                  }
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "selected",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "basePmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": true
+            },
+            {
+              "name": "stretchThresholds",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "bendThresholds",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "materialIndices",
+                "range",
+                "selected"
+              ],
+              "required": true
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "faceCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "edgeCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "minStretch",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "maxStretch",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "maxStretchVertices",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "shape": "number"
+            }
+          },
+          {
+            "name": "maxStretchPoints",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "element": {
+                "origin": "hostOutput",
+                "shape": "number"
+              }
+            }
+          },
+          {
+            "name": "stretchDistribution",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "limit",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "count",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
+            }
+          },
+          {
+            "name": "facePairCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "maxBend",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "maxBendFaces",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "material",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "face",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "points",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "element": {
+                      "origin": "hostOutput",
+                      "shape": "number"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "bendDistribution",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "limit",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "count",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                }
+              ]
+            }
+          },
+          {
+            "name": "flippedCount",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_copy_from_reference",
       "branches": [
         {

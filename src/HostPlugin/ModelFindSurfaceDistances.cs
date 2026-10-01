@@ -94,7 +94,7 @@ namespace PmxEditorMcp
             List<float[]> boxes;
             List<float> thresholds;
             if (!TryLimit(context, out limit, out message)
-                || !TryThresholds(context, out thresholds, out message)
+                || !TryThresholds(context, DistanceThresholdsName, out thresholds, out message)
                 || !ModelFindVertexBounds.TryBoxes(context, out boxes, out message))
             {
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
@@ -210,13 +210,13 @@ namespace PmxEditorMcp
             return value;
         }
 
-        private static bool TryThresholds(
-            McpMethodContext context, out List<float> thresholds, out string message)
+        internal static bool TryThresholds(
+            McpMethodContext context, string name, out List<float> thresholds, out string message)
         {
             thresholds = null;
             message = null;
             object given;
-            if (!context.Params.TryGetValue(DistanceThresholdsName, out given))
+            if (!context.Params.TryGetValue(name, out given))
             {
                 return true;
             }
@@ -224,7 +224,7 @@ namespace PmxEditorMcp
             object[] items = given as object[];
             if (items == null || items.Length == 0)
             {
-                message = DistanceThresholdsName + " は0以上の有限の数を1つ以上並べた並びでなければならない。";
+                message = name + " は0以上の有限の数を1つ以上並べた並びでなければならない。";
 
                 return false;
             }
@@ -235,7 +235,7 @@ namespace PmxEditorMcp
                 float one;
                 if (!ValueInput.TrySingle(item, out one) || !(one >= 0) || float.IsInfinity(one))
                 {
-                    message = DistanceThresholdsName + " は0以上の有限の数を1つ以上並べた並びでなければならない。";
+                    message = name + " は0以上の有限の数を1つ以上並べた並びでなければならない。";
 
                     return false;
                 }

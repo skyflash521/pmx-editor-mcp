@@ -169,6 +169,29 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void WhenTheLargestBendIsSharedTheFacePairWithTheSmallestFacePositionsIsReported()
+        {
+            V3[] positions =
+            {
+                new V3(0f, 0f, 0f), new V3(1f, 0f, 0f), new V3(0f, 0f, 3f), new V3(1f, 0f, 3f),
+                new V3(0f, 1f, 3f), new V3(1f, -1f, 3f), new V3(0f, 1f, 0f), new V3(1f, -1f, 0f),
+            };
+            int handle = Pair(
+                positions,
+                positions,
+                new[] { new[] { 2, 3, 4 }, new[] { 3, 2, 5 }, new[] { 0, 1, 6 }, new[] { 1, 0, 7 } });
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Compare(
+                handle, ComposedEditFixture.Given("all", true)));
+
+            Assert.Equal(2, value["facePairCount"]);
+            Assert.Equal(0f, (float)value["maxBend"], 5);
+            object[] faces = (object[])value["maxBendFaces"];
+            Assert.Equal(0, ((IDictionary<string, object>)faces[0])["face"]);
+            Assert.Equal(1, ((IDictionary<string, object>)faces[1])["face"]);
+        }
+
+        [Fact]
         public void AFaceTurnedOverIsCountedAsFlipped()
         {
             int handle = Pair(HingeBase, Moved(HingeBase, 3, 0f, 1f, 0f), HingeFaces);

@@ -335,6 +335,11 @@
       "duty": "指した材質から、不正な面と重なった面を落とす。材質は indices・range・all・selected のどれか1つで指す。operation の invalid は3つの頂点が揃っていない面を、duplicate はモデル全体で同じ3頂点を指す面を、duplicateInMaterial は材質ごとに同じ3頂点を指す面を、最初の1つだけ残して落とす。removed に落とした面の数を返す。"
     },
     {
+      "tool": "model_compare_shape",
+      "branching": false,
+      "duty": "変形の前後で、メッシュの伸び縮み・折れ・面の裏返りがどれだけ起きたかを数で確かめる。ポーズや変形を付けた後の引き伸ばし・折れ・裏返りの確認に使う。basePmxHandle に、変形する前のモデルの複製(model_clone_pmx が出したもの)のハンドルを渡す。モデルも複製も選択も変えない。頂点・材質・ボーン・各材質の面の数が複製と違えば invalid_argument になる。測る面は、materialIndices ならその材質の面、頂点を指したときは3頂点とも指した頂点に入る面とする。辺は2面が共有しても1本と数える。伸びは、辺の長さの複製の長さに対する比で、複製で長さ0の辺は測らない。edgeCount に辺の数を、minStretch・maxStretch に比の最小と最大を、maxStretchVertices と maxStretchPoints に最大の辺の2頂点の位置と現在の座標を返す。stretchThresholds に比を並べると、それ以上の辺の数を並べた順に stretchDistribution へ limit と count の組で返す。折れは、辺を共有する2面の法線のなす角が複製のときの角から変わった大きさ(度)で、複製が既に持つ折れは数えない。法線が0の面を含む組は測らない。facePairCount に測った組の数を、maxBend に最大を、maxBendFaces にその2面の material・face(材質の中での位置)と現在の座標を返す。bendThresholds に度を並べると、それ以上の組の数を bendDistribution に同じ形で返す。flippedCount に法線が複製と逆向きになった面の数を返す。測る辺や組が無ければ最小・最大・位置は返さない。同値のときは頂点・面の位置が小さい辺・組を返す。"
+    },
+    {
       "tool": "model_copy_from_reference",
       "branching": false,
       "duty": "剛体とJointへ、指している相手の名前や位置を写す。対象は indices・range・all・selected のどれか1つで指し、bodyNameFromBone は剛体を、それ以外はJointを指す。jointPositionFromSameNameBone は、Jointと同じ名前のボーンを探し、その位置をJointへ写す。写す元を指していない要素は変えない。changed に変えた要素の数を返す。"

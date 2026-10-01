@@ -16902,6 +16902,340 @@
           }
         }
       ]
+    },
+    {
+      "id": 22,
+      "title": "変形の前後の伸び・折れ・裏返りの比較",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 4
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 4
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  1,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  1,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 4
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "material",
+            "operation": "new",
+            "count": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "shapeFaceA",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "shapeFaceA"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 1,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "shapeFaceA"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "record": {
+            "name": "shapeFaceB",
+            "path": "0",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "shapeFaceB"
+              }
+            ],
+            "value": {
+              "vertex1": 1,
+              "vertex2": 3,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "shapeFaceB"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_pmx",
+          "arguments": {},
+          "record": {
+            "name": "shapeBasePmx",
+            "path": "",
+            "shape": "number"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              3
+            ],
+            "values": [
+              {
+                "position": [
+                  2,
+                  1,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_compare_shape",
+          "arguments": {
+            "basePmxHandle": {
+              "$from": "shapeBasePmx"
+            },
+            "all": true,
+            "stretchThresholds": [
+              1.5
+            ],
+            "bendThresholds": [
+              10
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "faceCount",
+                "equals": 2
+              },
+              {
+                "path": "edgeCount",
+                "equals": 5
+              },
+              {
+                "path": "maxStretch",
+                "equals": 2
+              },
+              {
+                "path": "maxStretchVertices.0",
+                "equals": 2
+              },
+              {
+                "path": "maxStretchVertices.1",
+                "equals": 3
+              },
+              {
+                "path": "stretchDistribution.0.count",
+                "equals": 1
+              },
+              {
+                "path": "facePairCount",
+                "equals": 1
+              },
+              {
+                "path": "maxBend",
+                "equals": 0
+              },
+              {
+                "path": "flippedCount",
+                "equals": 0
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }

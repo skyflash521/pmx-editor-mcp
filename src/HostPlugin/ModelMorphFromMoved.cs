@@ -385,7 +385,7 @@ namespace PmxEditorMcp
             }
         }
 
-        private static bool TryBase(
+        internal static bool TryBase(
             McpMethodContext context, out IPXPmx based, out string code, out string message)
         {
             based = null;
