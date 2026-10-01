@@ -64,6 +64,58 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AHandleThatWentAwayEarlierIsRefusedWithTheReasonItIsGone()
+        {
+            HandleLedger handles = Ledger();
+            int gone = handles.Issue("題材", new object(), () => { });
+            Call(handles, new object[] { gone });
+            int held = handles.Issue("題材", new object(), () => { });
+
+            IDictionary<string, object> envelope = Call(handles, new object[] { held, gone });
+
+            IDictionary<string, object> error = (IDictionary<string, object>)envelope["error"];
+            Assert.Equal(ToolEnvelope.InvalidHandle, (string)error["code"]);
+            string message = (string)error["message"];
+            Assert.Contains(gone.ToString(), message);
+            Assert.Contains("手放", message);
+            Assert.DoesNotContain(held.ToString() + "(", message);
+            Assert.Equal(1, handles.Count);
+        }
+
+        [Fact]
+        public void EveryHandleThatCannotBeUsedIsNamedWithItsOwnReasonAndNothingIsReleased()
+        {
+            HandleLedger handles = Ledger();
+            int gone = handles.Issue("題材", new object(), () => { });
+            Call(handles, new object[] { gone });
+            int held = handles.Issue("題材", new object(), () => { });
+            int unissued = held + 99;
+
+            IDictionary<string, object> envelope = Call(
+                handles, new object[] { gone, held, unissued });
+
+            string message = (string)((IDictionary<string, object>)envelope["error"])["message"];
+            Assert.Contains(gone.ToString() + "(発行済み", message);
+            Assert.Contains(unissued.ToString() + "(発行されていない", message);
+            Assert.DoesNotContain(held.ToString() + "(", message);
+            Assert.Contains("何も解放していない", message);
+            Assert.Equal(1, handles.Count);
+        }
+
+        [Fact]
+        public void AHandleThatWasNeverIssuedIsRefusedWithTheReasonItIsUnknown()
+        {
+            HandleLedger handles = Ledger();
+            int held = handles.Issue("題材", new object(), () => { });
+
+            IDictionary<string, object> envelope = Call(handles, new object[] { held + 99 });
+
+            string message = (string)((IDictionary<string, object>)envelope["error"])["message"];
+            Assert.Contains((held + 99).ToString(), message);
+            Assert.Contains("発行されていない", message);
+        }
+
+        [Fact]
         public void AHandleTheLedgerDoesNotKnowIsRefusedWithoutReleasingAnything()
         {
             HandleLedger handles = Ledger();

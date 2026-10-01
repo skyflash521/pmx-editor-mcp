@@ -50,7 +50,10 @@ namespace PmxEditorMcp
                 out message,
                 TargetNames.Element))
             {
-                return ToolEnvelope.Failure(code, message);
+                return ToolEnvelope.Failure(
+                    code, string.Equals(code, ToolEnvelope.InvalidHandle, StringComparison.Ordinal)
+                        ? Unusable(context, given)
+                        : message);
             }
 
             HandleReleaseResult released;
@@ -67,6 +70,19 @@ namespace PmxEditorMcp
                     .Select(id => "解放が例外で終わったハンドルがある: "
                         + id.ToString(CultureInfo.InvariantCulture))
                     .ToList());
+        }
+
+        private static string Unusable(McpMethodContext context, IList<long> given)
+        {
+            IList<string> reasons = given
+                .Where(id => !(id >= int.MinValue && id <= int.MaxValue && context.Handles.IsValid((int)id)))
+                .Select(id => id.ToString(CultureInfo.InvariantCulture) + (id > 0 && id <= context.Handles.LastIssuedId
+                    ? "(発行済みだが、すでに手放されている。リストへ加えたハンドルは、加えた時点で手放される)"
+                    : "(発行されていない)"))
+                .ToList();
+
+            return HandlesName + " に使えないハンドルがある: " + string.Join("・", reasons)
+                + "。何も解放していない。使えるハンドルだけで呼び直す。";
         }
 
         /// <summary>解放するハンドルの並び。整数の配列でなければ断る。</summary>

@@ -105,7 +105,7 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string MakesNew =
             "呼ぶたびに新しく作る。返るのは作ったもののハンドルの番号で、要らなくなったら"
-                + " session_release_handle へ渡す。";
+                + " session_release_handle へ渡す。リストへ加えたハンドルは、加えた時点で手放される。";
 
         /// <summary>
         /// そのツールの呼び方を、スキーマ正本から引いて組み立てる。対象の指し方は書かない。
