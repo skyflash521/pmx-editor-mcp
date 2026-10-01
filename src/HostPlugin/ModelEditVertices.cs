@@ -241,8 +241,8 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code ?? ToolEnvelope.InvalidArgument, message);
             }
 
-            ModelFindSurfaceDistances.SurfaceTree tree =
-                ModelFindSurfaceDistances.SurfaceTree.Of(model, surface);
+            SurfaceGeometry.SurfaceTree tree =
+                SurfaceGeometry.SurfaceTree.Of(model, surface);
             if (tree == null)
             {
                 return ComposedEditResult.Refuse(
@@ -255,14 +255,14 @@ namespace PmxEditorMcp
             List<KeyValuePair<IPXVertex, V3>> moves = new List<KeyValuePair<IPXVertex, V3>>();
             foreach (IPXVertex vertex in picked)
             {
-                ModelFindSurfaceDistances.Hit hit = tree.Nearest(
-                    ModelFindSurfaceDistances.Vec.Of(vertex.Position), reach);
+                SurfaceGeometry.Hit hit = tree.Nearest(
+                    SurfaceGeometry.Vec.Of(vertex.Position), reach);
                 if (hit == null)
                 {
                     continue;
                 }
 
-                ModelFindSurfaceDistances.Vec moved = hit.Point + (hit.Front * offset);
+                SurfaceGeometry.Vec moved = hit.Point + (hit.Front * offset);
                 moves.Add(new KeyValuePair<IPXVertex, V3>(
                     vertex, new V3((float)moved.X, (float)moved.Y, (float)moved.Z)));
             }

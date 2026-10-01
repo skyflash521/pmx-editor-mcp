@@ -4,7 +4,7 @@ using System.Linq;
 using System.Numerics;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
-using Vec = PmxEditorMcp.ModelFindSurfaceDistances.Vec;
+using Vec = PmxEditorMcp.SurfaceGeometry.Vec;
 
 namespace PmxEditorMcp
 {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web.Script.Serialization;
 using PEPlugin.Pmx;
-using Vec = PmxEditorMcp.ModelFindSurfaceDistances.Vec;
+using Vec = PmxEditorMcp.SurfaceGeometry.Vec;
 
 namespace PmxEditorMcp
 {
