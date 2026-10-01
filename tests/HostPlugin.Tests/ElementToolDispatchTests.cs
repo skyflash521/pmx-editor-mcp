@@ -35,6 +35,12 @@ namespace PmxEditorMcp.Tests
 
         private const string ItemCloneKey = "Sdk.Item.Clone()";
 
+        private const string LeafCloneKey = "Sdk.Leaf.Clone()";
+
+        private const string GroupCloneKey = "Sdk.Group.Clone()";
+
+        private const string MarkRefKey = "Sdk.Mark.Ref()";
+
         private const string InfoLabelKey = "Sdk.ItemInfo.Label()";
 
         private const string ItemsKey = "Sdk.Pmx.Items()";
@@ -1508,6 +1514,126 @@ namespace PmxEditorMcp.Tests
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
             Assert.Equal("二", _model.Items[1].Label);
             Assert.Same(_model.Items[0], _model.Items[1].Mate);
+        }
+
+        [Fact]
+        public void AClonedItemPointsAtTheSameItemOfTheModelWhenItIsAdded()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Items.Add(new Item { Label = "二", Mate = _model.Items[0] });
+            HandleLedger handles = Ledger();
+            IDictionary<string, object> cloned = Call(
+                "model_clone_item",
+                Arguments(TargetNames.Element.Indices, new object[] { 1 }),
+                handles);
+            long handle = Convert.ToInt64(((object[])cloned["value"])[0]);
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_items",
+                Arguments(TargetNames.Element.Handles, new object[] { handle }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Equal(3, _model.Items.Count);
+            Assert.Same(_model.Items[0], _model.Items[2].Mate);
+        }
+
+        [Fact]
+        public void ACloneOfAClonedItemPointsAtTheSameItemOfTheModelWhenItIsAdded()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Items.Add(new Item { Label = "二", Mate = _model.Items[0] });
+            HandleLedger handles = Ledger();
+            IDictionary<string, object> first = Call(
+                "model_clone_item",
+                Arguments(TargetNames.Element.Indices, new object[] { 1 }),
+                handles);
+            long firstHandle = Convert.ToInt64(((object[])first["value"])[0]);
+            IDictionary<string, object> second = Call(
+                "model_clone_item",
+                Arguments(TargetNames.Element.Handles, new object[] { firstHandle }),
+                handles);
+            long secondHandle = Convert.ToInt64(((object[])second["value"])[0]);
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_items",
+                Arguments(TargetNames.Element.Handles, new object[] { secondHandle }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(_model.Items[0], _model.Items[2].Mate);
+        }
+
+        [Fact]
+        public void AClonedLeafOfADividedListPointsAtTheSameItemWhenItIsAdded()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Groups.Add(new Group());
+            _model.Groups[0].Leaves.Add(new Item { Label = "葉", Mate = _model.Items[0] });
+            HandleLedger handles = Ledger();
+            int handle = ClonedHandle(
+                "model_clone_leaf",
+                Arguments(
+                    TargetNames.Parent.Indices, new object[] { 0 },
+                    TargetNames.Element.Indices, new object[] { 0 }),
+                handles);
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_leaves",
+                Arguments(
+                    ToolDispatch.AssignmentsName,
+                    new object[] { Assignment(0, handle) }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(_model.Items[0], ((Item)_model.Groups[0].Leaves[1]).Mate);
+        }
+
+        [Fact]
+        public void AClonedGroupPointsItsLeavesAtTheSameItemsWhenItIsAdded()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Groups.Add(new Group());
+            _model.Groups[0].Leaves.Add(new Item { Label = "葉", Mate = _model.Items[0] });
+            HandleLedger handles = Ledger();
+            int handle = ClonedHandle(
+                "model_clone_group",
+                Arguments(TargetNames.Element.Indices, new object[] { 0 }),
+                handles);
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_groups",
+                Arguments(TargetNames.Element.Handles, new object[] { handle }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(_model.Items[0], ((Item)_model.Groups[1].Leaves[0]).Mate);
+        }
+
+        [Fact]
+        public void AClonedGroupPointsItsMarkAtTheSameItemWhenItIsAdded()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Groups.Add(new Group { Mark = new Mark { Ref = _model.Items[0] } });
+            HandleLedger handles = Ledger();
+            int handle = ClonedHandle(
+                "model_clone_group",
+                Arguments(TargetNames.Element.Indices, new object[] { 0 }),
+                handles);
+
+            IDictionary<string, object> envelope = Call(
+                "model_add_groups",
+                Arguments(TargetNames.Element.Handles, new object[] { handle }),
+                handles);
+
+            Assert.True((bool)envelope["ok"], "包みが成功でない。");
+            Assert.Same(_model.Items[0], _model.Groups[1].Mark.Ref);
+        }
+
+        private int ClonedHandle(
+            string tool, IDictionary<string, object> arguments, HandleLedger handles)
+        {
+            return Convert.ToInt32(((object[])Call(tool, arguments, handles)["value"])[0]);
         }
 
         [Fact]
@@ -3023,7 +3149,22 @@ namespace PmxEditorMcp.Tests
                     },
                     { NoteKey, (target, arguments) => ((Model)target).Note },
                     { PmxCloneKey, (target, arguments) => ((Model)target).Duplicate() },
-                    { ItemCloneKey, (target, arguments) => new Item { Label = ((Item)target).Label } },
+                    { LeafCloneKey, (target, arguments) => CloneLeaf((Leaf)target) },
+                    { GroupCloneKey, (target, arguments) => CloneGroup((Group)target) },
+                    {
+                        MarkRefKey,
+                        (target, arguments) => arguments.Length == 0
+                            ? ((Mark)target).Ref
+                            : Referred((Mark)target, (Item)arguments[0])
+                    },
+                    {
+                        ItemCloneKey,
+                        (target, arguments) => new Item
+                        {
+                            Label = ((Item)target).Label,
+                            Mate = ((Item)target).Mate,
+                        }
+                    },
                     {
                         ItemInfoKey,
                         (target, arguments) => new ItemInfo { Label = ((Item)target).Label }
@@ -3143,6 +3284,38 @@ namespace PmxEditorMcp.Tests
             _madeBy = rowKey;
 
             return new Item();
+        }
+
+        private static object Referred(Mark mark, Item item)
+        {
+            mark.Ref = item;
+
+            return null;
+        }
+
+        private static Leaf CloneLeaf(Leaf leaf)
+        {
+            Item item = leaf as Item;
+
+            return item != null
+                ? (Leaf)new Item { Label = item.Label, Mate = item.Mate }
+                : new Spare { Note = ((Spare)leaf).Note };
+        }
+
+        private static Group CloneGroup(Group group)
+        {
+            Group made = new Group { Tag = group.Tag };
+            foreach (Leaf leaf in group.Leaves)
+            {
+                made.Leaves.Add(CloneLeaf(leaf));
+            }
+
+            if (group.Mark != null)
+            {
+                made.Mark = new Mark { Width = group.Mark.Width, Ref = group.Mark.Ref };
+            }
+
+            return made;
         }
 
         private static object Mated(Item item, Item mate)
@@ -3478,6 +3651,30 @@ namespace PmxEditorMcp.Tests
                         typeof(Item))
                 },
                 {
+                    "model_clone_leaf",
+                    new ToolCall(
+                        LeafCloneKey,
+                        Rooted(EditKind.Read),
+                        Divided(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(Leaf),
+                        typeof(Leaf))
+                },
+                {
+                    "model_clone_group",
+                    new ToolCall(
+                        GroupCloneKey,
+                        Rooted(EditKind.Read),
+                        Grouped(),
+                        DangerKind.None,
+                        new ToolArgument[0],
+                        new ToolArgument[0],
+                        typeof(Group),
+                        typeof(Group))
+                },
+                {
                     "model_clone_pmx",
                     new ToolCall(
                         PmxCloneKey,
@@ -3718,6 +3915,36 @@ namespace PmxEditorMcp.Tests
                         }))
                 },
                 {
+                    "model_update_leaf_mates",
+                    new ToolFields(
+                        true,
+                        true,
+                        Rooted(EditKind.DuplicateEdit),
+                        Divided(),
+                        new[]
+                        {
+                            new ToolFieldSet("spare", new ToolField[0]),
+                            new ToolFieldSet(
+                                "item",
+                                new[]
+                                {
+                                    new ToolField("mate", MateKey, typeof(Item), null, Direct()),
+                                }),
+                        })
+                },
+                {
+                    "model_update_mark_refs",
+                    new ToolFields(
+                        true,
+                        true,
+                        Rooted(EditKind.DuplicateEdit),
+                        Marked(),
+                        Set(new[]
+                        {
+                            new ToolField("ref", MarkRefKey, typeof(Item), null, Direct()),
+                        }))
+                },
+                {
                     "model_list_headed_groups",
                     new ToolFields(
                         false,
@@ -3939,6 +4166,7 @@ namespace PmxEditorMcp.Tests
                     if (mark != null)
                     {
                         ((Mark)pair.Value).Width = mark.Width;
+                        ((Mark)pair.Value).Ref = Pointed(mark.Ref, placed);
                     }
                 }
 
@@ -4042,6 +4270,8 @@ namespace PmxEditorMcp.Tests
         private sealed class Mark
         {
             public int Width { get; set; }
+
+            public Item Ref { get; set; }
 
             public List<Item> Veins { get; } = new List<Item>();
         }

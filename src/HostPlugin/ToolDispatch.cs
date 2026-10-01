@@ -166,6 +166,8 @@ namespace PmxEditorMcp
         private readonly Dictionary<ToolArgument, ToolField> _issuedReferences =
             new Dictionary<ToolArgument, ToolField>(ReferenceComparer<ToolArgument>.Instance);
 
+        private readonly List<ToolFields> _writableAggregations = new List<ToolFields>();
+
         private ToolDispatch(
             SdkRelayTable relay,
             IDictionary<string, SdkReceiver> receivers,
@@ -357,6 +359,9 @@ namespace PmxEditorMcp
                 .SelectMany(s => s.Fields)
                 .Where(f => f.Referenced != null && !f.Listed)
                 .ToList();
+            _writableAggregations.AddRange(
+                aggregations.Values.Where(a => a.Writes && a.Access.Kind == ToolAccessKind.Element));
+
             foreach (KeyValuePair<string, IList<ToolCall>> named in calls)
             {
                 foreach (ToolCall call in named.Value.Where(c => c.Issues != null))
@@ -1051,6 +1056,7 @@ namespace PmxEditorMcp
                     : null;
 
                 int drawn = 0;
+                ReachedLists cloned = new ReachedLists();
                 for (int at = 0; at < count; at++)
                 {
                     object value;
@@ -1077,6 +1083,12 @@ namespace PmxEditorMcp
 
                     if (issues)
                     {
+                        if (!TryDeferCloned(
+                            call, column[0].Item, value, target, cloned, out refused))
+                        {
+                            return;
+                        }
+
                         DeferIssued(call, value, positions);
                     }
 
@@ -1680,6 +1692,7 @@ namespace PmxEditorMcp
                 }
 
                 stage = Changing(call.Receiver, target);
+                ReachedLists cloned = new ReachedLists();
                 for (int at = 0; at < column.Count; at++)
                 {
                     object value;
@@ -1698,6 +1711,13 @@ namespace PmxEditorMcp
 
                     object projected;
                     if (!TryProjected(call, value, out projected, out refused))
+                    {
+                        return;
+                    }
+
+                    if (call.Issues != null
+                        && !TryDeferCloned(
+                            call, column[at].Item, value, target, cloned, out refused))
                     {
                         return;
                     }
@@ -2173,6 +2193,197 @@ namespace PmxEditorMcp
             return _keeperOf.TryGetValue(item, out keeper) && _deferred.TryGetValue(keeper, out held)
                 ? keeper
                 : item;
+        }
+
+        private bool TryDeferCloned(
+            ToolCall call,
+            object receiver,
+            object result,
+            PmxTarget target,
+            ReachedLists reached,
+            out Refusal refused)
+        {
+            refused = null;
+            IList<object> made;
+            IDictionary<string, object> ignored;
+            if (!call.RowKey.EndsWith(".Clone()", StringComparison.Ordinal)
+                || call.Access.Kind != ToolAccessKind.Element
+                || !TryMade(call, result, out made, out ignored))
+            {
+                return true;
+            }
+
+            bool held = target == null || target.Pmx == null;
+            List<ToolHop> path = Steps(call.Access);
+            foreach (object issued in made)
+            {
+                List<KeyValuePair<object, object>> pairs = new List<KeyValuePair<object, object>>();
+                foreach (ToolFields aggregation in _writableAggregations)
+                {
+                    List<ToolHop> steps = Steps(aggregation.Access);
+                    if (steps.Count < path.Count
+                        || path.Where((hop, at) => !SameHop(hop, steps[at])).Any())
+                    {
+                        continue;
+                    }
+
+                    List<ToolHop> rest = steps.Skip(path.Count).ToList();
+                    IList<object> copies;
+                    IList<object> sources = null;
+                    if (!TryDescend(issued, rest, out copies, out refused)
+                        || (held && !TryDescend(receiver, rest, out sources, out refused)))
+                    {
+                        return false;
+                    }
+
+                    for (int at = 0; at < copies.Count; at++)
+                    {
+                        IList<ToolField> fields = ReferenceFields(aggregation, copies[at]);
+                        if (held)
+                        {
+                            if (sources.Count == copies.Count && fields.Count != 0)
+                            {
+                                pairs.Add(new KeyValuePair<object, object>(sources[at], copies[at]));
+                            }
+
+                            continue;
+                        }
+
+                        foreach (ToolField field in fields)
+                        {
+                            if (!TryDeferReference(
+                                issued, copies[at], field, target, reached, out refused))
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                if (held)
+                {
+                    CopyDeferred(receiver, issued, pairs);
+                }
+            }
+
+            return true;
+        }
+
+        private static List<ToolHop> Steps(ToolAccess access)
+        {
+            List<ToolHop> steps = new List<ToolHop>(access.Parents);
+            steps.Add(new ToolHop(access.RowKey, access.Listed));
+
+            return steps;
+        }
+
+        private static bool SameHop(ToolHop left, ToolHop right)
+        {
+            return left.Listed == right.Listed
+                && string.Equals(left.RowKey, right.RowKey, StringComparison.Ordinal);
+        }
+
+        private bool TryDescend(
+            object start, IList<ToolHop> steps, out IList<object> found, out Refusal refused)
+        {
+            refused = null;
+            List<object> column = new List<object> { start };
+            foreach (ToolHop hop in steps)
+            {
+                List<object> next = new List<object>();
+                foreach (object owner in column)
+                {
+                    if (!TryStep(hop, owner, next, out refused))
+                    {
+                        found = null;
+
+                        return false;
+                    }
+                }
+
+                column = next;
+            }
+
+            found = column;
+
+            return true;
+        }
+
+        private static IList<ToolField> ReferenceFields(ToolFields aggregation, object element)
+        {
+            ToolFieldSet set;
+            if (aggregation.Access.Items.Count == 0)
+            {
+                set = aggregation.Access.IsElement(element) ? aggregation.Sets[0] : null;
+            }
+            else
+            {
+                ToolItem item = aggregation.Access.Items.FirstOrDefault(i => i.IsItem(element));
+                set = item == null ? null : SetOf(aggregation, item.ItemType);
+            }
+
+            return set == null
+                ? new ToolField[0]
+                : set.Fields.Where(f => f.Referenced != null && !f.Listed).ToList();
+        }
+
+        private bool TryDeferReference(
+            object keeper,
+            object element,
+            ToolField field,
+            PmxTarget target,
+            ReachedLists reached,
+            out Refusal refused)
+        {
+            refused = null;
+            object value;
+            SdkRelayRefusal refusal;
+            if (!_relay.TryInvoke(field.RowKey, element, new object[0], out value, out refusal))
+            {
+                refused = Refusal.Of(field.RowKey, refusal);
+
+                return false;
+            }
+
+            if (value == null)
+            {
+                return true;
+            }
+
+            IList<object> listed;
+            if (!TryListed(field.Referenced, target, reached, out listed, out refused))
+            {
+                return false;
+            }
+
+            object position = reached.Position(field.Referenced, value);
+            if (position != null)
+            {
+                Defer(keeper, new DeferredWrite(element, field, (int)position));
+            }
+
+            return true;
+        }
+
+        private void CopyDeferred(
+            object receiver, object issued, IList<KeyValuePair<object, object>> pairs)
+        {
+            DeferredWrites held;
+            if (!_deferred.TryGetValue(KeeperOf(receiver), out held))
+            {
+                return;
+            }
+
+            foreach (DeferredWrite pending in held.ToList())
+            {
+                foreach (KeyValuePair<object, object> pair in pairs)
+                {
+                    if (ReferenceEquals(pair.Key, pending.Target))
+                    {
+                        Defer(issued, new DeferredWrite(pair.Value, pending.Field, pending.Position));
+                    }
+                }
+            }
         }
 
         /// <summary>
