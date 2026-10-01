@@ -28,6 +28,12 @@ namespace PmxEditorMcp
 
         public const string ScaleName = "scale";
 
+        public const string ScaleFrameRotationName = "scaleFrameRotation";
+
+        public const string ScaleFrameAxisName = "scaleFrameAxis";
+
+        public const string ScaleFrameAngleName = "scaleFrameAngle";
+
         public const string CenterName = "center";
 
         public const string RampName = "ramp";
@@ -112,6 +118,9 @@ namespace PmxEditorMcp
                 RotationAxisName,
                 RotationAngleName,
                 ScaleName,
+                ScaleFrameRotationName,
+                ScaleFrameAxisName,
+                ScaleFrameAngleName,
                 CenterName,
                 RampName,
             };
@@ -225,21 +234,39 @@ namespace PmxEditorMcp
                     return true;
 
                 default:
+                    RowMatrix frame;
                     if (!TryPoint(context, ScaleName, out given, out code, out message)
+                        || !TryFrame(context, out frame, out code, out message)
                         || !TryCenter(context, ref center, out code, out message))
                     {
                         return false;
                     }
 
+                    RowMatrix back = frame.Transposed();
                     bool even = given.X == given.Y && given.Y == given.Z;
                     plan = (item, strength) =>
                     {
                         V3 scale = new V3(
                             Eased(given.X, strength), Eased(given.Y, strength), Eased(given.Z, strength));
+                        if (scale.X == scale.Y && scale.Y == scale.Z)
+                        {
+                            return Stretched(
+                                item,
+                                RowMatrix.Diagonal(scale.X, scale.X, scale.X),
+                                scale.X < 0f ? RowMatrix.Diagonal(1d / scale.X, 1d / scale.X, 1d / scale.X) : null,
+                                center,
+                                even ? scale.X : (float?)null);
+                        }
+
+                        bool invertible = scale.X != 0f && scale.Y != 0f && scale.Z != 0f;
 
                         return Stretched(
                             item,
-                            RowMatrix.Diagonal(scale.X, scale.Y, scale.Z),
+                            back.Times(RowMatrix.Diagonal(scale.X, scale.Y, scale.Z)).Times(frame),
+                            !invertible
+                                ? null
+                                : back.Times(RowMatrix.Diagonal(1d / scale.X, 1d / scale.Y, 1d / scale.Z))
+                                    .Times(frame),
                             center,
                             even ? scale.X : (float?)null);
                     };
@@ -420,9 +447,82 @@ namespace PmxEditorMcp
             return made;
         }
 
-        private static Change Stretched(object item, RowMatrix stretch, V3 center, float? even)
+        private static bool TryFrame(
+            McpMethodContext context, out RowMatrix frame, out string code, out string message)
+        {
+            frame = RowMatrix.Diagonal(1d, 1d, 1d);
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            bool turned = context.Params.ContainsKey(ScaleFrameRotationName);
+            bool axisGiven = context.Params.ContainsKey(ScaleFrameAxisName)
+                || context.Params.ContainsKey(ScaleFrameAngleName);
+            if (turned && axisGiven)
+            {
+                message = ScaleFrameRotationName + " と " + ScaleFrameAxisName + "・" + ScaleFrameAngleName
+                    + " は一緒に渡せない。";
+
+                return false;
+            }
+
+            if (turned)
+            {
+                V3 angles;
+                if (!TryPoint(context, ScaleFrameRotationName, out angles, out code, out message))
+                {
+                    return false;
+                }
+
+                frame = RowMatrix.YawPitchRoll(Radians(angles.Y), Radians(angles.X), Radians(angles.Z));
+
+                return true;
+            }
+
+            if (!axisGiven)
+            {
+                return true;
+            }
+
+            V3 axis;
+            float angle;
+            object taken;
+            if (!ComposedInput.TryDirection(context, ScaleFrameAxisName, out axis, out code, out message))
+            {
+                return false;
+            }
+
+            if (!context.Params.TryGetValue(ScaleFrameAngleName, out taken)
+                || !ValueInput.TrySingle(taken, out angle))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ScaleFrameAngleName + " は有限の数でなければならない。";
+
+                return false;
+            }
+
+            frame = RowMatrix.AroundAxis(axis.X, axis.Y, axis.Z, Radians(angle));
+            code = null;
+
+            return true;
+        }
+
+        private static Change Stretched(
+            object item, RowMatrix stretch, RowMatrix normalStretch, V3 center, float? even)
         {
             Change made = Change.Of(item, stretch.TransformAbout(Spot(item), center));
+            IPXVertex vertex = item as IPXVertex;
+            if (vertex != null && normalStretch != null)
+            {
+                V3 turned = normalStretch.Transform(vertex.Normal);
+                double length = Math.Sqrt(
+                    ((double)turned.X * turned.X) + ((double)turned.Y * turned.Y)
+                        + ((double)turned.Z * turned.Z));
+                if (length > 0d)
+                {
+                    made.Normal = new V3(
+                        (float)(turned.X / length), (float)(turned.Y / length), (float)(turned.Z / length));
+                }
+            }
+
             IPXBody body = item as IPXBody;
             if (body != null && even.HasValue)
             {
@@ -568,14 +668,18 @@ namespace PmxEditorMcp
                     break;
 
                 default:
-                    taken = new[] { ScaleName, CenterName, RampName };
+                    taken = new[]
+                    {
+                        ScaleName, ScaleFrameRotationName, ScaleFrameAxisName, ScaleFrameAngleName, CenterName,
+                        RampName,
+                    };
                     break;
             }
 
             string given = new[]
                 {
                     PositionName, AxesName, OffsetName, RotationName, RotationAxisName, RotationAngleName, ScaleName,
-                    CenterName, RampName,
+                    ScaleFrameRotationName, ScaleFrameAxisName, ScaleFrameAngleName, CenterName, RampName,
                 }
                 .Where(n => !taken.Contains(n, StringComparer.Ordinal))
                 .FirstOrDefault(context.Params.ContainsKey);

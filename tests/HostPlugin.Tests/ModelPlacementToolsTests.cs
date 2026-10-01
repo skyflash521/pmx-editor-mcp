@@ -527,6 +527,214 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ScalingUnevenlyTurnsTheNormalsWithTheInverseOfTheScale()
+        {
+            FakeVertex vertex = Vertex(1f, 1f, 0f);
+            Now(vertex).Normal = new V3(1f, 1f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 2f, 1f, 1f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            double length = Math.Sqrt(0.25 + 1.0);
+            Near(0.5 / length, Now(vertex).Normal.X);
+            Near(1.0 / length, Now(vertex).Normal.Y);
+            Near(0.0, Now(vertex).Normal.Z);
+        }
+
+        [Fact]
+        public void ScalingEvenlyLeavesTheNormalsAsTheyWere()
+        {
+            FakeVertex vertex = Vertex(1f, 1f, 0f);
+            Now(vertex).Normal = new V3(0f, 2f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 2f, 2f, 2f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Assert.Equal(0f, Now(vertex).Normal.X);
+            Assert.Equal(2f, Now(vertex).Normal.Y);
+        }
+
+        [Fact]
+        public void ScalingEvenlyByANegativeNumberTurnsTheNormalsOver()
+        {
+            FakeVertex vertex = Vertex(1f, 1f, 0f);
+            Now(vertex).Normal = new V3(0f, 2f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, -1f, -1f, -1f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Near(-1.0, Now(vertex).Position.X);
+            Near(-1.0, Now(vertex).Normal.Y);
+        }
+
+        [Fact]
+        public void ScalingFlatAlongTurnedAxesFlattensThePositionsAndLeavesTheNormals()
+        {
+            FakeVertex vertex = Vertex(1f, 1f, 1f);
+            Now(vertex).Normal = new V3(0.6f, 0.8f, -0.1f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 0f, 1f, 1f),
+                Triple(ModelPlaceElements.ScaleFrameRotationName, 10f, 20f, 30f),
+                Targets(Target(ElementKinds.Vertex, 0))));
+
+            Assert.Equal(1, value[ModelPlaceElements.ChangedName]);
+            Assert.Equal(0.6f, Now(vertex).Normal.X);
+            Assert.Equal(0.8f, Now(vertex).Normal.Y);
+            Assert.Equal(-0.1f, Now(vertex).Normal.Z);
+            Assert.False(float.IsNaN(Now(vertex).Position.X));
+        }
+
+        [Fact]
+        public void AVertexWithNoStrengthIsNotTouchedWhenTheAxesAreTurned()
+        {
+            FakeVertex outside = Vertex(1f, -1f, 0f);
+            Now(outside).Normal = new V3(0.6f, 0.8f, 0f);
+            FakeVertex inside = Vertex(1f, 3f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 2f, 1f, 1f),
+                Triple(ModelPlaceElements.ScaleFrameAxisName, 1f, 2f, 3f),
+                ComposedEditFixture.Given(ModelPlaceElements.ScaleFrameAngleName, 37.0),
+                Ramp("y", 0f, 2f),
+                Targets(Every(ElementKinds.Vertex))));
+
+            Assert.Equal(1, value[ModelPlaceElements.ChangedName]);
+            Assert.Equal(1f, Now(outside).Position.X);
+            Assert.Equal(-1f, Now(outside).Position.Y);
+            Assert.Equal(0.6f, Now(outside).Normal.X);
+            Assert.Equal(0.8f, Now(outside).Normal.Y);
+            Assert.NotEqual(1f, Now(inside).Position.X);
+        }
+
+        [Theory]
+        [InlineData(45f, 0f, 0f, 1f, 2f, 1f, 0f, 1f, 1f, 0f, 2f, 2f)]
+        [InlineData(0f, 45f, 0f, 2f, 1f, 1f, 1f, 0f, -1f, 2f, 0f, -2f)]
+        public void TheAnglesTurnTheScaleAxesAboutTheAxesOfTheSameNames(
+            float x, float y, float z, float sx, float sy, float sz,
+            float px, float py, float pz, float ex, float ey, float ez)
+        {
+            FakeVertex vertex = Vertex(px, py, pz);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, sx, sy, sz),
+                Triple(ModelPlaceElements.ScaleFrameRotationName, x, y, z),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Near(ex, Now(vertex).Position.X);
+            Near(ey, Now(vertex).Position.Y);
+            Near(ez, Now(vertex).Position.Z);
+        }
+
+        [Fact]
+        public void ScalingFlatLeavesTheNormalsWhereTheyCannotBeInverted()
+        {
+            FakeVertex vertex = Vertex(1f, 1f, 0f);
+            Now(vertex).Normal = new V3(0.6f, 0.8f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 0f, 1f, 1f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Assert.Equal(0.6f, Now(vertex).Normal.X);
+            Assert.Equal(0.8f, Now(vertex).Normal.Y);
+        }
+
+        [Fact]
+        public void TheScaleAxesCanBeTurnedByAnglesSoThatAnOffAxisPointStretchesAlongThem()
+        {
+            FakeVertex along = Vertex(1f, 1f, 0f);
+            FakeVertex across = Vertex(1f, -1f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 2f, 1f, 1f),
+                Triple(ModelPlaceElements.ScaleFrameRotationName, 0f, 0f, 45f),
+                Targets(Every(ElementKinds.Vertex)));
+
+            Near(2.0, Now(along).Position.X);
+            Near(2.0, Now(along).Position.Y);
+            Near(1.0, Now(across).Position.X);
+            Near(-1.0, Now(across).Position.Y);
+        }
+
+        [Fact]
+        public void TheScaleAxesCanBeTurnedAboutAnAxis()
+        {
+            FakeVertex along = Vertex(1f, 1f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 2f, 1f, 1f),
+                Triple(ModelPlaceElements.ScaleFrameAxisName, 0f, 0f, 1f),
+                ComposedEditFixture.Given(ModelPlaceElements.ScaleFrameAngleName, 45.0),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Near(2.0, Now(along).Position.X);
+            Near(2.0, Now(along).Position.Y);
+        }
+
+        [Fact]
+        public void TheNormalsFollowAScaleAlongTurnedAxes()
+        {
+            FakeVertex vertex = Vertex(1f, 1f, 0f);
+            Now(vertex).Normal = new V3(1f, 0f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 2f, 1f, 1f),
+                Triple(ModelPlaceElements.ScaleFrameRotationName, 0f, 0f, 45f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Near(0.75 / Math.Sqrt(0.625), Now(vertex).Normal.X);
+            Near(-0.25 / Math.Sqrt(0.625), Now(vertex).Normal.Y);
+            Near(0.0, Now(vertex).Normal.Z);
+        }
+
+        [Theory]
+        [InlineData(ModelPlaceElements.TranslateBy)]
+        [InlineData(ModelPlaceElements.RotateBy)]
+        [InlineData(ModelPlaceElements.AlignTo)]
+        public void TheScaleAxesAreNotAcceptedByTheOtherOperations(string operation)
+        {
+            Vertex(1f, 1f, 0f);
+
+            IDictionary<string, object> envelope = Place(
+                Operation(operation),
+                Triple(ModelPlaceElements.ScaleFrameRotationName, 0f, 0f, 45f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void TheScaleAxesGivenByAnglesAndByAnAxisTogetherAreRefused()
+        {
+            FakeVertex vertex = Vertex(1f, 1f, 0f);
+
+            IDictionary<string, object> envelope = Place(
+                Operation(ModelPlaceElements.ScaleBy),
+                Triple(ModelPlaceElements.ScaleName, 2f, 1f, 1f),
+                Triple(ModelPlaceElements.ScaleFrameRotationName, 0f, 0f, 45f),
+                Triple(ModelPlaceElements.ScaleFrameAxisName, 0f, 0f, 1f),
+                ComposedEditFixture.Given(ModelPlaceElements.ScaleFrameAngleName, 45.0),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Near(1.0, Now(vertex).Position.X);
+        }
+
+        [Fact]
         public void ScalingWithARampScalesEachVertexByWhereItIsAlongTheAxis()
         {
             FakeVertex low = Vertex(1f, 0f, 0f);

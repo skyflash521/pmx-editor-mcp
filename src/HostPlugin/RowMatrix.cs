@@ -80,6 +80,20 @@ namespace PmxEditorMcp
             return new RowMatrix(made);
         }
 
+        public RowMatrix Transposed()
+        {
+            double[,] made = new double[3, 3];
+            for (int row = 0; row < 3; row++)
+            {
+                for (int column = 0; column < 3; column++)
+                {
+                    made[row, column] = _cells[column, row];
+                }
+            }
+
+            return new RowMatrix(made);
+        }
+
         public V3 Transform(V3 given)
         {
             if (given == null)

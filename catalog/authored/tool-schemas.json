@@ -12981,6 +12981,30 @@
               "required": false
             },
             {
+              "name": "scaleFrameRotation",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              },
+              "required": false
+            },
+            {
+              "name": "scaleFrameAxis",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "scaleFrameAngle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
               "name": "center",
               "origin": "hostInput",
               "element": {
