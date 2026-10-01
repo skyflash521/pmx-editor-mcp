@@ -392,7 +392,7 @@
     {
       "tool": "model_edit_vertices",
       "branching": false,
-      "duty": "指した頂点の結合・近距離の統合・位置合わせ・鏡像を行う。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。weld は指した頂点を先頭の1つへまとめる。weldNear は threshold に距離のしきい値を渡し、その中にある頂点どうしをまとめる。align と mirrorCopy と mirrorModel は axis を渡し、align はその軸の値を平均へそろえ、mirrorCopy はその軸の鏡像を複製として足し、mirrorModel は指した頂点そのものを鏡像へ移し、3つの頂点がすべて移った面は2つめと3つめの頂点を入れ替えて向きを戻す。頂点をまとめる操作では、3つの頂点が揃わなくなった面を落とす。changed・removed・removedFaces を返し、added に足した頂点の位置を start と count の組で返す。足した頂点は並びの末尾に連なる。"
+      "duty": "指した頂点の結合・近距離の統合・位置合わせ・鏡像・面への投影を行う。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。weld は指した頂点を先頭の1つへまとめる。weldNear は threshold に距離のしきい値を渡し、その中にある頂点どうしをまとめる。align と mirrorCopy と mirrorModel は axis を渡し、align はその軸の値を平均へそろえ、mirrorCopy はその軸の鏡像を複製として足し、mirrorModel は指した頂点そのものを鏡像へ移し、3つの頂点がすべて移った面は2つめと3つめの頂点を入れ替えて向きを戻す。projectOntoSurface は surfaceMaterialIndices に並べた材質の面を相手に、指した頂点それぞれを、その面の上の最も近い点から面の表の向きへ surfaceOffset だけ離れた位置へ移す。surfaceOffset は面の表の側を正とし、省くと0で、負なら面の裏へ入る。表の向きは model_find_surface_distances と同じに決める。distanceLimit を渡すと、面までそれより遠い頂点は動かさない。頂点の法線は変えない。面積の無い面は相手に含めない。surfaceMaterialIndices・surfaceOffset・distanceLimit は projectOntoSurface のときだけ渡せ、changed に動かした頂点の数を返す。頂点をまとめる操作では、3つの頂点が揃わなくなった面を落とす。changed・removed・removedFaces を返し、added に足した頂点の位置を start と count の組で返す。足した頂点は並びの末尾に連なる。"
     },
     {
       "tool": "model_edit_weights",

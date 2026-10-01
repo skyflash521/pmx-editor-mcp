@@ -6,10 +6,6 @@ using PEPlugin.SDX;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 指した頂点の結合・近距離の統合・位置合わせ・鏡像を行うツール。頂点をまとめる操作では、
-    /// 3つの頂点が揃わなくなった面を落とす。
-    /// </summary>
     public static class ModelEditVertices
     {
         /// <summary>このツールの名前。</summary>
@@ -30,6 +26,8 @@ namespace PmxEditorMcp
         /// <summary>指した頂点を、指した軸の鏡像へ移す。</summary>
         public const string MirrorModel = "mirrorModel";
 
+        public const string ProjectOntoSurface = "projectOntoSurface";
+
         /// <summary>まとめる距離のしきい値を受け取る入力の名前。</summary>
         public const string ThresholdName = "threshold";
 
@@ -44,6 +42,8 @@ namespace PmxEditorMcp
 
         /// <summary>Z軸。</summary>
         public const string AxisZ = "z";
+
+        public const string OffsetName = "surfaceOffset";
 
         /// <summary>変えた頂点の数を返す項目の名前。</summary>
         public const string ChangedName = "changed";
@@ -63,7 +63,7 @@ namespace PmxEditorMcp
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
         {
-            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel }; }
+            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface }; }
         }
 
         /// <summary>受け取れる軸。スキーマが並べる順。</summary>
@@ -95,6 +95,9 @@ namespace PmxEditorMcp
                 ModelFindVertexBounds.MaterialIndicesName,
                 ThresholdName,
                 AxisName,
+                ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
+                OffsetName,
+                ModelFindSurfaceDistances.DistanceLimitName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -145,6 +148,25 @@ namespace PmxEditorMcp
             }
 
             IList<IPXVertex> picked = chosen.Select(at => model.Vertex[at]).ToList();
+            if (string.Equals(operation, ProjectOntoSurface, StringComparison.Ordinal))
+            {
+                return Projected(context, model, picked);
+            }
+
+            string[] projecting =
+            {
+                ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
+                OffsetName,
+                ModelFindSurfaceDistances.DistanceLimitName,
+            };
+            string unwanted = projecting.FirstOrDefault(context.Params.ContainsKey);
+            if (unwanted != null)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    unwanted + " は " + ProjectOntoSurface + " のときだけ渡せる。");
+            }
+
             switch (operation)
             {
                 case Weld:
@@ -186,6 +208,71 @@ namespace PmxEditorMcp
             int faces = ReferenceCleanup.DropUnsoundFaces(model);
 
             return Answer(moved.Count, moved.Count, faces, None(model));
+        }
+
+        private static ComposedEditResult Projected(
+            McpMethodContext context, IPXPmx model, IList<IPXVertex> picked)
+        {
+            string code;
+            string message;
+            List<int> surface;
+            float offset = 0f;
+            float? limit;
+            if (!ModelFindSurfaceDistances.TryMaterials(
+                    context,
+                    model,
+                    ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
+                    out surface,
+                    out code,
+                    out message)
+                || (context.Params.ContainsKey(OffsetName)
+                    && !ComposedInput.TryFloat(
+                        context,
+                        OffsetName,
+                        ProjectOntoSurface,
+                        new[] { ProjectOntoSurface },
+                        ComposedInput.NoFloor,
+                        ComposedInput.NoCeiling,
+                        out offset,
+                        out code,
+                        out message))
+                || !ModelFindSurfaceDistances.TryLimit(context, out limit, out message))
+            {
+                return ComposedEditResult.Refuse(code ?? ToolEnvelope.InvalidArgument, message);
+            }
+
+            ModelFindSurfaceDistances.SurfaceTree tree =
+                ModelFindSurfaceDistances.SurfaceTree.Of(model, surface);
+            if (tree == null)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.NotApplicable,
+                    ModelFindSurfaceDistances.SurfaceMaterialIndicesName
+                        + " の材質に面積のある面が1つも無い。");
+            }
+
+            double reach = limit.HasValue ? limit.Value : double.PositiveInfinity;
+            List<KeyValuePair<IPXVertex, V3>> moves = new List<KeyValuePair<IPXVertex, V3>>();
+            foreach (IPXVertex vertex in picked)
+            {
+                ModelFindSurfaceDistances.Hit hit = tree.Nearest(
+                    ModelFindSurfaceDistances.Vec.Of(vertex.Position), reach);
+                if (hit == null)
+                {
+                    continue;
+                }
+
+                ModelFindSurfaceDistances.Vec moved = hit.Point + (hit.Front * offset);
+                moves.Add(new KeyValuePair<IPXVertex, V3>(
+                    vertex, new V3((float)moved.X, (float)moved.Y, (float)moved.Z)));
+            }
+
+            foreach (KeyValuePair<IPXVertex, V3> move in moves)
+            {
+                move.Key.Position = move.Value;
+            }
+
+            return Answer(moves.Count, 0, 0, None(model), new[] { ElementKinds.Vertex });
         }
 
         private static ComposedEditResult Aligned(

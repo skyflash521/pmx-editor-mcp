@@ -197,6 +197,135 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
+        [Fact]
+        public void ProjectingMovesTheVerticesOntoTheNearestPointOfTheSurface()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+            Vertex(-0.4f, -0.3f, 0.2f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Project(
+                ComposedEditFixture.Given("indices", new object[] { 4, 5 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 })));
+
+            Assert.Equal(2, value["changed"]);
+            AssertAt(0.2f, 0f, 0.1f, _fixture.Model.Vertex[4]);
+            AssertAt(-0.4f, 0f, 0.2f, _fixture.Model.Vertex[5]);
+        }
+
+        [Fact]
+        public void TheOffsetIsMeasuredAlongTheFrontOfTheSurfaceFromBothSides()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+            Vertex(-0.4f, -0.3f, 0.2f);
+
+            Project(
+                ComposedEditFixture.Given("indices", new object[] { 4, 5 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("surfaceOffset", 0.01));
+
+            AssertAt(0.2f, 0.01f, 0.1f, _fixture.Model.Vertex[4]);
+            AssertAt(-0.4f, 0.01f, 0.2f, _fixture.Model.Vertex[5]);
+        }
+
+        [Theory]
+        [InlineData(2f, 0.25f)]
+        [InlineData(0f, -0.25f)]
+        public void TheOffsetDoesNotDependOnTheLengthOfTheNormalsOfTheSurface(
+            float normalLength, float expectedHeight)
+        {
+            Floor(new V3(0f, normalLength, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+
+            Project(
+                ComposedEditFixture.Given("indices", new object[] { 4 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("surfaceOffset", 0.25));
+
+            AssertAt(0.2f, expectedHeight, 0.1f, _fixture.Model.Vertex[4]);
+        }
+
+        [Fact]
+        public void ANegativeOffsetSinksTheVerticesBehindTheSurface()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+
+            Project(
+                ComposedEditFixture.Given("indices", new object[] { 4 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("surfaceOffset", -0.02));
+
+            AssertAt(0.2f, -0.02f, 0.1f, _fixture.Model.Vertex[4]);
+        }
+
+        [Fact]
+        public void VerticesFartherThanTheDistanceLimitStayWhereTheyAre()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+            Vertex(0.2f, 5f, 0.1f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Project(
+                ComposedEditFixture.Given("indices", new object[] { 4, 5 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("distanceLimit", 1.0)));
+
+            Assert.Equal(1, value["changed"]);
+            AssertAt(0.2f, 0f, 0.1f, _fixture.Model.Vertex[4]);
+            AssertAt(0.2f, 5f, 0.1f, _fixture.Model.Vertex[5]);
+        }
+
+        [Fact]
+        public void ProjectingWithoutTheSurfaceMaterialsIsRefused()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+
+            IDictionary<string, object> envelope = Project(
+                ComposedEditFixture.Given("indices", new object[] { 4 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Equal(0.5f, _fixture.Model.Vertex[4].Position.Y);
+        }
+
+        [Fact]
+        public void TheSurfaceMaterialsArePassedOnlyToProjecting()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+
+            IDictionary<string, object> envelope = _fixture.Call(
+                ModelEditVertices.ToolName,
+                ComposedEditFixture.Arguments(
+                    ComposedEditFixture.Given("operation", ModelEditVertices.Align),
+                    ComposedEditFixture.Given("indices", new object[] { 4 }),
+                    ComposedEditFixture.Given("axis", "y"),
+                    ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 })));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        private IDictionary<string, object> Project(params KeyValuePair<string, object>[] given)
+        {
+            List<KeyValuePair<string, object>> all = new List<KeyValuePair<string, object>>
+            {
+                ComposedEditFixture.Given("operation", ModelEditVertices.ProjectOntoSurface),
+            };
+            all.AddRange(given);
+
+            return _fixture.Call(
+                ModelEditVertices.ToolName, ComposedEditFixture.Arguments(all.ToArray()));
+        }
+
+        private static void AssertAt(float x, float y, float z, IPXVertex given)
+        {
+            Assert.Equal(x, given.Position.X, 5);
+            Assert.Equal(y, given.Position.Y, 5);
+            Assert.Equal(z, given.Position.Z, 5);
+        }
+
         private void Floor(V3 normal)
         {
             IPXVertex[] corners =

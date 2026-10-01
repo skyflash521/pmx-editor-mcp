@@ -202,7 +202,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        private static bool TryLimit(McpMethodContext context, out float? limit, out string message)
+        internal static bool TryLimit(McpMethodContext context, out float? limit, out string message)
         {
             limit = null;
             message = null;
@@ -242,17 +242,20 @@ namespace PmxEditorMcp
             public Hit Hit { get; }
         }
 
-        private sealed class Hit
+        internal sealed class Hit
         {
-            public Hit(Vec point, double signed)
+            public Hit(Vec point, double signed, Vec front)
             {
                 Point = point;
                 Signed = signed;
+                Front = front;
             }
 
             public Vec Point { get; }
 
             public double Signed { get; }
+
+            public Vec Front { get; }
         }
 
         internal struct Vec
@@ -476,7 +479,7 @@ namespace PmxEditorMcp
             }
         }
 
-        private sealed class SurfaceTree
+        internal sealed class SurfaceTree
         {
             private const int LeafSize = 4;
 
@@ -553,8 +556,12 @@ namespace PmxEditorMcp
                 }
 
                 double distance = Math.Sqrt(best);
+                double span = front.Length;
 
-                return new Hit(closest, (point - closest).Dot(front) < 0 ? -distance : distance);
+                return new Hit(
+                    closest,
+                    (point - closest).Dot(front) < 0 ? -distance : distance,
+                    span > 0 ? front * (1.0 / span) : front);
             }
 
             private void Search(Vec point, ref double best, ref Vec closest, ref Vec front, ref bool found)
