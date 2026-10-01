@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
 using Xunit;
@@ -422,6 +423,131 @@ namespace PmxEditorMcp.Tests
                     ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 })));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void ByNormalTheInsideOfAClosedSurfaceWithInwardNormalsIsTheFront()
+        {
+            Cube(true);
+            Vertex(0.5f, 0.1f, 0.2f);
+            Vertex(3f, 0.1f, 0.2f);
+
+            IDictionary<string, object> value = FindBy("normal", 8, 9);
+
+            Assert.Equal(1, value["frontCount"]);
+            Assert.Equal(1, value["backCount"]);
+            Assert.Equal(-2f, (float)value["minDistance"], 5);
+            Assert.Equal(9, value["minVertex"]);
+            Assert.Equal(0.5f, (float)value["maxDistance"], 5);
+            Assert.Equal(8, value["maxVertex"]);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ByRayParityTheInsideOfAClosedSurfaceIsTheBackWhicheverWayTheNormalsPoint(
+            bool inward)
+        {
+            Cube(inward);
+            Vertex(0.5f, 0.1f, 0.2f);
+            Vertex(3f, 0.1f, 0.2f);
+
+            IDictionary<string, object> value = FindBy("rayParity", 8, 9);
+
+            Assert.Equal(1, value["frontCount"]);
+            Assert.Equal(1, value["backCount"]);
+            Assert.Equal(-0.5f, (float)value["minDistance"], 5);
+            Assert.Equal(8, value["minVertex"]);
+            Assert.Equal(2f, (float)value["maxDistance"], 5);
+            Assert.Equal(9, value["maxVertex"]);
+        }
+
+        [Fact]
+        public void ByNormalAnOpenSurfaceWithDownwardNormalsHasItsUpperSideAsTheBack()
+        {
+            Floor(new V3(0f, -1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+            Vertex(0.2f, -0.3f, 0.1f);
+
+            IDictionary<string, object> value = FindBy("normal", 4, 5);
+
+            Assert.Equal(-0.5f, (float)value["minDistance"], 5);
+            Assert.Equal(4, value["minVertex"]);
+            Assert.Equal(0.3f, (float)value["maxDistance"], 5);
+            Assert.Equal(5, value["maxVertex"]);
+        }
+
+        [Fact]
+        public void ByRayParityAnOpenSurfaceHasItsSideReachedByTwoOfTheThreeRaysAsTheBack()
+        {
+            Floor(new V3(0f, -1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+            Vertex(0.2f, -0.3f, 0.1f);
+
+            IDictionary<string, object> value = FindBy("rayParity", 4, 5);
+
+            Assert.Equal(-0.3f, (float)value["minDistance"], 5);
+            Assert.Equal(5, value["minVertex"]);
+            Assert.Equal(0.5f, (float)value["maxDistance"], 5);
+            Assert.Equal(4, value["maxVertex"]);
+        }
+
+        [Theory]
+        [InlineData("inside")]
+        [InlineData("")]
+        [InlineData(1.0)]
+        public void ASideRuleThatIsNotOneOfTheTwoIsRefused(object given)
+        {
+            Cube(false);
+            Vertex(0.5f, 0.1f, 0.2f);
+
+            IDictionary<string, object> found = FindBy("rayParity", 8);
+            IDictionary<string, object> envelope = Find(
+                ComposedEditFixture.Given("indices", new object[] { 8 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("sideBy", given));
+
+            Assert.Equal(1, found["count"]);
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        private IDictionary<string, object> FindBy(string sideBy, params int[] indices)
+        {
+            return ComposedEditFixture.Value(Find(
+                ComposedEditFixture.Given("indices", indices.Cast<object>().ToArray()),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("sideBy", sideBy)));
+        }
+
+        private void Cube(bool inward)
+        {
+            IPXVertex[] corners = new IPXVertex[8];
+            for (int at = 0; at < 8; at++)
+            {
+                float x = (at & 1) == 0 ? -1f : 1f;
+                float y = (at & 2) == 0 ? -1f : 1f;
+                float z = (at & 4) == 0 ? -1f : 1f;
+                corners[at] = Vertex(x, y, z);
+                corners[at].Normal = inward ? new V3(-x, -y, -z) : new V3(x, y, z);
+            }
+
+            int[][] quads =
+            {
+                new[] { 0, 2, 6, 4 },
+                new[] { 1, 3, 7, 5 },
+                new[] { 0, 1, 5, 4 },
+                new[] { 2, 3, 7, 6 },
+                new[] { 0, 1, 3, 2 },
+                new[] { 4, 5, 7, 6 },
+            };
+            FakeMaterial cube = new FakeMaterial("箱");
+            foreach (int[] quad in quads)
+            {
+                cube.Faces.Add(new FakeFace(corners[quad[0]], corners[quad[1]], corners[quad[2]]));
+                cube.Faces.Add(new FakeFace(corners[quad[0]], corners[quad[2]], corners[quad[3]]));
+            }
+
+            _fixture.Model.Material.Add(cube);
         }
 
         private IDictionary<string, object> Project(params KeyValuePair<string, object>[] given)
