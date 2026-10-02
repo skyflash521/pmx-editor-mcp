@@ -41,6 +41,10 @@ namespace PmxEditorMcp
 
         public const string AverageNear = "averageNear";
 
+        public const string RampToward = "rampToward";
+
+        public const string TargetIndicesName = "targetIndices";
+
         public const string FromBoneName = "fromBone";
 
         public const string ToBoneName = "toBone";
@@ -103,6 +107,7 @@ namespace PmxEditorMcp
                     FromSurface,
                     SmoothSpatial,
                     AverageNear,
+                    RampToward,
                 };
             }
         }
@@ -141,6 +146,7 @@ namespace PmxEditorMcp
                 RadiusName,
                 IterationsName,
                 ThresholdName,
+                TargetIndicesName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -223,6 +229,20 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
+            IList<int> targets;
+            if (!ComposedInput.TryIndices(
+                    context,
+                    TargetIndicesName,
+                    operation,
+                    new[] { RampToward },
+                    model.Vertex.Count,
+                    out targets,
+                    out code,
+                    out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
             SurfaceInput surface;
             if (!TrySurface(context, model, operation, out surface, out code, out message))
             {
@@ -233,6 +253,13 @@ namespace PmxEditorMcp
             if (string.Equals(operation, ReplaceBone, StringComparison.Ordinal))
             {
                 picked = Holding(picked, model.Bone[fromBone]);
+            }
+
+            IList<KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>>> ramp = null;
+            if (string.Equals(operation, RampToward, StringComparison.Ordinal))
+            {
+                ramp = RampPlan(picked, targets.Select(at => model.Vertex[at]).ToList(), radius);
+                picked = ramp.Select(one => one.Key).ToList();
             }
 
             IList<IList<KeyValuePair<IPXBone, float>>> before =
@@ -275,6 +302,14 @@ namespace PmxEditorMcp
                     foreach (IList<IPXVertex> group in VertexClusters.Near(picked, threshold))
                     {
                         Aim(group, Averaged(group));
+                    }
+
+                    break;
+
+                case RampToward:
+                    foreach (KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>> one in ramp)
+                    {
+                        VertexWeights.Write(one.Key, one.Value);
                     }
 
                     break;
@@ -327,7 +362,7 @@ namespace PmxEditorMcp
                     context,
                     RadiusName,
                     operation,
-                    new[] { SmoothSpatial },
+                    new[] { SmoothSpatial, RampToward },
                     0f,
                     ComposedInput.NoCeiling,
                     out radius,
@@ -356,7 +391,9 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            if (string.Equals(operation, SmoothSpatial, StringComparison.Ordinal) && !(radius > 0f))
+            if ((string.Equals(operation, SmoothSpatial, StringComparison.Ordinal)
+                    || string.Equals(operation, RampToward, StringComparison.Ordinal))
+                && !(radius > 0f))
             {
                 code = ToolEnvelope.InvalidArgument;
                 message = RadiusName + " は 0 より大きくなければならない。";
@@ -933,6 +970,55 @@ namespace PmxEditorMcp
                     VertexWeights.Write(picked[at], current[at]);
                 }
             }
+        }
+
+        private static IList<KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>>> RampPlan(
+            IList<IPXVertex> picked, IList<IPXVertex> targets, float radius)
+        {
+            IList<SurfaceGeometry.Vec> goals = targets
+                .Where(target => Vectors.Finite(target.Position))
+                .Select(target => SurfaceGeometry.Vec.Of(target.Position))
+                .ToList();
+            IList<KeyValuePair<IPXBone, float>>[] reached = targets
+                .Where(target => Vectors.Finite(target.Position))
+                .Select(VertexWeights.Read)
+                .ToArray();
+            List<KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>>> made =
+                new List<KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>>>();
+            foreach (IPXVertex vertex in picked)
+            {
+                if (!Vectors.Finite(vertex.Position))
+                {
+                    continue;
+                }
+
+                SurfaceGeometry.Vec here = SurfaceGeometry.Vec.Of(vertex.Position);
+                int nearest = -1;
+                double best = double.PositiveInfinity;
+                for (int goal = 0; goal < goals.Count; goal++)
+                {
+                    double apart = (goals[goal] - here).Length;
+                    if (apart < best)
+                    {
+                        best = apart;
+                        nearest = goal;
+                    }
+                }
+
+                double ratio = nearest < 0 ? 0d : 1d - (best / radius);
+                if (!(ratio > 0d))
+                {
+                    continue;
+                }
+
+                made.Add(new KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>>(
+                    vertex,
+                    VertexWeights.Settled(
+                        Weighted(VertexWeights.Read(vertex), (float)(1d - ratio))
+                            .Concat(Weighted(reached[nearest], (float)ratio)))));
+            }
+
+            return made;
         }
 
         private static IEnumerable<KeyValuePair<IPXBone, float>> Weighted(

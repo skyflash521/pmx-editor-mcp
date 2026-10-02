@@ -6852,6 +6852,18 @@
               "bounds": {
                 "minimum": 0
               }
+            },
+            {
+              "name": "targetIndices",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
             }
           ],
           "choices": [

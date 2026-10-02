@@ -88,6 +88,23 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AVertexWhoseRatioIsZeroKeepsWeightsThatDoNotAddUpToOne()
+        {
+            IList<IPXBone> bones = Bones("根", "副", "先");
+            Rooted(0f, 0f, 0f, bones[2]);
+            FakeVertex outside = Rooted(3f, 0f, 0f, bones[0]);
+            Weigh(outside, bones[0], 0.3f, bones[1], 0.2f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(
+                Ramp(
+                    RampRadius,
+                    new object[] { 0 },
+                    ComposedEditFixture.Given("indices", new object[] { 1 })));
+
+            Assert.Equal(0, value[ModelEditWeights.ChangedName]);
+        }
+
+        [Fact]
         public void AMiddleVertexTakesTheBlendOfItsOwnWeightsAndTheTargetWeights()
         {
             IList<IPXBone> bones = Bones("根", "副", "先", "先副");

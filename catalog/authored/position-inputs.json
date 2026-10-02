@@ -124,6 +124,7 @@
     {"tool": "model_edit_weights", "input": "fromBone", "of": "bone", "with": {"operation": "replaceBone", "indices": [0], "toBone": 1}},
     {"tool": "model_edit_weights", "input": "toBone", "of": "bone", "with": {"operation": "replaceBone", "indices": [0], "fromBone": 1}},
     {"tool": "model_edit_weights", "input": "excludeBones[]", "of": "bone", "with": {"operation": "fromSurface", "indices": [0], "surfaceMaterialIndices": [0]}},
+    {"tool": "model_edit_weights", "input": "targetIndices[]", "of": "vertex", "with": {"operation": "rampToward", "indices": [0], "radius": 1}},
     {"tool": "model_insert_elements", "input": "parentIndices[]", "of": "material", "with": {"kind": "face", "operation": "new"}},
     {"tool": "model_insert_elements", "input": "parentRange", "of": "material", "form": "range", "with": {"kind": "face", "operation": "new"}},
     {"tool": "model_mirror_elements", "input": "targets[].indices[]", "of": "bone", "with": {"operation": "copyTargets", "targets": [{"kind": "bone"}]}},
