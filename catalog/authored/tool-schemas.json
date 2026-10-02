@@ -6639,6 +6639,55 @@
               "bounds": {
                 "minimum": 0
               }
+            },
+            {
+              "name": "from",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "to",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "across",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "knots",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "s",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "scale",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  }
+                ]
+              }
             }
           ],
           "choices": [

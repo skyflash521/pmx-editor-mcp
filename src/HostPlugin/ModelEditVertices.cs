@@ -37,6 +37,8 @@ namespace PmxEditorMcp
 
         public const string SweepBand = "sweepBand";
 
+        public const string LateralScale = "lateralScale";
+
         public const string GuideIndicesName = "guideIndices";
 
         public const string RootIndicesName = "rootIndices";
@@ -50,6 +52,18 @@ namespace PmxEditorMcp
         public const string OffsetDistanceName = "t";
 
         public const string OffsetMoveName = "move";
+
+        public const string FromName = "from";
+
+        public const string ToName = "to";
+
+        public const string AcrossName = "across";
+
+        public const string KnotsName = "knots";
+
+        public const string KnotPositionName = "s";
+
+        public const string KnotScaleName = "scale";
 
         public const string ModeName = "mode";
 
@@ -114,12 +128,16 @@ namespace PmxEditorMcp
                 ModelMorphFromMoved.BasePmxHandleName, new[] { FollowGuide, MirrorDisplacement }),
             new KeyValuePair<string, string[]>(RootIndicesName, new[] { SweepBand }),
             new KeyValuePair<string, string[]>(OffsetsName, new[] { SweepBand }),
+            new KeyValuePair<string, string[]>(FromName, new[] { LateralScale }),
+            new KeyValuePair<string, string[]>(ToName, new[] { LateralScale }),
+            new KeyValuePair<string, string[]>(AcrossName, new[] { LateralScale }),
+            new KeyValuePair<string, string[]>(KnotsName, new[] { LateralScale }),
         };
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
         {
-            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface, PushOutOfSurface, FollowGuide, MirrorDisplacement, SweepBand }; }
+            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface, PushOutOfSurface, FollowGuide, MirrorDisplacement, SweepBand, LateralScale }; }
         }
 
         public static IList<string> Modes
@@ -168,6 +186,10 @@ namespace PmxEditorMcp
                 LayerToleranceName,
                 OffsetsName,
                 FixedEndsName,
+                FromName,
+                ToName,
+                AcrossName,
+                KnotsName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -278,6 +300,11 @@ namespace PmxEditorMcp
             if (string.Equals(operation, SweepBand, StringComparison.Ordinal))
             {
                 return Swept(context, model, chosen, tolerance, fixedEnds);
+            }
+
+            if (string.Equals(operation, LateralScale, StringComparison.Ordinal))
+            {
+                return ScaledAcross(context, model, chosen);
             }
 
             if (string.Equals(operation, ProjectOntoSurface, StringComparison.Ordinal))
@@ -754,6 +781,126 @@ namespace PmxEditorMcp
             }
 
             return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex });
+        }
+
+        private static ComposedEditResult ScaledAcross(
+            McpMethodContext context,
+            IPXPmx model,
+            IList<int> chosen)
+        {
+            Vec from;
+            Vec to;
+            Vec across;
+            IList<KeyValuePair<double, double>> knots;
+            LateralScaling scaling;
+            string message;
+            if (!TryPoint(context, FromName, out from, out message)
+                || !TryPoint(context, ToName, out to, out message)
+                || !TryPoint(context, AcrossName, out across, out message)
+                || !TryKnots(context, out knots, out message)
+                || !LateralScaling.TryCreate(from, to, across, knots, out scaling, out message))
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
+            }
+
+            Dictionary<int, V3> made = new Dictionary<int, V3>();
+            foreach (int at in chosen.Distinct())
+            {
+                V3 was = model.Vertex[at].Position;
+                V3 moved = scaling.Scaled(Vec.Of(was)).ToV3();
+                if (float.IsNaN(moved.X) || float.IsInfinity(moved.X)
+                    || float.IsNaN(moved.Y) || float.IsInfinity(moved.Y)
+                    || float.IsNaN(moved.Z) || float.IsInfinity(moved.Z))
+                {
+                    return ComposedEditResult.Refuse(
+                        ToolEnvelope.InvalidArgument,
+                        KnotsName + " の倍率を掛けると、単精度で持てない位置になる頂点がある。");
+                }
+
+                if (moved.X != was.X || moved.Y != was.Y || moved.Z != was.Z)
+                {
+                    made[at] = moved;
+                }
+            }
+
+            foreach (KeyValuePair<int, V3> each in made)
+            {
+                model.Vertex[each.Key].Position = each.Value;
+            }
+
+            return Answer(made.Count, 0, 0, None(model), new[] { ElementKinds.Vertex });
+        }
+
+        private static bool TryPoint(
+            McpMethodContext context, string name, out Vec point, out string message)
+        {
+            point = default(Vec);
+            message = name + " は、3つの有限の数の並びでなければならない。";
+            object given;
+            object[] parts;
+            float[] axes = new float[3];
+            if (!context.Params.TryGetValue(name, out given)
+                || (parts = given as object[]) == null
+                || parts.Length != axes.Length)
+            {
+                return false;
+            }
+
+            for (int at = 0; at < axes.Length; at++)
+            {
+                if (!ValueInput.TrySingle(parts[at], out axes[at]))
+                {
+                    return false;
+                }
+            }
+
+            message = null;
+            point = new Vec(axes[0], axes[1], axes[2]);
+
+            return true;
+        }
+
+        private static bool TryKnots(
+            McpMethodContext context,
+            out IList<KeyValuePair<double, double>> knots,
+            out string message)
+        {
+            knots = null;
+            message = KnotsName + " は、" + KnotPositionName + "(位置)の昇順に、"
+                + KnotScaleName + "(有限の数の倍率)との組を1つ以上並べたものでなければならない。";
+            object given;
+            context.Params.TryGetValue(KnotsName, out given);
+            object[] items = given as object[];
+            if (items == null || items.Length == 0)
+            {
+                return false;
+            }
+
+            List<KeyValuePair<double, double>> made = new List<KeyValuePair<double, double>>();
+            foreach (object item in items)
+            {
+                IDictionary<string, object> held = item as IDictionary<string, object>;
+                object position;
+                object scale;
+                float along;
+                float by;
+                if (held == null
+                    || !held.TryGetValue(KnotPositionName, out position)
+                    || !held.TryGetValue(KnotScaleName, out scale)
+                    || !ValueInput.TrySingle(position, out along)
+                    || !ValueInput.TrySingle(scale, out by)
+                    || (made.Count > 0 && !(along > made[made.Count - 1].Key)))
+                {
+                    return false;
+                }
+
+                made.Add(new KeyValuePair<double, double>(along, by));
+            }
+
+            message = null;
+            knots = made;
+
+            return true;
         }
 
         private static bool TryOffsets(
