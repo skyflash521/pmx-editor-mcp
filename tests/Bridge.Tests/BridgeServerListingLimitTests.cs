@@ -112,6 +112,14 @@ namespace PmxEditorMcp.Bridge.Tests
                         "{\"vertices\":[0],\"spread\":0}".Length)
                 },
                 {
+                    "model_find_exposed_vertices",
+                    new Listing(
+                        new[] { "count", "maxDepth", "maxVertex" },
+                        "0".Length + "0".Length + "0".Length,
+                        "vertices",
+                        "{\"vertex\":0,\"depth\":0}".Length)
+                },
+                {
                     "view_pick_screen_point",
                     new Listing(
                         new[] { "count" },

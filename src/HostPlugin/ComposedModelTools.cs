@@ -51,6 +51,7 @@ namespace PmxEditorMcp
             ModelCompareShape.AddTo(methods, edit);
             ModelFindParts.AddTo(methods, edit);
             ModelFindCoincidentVertices.AddTo(methods, edit);
+            ModelFindExposedVertices.AddTo(methods, edit);
             ModelInsertElements.AddTo(methods, edit, builder);
             ModelDeleteElements.AddTo(methods, edit);
         }
