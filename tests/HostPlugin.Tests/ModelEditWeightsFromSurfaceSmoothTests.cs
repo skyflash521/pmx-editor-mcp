@@ -349,10 +349,10 @@ namespace PmxEditorMcp.Tests
         private IDictionary<string, object> Picking(
             FakeVertex first, FakeVertex second, params KeyValuePair<string, object>[] given)
         {
-            List<object> picked = new List<object> { _fixture.Model.Vertex.IndexOf(first) };
+            List<object> picked = new List<object> { _fixture.Model.Vertex.IndexOf(_fixture.Now(first)) };
             if (second != null)
             {
-                picked.Add(_fixture.Model.Vertex.IndexOf(second));
+                picked.Add(_fixture.Model.Vertex.IndexOf(_fixture.Now(second)));
             }
 
             List<KeyValuePair<string, object>> all = new List<KeyValuePair<string, object>>
@@ -379,8 +379,8 @@ namespace PmxEditorMcp.Tests
                     "indices",
                     new object[]
                     {
-                        _fixture.Model.Vertex.IndexOf(first),
-                        _fixture.Model.Vertex.IndexOf(second),
+                        _fixture.Model.Vertex.IndexOf(_fixture.Now(first)),
+                        _fixture.Model.Vertex.IndexOf(_fixture.Now(second)),
                     }),
             };
             if (operation == SmoothSpatial)

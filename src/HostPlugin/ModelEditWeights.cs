@@ -73,6 +73,10 @@ namespace PmxEditorMcp
 
         public const string FalloffFadeName = "fade";
 
+        public const string SourceSmoothRadiusName = "sourceSmoothRadius";
+
+        public const string FalloffSmoothRadiusName = "falloffSmoothRadius";
+
         public const string RadiusName = "radius";
 
         public const string IterationsName = "iterations";
@@ -143,6 +147,8 @@ namespace PmxEditorMcp
                 MaxBonesName,
                 MinWeightName,
                 FalloffName,
+                SourceSmoothRadiusName,
+                FalloffSmoothRadiusName,
                 RadiusName,
                 IterationsName,
                 ThresholdName,
@@ -421,6 +427,21 @@ namespace PmxEditorMcp
             public double Near { get; set; }
 
             public double Fade { get; set; }
+
+            public float SourceSmooth { get; set; }
+
+            public float FalloffSmooth { get; set; }
+        }
+
+        private sealed class Plan
+        {
+            public IPXVertex Vertex { get; set; }
+
+            public SurfaceGeometry.Hit Hit { get; set; }
+
+            public double Fade { get; set; }
+
+            public IList<KeyValuePair<IPXBone, float>> Copied { get; set; }
         }
 
         private static bool TrySurface(
@@ -442,6 +463,8 @@ namespace PmxEditorMcp
                 MaxBonesName,
                 MinWeightName,
                 FalloffName,
+                SourceSmoothRadiusName,
+                FalloffSmoothRadiusName,
             };
             if (!string.Equals(operation, FromSurface, StringComparison.Ordinal))
             {
@@ -461,6 +484,8 @@ namespace PmxEditorMcp
             string projection = ProjectionNearest;
             int maxBones = DefaultMaxBones;
             float minWeight = 0f;
+            float sourceSmooth = 0f;
+            float falloffSmooth = 0f;
             ISet<IPXBone> excluded = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
             input = new SurfaceInput();
             if (!ModelFindSurfaceDistances.TryMaterials(
@@ -499,6 +524,8 @@ namespace PmxEditorMcp
                         out minWeight,
                         out code,
                         out message))
+                || !TrySmoothRadius(context, operation, SourceSmoothRadiusName, out sourceSmooth, out code, out message)
+                || !TrySmoothRadius(context, operation, FalloffSmoothRadiusName, out falloffSmooth, out code, out message)
                 || !TryExcluded(context, model, excluded, out code, out message)
                 || !TryFalloff(context, input, out message))
             {
@@ -525,8 +552,52 @@ namespace PmxEditorMcp
             input.Excluded = excluded;
             input.MaxBones = maxBones;
             input.MinWeight = minWeight;
+            input.SourceSmooth = sourceSmooth;
+            input.FalloffSmooth = falloffSmooth;
 
             return true;
+        }
+
+        private static bool TrySmoothRadius(
+            McpMethodContext context,
+            string operation,
+            string name,
+            out float radius,
+            out string code,
+            out string message)
+        {
+            radius = 0f;
+            code = null;
+            message = null;
+            if (!context.Params.ContainsKey(name))
+            {
+                return true;
+            }
+
+            if (!ComposedInput.TryFloat(
+                    context,
+                    name,
+                    operation,
+                    new[] { FromSurface },
+                    0f,
+                    ComposedInput.NoCeiling,
+                    out radius,
+                    out code,
+                    out message))
+            {
+                return false;
+            }
+
+            if (radius > 0f)
+            {
+                return true;
+            }
+
+            radius = 0f;
+            code = ToolEnvelope.InvalidArgument;
+            message = name + " は 0 より大きくなければならない。";
+
+            return false;
         }
 
         private static bool TryMaxBones(
@@ -651,40 +722,142 @@ namespace PmxEditorMcp
 
         private static void Surfaced(IEnumerable<IPXVertex> picked, SurfaceInput input)
         {
+            bool smooths = input.SourceSmooth > 0f || (input.FalloffSmooth > 0f && input.Fades);
+            List<Plan> plans = new List<Plan>();
             foreach (IPXVertex vertex in picked)
             {
-                if (!Vectors.Finite(vertex.Position))
+                Plan plan = Planned(vertex, input);
+                if (plan == null)
                 {
                     continue;
                 }
 
-                SurfaceGeometry.Vec at = SurfaceGeometry.Vec.Of(vertex.Position);
-                SurfaceGeometry.Hit hit = Landing(input, at, vertex.Normal);
-                if (hit == null || hit.Corners == null)
+                if (smooths)
+                {
+                    plans.Add(plan);
+                }
+                else
+                {
+                    Applied(plan);
+                }
+            }
+
+            if (input.SourceSmooth > 0f)
+            {
+                SmoothedCopies(plans, input);
+            }
+
+            if (input.FalloffSmooth > 0f && input.Fades)
+            {
+                SmoothedFades(plans, input.FalloffSmooth);
+            }
+
+            foreach (Plan plan in plans)
+            {
+                Applied(plan);
+            }
+        }
+
+        private static Plan Planned(IPXVertex vertex, SurfaceInput input)
+        {
+            if (!Vectors.Finite(vertex.Position))
+            {
+                return null;
+            }
+
+            SurfaceGeometry.Vec at = SurfaceGeometry.Vec.Of(vertex.Position);
+            SurfaceGeometry.Hit hit = Landing(input, at, vertex.Normal);
+            if (hit == null || hit.Corners == null)
+            {
+                return null;
+            }
+
+            return new Plan
+            {
+                Vertex = vertex,
+                Hit = hit,
+                Fade = Faded(input, (hit.Point - at).Length),
+                Copied = Copied(hit, input),
+            };
+        }
+
+        private static void Applied(Plan plan)
+        {
+            IPXVertex vertex = plan.Vertex;
+            double fade = plan.Fade;
+            IList<KeyValuePair<IPXBone, float>> copied = plan.Copied;
+            if (fade >= 1d || copied.Count == 0)
+            {
+                return;
+            }
+
+            if (fade == 0d && TrySdef(vertex, plan.Hit, copied))
+            {
+                return;
+            }
+
+            vertex.SDEF = false;
+            VertexWeights.Write(
+                vertex,
+                fade == 0d
+                    ? copied
+                    : VertexWeights.Settled(
+                        Weighted(copied, (float)(1d - fade))
+                            .Concat(Weighted(VertexWeights.Read(vertex), (float)fade))));
+        }
+
+        private static void SmoothedCopies(IList<Plan> plans, SurfaceInput input)
+        {
+            IList<Plan> held = plans.Where(plan => plan.Copied.Count > 0).ToList();
+            IList<int>[] near;
+            double[][] pull;
+            Gaussian(held.Select(plan => plan.Vertex).ToList(), input.SourceSmooth, out near, out pull);
+            IList<KeyValuePair<IPXBone, float>>[] next = held.Select(plan => plan.Copied).ToArray();
+            for (int at = 0; at < held.Count; at++)
+            {
+                if (near[at].Count == 0)
                 {
                     continue;
                 }
 
-                double fade = Faded(input, (hit.Point - at).Length);
-                IList<KeyValuePair<IPXBone, float>> copied = Copied(hit, input);
-                if (fade >= 1d || copied.Count == 0)
+                List<KeyValuePair<IPXBone, float>> mixed =
+                    new List<KeyValuePair<IPXBone, float>>(held[at].Copied);
+                for (int slot = 0; slot < near[at].Count; slot++)
                 {
-                    continue;
+                    mixed.AddRange(Weighted(held[near[at][slot]].Copied, (float)pull[at][slot]));
                 }
 
-                if (fade == 0d && TrySdef(vertex, hit, copied))
+                next[at] = Limited(mixed, input);
+            }
+
+            for (int at = 0; at < held.Count; at++)
+            {
+                held[at].Copied = next[at];
+            }
+        }
+
+        private static void SmoothedFades(IList<Plan> plans, float radius)
+        {
+            IList<int>[] near;
+            double[][] pull;
+            Gaussian(plans.Select(plan => plan.Vertex).ToList(), radius, out near, out pull);
+            double[] next = plans.Select(plan => plan.Fade).ToArray();
+            for (int at = 0; at < plans.Count; at++)
+            {
+                double sum = plans[at].Fade;
+                double whole = 1d;
+                for (int slot = 0; slot < near[at].Count; slot++)
                 {
-                    continue;
+                    sum += pull[at][slot] * plans[near[at][slot]].Fade;
+                    whole += pull[at][slot];
                 }
 
-                vertex.SDEF = false;
-                VertexWeights.Write(
-                    vertex,
-                    fade == 0d
-                        ? copied
-                        : VertexWeights.Settled(
-                            Weighted(copied, (float)(1d - fade))
-                                .Concat(Weighted(VertexWeights.Read(vertex), (float)fade))));
+                next[at] = sum / whole;
+            }
+
+            for (int at = 0; at < plans.Count; at++)
+            {
+                plans[at].Fade = next[at];
             }
         }
 
@@ -751,6 +924,12 @@ namespace PmxEditorMcp
                 }
             }
 
+            return Limited(mixed, input);
+        }
+
+        private static IList<KeyValuePair<IPXBone, float>> Limited(
+            IEnumerable<KeyValuePair<IPXBone, float>> mixed, SurfaceInput input)
+        {
             IList<KeyValuePair<IPXBone, float>> settled = VertexWeights.Settled(mixed);
             settled = VertexWeights.Settled(settled.Take(input.MaxBones).ToList());
 
@@ -919,12 +1098,13 @@ namespace PmxEditorMcp
             }
         }
 
-        private static void SmoothedInSpace(IList<IPXVertex> picked, float radius, int iterations)
+        private static void Gaussian(
+            IList<IPXVertex> picked, float radius, out IList<int>[] near, out double[][] pull)
         {
-            IList<int>[] near = SurfaceGeometry.Within(
+            near = SurfaceGeometry.Within(
                 picked.Select(vertex => SurfaceGeometry.Vec.Of(vertex.Position)).ToList(), radius);
             double variance = radius / 2d * (radius / 2d);
-            double[][] pull = new double[picked.Count][];
+            pull = new double[picked.Count][];
             for (int at = 0; at < picked.Count; at++)
             {
                 SurfaceGeometry.Vec here = SurfaceGeometry.Vec.Of(picked[at].Position);
@@ -937,7 +1117,13 @@ namespace PmxEditorMcp
                     })
                     .ToArray();
             }
+        }
 
+        private static void SmoothedInSpace(IList<IPXVertex> picked, float radius, int iterations)
+        {
+            IList<int>[] near;
+            double[][] pull;
+            Gaussian(picked, radius, out near, out pull);
             IList<KeyValuePair<IPXBone, float>>[] current =
                 picked.Select(VertexWeights.Read).ToArray();
             for (int round = 0; round < iterations; round++)

@@ -6830,6 +6830,18 @@
               ]
             },
             {
+              "name": "sourceSmoothRadius",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "falloffSmoothRadius",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
               "name": "radius",
               "origin": "hostInput",
               "shape": "number",
