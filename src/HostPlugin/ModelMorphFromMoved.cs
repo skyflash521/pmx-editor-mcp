@@ -61,7 +61,9 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
-            string differs = Differs(based, model);
+            string differs = context.Params.ContainsKey(BoneMorphNameName)
+                ? ModelCompareShape.Differs(based, model)
+                : Differs(based, model);
             if (differs != null)
             {
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, differs);

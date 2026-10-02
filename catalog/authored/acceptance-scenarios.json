@@ -22553,6 +22553,136 @@
           "expect": {
             "ok": true
           }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_clone_pmx",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "morphBackThirdBasePmx",
+            "path": "",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              1,
+              2
+            ],
+            "values": [
+              {
+                "position": [
+                  0.125,
+                  1.5,
+                  1.5
+                ],
+                "normal": [
+                  1,
+                  0,
+                  0
+                ]
+              },
+              {
+                "normal": [
+                  0,
+                  0,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_morph_from_moved",
+          "arguments": {
+            "basePmxHandle": {
+              "$from": "morphBackThirdBasePmx"
+            },
+            "name": "法線違い_頂点",
+            "boneMorphName": "法線違い_ボーン"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 3
+              },
+              {
+                "path": "offsets",
+                "equals": 1
+              },
+              {
+                "path": "boneAdded",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_morph_offsets",
+          "arguments": {
+            "parentIndices": [
+              3
+            ],
+            "all": true,
+            "fields": [
+              "vertex",
+              "offset"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "total",
+                "equals": 1
+              },
+              {
+                "path": "items.0.vertex",
+                "equals": 1
+              },
+              {
+                "path": "items.0.offset",
+                "equals": [
+                  0,
+                  0,
+                  -1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_release_handle",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "morphBackThirdBasePmx"
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
         }
       ]
     },
