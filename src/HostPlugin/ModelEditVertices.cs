@@ -35,7 +35,21 @@ namespace PmxEditorMcp
 
         public const string MirrorDisplacement = "mirrorDisplacement";
 
+        public const string SweepBand = "sweepBand";
+
         public const string GuideIndicesName = "guideIndices";
+
+        public const string RootIndicesName = "rootIndices";
+
+        public const string LayerToleranceName = "layerTolerance";
+
+        public const string OffsetsName = "offsets";
+
+        public const string FixedEndsName = "fixedEnds";
+
+        public const string OffsetDistanceName = "t";
+
+        public const string OffsetMoveName = "move";
 
         public const string ModeName = "mode";
 
@@ -98,12 +112,14 @@ namespace PmxEditorMcp
             new KeyValuePair<string, string[]>(GuideIndicesName, new[] { FollowGuide }),
             new KeyValuePair<string, string[]>(
                 ModelMorphFromMoved.BasePmxHandleName, new[] { FollowGuide, MirrorDisplacement }),
+            new KeyValuePair<string, string[]>(RootIndicesName, new[] { SweepBand }),
+            new KeyValuePair<string, string[]>(OffsetsName, new[] { SweepBand }),
         };
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
         {
-            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface, PushOutOfSurface, FollowGuide, MirrorDisplacement }; }
+            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface, PushOutOfSurface, FollowGuide, MirrorDisplacement, SweepBand }; }
         }
 
         public static IList<string> Modes
@@ -148,6 +164,10 @@ namespace PmxEditorMcp
                 GuideIndicesName,
                 ModeName,
                 ModelMorphFromMoved.BasePmxHandleName,
+                RootIndicesName,
+                LayerToleranceName,
+                OffsetsName,
+                FixedEndsName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -173,6 +193,8 @@ namespace PmxEditorMcp
             }
 
             float threshold;
+            float tolerance;
+            int fixedEnds = 0;
             string axis;
             string mode;
             if (!ComposedInput.TryFloat(
@@ -185,6 +207,26 @@ namespace PmxEditorMcp
                     out threshold,
                     out code,
                     out message)
+                || !ComposedInput.TryFloat(
+                    context,
+                    LayerToleranceName,
+                    operation,
+                    new[] { SweepBand },
+                    0f,
+                    ComposedInput.NoCeiling,
+                    out tolerance,
+                    out code,
+                    out message)
+                || (context.Params.ContainsKey(FixedEndsName)
+                    && !ComposedInput.TryCount(
+                        context,
+                        FixedEndsName,
+                        operation,
+                        new[] { SweepBand },
+                        0,
+                        out fixedEnds,
+                        out code,
+                        out message))
                 || !ComposedInput.TryChoice(
                     context,
                     AxisName,
@@ -231,6 +273,11 @@ namespace PmxEditorMcp
             if (string.Equals(operation, MirrorDisplacement, StringComparison.Ordinal))
             {
                 return Displaced(context, model, chosen, axis);
+            }
+
+            if (string.Equals(operation, SweepBand, StringComparison.Ordinal))
+            {
+                return Swept(context, model, chosen, tolerance, fixedEnds);
             }
 
             if (string.Equals(operation, ProjectOntoSurface, StringComparison.Ordinal))
@@ -650,6 +697,116 @@ namespace PmxEditorMcp
             }
 
             return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex });
+        }
+
+        private static ComposedEditResult Swept(
+            McpMethodContext context,
+            IPXPmx model,
+            IList<int> chosen,
+            double tolerance,
+            int fixedEnds)
+        {
+            string code;
+            string message;
+            List<int> roots;
+            IList<KeyValuePair<double, Vec>> offsets;
+            if (!ModelFindSurfaceDistances.TryPositions(
+                    context, RootIndicesName, "頂点", model.Vertex.Count, out roots, out code, out message)
+                || !TryOffsets(context, out offsets, out message))
+            {
+                return ComposedEditResult.Refuse(code ?? ToolEnvelope.InvalidArgument, message);
+            }
+
+            int[] band = chosen.Distinct().ToArray();
+            roots = roots.Distinct().ToList();
+            if (roots.Except(band).Any())
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    RootIndicesName + " の頂点は、" + TargetNames.Element.Indices + " に含まれなければならない。");
+            }
+
+            Vec[] spots = ModelCompareShape.Positions(model);
+            double[] reach = BandSweep.Distances(
+                band,
+                roots,
+                SurfaceGeometry.Neighbours(model, Enumerable.Range(0, model.Material.Count)),
+                spots);
+            if (band.Any(at => double.IsInfinity(reach[at])))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    TargetNames.Element.Indices + " の頂点に、面の辺で " + RootIndicesName
+                        + " からたどり着けないものがある。");
+            }
+
+            int changed = 0;
+            foreach (KeyValuePair<int, Vec> each in BandSweep.Place(
+                BandSweep.Layers(band, reach, tolerance), reach, spots, offsets, fixedEnds))
+            {
+                V3 was = model.Vertex[each.Key].Position;
+                V3 made = each.Value.ToV3();
+                if (made.X != was.X || made.Y != was.Y || made.Z != was.Z)
+                {
+                    model.Vertex[each.Key].Position = made;
+                    changed++;
+                }
+            }
+
+            return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex });
+        }
+
+        private static bool TryOffsets(
+            McpMethodContext context,
+            out IList<KeyValuePair<double, Vec>> offsets,
+            out string message)
+        {
+            offsets = null;
+            message = OffsetsName + " は、" + OffsetDistanceName + "(網目に沿った距離)の昇順に、"
+                + OffsetMoveName + "(3つの有限の数の並び)との組を1つ以上並べたものでなければならない。";
+            object given;
+            context.Params.TryGetValue(OffsetsName, out given);
+            object[] items = given as object[];
+            if (items == null || items.Length == 0)
+            {
+                return false;
+            }
+
+            List<KeyValuePair<double, Vec>> made = new List<KeyValuePair<double, Vec>>();
+            foreach (object item in items)
+            {
+                IDictionary<string, object> held = item as IDictionary<string, object>;
+                object distance;
+                object move;
+                float along;
+                object[] parts;
+                if (held == null
+                    || !held.TryGetValue(OffsetDistanceName, out distance)
+                    || !held.TryGetValue(OffsetMoveName, out move)
+                    || !ValueInput.TrySingle(distance, out along)
+                    || (parts = move as object[]) == null
+                    || parts.Length != 3
+                    || (made.Count > 0 && !(along > made[made.Count - 1].Key)))
+                {
+                    return false;
+                }
+
+                float[] axes = new float[parts.Length];
+                for (int at = 0; at < parts.Length; at++)
+                {
+                    if (!ValueInput.TrySingle(parts[at], out axes[at]))
+                    {
+                        return false;
+                    }
+                }
+
+                made.Add(new KeyValuePair<double, Vec>(along, new Vec(axes[0], axes[1], axes[2])));
+            }
+
+            message = null;
+            offsets = made;
+
+            return true;
         }
 
         private static Vec Pulled(Vec at, IList<int> guides, Vec[] before, Vec[] now)

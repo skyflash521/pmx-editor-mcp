@@ -6583,6 +6583,62 @@
               "origin": "hostInput",
               "shape": "number",
               "required": false
+            },
+            {
+              "name": "rootIndices",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "layerTolerance",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "bounds": {
+                "minimum": 0
+              }
+            },
+            {
+              "name": "offsets",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "t",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "move",
+                    "origin": "hostInput",
+                    "required": true,
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "fixedEnds",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false,
+              "default": 0,
+              "bounds": {
+                "minimum": 0
+              }
             }
           ],
           "choices": [
