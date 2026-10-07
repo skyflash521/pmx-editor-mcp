@@ -1228,6 +1228,70 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void RepairingCountsTheElementsItDropsAsFollowingAndNotAsRepaired()
+        {
+            FakeVertex[] corners = Enumerable.Range(0, 4)
+                .Select(at => new FakeVertex(at, 0f, 0f))
+                .ToArray();
+            foreach (FakeVertex vertex in corners)
+            {
+                _fixture.Model.Vertex.Add(vertex);
+            }
+
+            FakeMaterial material = new FakeMaterial("材質");
+            material.Faces.Add(new FakeFace(corners[0], corners[1], corners[2]));
+            material.Faces.Add(new FakeFace(corners[1], corners[2], corners[3]));
+            _fixture.Model.Material.Add(material);
+            FakeMorph morph = new FakeMorph("頂点");
+            morph.Offsets.Add(new FakeVertexMorphOffset(corners[0]));
+            morph.Offsets.Add(new FakeVertexMorphOffset(corners[3]));
+            _fixture.Model.Morph.Add(morph);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Vertex),
+                ComposedEditFixture.Given("indices", new object[] { 0 })));
+
+            Dictionary<object, object> following = ((object[])value[ModelDeleteElements.FollowingName])
+                .Cast<IDictionary<string, object>>()
+                .ToDictionary(
+                    entry => entry[ModelDeleteElements.KindName],
+                    entry => entry[ModelDeleteElements.RemovedName]);
+            Assert.Equal(1, following[ElementKinds.Face]);
+            Assert.Equal(1, following[ElementKinds.MorphOffset]);
+            Assert.Equal(2, following.Count);
+            Assert.Equal(0, value[ModelDeleteElements.RepairedName]);
+            Assert.Single(_fixture.Model.Material[0].Faces);
+        }
+
+        [Fact]
+        public void TheChildrenOfElementsTakenAlongAreCountedAsFollowing()
+        {
+            FakeVertex alone = new FakeVertex();
+            _fixture.Model.Vertex.Add(alone);
+            FakeMaterial material = new FakeMaterial("材質");
+            material.Faces.Add(new FakeFace(alone, alone, alone));
+            _fixture.Model.Material.Add(material);
+            FakeMorph morph = new FakeMorph("頂点");
+            morph.Offsets.Add(new FakeVertexMorphOffset(alone));
+            _fixture.Model.Morph.Add(morph);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Vertex),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(ReferenceCleanup.RelatedName, ReferenceCleanup.Cascade)));
+
+            Dictionary<object, object> following = ((object[])value[ModelDeleteElements.FollowingName])
+                .Cast<IDictionary<string, object>>()
+                .ToDictionary(
+                    entry => entry[ModelDeleteElements.KindName],
+                    entry => entry[ModelDeleteElements.RemovedName]);
+            Assert.Equal(1, following[ElementKinds.Material]);
+            Assert.Equal(1, following[ElementKinds.Face]);
+            Assert.Equal(1, following[ElementKinds.Morph]);
+            Assert.Equal(1, following[ElementKinds.MorphOffset]);
+        }
+
+        [Fact]
         public void DeletingEveryVertexOfALargeModelFinishesInTime()
         {
             for (int at = 0; at < ManyElements; at++)

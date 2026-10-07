@@ -80,6 +80,7 @@ namespace PmxEditorMcp
                 going.AddRange(positions.Select(at => items[at]));
             }
 
+            IDictionary<string, int> start = Sizes(pmx);
             IDictionary<string, IList<object>> following = handling == RelatedHandling.Cascade
                 ? ReferenceCleanup.Following(pmx, kind, going)
                 : new Dictionary<string, IList<object>>(StringComparer.Ordinal);
@@ -93,13 +94,30 @@ namespace PmxEditorMcp
                 Drag(pmx, dragged.Key, dragged.Value);
             }
 
-            int repaired = handling == RelatedHandling.Keep ? 0 : ReferenceCleanup.Sweep(pmx);
+            int repaired = 0;
+            if (handling != RelatedHandling.Keep)
+            {
+                IDictionary<string, int> swept = Sizes(pmx);
+                repaired = ReferenceCleanup.Sweep(pmx)
+                    - Sizes(pmx).Sum(after => swept[after.Key] - after.Value);
+            }
+
+            Dictionary<string, int> dropped = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, int> after in Sizes(pmx))
+            {
+                int lost = start[after.Key] - after.Value
+                    - (string.Equals(after.Key, kind.Name, StringComparison.Ordinal) ? going.Count : 0);
+                if (lost > 0)
+                {
+                    dropped.Add(after.Key, lost);
+                }
+            }
 
             return ComposedEditResult.Complete(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { RemovedName, going.Count },
-                    { FollowingName, Counted(following) },
+                    { FollowingName, Counted(dropped) },
                     { RepairedName, repaired },
                 });
         }
@@ -128,14 +146,32 @@ namespace PmxEditorMcp
             }
         }
 
-        private static object[] Counted(IDictionary<string, IList<object>> following)
+        private static IDictionary<string, int> Sizes(object pmx)
+        {
+            Dictionary<string, int> sizes = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (string name in ElementKinds.Names)
+            {
+                ElementKind kind;
+                string message;
+                if (!ElementKinds.TryResolve(name, out kind, out message))
+                {
+                    throw new InvalidOperationException(message);
+                }
+
+                sizes.Add(name, ElementKinds.Owners(pmx, kind).Sum(owner => kind.Items(owner).Count));
+            }
+
+            return sizes;
+        }
+
+        private static object[] Counted(IDictionary<string, int> dropped)
         {
             return ElementKinds.Names
-                .Where(following.ContainsKey)
+                .Where(dropped.ContainsKey)
                 .Select(name => (object)new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { KindName, name },
-                    { RemovedName, following[name].Count },
+                    { RemovedName, dropped[name] },
                 })
                 .ToArray();
         }
