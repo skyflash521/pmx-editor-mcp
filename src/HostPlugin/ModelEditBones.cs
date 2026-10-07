@@ -52,7 +52,6 @@ namespace PmxEditorMcp
         /// <summary>指したボーンとその親の中間へ、ボーンを足す。</summary>
         public const string AddMiddle = "addMiddle";
 
-        /// <summary>指したボーンの上に、そのボーンを付与の元にする親を足す。</summary>
         public const string AddAppendParent = "addAppendParent";
 
         /// <summary>指した頂点の重心へボーンを1つ足す。</summary>
@@ -576,8 +575,16 @@ namespace PmxEditorMcp
             IPXPmx model, IPXPmxBuilder builder, IList<IPXBone> picked, string operation)
         {
             List<int> added = new List<int>();
+            bool appending = string.Equals(operation, AddAppendParent, StringComparison.Ordinal);
             foreach (IPXBone bone in picked)
             {
+                if (appending
+                    && (bone.IsAppendRotation || bone.IsAppendTranslation
+                        || !(bone.IsRotation || bone.IsTranslation)))
+                {
+                    continue;
+                }
+
                 IPXBone made = builder.Bone();
                 made.Name = bone.Name + Tail(operation);
                 made.NameE = string.Empty;
@@ -594,21 +601,27 @@ namespace PmxEditorMcp
                 else
                 {
                     made.Parent = bone.Parent;
-                    if (string.Equals(operation, AddAppendParent, StringComparison.Ordinal))
+                    if (appending)
                     {
-                        made.AppendParent = bone;
-                        made.IsAppendRotation = true;
-                        made.AppendRatio = 1f;
+                        made.IsRotation = bone.IsRotation;
+                        made.IsTranslation = bone.IsTranslation;
+                        bone.AppendParent = made;
+                        bone.IsAppendRotation = bone.IsRotation;
+                        bone.IsAppendTranslation = bone.IsTranslation;
+                        bone.AppendRatio = 1f;
+                    }
+                    else
+                    {
+                        bone.Parent = made;
                     }
 
-                    bone.Parent = made;
                     model.Bone.Insert(model.Bone.IndexOf(bone), made);
                 }
 
                 added.Add(model.Bone.IndexOf(made));
             }
 
-            return Answer(added, picked.Count, 0);
+            return Answer(added, added.Count, 0);
         }
 
         private static void TakeTurn(IPXBone made, IPXBone bone)

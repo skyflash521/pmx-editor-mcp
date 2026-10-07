@@ -220,18 +220,60 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheAddedParentTakesItsTurnFromTheBoneItWasAddedFor()
+        public void TheAddedAppendParentIsASiblingBeforeTheBoneThatTakesItsTurnFromIt()
         {
-            Bones("腕");
+            IList<IPXBone> bones = Bones("親", "腕");
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            NowAll(bones)[1].IsRotation = true;
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Bone(
+                Operation(ModelEditBones.AddAppendParent),
+                ComposedEditFixture.Given("indices", new object[] { 1 })));
+
+            IPXBone arm = Named("腕");
+            IPXBone made = _fixture.Model.Bone[(int)((object[])value[ModelEditBones.AddedName])[0]];
+            Assert.Same(Named("親"), arm.Parent);
+            Assert.Same(Named("親"), made.Parent);
+            Assert.Same(made, arm.AppendParent);
+            Assert.True(arm.IsAppendRotation);
+            Assert.False(arm.IsAppendTranslation);
+            Assert.Equal(1f, arm.AppendRatio);
+            Assert.True(made.IsRotation);
+            Assert.False(made.IsTranslation);
+            Assert.True(_fixture.Model.Bone.IndexOf(made) < _fixture.Model.Bone.IndexOf(arm));
+        }
+
+        [Fact]
+        public void TheAddedAppendParentCarriesTheTranslationOfTheBone()
+        {
+            IList<IPXBone> bones = Bones("腕");
+            NowAll(bones)[0].IsTranslation = true;
 
             Bone(
                 Operation(ModelEditBones.AddAppendParent),
                 ComposedEditFixture.Given("all", true));
 
-            IPXBone made = Named("腕").Parent;
-            Assert.NotNull(made);
-            Assert.Same(Named("腕"), made.AppendParent);
-            Assert.True(made.IsAppendRotation);
+            IPXBone arm = Named("腕");
+            Assert.True(arm.IsAppendTranslation);
+            Assert.False(arm.IsAppendRotation);
+            Assert.True(arm.AppendParent.IsTranslation);
+            Assert.False(arm.AppendParent.IsRotation);
+        }
+
+        [Fact]
+        public void NoAppendParentIsAddedToABoneThatAlreadyTakesATurnOrCannotMove()
+        {
+            IList<IPXBone> bones = Bones("元", "腕D", "固定");
+            NowAll(bones)[1].IsRotation = true;
+            NowAll(bones)[1].IsAppendRotation = true;
+            NowAll(bones)[1].AppendParent = NowAll(bones)[0];
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Bone(
+                Operation(ModelEditBones.AddAppendParent),
+                ComposedEditFixture.Given("indices", new object[] { 1, 2 })));
+
+            Assert.Empty((object[])value[ModelEditBones.AddedName]);
+            Assert.Equal(3, _fixture.Model.Bone.Count);
         }
 
         [Fact]
