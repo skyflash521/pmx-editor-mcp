@@ -132,6 +132,24 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ASequenceWhoseCountTheHostBoundsCarriesThatCountToTheInnerOnes()
+        {
+            SchemaItem cells = Sequence("cells", Number(), null);
+            SchemaItem rows = Sequence("rows", Group(null, cells), null);
+            const int envelope = 5;
+
+            IDictionary<SchemaItem, int> limits = ElementLimitRule.Request(
+                Branch(new[] { rows }),
+                Lengths,
+                Budget,
+                envelope + 20000,
+                item => ReferenceEquals(item, rows) ? 4 : (int?)null);
+
+            Assert.Equal(4, limits[rows]);
+            Assert.Equal(10000 / 4, limits[cells]);
+        }
+
+        [Fact]
         public void TheSequencesInTheDistributedGroupHaveNoLimit()
         {
             SchemaItem values = Sequence("values", Number(), null);

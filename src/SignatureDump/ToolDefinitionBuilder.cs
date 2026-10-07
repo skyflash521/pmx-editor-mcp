@@ -364,8 +364,9 @@ namespace PmxEditorMcp.SignatureDump
             int requestBudgetBytes,
             int tokenLimit)
         {
-            IDictionary<SchemaItem, int> limits =
-                ElementLimitRule.Request(writing.Branch, lengths, requestBudgetBytes, tokenLimit);
+            writing.ItemPaths = Paths(writing.Branch);
+            IDictionary<SchemaItem, int> limits = ElementLimitRule.Request(
+                writing.Branch, lengths, requestBudgetBytes, tokenLimit, item => Declared(writing, item));
 
             // 応答が並びを返すなら、要求で受ける件数も応答で返せる件数より多くできない。
             SchemaItem returned = writing.Schema.Output == null ? null : writing.Schema.Output.Element;
@@ -381,9 +382,19 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             writing.Limits = limits;
-            writing.ItemPaths = Paths(writing.Branch);
 
             return writing;
+        }
+
+        private static int? Declared(Writing writing, SchemaItem item)
+        {
+            HostListLength length;
+            if (!TryComposed(writing, item, writing.Rules?.ComposedReads.Lists, out length))
+            {
+                TryComposed(writing, item, writing.Rules?.ComposedTexts.Lists, out length);
+            }
+
+            return length == null ? null : length.Most;
         }
 
         private static void Aligned(IList<Writing> branches)

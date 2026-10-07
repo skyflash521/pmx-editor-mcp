@@ -385,6 +385,7 @@
     {"tool": "model_place_elements", "input": "scaleFrameAxis", "least": 3, "most": 3, "basis": "ModelPlaceElements.cs が ComposedInput.TryDirection(ViewCaptureImage.TrySpot)でちょうど3つの並びとして読む。"},
     {"tool": "model_place_elements", "input": "scaleFrameRotation", "least": 3, "most": 3, "basis": "ModelPlaceElements.cs の TryPoint がちょうど3つの並びとして読む。"},
     {"tool": "model_place_elements", "input": "scale", "least": 3, "most": 3, "basis": "ModelPlaceElements.cs の TryPoint がちょうど3つの並びとして読む。"},
+    {"tool": "model_place_elements", "input": "targets", "least": 1, "most": 4, "basis": "ModelPlaceElements.cs の TryTargets が空の並びと、4つの種類のどれかを二度並べた並びを断る。"},
     {"tool": "model_place_elements", "input": "targets[].indices", "basis": "TargetInput.cs が要素の数を問わずに読む。"},
     {"tool": "model_place_elements", "input": "targets[].materialIndices", "basis": "ModelFindVertexBounds.cs の TryVertices が要素の数を問わずに読む。"},
     {"tool": "model_reorder_elements", "input": "indices", "basis": "TargetInput.cs が要素の数を問わずに読む。"},

@@ -25,9 +25,16 @@ namespace PmxEditorMcp.SignatureDump
         /// またぐときは、その要素数を積へ掛けてから分ける。配る組の内側の並びは、要求の大きさが
         /// 対象の件数で変わらないので上限を持たず、返す表に現れない。構造トークンの残りが並びに
         /// 足りないか、要素が想定文字数を持たなければ <see cref="InvalidOperationException"/>。
+        /// <paramref name="bounded"/> はホストが要素数の上限を宣言した並びのその上限を返し、宣言が
+        /// 無ければ null を返す。宣言した並びは一次資料が要素数を定めた並びと同じく積へ掛け、自身の
+        /// 上限は宣言と取り分の小さい方になる。
         /// </summary>
         public static IDictionary<SchemaItem, int> Request(
-            SchemaBranch branch, AssumedLength lengths, int budgetBytes, int tokenLimit)
+            SchemaBranch branch,
+            AssumedLength lengths,
+            int budgetBytes,
+            int tokenLimit,
+            Func<SchemaItem, int?> bounded = null)
         {
             if (branch == null)
             {
@@ -65,13 +72,23 @@ namespace PmxEditorMcp.SignatureDump
                         "1件の想定文字数が0の並びがある: " + (array.Name ?? "名前無し"));
                 }
 
-                long counted = Counted(path);
-                IList<SchemaItem> shared = path.Where(i => !i.MaxItems.HasValue).ToList();
-                long each = AtLeastOne(Root(
-                    Math.Min(
-                        budgetBytes / (counted * chars * BytesPerChar),
-                        share / (counted * (Tokens(array.Element) + 1))),
-                    shared.Count));
+                Func<SchemaItem, int?> fixedCount = i => i.MaxItems ?? (bounded == null ? null : bounded(i));
+                long counted = Counted(path, fixedCount);
+                long capacity = Math.Min(
+                    budgetBytes / (counted * chars * BytesPerChar),
+                    share / (counted * (Tokens(array.Element) + 1)));
+                int? declared = fixedCount(array);
+                if (declared.HasValue)
+                {
+                    int found;
+                    long own = Math.Min(declared.Value, AtLeastOne(capacity));
+                    limits[array] = limits.TryGetValue(array, out found)
+                        ? (int)Math.Min(found, own)
+                        : (int)own;
+                }
+
+                IList<SchemaItem> shared = path.Where(i => !fixedCount(i).HasValue).ToList();
+                long each = AtLeastOne(Root(capacity, shared.Count));
                 foreach (SchemaItem sequence in shared)
                 {
                     int found;
@@ -151,18 +168,15 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// その並びを囲む並びのうち、一次資料が要素数を定めたものの積。予算を段へ分ける前に、
-        /// この回数だけ取り分ける。
-        /// </summary>
-        private static long Counted(IList<SchemaItem> path)
+        private static long Counted(IList<SchemaItem> path, Func<SchemaItem, int?> fixedCount)
         {
             long counted = 1;
             foreach (SchemaItem enclosing in path.Take(path.Count - 1))
             {
-                if (enclosing.MaxItems.HasValue)
+                int? count = fixedCount(enclosing);
+                if (count.HasValue)
                 {
-                    counted *= enclosing.MaxItems.Value;
+                    counted *= count.Value;
                 }
             }
 
