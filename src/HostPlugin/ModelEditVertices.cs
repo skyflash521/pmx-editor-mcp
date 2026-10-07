@@ -61,6 +61,8 @@ namespace PmxEditorMcp
 
         public const string AcrossName = "across";
 
+        public const string DirectionName = "direction";
+
         public const string KnotsName = "knots";
 
         public const string KnotPositionName = "s";
@@ -121,6 +123,7 @@ namespace PmxEditorMcp
                 ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
                 new[] { ProjectOntoSurface, PushOutOfSurface }),
             new KeyValuePair<string, string[]>(OffsetName, new[] { ProjectOntoSurface }),
+            new KeyValuePair<string, string[]>(DirectionName, new[] { ProjectOntoSurface }),
             new KeyValuePair<string, string[]>(
                 ModelFindSurfaceDistances.DistanceLimitName, new[] { ProjectOntoSurface }),
             new KeyValuePair<string, string[]>(MarginName, new[] { PushOutOfSurface }),
@@ -179,6 +182,7 @@ namespace PmxEditorMcp
                 AxisName,
                 ModelFindSurfaceDistances.SurfaceMaterialIndicesName,
                 OffsetName,
+                DirectionName,
                 ModelFindSurfaceDistances.DistanceLimitName,
                 MarginName,
                 SpreadRadiusName,
@@ -371,6 +375,7 @@ namespace PmxEditorMcp
             List<int> surface;
             float offset = 0f;
             float? limit;
+            V3 direction = null;
             if (!ModelFindSurfaceDistances.TryMaterials(
                     context,
                     model,
@@ -389,7 +394,10 @@ namespace PmxEditorMcp
                         out offset,
                         out code,
                         out message))
-                || !ModelFindSurfaceDistances.TryLimit(context, out limit, out message))
+                || !ModelFindSurfaceDistances.TryLimit(context, out limit, out message)
+                || (context.Params.ContainsKey(DirectionName)
+                    && !ComposedInput.TryDirection(
+                        context, DirectionName, out direction, out code, out message)))
             {
                 return ComposedEditResult.Refuse(code ?? ToolEnvelope.InvalidArgument, message);
             }
@@ -408,9 +416,11 @@ namespace PmxEditorMcp
             List<KeyValuePair<IPXVertex, V3>> moves = new List<KeyValuePair<IPXVertex, V3>>();
             foreach (IPXVertex vertex in picked)
             {
-                SurfaceGeometry.Hit hit = tree.Nearest(
-                    SurfaceGeometry.Vec.Of(vertex.Position), reach);
-                if (hit == null)
+                SurfaceGeometry.Vec at = SurfaceGeometry.Vec.Of(vertex.Position);
+                SurfaceGeometry.Hit hit = direction == null
+                    ? tree.Nearest(at, reach)
+                    : tree.Nearest(at, 0) ?? tree.Cast(at, SurfaceGeometry.Vec.Of(direction));
+                if (hit == null || (direction != null && hit.Signed > reach))
                 {
                     continue;
                 }

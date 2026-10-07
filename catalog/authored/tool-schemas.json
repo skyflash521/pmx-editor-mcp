@@ -6668,6 +6668,15 @@
               }
             },
             {
+              "name": "direction",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
               "name": "knots",
               "origin": "hostInput",
               "required": false,

@@ -396,6 +396,108 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ADirectionProjectsTheVerticesWhereTheRayFirstMeetsTheSurface()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Project(
+                ComposedEditFixture.Given("indices", new object[] { 4 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("direction", new object[] { 2.0, -2.0, 0.0 }),
+                ComposedEditFixture.Given("surfaceOffset", 0.01)));
+
+            Assert.Equal(1, value["changed"]);
+            AssertAt(0.7f, 0.01f, 0.1f, _fixture.Model.Vertex[4]);
+        }
+
+        [Fact]
+        public void AVertexOnTheSurfaceMeetsItAtTheStartEvenAlongTheSurface()
+        {
+            IPXVertex[] corners = { Vertex(0f, 0f, 0f), Vertex(0f, 2f, 0f), Vertex(0f, 0f, 2f) };
+            foreach (IPXVertex corner in corners)
+            {
+                corner.Normal = new V3(1f, 0f, 0f);
+            }
+
+            FakeMaterial wall = new FakeMaterial("壁");
+            wall.Faces.Add(new FakeFace(corners[0], corners[1], corners[2]));
+            _fixture.Model.Material.Add(wall);
+            Vertex(0f, 0.5f, 0.5f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Project(
+                ComposedEditFixture.Given("indices", new object[] { 3 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("direction", new object[] { 0.0, -1.0, 0.0 }),
+                ComposedEditFixture.Given("surfaceOffset", 0.01)));
+
+            Assert.Equal(1, value["changed"]);
+            AssertAt(0.01f, 0.5f, 0.5f, _fixture.Model.Vertex[3]);
+        }
+
+        [Fact]
+        public void VerticesWhoseRayMissesTheSurfaceStayWhereTheyAre()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Project(
+                ComposedEditFixture.Given("indices", new object[] { 4 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("direction", new object[] { 0.0, 1.0, 0.0 })));
+
+            Assert.Equal(0, value["changed"]);
+            AssertAt(0.2f, 0.5f, 0.1f, _fixture.Model.Vertex[4]);
+        }
+
+        [Fact]
+        public void WithADirectionTheDistanceLimitIsMeasuredAlongTheRay()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Project(
+                ComposedEditFixture.Given("indices", new object[] { 4 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("direction", new object[] { 1.0, -1.0, 0.0 }),
+                ComposedEditFixture.Given("distanceLimit", 0.6)));
+
+            Assert.Equal(0, value["changed"]);
+            AssertAt(0.2f, 0.5f, 0.1f, _fixture.Model.Vertex[4]);
+        }
+
+        [Fact]
+        public void ADirectionWithoutLengthIsRefused()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+
+            IDictionary<string, object> envelope = Project(
+                ComposedEditFixture.Given("indices", new object[] { 4 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 }),
+                ComposedEditFixture.Given("direction", new object[] { 0.0, 0.0, 0.0 }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
+        public void TheDirectionIsPassedOnlyToProjecting()
+        {
+            Floor(new V3(0f, 1f, 0f));
+            Vertex(0.2f, 0.5f, 0.1f);
+
+            IDictionary<string, object> envelope = _fixture.Call(
+                ModelEditVertices.ToolName,
+                ComposedEditFixture.Arguments(
+                    ComposedEditFixture.Given("operation", ModelEditVertices.Align),
+                    ComposedEditFixture.Given("indices", new object[] { 4 }),
+                    ComposedEditFixture.Given("axis", "y"),
+                    ComposedEditFixture.Given("direction", new object[] { 0.0, -1.0, 0.0 })));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+        }
+
+        [Fact]
         public void ProjectingWithoutTheSurfaceMaterialsIsRefused()
         {
             Floor(new V3(0f, 1f, 0f));
