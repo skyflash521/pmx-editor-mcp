@@ -39,6 +39,8 @@ namespace PmxEditorMcp
 
         public const string LateralScale = "lateralScale";
 
+        public const string CopyFromBase = "copyFromBase";
+
         public const string GuideIndicesName = "guideIndices";
 
         public const string RootIndicesName = "rootIndices";
@@ -125,7 +127,8 @@ namespace PmxEditorMcp
             new KeyValuePair<string, string[]>(SpreadRadiusName, new[] { PushOutOfSurface }),
             new KeyValuePair<string, string[]>(GuideIndicesName, new[] { FollowGuide }),
             new KeyValuePair<string, string[]>(
-                ModelMorphFromMoved.BasePmxHandleName, new[] { FollowGuide, MirrorDisplacement }),
+                ModelMorphFromMoved.BasePmxHandleName,
+                new[] { FollowGuide, MirrorDisplacement, CopyFromBase }),
             new KeyValuePair<string, string[]>(RootIndicesName, new[] { SweepBand }),
             new KeyValuePair<string, string[]>(OffsetsName, new[] { SweepBand }),
             new KeyValuePair<string, string[]>(FromName, new[] { LateralScale }),
@@ -137,7 +140,7 @@ namespace PmxEditorMcp
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
         {
-            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface, PushOutOfSurface, FollowGuide, MirrorDisplacement, SweepBand, LateralScale }; }
+            get { return new[] { Weld, WeldNear, Align, MirrorCopy, MirrorModel, ProjectOntoSurface, PushOutOfSurface, FollowGuide, MirrorDisplacement, SweepBand, LateralScale, CopyFromBase }; }
         }
 
         public static IList<string> Modes
@@ -295,6 +298,11 @@ namespace PmxEditorMcp
             if (string.Equals(operation, MirrorDisplacement, StringComparison.Ordinal))
             {
                 return Displaced(context, model, chosen, axis);
+            }
+
+            if (string.Equals(operation, CopyFromBase, StringComparison.Ordinal))
+            {
+                return Copied(context, model, chosen);
             }
 
             if (string.Equals(operation, SweepBand, StringComparison.Ordinal))
@@ -657,6 +665,48 @@ namespace PmxEditorMcp
                     model.Vertex[at].Position = made;
                     changed++;
                 }
+            }
+
+            return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex });
+        }
+
+        private static ComposedEditResult Copied(
+            McpMethodContext context, IPXPmx model, IList<int> chosen)
+        {
+            IPXPmx based;
+            string code;
+            string message;
+            if (!ModelMorphFromMoved.TryBase(context, out based, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            string differs = ModelCompareShape.Differs(based, model);
+            if (differs != null)
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, differs);
+            }
+
+            int changed = 0;
+            foreach (int at in chosen.Distinct())
+            {
+                IPXVertex source = based.Vertex[at];
+                IPXVertex vertex = model.Vertex[at];
+                if (Vectors.Same(vertex.Position, source.Position)
+                    && Vectors.Same(vertex.Normal, source.Normal)
+                    && Vectors.Same(vertex.SDEF_C, source.SDEF_C)
+                    && Vectors.Same(vertex.SDEF_R0, source.SDEF_R0)
+                    && Vectors.Same(vertex.SDEF_R1, source.SDEF_R1))
+                {
+                    continue;
+                }
+
+                vertex.Position = Vectors.Copied(source.Position);
+                vertex.Normal = Vectors.Copied(source.Normal);
+                vertex.SDEF_C = Vectors.Copied(source.SDEF_C);
+                vertex.SDEF_R0 = Vectors.Copied(source.SDEF_R0);
+                vertex.SDEF_R1 = Vectors.Copied(source.SDEF_R1);
+                changed++;
             }
 
             return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex });

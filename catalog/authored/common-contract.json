@@ -397,7 +397,7 @@
     {
       "tool": "model_edit_vertices",
       "branching": false,
-      "duty": "materialIndices は材質の面が使う頂点。weld は先頭へ結合、weldNear は threshold 以内を統合。align は軸の値を平均へ、mirrorCopy は鏡像の複製を足し、mirrorModel は鏡像へ移し3頂点とも移った面は裏返す。projectOntoSurface は surfaceMaterialIndices の面の最も近い点から表(model_find_surface_distances の向き)へ surfaceOffset の位置へ投影、distanceLimit 超は不動。pushOutOfSurface はめり込み・食い込み・埋まりを直す。最も近い点から margin 離れるまで、内側(向き不問)は越え、外側の margin 未満は手前へ押し出し、面上は不動。spreadRadius は押す量と押す頂点が離れる倍率を、半径で0のガウス重みで広げる。remaining は残った面内か margin 未満の頂点数。followGuide は動かす前の複製 basePmxHandle から手本 guideIndices(不動)の変形へ追従。rigid は手本の剛体当てはめ(一直線でない3つ以上)、interpolate は距離の2乗の逆数で補間。mirrorDisplacement は片側の変形を反対側へ写す(左右対称)。basePmxHandle の複製から今への変位を axis で反転し、複製で鏡像位置(0.001以内)の頂点の今の位置へ足し、法線は指した頂点の今の法線の反転。複数なら隣が合う方、無ければ不変。軸上は自分が相手で、軸方向を除く。sweepBand は rootIndices から辺伝いの距離 t で帯を層(layerTolerance 以内は同層)に分け、層の重心を offsets(線形補間、外は端の値)で動かし(両端 fixedEnds 層は不動)、断面は回転最小化フレームで回す。lateralScale は軸からの距離のうち across の軸直交成分の分だけに knots の倍率を掛ける(s は from=0・to=1 の射影比、間はなめらかに補間、外は端の値)。法線は mirror 系だけが変える。"
+      "duty": "materialIndices は材質の面が使う頂点。weld は先頭へ結合、weldNear は threshold 以内を統合。align は軸の値を平均へ、mirrorCopy は鏡像の複製を足し、mirrorModel は鏡像へ移し3頂点とも移った面は裏返す。projectOntoSurface は surfaceMaterialIndices の面の最も近い点から表(model_find_surface_distances の向き)へ surfaceOffset の所へ投影、distanceLimit 超は不動。pushOutOfSurface はめり込み・食い込み・埋まりを直す。最も近い点から margin 離れるまで押し出し(内側は向き不問で越え)、面上は不動。spreadRadius は押す量と押す頂点が離れる倍率を半径で0のガウス重みで広げる。remaining は面内か margin 未満で残った頂点数。followGuide は複製 basePmxHandle から手本 guideIndices(不動)の変形へ追従。rigid は手本の剛体当てはめ(一直線でない3つ以上)、interpolate は距離の2乗の逆数で補間。mirrorDisplacement は片側の変形を反対側へ写す(左右対称)。basePmxHandle から今への変位を axis で反転し、複製で鏡像位置(0.001以内)の頂点の今へ足し、法線は指した頂点の法線の反転。複数なら隣が合う方、無ければ不変。軸上は自分が相手で軸方向を除く。sweepBand は rootIndices から辺伝いの距離 t で帯を層(layerTolerance 以内は同層)に分け、層の重心を offsets(線形補間、外は端の値)で動かし(両端 fixedEnds 層は不動)、断面を回転最小化フレームで回す。lateralScale は軸からの距離のうち across の軸直交成分の分に knots の倍率を掛ける(s は from=0・to=1 の射影比、間はなめらか、外は端の値)。copyFromBase は basePmxHandle の同位置の頂点の座標・法線・SDEF値を写す。他に法線を変えるのは mirror 系だけ。"
     },
     {
       "tool": "model_edit_weights",
@@ -492,7 +492,7 @@
     {
       "tool": "motion_apply_current_pose",
       "branching": false,
-      "duty": "TransformView でいま変形している形——ボーンで取らせている姿勢とモーフ——を、編集中のモデルの形状へ焼き込む。TransformView のファイルメニューの「現在の変形状態でモデル形状を更新」に当たる。ボーンとそのローカル軸・頂点とその法線・剛体・Joint の位置と向きが、ボーンの変形とモーフを当てた後の値になり、そのあと TransformView の変形とモーフは初期の状態へ戻る。エディタの元に戻す1回で呼び出しの前へ戻る。morphThreshold を渡すと、頂点モーフを焼き込んだ形に合わせて計算し直し、X・Y・Z の差がどれも morphThreshold 以下の頂点はオフセットから外す。このとき TransformView で当てていた頂点モーフ・グループモーフ・フリップモーフは0へ戻してから焼き込み、それらの変形は形状に入らない。渡さなければ頂点モーフは計算し直さず、当てていたモーフはすべて形状に入る。ファイルメニューの正規化の入り切りは呼び出しの前のまま残す。TransformView が開いていないとき、人の応答を待つ表示を出しているとき、項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。成功したときは何も返さない。"
+      "duty": "TransformView でいま変形している形——ボーンで取らせている姿勢とモーフ——を、編集中のモデルの形状へ焼き込む。TransformView のファイルメニューの「現在の変形状態でモデル形状を更新」に当たる。ボーンとそのローカル軸・頂点とその法線・剛体・Joint の位置と向きが、ボーンの変形とモーフを当てた後の値になり、そのあと TransformView の変形とモーフは初期の状態へ戻る。エディタの元に戻す1回で呼び出しの前へ戻る。一部の頂点だけへ入れるには、焼き込んだ後に model_clone_pmx で複製し、session_undo で戻してから model_edit_vertices の copyFromBase でその頂点へ写す。morphThreshold を渡すと、頂点モーフを焼き込んだ形に合わせて計算し直し、X・Y・Z の差がどれも morphThreshold 以下の頂点はオフセットから外す。このとき TransformView で当てていた頂点モーフ・グループモーフ・フリップモーフは0へ戻してから焼き込み、それらの変形は形状に入らない。渡さなければ頂点モーフは計算し直さず、当てていたモーフはすべて形状に入る。ファイルメニューの正規化の入り切りは呼び出しの前のまま残す。TransformView が開いていないとき、人の応答を待つ表示を出しているとき、項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。成功したときは何も返さない。"
     },
     {
       "tool": "motion_get_vmd_camera_view",
