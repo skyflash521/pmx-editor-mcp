@@ -24224,6 +24224,16 @@
             "shape": "number"
           },
           {
+            "name": "bonesDeformedBeforeParent",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "bonesDeformedBeforeAppendParent",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
             "name": "found",
             "origin": "hostOutput",
             "shape": "number"

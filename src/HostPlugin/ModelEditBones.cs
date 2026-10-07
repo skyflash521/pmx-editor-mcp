@@ -585,6 +585,7 @@ namespace PmxEditorMcp
                 made.Controllable = true;
                 made.IsRotation = true;
                 made.Position = Spot(bone, operation);
+                TakeTurn(made, bone);
                 if (string.Equals(operation, AddMultiStageChild, StringComparison.Ordinal))
                 {
                     made.Parent = bone;
@@ -608,6 +609,12 @@ namespace PmxEditorMcp
             }
 
             return Answer(added, picked.Count, 0);
+        }
+
+        private static void TakeTurn(IPXBone made, IPXBone bone)
+        {
+            made.IsAfterPhysics = bone.IsAfterPhysics;
+            made.Level = bone.Level;
         }
 
         /// <summary>足すボーンを置く点。中間へ足すときだけ親との中ほどになる。</summary>
@@ -712,6 +719,7 @@ namespace PmxEditorMcp
                 made.NameE = string.Empty;
                 made.Position = Vectors.Add(bone.Position, bone.ToOffset);
                 made.Parent = bone;
+                TakeTurn(made, bone);
                 bone.ToBone = made;
                 bone.ToOffset = new V3(0f, 0f, 0f);
                 model.Bone.Add(made);

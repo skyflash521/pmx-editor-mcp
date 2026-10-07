@@ -136,9 +136,10 @@ namespace PmxEditorMcp.Bridge.Tests
                             "unsoundFaces", "danglingFaces", "danglingWeights", "danglingBones",
                             "danglingMorphOffsets", "danglingNodeItems", "danglingPhysics",
                             "unnormalizedWeights", "duplicateFaces", "hiddenMorphsInExpressionFrame",
+                            "bonesDeformedBeforeParent", "bonesDeformedBeforeAppendParent",
                             "found", "runsTotal",
                         },
-                        "0".Length * 12,
+                        "0".Length * 14,
                         "runs",
                         "{\"start\":0,\"count\":0}".Length)
                 },

@@ -270,6 +270,88 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ABoneOnALowerLevelThanItsParentIsCounted()
+        {
+            FakeBone parent = new FakeBone("足首") { Level = 2 };
+            _fixture.Model.Bone.Add(parent);
+            _fixture.Model.Bone.Add(new FakeBone("靴") { Parent = parent });
+
+            IDictionary<string, object> found = Validated();
+
+            Assert.Equal(1, found[ModelValidatePmx.BonesDeformedBeforeParentName]);
+            Assert.Equal(1, found[ModelValidatePmx.FoundName]);
+        }
+
+        [Fact]
+        public void ABoneOnTheSameLevelBeforeItsParentInTheListIsCounted()
+        {
+            FakeBone parent = new FakeBone("足首");
+            _fixture.Model.Bone.Add(new FakeBone("靴") { Parent = parent });
+            _fixture.Model.Bone.Add(parent);
+
+            Assert.Equal(1, Validated()[ModelValidatePmx.BonesDeformedBeforeParentName]);
+        }
+
+        [Fact]
+        public void ABoneDeformedBeforePhysicsUnderAParentDeformedAfterPhysicsIsCounted()
+        {
+            FakeBone parent = new FakeBone("髪") { IsAfterPhysics = true };
+            _fixture.Model.Bone.Add(parent);
+            _fixture.Model.Bone.Add(new FakeBone("飾り") { Parent = parent, Level = 3 });
+
+            Assert.Equal(1, Validated()[ModelValidatePmx.BonesDeformedBeforeParentName]);
+        }
+
+        [Fact]
+        public void ABoneDeformedAfterItsParentIsNotCounted()
+        {
+            FakeBone parent = new FakeBone("足首") { Level = 2 };
+            _fixture.Model.Bone.Add(parent);
+            _fixture.Model.Bone.Add(new FakeBone("靴") { Parent = parent, Level = 2 });
+            _fixture.Model.Bone.Add(new FakeBone("飾り") { Parent = parent, IsAfterPhysics = true });
+
+            Assert.Equal(0, Validated()[ModelValidatePmx.FoundName]);
+        }
+
+        [Fact]
+        public void ABoneDeformedBeforeItsAppendParentIsCounted()
+        {
+            FakeBone source = new FakeBone("足首") { Level = 1 };
+            _fixture.Model.Bone.Add(new FakeBone("足首D") { AppendParent = source, IsAppendRotation = true });
+            _fixture.Model.Bone.Add(source);
+
+            IDictionary<string, object> found = Validated();
+
+            Assert.Equal(1, found[ModelValidatePmx.BonesDeformedBeforeAppendParentName]);
+            Assert.Equal(0, found[ModelValidatePmx.BonesDeformedBeforeParentName]);
+        }
+
+        [Fact]
+        public void RunsGiveTheBonesDeformedBeforeTheirParent()
+        {
+            FakeBone parent = new FakeBone("足首") { Level = 1 };
+            _fixture.Model.Bone.Add(parent);
+            _fixture.Model.Bone.Add(new FakeBone("足先") { Parent = parent, Level = 1 });
+            _fixture.Model.Bone.Add(new FakeBone("靴") { Parent = parent });
+
+            Assert.Equal(
+                new[] { "2+1" },
+                RunsOf(Located(ModelValidatePmx.BonesDeformedBeforeParentName)));
+        }
+
+        [Fact]
+        public void RunsGiveTheBonesDeformedBeforeTheirAppendParent()
+        {
+            FakeBone source = new FakeBone("足首") { Level = 1 };
+            _fixture.Model.Bone.Add(source);
+            _fixture.Model.Bone.Add(new FakeBone("足首D") { AppendParent = source });
+
+            Assert.Equal(
+                new[] { "1+1" },
+                RunsOf(Located(ModelValidatePmx.BonesDeformedBeforeAppendParentName)));
+        }
+
+        [Fact]
         public void TheSameThreeVerticesInTwoMaterialsAreNotCounted()
         {
             IList<IPXVertex> corners = Corners();

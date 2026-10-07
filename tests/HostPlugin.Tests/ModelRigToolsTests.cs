@@ -197,6 +197,28 @@ namespace PmxEditorMcp.Tests
             Near(2.0, made.Position.Y);
         }
 
+        [Theory]
+        [InlineData(ModelEditBones.AddMultiStageParent)]
+        [InlineData(ModelEditBones.AddMultiStageChild)]
+        [InlineData(ModelEditBones.AddMiddle)]
+        public void AStagedBoneTakesTheDeformOrderOfThePickedBone(string operation)
+        {
+            IList<IPXBone> bones = Bones("親", "腕");
+            NowAll(bones)[0].Level = 2;
+            NowAll(bones)[0].IsAfterPhysics = true;
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            NowAll(bones)[1].Level = 2;
+            NowAll(bones)[1].IsAfterPhysics = true;
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Bone(
+                Operation(operation),
+                ComposedEditFixture.Given("indices", new object[] { 1 })));
+
+            IPXBone made = _fixture.Model.Bone[(int)((object[])value[ModelEditBones.AddedName])[0]];
+            Assert.Equal(2, made.Level);
+            Assert.True(made.IsAfterPhysics);
+        }
+
         [Fact]
         public void TheAddedParentTakesItsTurnFromTheBoneItWasAddedFor()
         {
@@ -555,6 +577,26 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2f, made.Position.Y);
             Assert.Same(made, Now(bone).ToBone);
             Assert.Equal(new object[] { 1 }, (object[])value[ModelEditBones.AddedName]);
+        }
+
+        [Fact]
+        public void TheAddedTipTakesTheDeformOrderOfItsBone()
+        {
+            FakeBone bone = new FakeBone("腕")
+            {
+                ToOffset = new V3(0f, 2f, 0f),
+                Level = 2,
+                IsAfterPhysics = true,
+            };
+            _fixture.Model.Bone.Add(bone);
+
+            Bone(
+                Operation(ModelEditBones.AddTipBones),
+                ComposedEditFixture.Given("indices", new object[] { 0 }));
+
+            IPXBone made = _fixture.Model.Bone[1];
+            Assert.Equal(2, made.Level);
+            Assert.True(made.IsAfterPhysics);
         }
 
         [Fact]

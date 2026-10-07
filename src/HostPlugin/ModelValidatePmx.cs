@@ -43,6 +43,10 @@ namespace PmxEditorMcp
 
         public const string HiddenMorphsInExpressionFrameName = "hiddenMorphsInExpressionFrame";
 
+        public const string BonesDeformedBeforeParentName = "bonesDeformedBeforeParent";
+
+        public const string BonesDeformedBeforeAppendParentName = "bonesDeformedBeforeAppendParent";
+
         private static readonly JavaScriptSerializer Sizer = new JavaScriptSerializer();
 
         public static IList<string> Locatable
@@ -58,6 +62,8 @@ namespace PmxEditorMcp
                     UnnormalizedWeightsName,
                     DuplicateFacesName,
                     HiddenMorphsInExpressionFrameName,
+                    BonesDeformedBeforeParentName,
+                    BonesDeformedBeforeAppendParentName,
                 };
             }
         }
@@ -102,6 +108,8 @@ namespace PmxEditorMcp
             IList<int> unnormalized = Unnormalized(model);
             IList<int> doubled = Doubled(model);
             IList<IPXMorph> hidden = HiddenExpressionMorphs.Of(model);
+            IList<int> beforeParent = DeformedBefore(model, bone => bone.Parent);
+            IList<int> beforeAppendParent = DeformedBefore(model, bone => bone.AppendParent);
 
             Dictionary<string, object> found = new Dictionary<string, object>(StringComparer.Ordinal)
             {
@@ -118,6 +126,8 @@ namespace PmxEditorMcp
                 { UnnormalizedWeightsName, unnormalized.Count },
                 { DuplicateFacesName, doubled.Count },
                 { HiddenMorphsInExpressionFrameName, hidden.Count },
+                { BonesDeformedBeforeParentName, beforeParent.Count },
+                { BonesDeformedBeforeAppendParentName, beforeAppendParent.Count },
             };
             found[FoundName] = found.Values.Sum(count => (int)count);
             if (asked == null)
@@ -135,6 +145,8 @@ namespace PmxEditorMcp
                 { UnnormalizedWeightsName, unnormalized },
                 { DuplicateFacesName, doubled },
                 { HiddenMorphsInExpressionFrameName, PositionsOf(model.Morph, hidden) },
+                { BonesDeformedBeforeParentName, beforeParent },
+                { BonesDeformedBeforeAppendParentName, beforeAppendParent },
             };
             IList<object> all = PositionRuns.Joined(places[asked]);
             Page<object> page;
@@ -359,6 +371,48 @@ namespace PmxEditorMcp
             }
 
             return found;
+        }
+
+        /// <summary>
+        /// <paramref name="referenced"/> が指すボーンより先に変形するボーンの位置。エディタは物理前の
+        /// ボーンを物理後のボーンより先に、同じ側では変形階層の小さい順に、同じ変形階層では並びの順に
+        /// 変形する。並びに居ないボーンを指す参照は数えない。
+        /// </summary>
+        private static IList<int> DeformedBefore(IPXPmx model, Func<IPXBone, IPXBone> referenced)
+        {
+            IList<IPXBone> bones = model.Bone;
+            Dictionary<IPXBone, int> places = new Dictionary<IPXBone, int>(
+                ReferenceComparer<IPXBone>.Instance);
+            for (int at = 0; at < bones.Count; at++)
+            {
+                if (!places.ContainsKey(bones[at]))
+                {
+                    places.Add(bones[at], at);
+                }
+            }
+
+            return Enumerable.Range(0, bones.Count)
+                .Where(at =>
+                {
+                    IPXBone held = referenced(bones[at]);
+                    int place;
+
+                    return held != null
+                        && places.TryGetValue(held, out place)
+                        && place != at
+                        && Earlier(bones[at], at, held, place);
+                })
+                .ToList();
+        }
+
+        private static bool Earlier(IPXBone bone, int at, IPXBone other, int place)
+        {
+            if (bone.IsAfterPhysics != other.IsAfterPhysics)
+            {
+                return other.IsAfterPhysics;
+            }
+
+            return bone.Level != other.Level ? bone.Level < other.Level : at < place;
         }
 
         private static IList<int> Unnormalized(IPXPmx model)
