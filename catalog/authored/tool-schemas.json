@@ -24183,42 +24183,52 @@
         "origin": "hostOutput",
         "members": [
           {
-            "name": "unsoundFaces",
+            "name": "badUvaCount",
             "origin": "hostOutput",
             "shape": "number"
           },
           {
-            "name": "danglingFaces",
+            "name": "emptyModelName",
             "origin": "hostOutput",
             "shape": "number"
           },
           {
-            "name": "danglingWeights",
+            "name": "emptyComment",
             "origin": "hostOutput",
             "shape": "number"
           },
           {
-            "name": "danglingBones",
+            "name": "invalidNormals",
             "origin": "hostOutput",
             "shape": "number"
           },
           {
-            "name": "danglingMorphOffsets",
+            "name": "invalidWeights",
             "origin": "hostOutput",
             "shape": "number"
           },
           {
-            "name": "danglingNodeItems",
+            "name": "emptySdefValues",
             "origin": "hostOutput",
             "shape": "number"
           },
           {
-            "name": "danglingPhysics",
+            "name": "sdefBadBoneReferences",
             "origin": "hostOutput",
             "shape": "number"
           },
           {
-            "name": "unnormalizedWeights",
+            "name": "unusedVertices",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "badFaceVertexReferences",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "badFaces",
             "origin": "hostOutput",
             "shape": "number"
           },
@@ -24228,7 +24238,57 @@
             "shape": "number"
           },
           {
-            "name": "hiddenMorphsInExpressionFrame",
+            "name": "unnamedMaterials",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "duplicateMaterialNames",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "materialsWithoutFaces",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "missingTextures",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "missingSphereTextures",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "sphereModeNone",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "missingToonTextures",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "noBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "unnamedBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "duplicateBoneNames",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "cyclicBones",
             "origin": "hostOutput",
             "shape": "number"
           },
@@ -24238,7 +24298,182 @@
             "shape": "number"
           },
           {
+            "name": "badParentBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
             "name": "bonesDeformedBeforeAppendParent",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "badAppendParentBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "badToBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "missingAppendParentBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "badIkTargets",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "badIkLinks",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "bonesNotInFrame",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "bonesInFramesTwice",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "unnamedMorphs",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "duplicateMorphNames",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "badMorphOffsets",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "morphsNotInFrame",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "morphsInFramesTwice",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "unnamedFrames",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "duplicateFrameNames",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "framesWithBadBones",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "framesWithBadMorphs",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "boneInExpressionFrame",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "missingSystemFrames",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "unnamedBodies",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "duplicateBodyNames",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "bodiesWithBadBone",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "unnamedJoints",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "duplicateJointNames",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "jointsWithBadBodyA",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "jointsWithBadBodyB",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "unnamedSoftBodies",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "duplicateSoftBodyNames",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "softBodiesWithBadMaterial",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "softBodiesWithBadBody",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "softBodiesWithBadVertex",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "softBodiesPinnedOnAnchor",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "softBodiesOutsideMaterial",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "unnormalizedWeights",
+            "origin": "hostOutput",
+            "shape": "number"
+          },
+          {
+            "name": "hiddenMorphsInExpressionFrame",
             "origin": "hostOutput",
             "shape": "number"
           },

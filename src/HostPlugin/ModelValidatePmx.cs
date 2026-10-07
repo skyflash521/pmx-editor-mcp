@@ -23,29 +23,9 @@ namespace PmxEditorMcp
 
         public const string NextOffsetName = "nextOffset";
 
-        public const string UnsoundFacesName = "unsoundFaces";
-
-        public const string DanglingFacesName = "danglingFaces";
-
-        public const string DanglingWeightsName = "danglingWeights";
-
-        public const string DanglingBonesName = "danglingBones";
-
-        public const string DanglingMorphOffsetsName = "danglingMorphOffsets";
-
-        public const string DanglingNodeItemsName = "danglingNodeItems";
-
-        public const string DanglingPhysicsName = "danglingPhysics";
-
         public const string UnnormalizedWeightsName = "unnormalizedWeights";
 
-        public const string DuplicateFacesName = "duplicateFaces";
-
         public const string HiddenMorphsInExpressionFrameName = "hiddenMorphsInExpressionFrame";
-
-        public const string BonesDeformedBeforeParentName = "bonesDeformedBeforeParent";
-
-        public const string BonesDeformedBeforeAppendParentName = "bonesDeformedBeforeAppendParent";
 
         private static readonly JavaScriptSerializer Sizer = new JavaScriptSerializer();
 
@@ -53,18 +33,9 @@ namespace PmxEditorMcp
         {
             get
             {
-                return new[]
-                {
-                    UnsoundFacesName,
-                    DanglingFacesName,
-                    DanglingWeightsName,
-                    DanglingBonesName,
-                    UnnormalizedWeightsName,
-                    DuplicateFacesName,
-                    HiddenMorphsInExpressionFrameName,
-                    BonesDeformedBeforeParentName,
-                    BonesDeformedBeforeAppendParentName,
-                };
+                return PmxStateCheck.Locatable
+                    .Concat(new[] { UnnormalizedWeightsName, HiddenMorphsInExpressionFrameName })
+                    .ToList();
             }
         }
 
@@ -96,58 +67,30 @@ namespace PmxEditorMcp
             }
 
             IPXPmx model = (IPXPmx)pmx;
-            ISet<object> vertices = ReferenceCleanup.Held(model.Vertex.Cast<object>());
-            ISet<object> materials = ReferenceCleanup.Held(model.Material.Cast<object>());
-            ISet<object> bones = ReferenceCleanup.Held(model.Bone.Cast<object>());
-            ISet<object> morphs = ReferenceCleanup.Held(model.Morph.Cast<object>());
-            ISet<object> bodies = ReferenceCleanup.Held(model.Body.Cast<object>());
-
-            IList<int> unsound = Unsound(model);
-            IList<int> looseFaces = LooseFaces(model, vertices);
-            IList<int> looseWeights = LooseWeights(model, bones);
-            IList<int> unnormalized = Unnormalized(model);
-            IList<int> doubled = Doubled(model);
+            List<StateItem> items = PmxStateCheck.Of(model).ToList();
             IList<IPXMorph> hidden = HiddenExpressionMorphs.Of(model);
-            IList<int> beforeParent = DeformedBefore(model, bone => bone.Parent);
-            IList<int> beforeAppendParent = DeformedBefore(model, bone => bone.AppendParent);
+            IList<int> unnormalized = Enumerable.Range(0, model.Vertex.Count)
+                .Where(at => !VertexWeights.IsSound(model.Vertex[at]))
+                .ToList();
+            items.Add(new StateItem(UnnormalizedWeightsName, unnormalized.Count, unnormalized));
+            IList<int> hiddenPlaces = PositionsOf(model.Morph, hidden);
+            items.Add(new StateItem(HiddenMorphsInExpressionFrameName, hiddenPlaces.Count, hiddenPlaces));
 
-            Dictionary<string, object> found = new Dictionary<string, object>(StringComparer.Ordinal)
+            Dictionary<string, object> found = new Dictionary<string, object>(StringComparer.Ordinal);
+            foreach (StateItem item in items)
             {
-                { UnsoundFacesName, unsound.Count },
-                { DanglingFacesName, looseFaces.Count },
-                { DanglingWeightsName, looseWeights.Count },
-                { DanglingBonesName, LooseBones(model, bones) },
-                {
-                    DanglingMorphOffsetsName,
-                    LooseOffsets(model, vertices, materials, bones, morphs, bodies)
-                },
-                { DanglingNodeItemsName, LooseNodeItems(model, bones, morphs) },
-                { DanglingPhysicsName, LoosePhysics(model, vertices, materials, bones, bodies) },
-                { UnnormalizedWeightsName, unnormalized.Count },
-                { DuplicateFacesName, doubled.Count },
-                { HiddenMorphsInExpressionFrameName, hidden.Count },
-                { BonesDeformedBeforeParentName, beforeParent.Count },
-                { BonesDeformedBeforeAppendParentName, beforeAppendParent.Count },
-            };
-            found[FoundName] = found.Values.Sum(count => (int)count);
+                found.Add(item.Name, item.Count);
+            }
+
+            found[FoundName] = items.Sum(item => item.Count);
             if (asked == null)
             {
                 return ComposedEditResult.Complete(found);
             }
 
-            IDictionary<string, IList<int>> places = new Dictionary<string, IList<int>>(
-                StringComparer.Ordinal)
-            {
-                { UnsoundFacesName, unsound },
-                { DanglingFacesName, looseFaces },
-                { DanglingWeightsName, looseWeights },
-                { DanglingBonesName, BonesWithLoose(model, bones) },
-                { UnnormalizedWeightsName, unnormalized },
-                { DuplicateFacesName, doubled },
-                { HiddenMorphsInExpressionFrameName, PositionsOf(model.Morph, hidden) },
-                { BonesDeformedBeforeParentName, beforeParent },
-                { BonesDeformedBeforeAppendParentName, beforeAppendParent },
-            };
+            IDictionary<string, IList<int>> places = items
+                .Where(item => item.Positions != null)
+                .ToDictionary(item => item.Name, item => item.Positions, StringComparer.Ordinal);
             IList<object> all = PositionRuns.Joined(places[asked]);
             Page<object> page;
             if (!Paging.TryTake(
@@ -260,188 +203,6 @@ namespace PmxEditorMcp
             return Enumerable.Range(0, all.Count)
                 .Where(at => chosen.Any(morph => ReferenceEquals(morph, all[at])))
                 .ToList();
-        }
-
-        private static IList<int> Unsound(IPXPmx model)
-        {
-            IList<IPXFace> faces = ViewSelection.Faces(model);
-
-            return Enumerable.Range(0, faces.Count)
-                .Where(at => !ReferenceCleanup.IsSoundFace(faces[at]))
-                .ToList();
-        }
-
-        private static IList<int> LooseFaces(IPXPmx model, ISet<object> vertices)
-        {
-            IList<IPXFace> faces = ViewSelection.Faces(model);
-
-            return Enumerable.Range(0, faces.Count)
-                .Where(at =>
-                    !ReferenceCleanup.Alive(faces[at].Vertex1, vertices)
-                    || !ReferenceCleanup.Alive(faces[at].Vertex2, vertices)
-                    || !ReferenceCleanup.Alive(faces[at].Vertex3, vertices))
-                .ToList();
-        }
-
-        private static IList<int> LooseWeights(IPXPmx model, ISet<object> bones)
-        {
-            return Enumerable.Range(0, model.Vertex.Count)
-                .Where(at => VertexWeights.Read(model.Vertex[at])
-                    .Any(share => !ReferenceCleanup.Alive(share.Key, bones)))
-                .ToList();
-        }
-
-        private static int LooseBones(IPXPmx model, ISet<object> bones)
-        {
-            return model.Bone.Sum(bone => LooseReferences(bone, bones));
-        }
-
-        private static IList<int> BonesWithLoose(IPXPmx model, ISet<object> bones)
-        {
-            return Enumerable.Range(0, model.Bone.Count)
-                .Where(at => LooseReferences(model.Bone[at], bones) > 0)
-                .ToList();
-        }
-
-        private static int LooseReferences(IPXBone bone, ISet<object> bones)
-        {
-            int found = 0;
-            found += Loose(bone.Parent, bones) ? 1 : 0;
-            found += Loose(bone.ToBone, bones) ? 1 : 0;
-            found += Loose(bone.AppendParent, bones) ? 1 : 0;
-            if (bone.IK == null)
-            {
-                return found;
-            }
-
-            found += bone.IsIK && !ReferenceCleanup.Alive(bone.IK.Target, bones) ? 1 : 0;
-            found += bone.IK.Links.Count(link => !ReferenceCleanup.Alive(link.Bone, bones));
-
-            return found;
-        }
-
-        private static bool Loose(IPXBone held, ISet<object> bones)
-        {
-            return held != null && !bones.Contains(held);
-        }
-
-        private static int LooseOffsets(
-            IPXPmx model,
-            ISet<object> vertices,
-            ISet<object> materials,
-            ISet<object> bones,
-            ISet<object> morphs,
-            ISet<object> bodies)
-        {
-            return model.Morph.Sum(morph => morph.Offsets.Count(
-                offset => !ReferenceCleanup.PointsAtLive(
-                    offset, vertices, materials, bones, morphs, bodies)));
-        }
-
-        private static int LooseNodeItems(IPXPmx model, ISet<object> bones, ISet<object> morphs)
-        {
-            return ReferenceCleanup.Nodes(model).Sum(node => node.Items.Count(item => !(item.IsBone
-                ? ReferenceCleanup.Alive(item.BoneItem.Bone, bones)
-                : item.IsMorph
-                    && (item.MorphItem.Morph == null
-                        || ReferenceCleanup.Alive(item.MorphItem.Morph, morphs)))));
-        }
-
-        private static int LoosePhysics(
-            IPXPmx model,
-            ISet<object> vertices,
-            ISet<object> materials,
-            ISet<object> bones,
-            ISet<object> bodies)
-        {
-            int found = model.Body.Count(body => body.Bone != null && !bones.Contains(body.Bone));
-            foreach (IPXJoint joint in model.Joint)
-            {
-                found += joint.BodyA != null && !bodies.Contains(joint.BodyA) ? 1 : 0;
-                found += joint.BodyB != null && !bodies.Contains(joint.BodyB) ? 1 : 0;
-            }
-
-            foreach (IPXSoftBody soft in model.SoftBody)
-            {
-                found += soft.Material != null && !materials.Contains(soft.Material) ? 1 : 0;
-                found += soft.Pins.Count(pin => !ReferenceCleanup.Alive(pin, vertices));
-                found += soft.Anchors.Count(anchor =>
-                    (anchor.Body != null && !bodies.Contains(anchor.Body))
-                    || (anchor.Vertex != null && !vertices.Contains(anchor.Vertex)));
-            }
-
-            return found;
-        }
-
-        /// <summary>
-        /// <paramref name="referenced"/> が指すボーンより先に変形するボーンの位置。エディタは物理前の
-        /// ボーンを物理後のボーンより先に、同じ側では変形階層の小さい順に、同じ変形階層では並びの順に
-        /// 変形する。並びに居ないボーンを指す参照は数えない。
-        /// </summary>
-        private static IList<int> DeformedBefore(IPXPmx model, Func<IPXBone, IPXBone> referenced)
-        {
-            IList<IPXBone> bones = model.Bone;
-            Dictionary<IPXBone, int> places = new Dictionary<IPXBone, int>(
-                ReferenceComparer<IPXBone>.Instance);
-            for (int at = 0; at < bones.Count; at++)
-            {
-                if (!places.ContainsKey(bones[at]))
-                {
-                    places.Add(bones[at], at);
-                }
-            }
-
-            return Enumerable.Range(0, bones.Count)
-                .Where(at =>
-                {
-                    IPXBone held = referenced(bones[at]);
-                    int place;
-
-                    return held != null
-                        && places.TryGetValue(held, out place)
-                        && place != at
-                        && Earlier(bones[at], at, held, place);
-                })
-                .ToList();
-        }
-
-        private static bool Earlier(IPXBone bone, int at, IPXBone other, int place)
-        {
-            if (bone.IsAfterPhysics != other.IsAfterPhysics)
-            {
-                return other.IsAfterPhysics;
-            }
-
-            return bone.Level != other.Level ? bone.Level < other.Level : at < place;
-        }
-
-        private static IList<int> Unnormalized(IPXPmx model)
-        {
-            return Enumerable.Range(0, model.Vertex.Count)
-                .Where(at => !VertexWeights.IsSound(model.Vertex[at]))
-                .ToList();
-        }
-
-        private static IList<int> Doubled(IPXPmx model)
-        {
-            List<int> found = new List<int>();
-            int at = 0;
-            IDictionary<IPXVertex, int> places = ModelCleanFaces.Places(model);
-            foreach (IPXMaterial material in model.Material)
-            {
-                HashSet<string> met = new HashSet<string>(StringComparer.Ordinal);
-                foreach (IPXFace face in material.Faces)
-                {
-                    if (!met.Add(ModelCleanFaces.Key(face, places)))
-                    {
-                        found.Add(at);
-                    }
-
-                    at++;
-                }
-            }
-
-            return found;
         }
     }
 }

@@ -7359,7 +7359,27 @@
             "ok": true,
             "values": [
               {
-                "path": "found",
+                "path": "invalidWeights",
+                "equals": 0
+              },
+              {
+                "path": "unusedVertices",
+                "equals": 0
+              },
+              {
+                "path": "badFaceVertexReferences",
+                "equals": 0
+              },
+              {
+                "path": "badFaces",
+                "equals": 0
+              },
+              {
+                "path": "duplicateFaces",
+                "equals": 0
+              },
+              {
+                "path": "unnormalizedWeights",
                 "equals": 0
               }
             ]
