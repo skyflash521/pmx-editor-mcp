@@ -790,15 +790,21 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ツール名から説明文へ。合成ツールは受け持つことをそのまま使う。</summary>
         public IDictionary<string, string> Descriptions(InventoryRecord inventory)
         {
+            return DescriptionsFrom(DescriptionMaterials(inventory))
+                .ToDictionary(d => d.Key, d => d.Value.Text, StringComparer.Ordinal);
+        }
+
+        /// <summary>合成ツールを除く各ツールの説明文の素材。</summary>
+        public IList<ToolDescriptionMaterial> DescriptionMaterials(InventoryRecord inventory)
+        {
             if (inventory == null)
             {
                 throw new ArgumentNullException(nameof(inventory));
             }
 
             TypeRoleTable owned = OwnedRoles(inventory);
-            IDictionary<string, SignatureRecord> signatures = inventory.Signatures
-                .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
-            IList<ToolDescriptionMaterial> materials = ToolDescriptionEvidence.Collect(
+
+            return ToolDescriptionEvidence.Collect(
                 Map,
                 owned,
                 _names,
@@ -811,19 +817,31 @@ namespace PmxEditorMcp.SignatureDump
                 _methodNotes,
                 _propertyNotes,
                 Schemas);
+        }
 
-            Dictionary<string, string> descriptions =
-                new Dictionary<string, string>(StringComparer.Ordinal);
+        /// <summary>素材から組み立てた説明文に、合成ツールの説明文を足したもの。</summary>
+        public IDictionary<string, ToolDescription> DescriptionsFrom(
+            IList<ToolDescriptionMaterial> materials)
+        {
+            if (materials == null)
+            {
+                throw new ArgumentNullException(nameof(materials));
+            }
+
+            Dictionary<string, ToolDescription> descriptions =
+                new Dictionary<string, ToolDescription>(StringComparer.Ordinal);
             foreach (ToolDescriptionMaterial material in materials)
             {
-                descriptions[material.Tool] = ToolDescriptionRule.Compose(material).Text;
+                descriptions.Add(material.Tool, ToolDescriptionRule.Compose(material));
             }
 
             foreach (KeyValuePair<string, ComposedTool> composed in _composedTools)
             {
-                descriptions[composed.Key] = ToolDescriptionRule.WithUsage(
-                    composed.Value.Duty,
-                    ToolUsageNoteRule.Of(composed.Key, Schemas));
+                descriptions[composed.Key] = new ToolDescription(
+                    ToolDescriptionRule.WithUsage(
+                        composed.Value.Duty,
+                        ToolUsageNoteRule.Of(composed.Key, Schemas)),
+                    null);
             }
 
             return descriptions;

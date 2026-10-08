@@ -48,30 +48,12 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             DiscoveryTaskTable tasks;
-            IList<CapabilityRecord> ledger;
-            TypeRoleTable roles;
-            IList<PropertyNameRecord> names;
-            CommonAssignmentTable assignments;
-            ToolMap map;
-            ToolSchemaTable schemas;
-            IDictionary<string, ComposedTool> composedTools;
-            IDictionary<string, string> methodNotes;
-            IDictionary<string, string> propertyNotes;
+            ToolDefinitionInputs inputs;
             try
             {
                 tasks = DiscoveryTaskJsonReader.Read(Read(args[7], "用途の作業の正本"));
-                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
-                composedTools = CommonContractJsonReader
-                    .Read(Read(args[2], "共通契約の正本")).ComposedTools;
-                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
-                names = PropertyNameJsonReader.ReadPropertyNames(Read(args[4], "日本語名の正本"));
-                assignments = CommonAssignmentJsonReader.Read(Read(args[5], "共通契約割当の正本"));
-                map = ToolMapJsonReader.Read(Read(args[6], "能力対応表の正本"));
-                schemas = ToolSchemaJsonReader.Read(Read(args[8], "スキーマ正本"));
-                string document = Read(
-                    SdkAssemblyLocator.GetDocumentPath(editorDirectory), "ドキュメントXML");
-                methodNotes = DocumentNoteReader.ReadMethods(document);
-                propertyNotes = DocumentNoteReader.Read(document);
+                inputs = ToolDefinitionInputs.Read(
+                    editorDirectory, args.Take(7).Concat(new[] { args[8] }).ToArray());
             }
             catch (Exception exception)
             {
@@ -91,38 +73,11 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
-            Dictionary<string, string> descriptions =
-                new Dictionary<string, string>(StringComparer.Ordinal);
+            Dictionary<string, string> descriptions;
             try
             {
-                TypeRoleTable owned = TypeGroupRule.Resolve(
-                    roles, TypeGroupEvidence.OwnersByType(ledger, inventory));
-                IDictionary<string, SignatureRecord> signatures = inventory.Signatures
-                    .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
-                foreach (ToolDescriptionMaterial material in ToolDescriptionEvidence.Collect(
-                    map,
-                    owned,
-                    names,
-                    inventory,
-                    ToolNameEvidence.Resolve(map, owned, assignments, inventory),
-                    ToolMapEvidence.ContractNotesBySignature(
-                        ToolMapEvidence.ProvidedOwners(
-                            LedgerPopulation.Resolve(ledger, inventory).Owners, ledger),
-                        ToolMapEvidence.ContractNotes(ledger)),
-                    methodNotes,
-                    propertyNotes,
-                    schemas))
-                {
-                    descriptions.Add(material.Tool, ToolDescriptionRule.Compose(material).Text);
-                }
-
-                foreach (KeyValuePair<string, ComposedTool> composed in composedTools)
-                {
-                    descriptions[composed.Key] = ToolDescriptionRule.WithUsage(
-                        composed.Value.Duty,
-                        ToolUsageNoteRule.Of(composed.Key, schemas));
-                }
-
+                descriptions = new Dictionary<string, string>(
+                    inputs.Descriptions(inventory), StringComparer.Ordinal);
                 foreach (KeyValuePair<string, string> own in
                     FixedToolTable.Descriptions(debugHooks: true))
                 {

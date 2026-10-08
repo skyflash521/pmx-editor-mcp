@@ -48,29 +48,10 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
-            IList<CapabilityRecord> ledger;
-            TypeRoleTable roles;
-            IList<PropertyNameRecord> names;
-            CommonAssignmentTable assignments;
-            ToolMap map;
-            ToolSchemaTable schemas;
-            IDictionary<string, ComposedTool> composedTools;
-            IDictionary<string, string> methodNotes;
-            IDictionary<string, string> propertyNotes;
+            ToolDefinitionInputs inputs;
             try
             {
-                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
-                composedTools = CommonContractJsonReader
-                    .Read(Read(args[2], "共通契約の正本")).ComposedTools;
-                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
-                names = PropertyNameJsonReader.ReadPropertyNames(Read(args[4], "日本語名の正本"));
-                assignments = CommonAssignmentJsonReader.Read(Read(args[5], "共通契約割当の正本"));
-                map = ToolMapJsonReader.Read(Read(args[6], "能力対応表の正本"));
-                schemas = ToolSchemaJsonReader.Read(Read(args[7], "スキーマ正本"));
-                string document = Read(
-                    SdkAssemblyLocator.GetDocumentPath(editorDirectory), "ドキュメントXML");
-                methodNotes = DocumentNoteReader.ReadMethods(document);
-                propertyNotes = DocumentNoteReader.Read(document);
+                inputs = ToolDefinitionInputs.Read(editorDirectory, args);
             }
             catch (Exception exception)
             {
@@ -91,42 +72,12 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             IList<ToolDescriptionMaterial> materials;
-            Dictionary<string, ToolDescription> descriptions =
-                new Dictionary<string, ToolDescription>(StringComparer.Ordinal);
+            IDictionary<string, ToolDescription> descriptions;
             try
             {
-                TypeRoleTable owned = TypeGroupRule.Resolve(
-                    roles, TypeGroupEvidence.OwnersByType(ledger, inventory));
-                IDictionary<string, SignatureRecord> signatures = inventory.Signatures
-                    .ToDictionary(s => s.Key, s => s, StringComparer.Ordinal);
-                materials = ToolDescriptionEvidence.Collect(
-                    map,
-                    owned,
-                    names,
-                    inventory,
-                    ToolNameEvidence.Resolve(map, owned, assignments, inventory),
-                    ToolMapEvidence.ContractNotesBySignature(
-                        ToolMapEvidence.ProvidedOwners(
-                            LedgerPopulation.Resolve(ledger, inventory).Owners, ledger),
-                        ToolMapEvidence.ContractNotes(ledger)),
-                    methodNotes,
-                    propertyNotes,
-                    schemas);
-                foreach (ToolDescriptionMaterial material in materials)
-                {
-                    descriptions.Add(material.Tool, ToolDescriptionRule.Compose(material));
-                }
-
-                foreach (KeyValuePair<string, ComposedTool> composed in composedTools)
-                {
-                    descriptions[composed.Key] = new ToolDescription(
-                        ToolDescriptionRule.WithUsage(
-                            composed.Value.Duty,
-                            ToolUsageNoteRule.Of(composed.Key, schemas)),
-                        null);
-                }
-
-                ToolDescriptionGate.Require(materials, descriptions, composedTools.Keys);
+                materials = inputs.DescriptionMaterials(inventory);
+                descriptions = inputs.DescriptionsFrom(materials);
+                ToolDescriptionGate.Require(materials, descriptions, inputs.ComposedTools.Keys);
             }
             catch (InvalidOperationException exception)
             {
@@ -154,16 +105,6 @@ namespace PmxEditorMcp.SignatureDump
                     : descriptions.Values.Max(d => Encoding.UTF8.GetByteCount(d.Text))));
 
             return ExitCodes.Success;
-        }
-
-        private static string Read(string path, string name)
-        {
-            if (!File.Exists(path))
-            {
-                throw new FileNotFoundException(name + "が無い: " + path, path);
-            }
-
-            return File.ReadAllText(path);
         }
     }
 }
