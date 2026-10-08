@@ -66,10 +66,14 @@ pwsh -File scripts/deploy-host.ps1
 
 ```
 pwsh -File scripts/publish-bridge.ps1 -Destination <発行先>
-claude mcp add pmx-editor-mcp -- "<発行先の PmxEditorMcp.Bridge.exe の絶対パス>"
+claude mcp add -s user pmx-editor-mcp -- "<発行先の PmxEditorMcp.Bridge.exe の絶対パス>"
 ```
 
 登録を解くのは `claude mcp remove pmx-editor-mcp`。
+
+Claude Code のセッションの中では、ホストの配置とエディタの起動は `local.props` の導入先を
+そのまま使わず、`%LOCALAPPDATA%\pmx-editor-mcp-dev-editors\<セッション>` へ複製した導入先で行う。最後に使ってから7日以上たち、そこからエディタが動いていない複製は、
+次に複製を作るときに消す。
 
 エディタの起動・終了、ホストの停止・開始、画面への操作は[操作役のスクリプト](scripts/host-control.ps1)が
 行うので、画面を人手で操作する必要はない。受け付ける操作はそのスクリプトの冒頭が並べる。
@@ -91,3 +95,7 @@ claude mcp add pmx-editor-mcp -- "<発行先の PmxEditorMcp.Bridge.exe の絶�
 ## 検証
 
 変更を確定させる前に通す検査の走らせ方は[検証手順](docs/conventions/verification.md)が定める。
+
+CI(GitHub Actions)が走らせるのは、[check-set.ps1](scripts/check-set.ps1) が `-WithoutEditor` の印を
+付けた検査だけである。印の無い検査は、手元で走らせる[検証手順](docs/conventions/verification.md)の
+検査でだけ確かめられる。

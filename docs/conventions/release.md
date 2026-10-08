@@ -45,7 +45,15 @@
 1. `pwsh -File scripts/verify.ps1 -All`
 2. `pwsh -File scripts/verify-live.ps1 -All`
 3. 配布パッケージから導入した状態の検査。[インストール指示書](../package/INSTALL.md)のとおりの
-   新規導入・更新・アンインストールと、受入シナリオ1〜9がすべて合格すること。
+   新規導入・更新・アンインストールと、受入シナリオの全件が合格すること。導入するPMXエディタは、
+   [操作役のスクリプト](../../scripts/host-control.ps1)が起動するものとする。受入シナリオは、新規導入の
+   後と更新の後に、PowerShell で次を走らせる。
+
+   ```
+   . ./scripts/editor-dir.ps1
+   $env:PMX_EDITOR_MCP_TEST_EDITOR_DIR = Get-SessionEditorDirectory
+   node scripts/acceptance.mjs --cases catalog/authored/acceptance-scenarios.json --setup scripts/acceptance-setup-package.ps1
+   ```
 
 ## 4. main へ入れる
 

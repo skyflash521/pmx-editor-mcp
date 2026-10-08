@@ -1,9 +1,7 @@
 # 受入の導入の前置のうち、開発配置の経路。
-# ホストをデプロイターゲットで配置し、ブリッジのビルド成果物を受入の実行器が起こす相手として返す。
 # 受入の実行器はこのスクリプトの中身を解さず、最後の行へ書いた組だけを読む。
 [CmdletBinding()]
 param(
-    # 行う前置。prepare は導入を済ませ、起こす相手を書き出す。
     [Parameter(Mandatory = $true)]
     [ValidateSet("prepare")]
     [string]$Action
