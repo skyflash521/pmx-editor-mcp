@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PmxEditorMcp.Bridge;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -8,11 +9,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
     public sealed class DiscoveryRuleTests
     {
         [Fact]
-        public void AToolWhoseNameCarriesEveryTermIsMatched()
+        public void AToolWhoseNameCarriesTheTermIsMatched()
         {
             Assert.Equal(
                 new[] { "model_list_bones" },
-                DiscoveryRule.Matched(Descriptions(), new[] { "list", "bone" }).ToArray());
+                DiscoveryRule.Matched(Descriptions(), new[] { "bone" }).ToArray());
         }
 
         [Fact]
@@ -28,13 +29,23 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Equal(
                 new[] { "model_list_bones" },
-                DiscoveryRule.Matched(Descriptions(), new[] { "LIST", "BONE" }).ToArray());
+                DiscoveryRule.Matched(Descriptions(), new[] { "BONE" }).ToArray());
         }
 
         [Fact]
-        public void AToolThatMissesOneTermIsNotMatched()
+        public void AToolThatCarriesAnyOneOfTheTermsIsMatched()
         {
-            Assert.Empty(DiscoveryRule.Matched(Descriptions(), new[] { "bone", "頂点" }));
+            Assert.Equal(
+                new[] { "model_list_bones", "model_list_vertices" },
+                DiscoveryRule.Matched(Descriptions(), new[] { "bone", "頂点" }).ToArray());
+        }
+
+        [Fact]
+        public void ATermThatNoToolCarriesAddsNothing()
+        {
+            Assert.Equal(
+                new[] { "model_list_bones" },
+                DiscoveryRule.Matched(Descriptions(), new[] { "bone", "material" }).ToArray());
         }
 
         [Fact]
@@ -55,6 +66,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     new DiscoverySearch(new[] { "list" }),
                     new DiscoverySearch(new[] { "bone" }),
                 },
+                new[] { "model_list_bones", "model_list_vertices" });
+
+            Assert.Equal(
+                new[] { "model_list_bones", "model_list_vertices" },
+                DiscoveryRule.Found(Descriptions(), task).ToArray());
+        }
+
+        [Fact]
+        public void ASearchOfSeveralTermsBringsEveryToolThatAnyTermFinds()
+        {
+            DiscoveryTask task = new DiscoveryTask(
+                "題材",
+                new[] { new DiscoverySearch(new[] { "ボーンの一覧", "頂点の一覧" }) },
                 new[] { "model_list_bones", "model_list_vertices" });
 
             Assert.Equal(
@@ -124,12 +148,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static IList<string> FoundByFindTool(
             IDictionary<string, string> descriptions, IList<string> terms)
         {
-            return descriptions
-                .Where(d => terms.All(
-                    t => TextMatch.Contains(d.Key, t) || TextMatch.Contains(d.Value, t)))
-                .Select(d => d.Key)
-                .OrderBy(n => n, StringComparer.Ordinal)
-                .ToList();
+            return ToolSearch.Found(
+                terms, descriptions.Select(d => new ToolSearch.Entry(d.Key, d.Value)));
         }
 
         private static DiscoveryTaskTable Table(IList<string> terms, IList<string> tools)
