@@ -541,6 +541,33 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void RepointingBothBonesOfAnSdefVertexToOneLeavesOneSlotAndNoSdef()
+        {
+            FakePmx pmx = new FakePmx();
+            FakeBone kept = new FakeBone("残す");
+            FakeBone moved = new FakeBone("移す");
+            pmx.Bone.Add(kept);
+            FakeVertex vertex = new FakeVertex
+            {
+                SDEF = true,
+                Bone1 = kept,
+                Weight1 = 0.5f,
+                Bone2 = moved,
+                Weight2 = 0.5f,
+            };
+            pmx.Vertex.Add(vertex);
+
+            ReferenceCleanup.Repoint(
+                pmx, new Dictionary<IPXBone, IPXBone> { { moved, kept } });
+
+            Assert.True(VertexWeights.IsSound(vertex));
+            Assert.Same(kept, vertex.Bone1);
+            Assert.Equal(1f, vertex.Weight1);
+            Assert.Null(vertex.Bone2);
+            Assert.False(vertex.SDEF);
+        }
+
+        [Fact]
         public void AnSdefVertexThatKeepsTwoBonesStaysSdef()
         {
             FakePmx pmx = new FakePmx();

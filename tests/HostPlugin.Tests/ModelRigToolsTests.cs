@@ -45,6 +45,60 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void MergingBonesLeavesTheVerticesHoldingThemWithOneSlotForTheMergedBone()
+        {
+            IList<IPXBone> bones = Bones("腕", "腕", "手");
+            FakeVertex spread = Vertex(0f, 0f, 0f);
+            Now(spread).Bone1 = NowAll(bones)[0];
+            Now(spread).Weight1 = 0.3f;
+            Now(spread).Bone2 = NowAll(bones)[1];
+            Now(spread).Weight2 = 0.3f;
+            Now(spread).Bone3 = NowAll(bones)[2];
+            Now(spread).Weight3 = 0.4f;
+            FakeVertex sdef = Vertex(1f, 0f, 0f);
+            Now(sdef).SDEF = true;
+            Now(sdef).Bone1 = NowAll(bones)[0];
+            Now(sdef).Weight1 = 0.5f;
+            Now(sdef).Bone2 = NowAll(bones)[1];
+            Now(sdef).Weight2 = 0.5f;
+
+            Bone(
+                Operation(ModelEditBones.MergeSameName),
+                ComposedEditFixture.Given("all", true));
+
+            Assert.True(VertexWeights.IsSound(Now(spread)));
+            Near(0.6, Share(spread, Named("腕")));
+            Near(0.4, Share(spread, Named("手")));
+            Assert.True(VertexWeights.IsSound(Now(sdef)));
+            Assert.False(Now(sdef).SDEF);
+            Near(1.0, Share(sdef, Named("腕")));
+        }
+
+        [Fact]
+        public void DissolvingATipLeavesTheVerticesHoldingItAndItsParentWithOneSlot()
+        {
+            FakeBone arm = new FakeBone("腕");
+            FakeBone tip = new FakeBone("腕先") { Parent = arm };
+            FakeVertex vertex = new FakeVertex(0f, 0f, 0f)
+            {
+                Bone1 = arm,
+                Weight1 = 0.5f,
+                Bone2 = tip,
+                Weight2 = 0.5f,
+            };
+            _fixture.Model.Bone.Add(arm);
+            _fixture.Model.Bone.Add(tip);
+            _fixture.Model.Vertex.Add(vertex);
+
+            Bone(
+                Operation(ModelEditBones.DissolveTipBones),
+                ComposedEditFixture.Given("indices", new object[] { 1 }));
+
+            Assert.True(VertexWeights.IsSound(Now(vertex)));
+            Near(1.0, Share(vertex, Named("腕")));
+        }
+
+        [Fact]
         public void ABoneWithNoChildIsPutOutOfReach()
         {
             IList<IPXBone> bones = Bones("親", "子");
@@ -784,6 +838,24 @@ namespace PmxEditorMcp.Tests
         {
             vertex.Bone1 = bone;
             vertex.Weight1 = 1f;
+        }
+
+        /// <summary>その頂点がそのボーンへ振っている重みの合計。振っていなければ0。</summary>
+        private float Share(IPXVertex given, IPXBone weighed)
+        {
+            IPXVertex now = Now(given);
+            IPXBone[] held = { now.Bone1, now.Bone2, now.Bone3, now.Bone4 };
+            float[] weights = { now.Weight1, now.Weight2, now.Weight3, now.Weight4 };
+            float share = 0f;
+            for (int at = 0; at < held.Length; at++)
+            {
+                if (ReferenceEquals(held[at], weighed))
+                {
+                    share += weights[at];
+                }
+            }
+
+            return share;
         }
 
         /// <summary>画面で見え、操作もできるボーンにする。</summary>
