@@ -13,14 +13,18 @@ namespace PmxEditorMcp
     {
         private readonly IUiDispatcher _inner;
 
+        private readonly HostLog _log;
+
         private readonly IModelUpdates _updates;
 
         private readonly Func<object> _transformView;
 
         /// <summary><paramref name="transformView"/> は TransformView のコネクタを返す。UIスレッドで呼ばれる。</summary>
-        public TransformViewFollowing(IUiDispatcher inner, IModelUpdates updates, Func<object> transformView)
+        public TransformViewFollowing(
+            IUiDispatcher inner, HostLog log, IModelUpdates updates, Func<object> transformView)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+            _log = log ?? throw new ArgumentNullException(nameof(log));
             _updates = updates ?? throw new ArgumentNullException(nameof(updates));
             _transformView = transformView ?? throw new ArgumentNullException(nameof(transformView));
         }
@@ -39,7 +43,14 @@ namespace PmxEditorMcp
                 action();
                 if (_updates.Count != updated && TransformViewSync.Refreshes == refreshed)
                 {
-                    TransformViewSync.Refresh(_transformView());
+                    try
+                    {
+                        TransformViewSync.Refresh(_transformView());
+                    }
+                    catch (Exception exception)
+                    {
+                        _log.WriteException("TransformView の読み直しで例外が起きた。", exception);
+                    }
                 }
             });
         }

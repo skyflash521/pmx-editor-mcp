@@ -118,7 +118,7 @@ namespace PmxEditorMcp.Tests
 
         private TransformViewFollowing Following(IModelUpdates updates, Func<object> transformView)
         {
-            return new TransformViewFollowing(new InlineDispatcher(), updates, transformView);
+            return new TransformViewFollowing(new InlineDispatcher(), _log, updates, transformView);
         }
 
         private string Logged()

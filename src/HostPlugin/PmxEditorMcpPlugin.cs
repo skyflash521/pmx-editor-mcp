@@ -403,7 +403,8 @@ namespace PmxEditorMcp
         {
             return _modelUpdates == null
                 ? dispatcher
-                : new TransformViewFollowing(dispatcher, _modelUpdates, () => Receiver(receivers, TransformViewType));
+                : new TransformViewFollowing(
+                    dispatcher, _log, _modelUpdates, () => Receiver(receivers, TransformViewType));
         }
 
         /// <summary>要求を直列化する錠を持ったスレッドから呼ばれる。</summary>
