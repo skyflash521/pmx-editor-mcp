@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -15,6 +14,16 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string SignaturesName = "signatures";
 
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                CapabilitiesName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(CapabilityIdName, JsonForm.Text()),
+                        JsonForm.Member(
+                            SignaturesName, JsonForm.Array(JsonForm.Text(), allowEmpty: true))),
+                    allowEmpty: true)));
+
         /// <summary>
         /// 能力IDの昇順、その中は行キーの昇順で返す。形が違えば <see cref="FormatException"/>。
         /// </summary>
@@ -25,36 +34,23 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            object[] capabilities = Members(Parse(json), CapabilitiesName)[CapabilitiesName] as object[];
-            if (capabilities == null)
-            {
-                throw new FormatException(CapabilitiesName + " は能力の並びでなければならない。");
-            }
-
+            IDictionary<string, object> root = (IDictionary<string, object>)Form.Read(json);
             HashSet<string> capabilityIds = new HashSet<string>(StringComparer.Ordinal);
             HashSet<string> keys = new HashSet<string>(StringComparer.Ordinal);
             List<ExcludedBaselineEntry> entries = new List<ExcludedBaselineEntry>();
 
-            foreach (object capability in capabilities)
+            foreach (IDictionary<string, object> members in
+                ((object[])root[CapabilitiesName]).Cast<IDictionary<string, object>>())
             {
-                Dictionary<string, object> members =
-                    Members(capability, CapabilityIdName, SignaturesName);
-                string capabilityId = Text(members[CapabilityIdName], CapabilityIdName);
+                string capabilityId = (string)members[CapabilityIdName];
                 if (!capabilityIds.Add(capabilityId))
                 {
                     throw new FormatException("同じ能力IDが二度現れる: " + capabilityId);
                 }
 
-                object[] signatures = members[SignaturesName] as object[];
-                if (signatures == null)
-                {
-                    throw new FormatException(SignaturesName + " は行キーの並びでなければならない。");
-                }
-
                 List<string> read = new List<string>();
-                foreach (object signature in signatures)
+                foreach (string key in ((object[])members[SignaturesName]).Cast<string>())
                 {
-                    string key = Text(signature, SignaturesName);
                     if (!keys.Add(key))
                     {
                         throw new FormatException("同じ行キーが二度現れる: " + key);
@@ -70,60 +66,6 @@ namespace PmxEditorMcp.SignatureDump
 
             return new ReadOnlyCollection<ExcludedBaselineEntry>(
                 entries.OrderBy(e => e.CapabilityId, StringComparer.Ordinal).ToList());
-        }
-
-        private static object Parse(string json)
-        {
-            try
-            {
-                return new JavaScriptSerializer().DeserializeObject(json);
-            }
-            catch (Exception exception)
-            {
-                throw new FormatException("JSONとして読めない。", exception);
-            }
-        }
-
-        /// <summary>
-        /// 求める項目だけを持つ対象として読む。余分な項目を黙って捨てると、正本の形が崩れても
-        /// 気づけない。
-        /// </summary>
-        private static Dictionary<string, object> Members(object value, params string[] names)
-        {
-            Dictionary<string, object> members = value as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException("項目の組でなければならない。");
-            }
-
-            foreach (string name in names)
-            {
-                if (!members.ContainsKey(name))
-                {
-                    throw new FormatException("項目が無い: " + name);
-                }
-            }
-
-            foreach (string name in members.Keys)
-            {
-                if (!names.Contains(name, StringComparer.Ordinal))
-                {
-                    throw new FormatException("知らない項目がある: " + name);
-                }
-            }
-
-            return members;
-        }
-
-        private static string Text(object value, string name)
-        {
-            string text = value as string;
-            if (string.IsNullOrEmpty(text))
-            {
-                throw new FormatException(name + " は空でない文字列でなければならない。");
-            }
-
-            return text;
         }
     }
 }
