@@ -108,6 +108,19 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
+            try
+            {
+                return Dispatch(args, output, error);
+            }
+            catch (Exception exception)
+            {
+                error.WriteLine(exception.ToString());
+                return ExitCodes.Unresolved;
+            }
+        }
+
+        private static int Dispatch(string[] args, TextWriter output, TextWriter error)
+        {
             if (args.Length == 0)
             {
                 error.WriteLine("下位コマンドを指定する。");

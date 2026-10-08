@@ -13,7 +13,7 @@ namespace PmxEditorMcp.SignatureDump
 
         public const int WriteFailed = 4;
 
-        /// <summary>読み込めた入力どうしが食い違い、結果を確定できないとき。</summary>
+        /// <summary>読み込めた入力どうしが食い違い、結果を確定できないとき。想定外の例外で止まったときも。</summary>
         public const int Unresolved = 5;
     }
 }

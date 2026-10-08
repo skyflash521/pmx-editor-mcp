@@ -50,6 +50,20 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(tools));
             }
 
+            for (int at = 1; at < tools.Count; at++)
+            {
+                int order = string.CompareOrdinal(tools[at - 1].Tool, tools[at].Tool);
+                if (order == 0)
+                {
+                    throw new ArgumentException("同じツールが二度現れる: " + tools[at].Tool, nameof(tools));
+                }
+
+                if (order > 0)
+                {
+                    throw new ArgumentException("序数の昇順で並んでいない: " + tools[at].Tool, nameof(tools));
+                }
+            }
+
             Tools = new ReadOnlyCollection<UncoveredToolRecord>(tools);
         }
 
