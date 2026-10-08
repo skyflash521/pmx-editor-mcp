@@ -392,7 +392,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             FormatException error = Assert.Throws<FormatException>(
                 () => TypeRoleTableJsonReader.ReadTypeRoles(json));
 
-            Assert.Equal("項目の組でなければならない。", error.Message);
+            Assert.Contains("は項目の組でなければならない。", error.Message);
         }
 
         [Fact]

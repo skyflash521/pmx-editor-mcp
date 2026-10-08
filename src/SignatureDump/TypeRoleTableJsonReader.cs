@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -48,6 +47,39 @@ namespace PmxEditorMcp.SignatureDump
                 { "dto", TypeRole.Dto },
             };
 
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                TypesName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(TypeNameName, JsonForm.Text()),
+                        JsonForm.Member(RoleName, JsonForm.Text()),
+                        JsonForm.Member(BasisName, JsonForm.Text()),
+                        JsonForm.Optional(ElementNounName, JsonForm.Text()),
+                        JsonForm.Optional(ElementNounPluralName, JsonForm.Text()),
+                        JsonForm.Optional(GroupName, JsonForm.Text())),
+                    TypeNameName,
+                    allowEmpty: true)),
+            JsonForm.Member(
+                IssuancesName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(SignatureKeyName, JsonForm.Text()),
+                        JsonForm.Member(IssuesName, JsonForm.Flag()),
+                        JsonForm.Member(BasisName, JsonForm.Text())),
+                    SignatureKeyName,
+                    allowEmpty: true)),
+            JsonForm.Member(
+                CollectionsName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(SignatureKeyName, JsonForm.Text()),
+                        JsonForm.Member(OwnsName, JsonForm.Flag()),
+                        JsonForm.Member(BasisName, JsonForm.Text()),
+                        JsonForm.Optional(OwnerPathName, JsonForm.Array(JsonForm.Text()))),
+                    SignatureKeyName,
+                    allowEmpty: true)));
+
         /// <summary>
         /// 型ごとの役割と、ハンドル発行の判定と、要素を並べるリストの判定を、書かれた順に返す。
         /// 型名と行キーが序数の昇順に重複なく並び、要素名詞が表の中で重複しないことを求める。形が
@@ -60,75 +92,25 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            Dictionary<string, object> members = Members(
-                Parse(json), TypesName, IssuancesName, CollectionsName);
+            IDictionary<string, object> root = (IDictionary<string, object>)Form.Read(json);
 
             return new TypeRoleTable(
-                ReadTypes(members[TypesName]),
-                ReadIssuances(members[IssuancesName]),
-                ReadCollections(members[CollectionsName]));
+                ReadTypes(root[TypesName]),
+                Each(root[IssuancesName]).Select(ReadIssuance).ToList(),
+                Each(root[CollectionsName]).Select(ReadCollection).ToList());
         }
 
-        private static IList<ElementCollectionRecord> ReadCollections(object value)
+        private static ElementCollectionRecord ReadCollection(IDictionary<string, object> members)
         {
-            List<ElementCollectionRecord> records = new List<ElementCollectionRecord>();
-            string previous = null;
-            foreach (object item in Array(value, CollectionsName))
-            {
-                bool owns = Owned(item);
-                Dictionary<string, object> members = Members(
-                    item,
-                    owns
-                        ? new[] { SignatureKeyName, OwnsName, BasisName, OwnerPathName }
-                        : new[] { SignatureKeyName, OwnsName, BasisName },
-                    new string[0]);
-                ElementCollectionRecord record;
-                try
-                {
-                    record = new ElementCollectionRecord(
-                        Text(members[SignatureKeyName], SignatureKeyName),
-                        owns,
-                        Text(members[BasisName], BasisName),
-                        owns ? ReadPath(members[OwnerPathName]) : null);
-                }
-                catch (ArgumentException exception)
-                {
-                    throw new FormatException(exception.Message, exception);
-                }
-
-                RequireAscending(previous, record.SignatureKey, "行キー");
-                previous = record.SignatureKey;
-                records.Add(record);
-            }
-
-            return records;
-        }
-
-        private static IList<HandleIssuanceRecord> ReadIssuances(object value)
-        {
-            List<HandleIssuanceRecord> records = new List<HandleIssuanceRecord>();
-            string previous = null;
-            foreach (object item in Array(value, IssuancesName))
-            {
-                HandleIssuanceRecord record = ReadIssuance(item);
-                RequireAscending(previous, record.SignatureKey, "行キー");
-                previous = record.SignatureKey;
-                records.Add(record);
-            }
-
-            return records;
-        }
-
-        private static HandleIssuanceRecord ReadIssuance(object item)
-        {
-            Dictionary<string, object> members = Members(
-                item, new[] { SignatureKeyName, IssuesName, BasisName }, new string[0]);
+            bool owns = (bool)members[OwnsName];
+            RequireMembers(members, owns ? new[] { OwnerPathName } : new string[0], new string[0]);
             try
             {
-                return new HandleIssuanceRecord(
-                    Text(members[SignatureKeyName], SignatureKeyName),
-                    Flag(item),
-                    Text(members[BasisName], BasisName));
+                return new ElementCollectionRecord(
+                    (string)members[SignatureKeyName],
+                    owns,
+                    (string)members[BasisName],
+                    owns ? ((object[])members[OwnerPathName]).Cast<string>().ToList() : null);
             }
             catch (ArgumentException exception)
             {
@@ -136,73 +118,30 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        private static bool Owned(object item)
+        private static HandleIssuanceRecord ReadIssuance(IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = item as Dictionary<string, object>;
-            if (members == null)
+            try
             {
-                throw new FormatException("項目の組でなければならない。");
+                return new HandleIssuanceRecord(
+                    (string)members[SignatureKeyName],
+                    (bool)members[IssuesName],
+                    (string)members[BasisName]);
             }
-
-            object value;
-            if (!members.TryGetValue(OwnsName, out value))
+            catch (ArgumentException exception)
             {
-                throw new FormatException("項目が無い: " + OwnsName);
+                throw new FormatException(exception.Message, exception);
             }
-
-            return Flag(value, OwnsName);
-        }
-
-        private static IList<string> ReadPath(object value)
-        {
-            object[] items = Array(value, OwnerPathName);
-            if (items.Length == 0)
-            {
-                throw new FormatException(OwnerPathName + " は1件以上でなければならない。");
-            }
-
-            return items.Select(i => Text(i, OwnerPathName)).ToList();
-        }
-
-        private static bool Flag(object item)
-        {
-            Dictionary<string, object> members = item as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException("項目の組でなければならない。");
-            }
-
-            object value;
-            if (!members.TryGetValue(IssuesName, out value))
-            {
-                throw new FormatException("項目が無い: " + IssuesName);
-            }
-
-            return Flag(value, IssuesName);
-        }
-
-        private static bool Flag(object value, string name)
-        {
-            if (!(value is bool))
-            {
-                throw new FormatException(name + " は真偽でなければならない。");
-            }
-
-            return (bool)value;
         }
 
         private static IList<TypeRoleRecord> ReadTypes(object value)
         {
             List<TypeRoleRecord> records = new List<TypeRoleRecord>();
             HashSet<string> nouns = new HashSet<string>(StringComparer.Ordinal);
-            string previous = null;
-            foreach (object item in Array(value, TypesName))
+            foreach (IDictionary<string, object> item in Each(value))
             {
                 TypeRoleRecord record = ReadRecord(item);
-                RequireAscending(previous, record.TypeName, "型");
                 RequireUnique(nouns, record.ElementNoun);
                 RequireUnique(nouns, record.ElementNounPlural);
-                previous = record.TypeName;
                 records.Add(record);
             }
 
@@ -221,45 +160,31 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        private static void RequireAscending(string previous, string current, string what)
+        private static TypeRoleRecord ReadRecord(IDictionary<string, object> members)
         {
-            if (previous == null)
+            string text = (string)members[RoleName];
+            TypeRole role;
+            if (!Roles.TryGetValue(text, out role))
             {
-                return;
+                throw new FormatException("知らない役割: " + text);
             }
 
-            int order = string.CompareOrdinal(previous, current);
-            if (order == 0)
-            {
-                throw new FormatException("同じ" + what + "が二度現れる: " + current);
-            }
-
-            if (order > 0)
-            {
-                throw new FormatException("序数の昇順で並んでいない: " + current);
-            }
-        }
-
-        private static TypeRoleRecord ReadRecord(object item)
-        {
-            TypeRole role = ReadRole(item);
-            Dictionary<string, object> members = Members(
-                item, NamesFor(role), OptionalNamesFor(role));
+            RequireMembers(members, RequiredOptionalNamesFor(role), OptionalNamesFor(role));
             string noun = members.ContainsKey(ElementNounName)
-                ? Noun(members[ElementNounName], ElementNounName)
+                ? Noun((string)members[ElementNounName], ElementNounName)
                 : string.Empty;
             string plural = members.ContainsKey(ElementNounPluralName)
-                ? Noun(members[ElementNounPluralName], ElementNounPluralName)
+                ? Noun((string)members[ElementNounPluralName], ElementNounPluralName)
                 : string.Empty;
             CapabilityOwner group = members.ContainsKey(GroupName)
-                ? ReadGroup(members[GroupName])
+                ? ReadGroup((string)members[GroupName])
                 : CapabilityOwner.None;
             try
             {
                 return new TypeRoleRecord(
-                    Text(members[TypeNameName], TypeNameName),
+                    (string)members[TypeNameName],
                     role,
-                    Text(members[BasisName], BasisName),
+                    (string)members[BasisName],
                     noun,
                     plural,
                     group);
@@ -281,52 +206,38 @@ namespace PmxEditorMcp.SignatureDump
                 : new string[0];
         }
 
-        private static TypeRole ReadRole(object item)
-        {
-            Dictionary<string, object> members = item as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException("項目の組でなければならない。");
-            }
-
-            object value;
-            if (!members.TryGetValue(RoleName, out value))
-            {
-                throw new FormatException("項目が無い: " + RoleName);
-            }
-
-            string text = Text(value, RoleName);
-            TypeRole role;
-            if (!Roles.TryGetValue(text, out role))
-            {
-                throw new FormatException("知らない役割: " + text);
-            }
-
-            return role;
-        }
-
-        /// <summary>役割ごとに、項目が持つべき名前。欠けると項目が無いとして弾かれる。</summary>
-        private static string[] NamesFor(TypeRole role)
+        private static string[] RequiredOptionalNamesFor(TypeRole role)
         {
             if (role == TypeRole.EventArgs || role == TypeRole.Dto)
             {
-                return new[] { TypeNameName, RoleName, BasisName };
+                return new string[0];
             }
 
             if (role == TypeRole.Connector)
             {
-                return new[] { TypeNameName, RoleName, BasisName, ElementNounName };
+                return new[] { ElementNounName };
             }
 
-            return new[]
-            {
-                TypeNameName, RoleName, BasisName, ElementNounName, ElementNounPluralName,
-            };
+            return new[] { ElementNounName, ElementNounPluralName };
         }
 
-        private static CapabilityOwner ReadGroup(object value)
+        private static void RequireMembers(
+            IDictionary<string, object> members, string[] required, string[] allowed)
         {
-            string text = Text(value, GroupName);
+            foreach (string name in required.Where(n => !members.ContainsKey(n)))
+            {
+                throw new FormatException("項目が無い: " + name);
+            }
+
+            foreach (string name in new[] { ElementNounName, ElementNounPluralName, GroupName, OwnerPathName }
+                .Where(n => members.ContainsKey(n) && !required.Contains(n) && !allowed.Contains(n)))
+            {
+                throw new FormatException("知らない項目がある: " + name);
+            }
+        }
+
+        private static CapabilityOwner ReadGroup(string text)
+        {
             CapabilityOwner group;
             if (!ToolGroups.ByToken.TryGetValue(text, out group))
             {
@@ -337,9 +248,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>要素名詞はツール名の一部になるので、小文字と数字と下線だけの語に限る。</summary>
-        private static string Noun(object value, string name)
+        private static string Noun(string text, string name)
         {
-            string text = Text(value, name);
             if (!SnakeCase.IsMatch(text))
             {
                 throw new FormatException(
@@ -350,77 +260,9 @@ namespace PmxEditorMcp.SignatureDump
             return text;
         }
 
-        private static object Parse(string json)
+        private static IEnumerable<IDictionary<string, object>> Each(object value)
         {
-            try
-            {
-                return new JavaScriptSerializer().DeserializeObject(json);
-            }
-            catch (Exception exception)
-            {
-                throw new FormatException("JSONとして読めない。", exception);
-            }
-        }
-
-        private static object[] Array(object value, string name)
-        {
-            object[] items = value as object[];
-            if (items == null)
-            {
-                throw new FormatException(name + " は項目の並びでなければならない。");
-            }
-
-            return items;
-        }
-
-        /// <summary>
-        /// 求める項目だけを持つ対象として読む。余分な項目を黙って捨てると、正本の形が崩れても
-        /// 気づけない。
-        /// </summary>
-        private static Dictionary<string, object> Members(object value, params string[] names)
-        {
-            return Members(value, names, new string[0]);
-        }
-
-        private static Dictionary<string, object> Members(
-            object value, string[] names, string[] optional)
-        {
-            Dictionary<string, object> members = value as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException("項目の組でなければならない。");
-            }
-
-            foreach (string name in names)
-            {
-                if (!members.ContainsKey(name))
-                {
-                    throw new FormatException("項目が無い: " + name);
-                }
-            }
-
-            foreach (string name in members.Keys)
-            {
-                if (!names.Contains(name, StringComparer.Ordinal)
-                    && !optional.Contains(name, StringComparer.Ordinal))
-                {
-                    throw new FormatException("知らない項目がある: " + name);
-                }
-            }
-
-            return members;
-        }
-
-        private static string Text(object value, string name)
-        {
-            string text = value as string;
-            if (string.IsNullOrEmpty(text) || text.Trim().Length == 0)
-            {
-                throw new FormatException(
-                    name + " は空でない文字列でなければならない(空白だけも不可)。");
-            }
-
-            return text;
+            return ((object[])value).Cast<IDictionary<string, object>>();
         }
     }
 }
