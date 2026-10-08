@@ -24,7 +24,6 @@
 
   <ItemGroup>
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Web.Extensions" />
   </ItemGroup>
 
 </Project>

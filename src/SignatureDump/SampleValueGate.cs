@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web.Script.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -46,6 +47,11 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>組み合わせを許す列挙で、列挙子を連ねる区切り。</summary>
         private static readonly string[] MemberSeparator = { ", " };
+
+        private static readonly JsonSerializerOptions Spelling = new JsonSerializerOptions
+        {
+            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
+        };
 
         /// <summary>合わなければ <see cref="InvalidOperationException"/>。</summary>
         public static void Require(
@@ -378,7 +384,7 @@ namespace PmxEditorMcp.SignatureDump
 
         private static string Written(object value)
         {
-            return new JavaScriptSerializer().Serialize(value);
+            return JsonSerializer.Serialize(value, Spelling);
         }
 
         private static void RequireThat(bool held, string message)
