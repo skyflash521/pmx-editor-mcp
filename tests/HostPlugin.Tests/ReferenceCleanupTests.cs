@@ -568,6 +568,81 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void RepointingABoneToNothingMovesItsWeightToTheFirstBoneInTheList()
+        {
+            FakePmx pmx = new FakePmx();
+            FakeBone first = new FakeBone("先頭");
+            FakeBone moved = new FakeBone("移す");
+            pmx.Bone.Add(first);
+            FakeVertex vertex = new FakeVertex { QDEF = true, Bone1 = moved, Weight1 = 1f };
+            pmx.Vertex.Add(vertex);
+
+            ReferenceCleanup.Repoint(
+                pmx, new Dictionary<IPXBone, IPXBone> { { moved, null } });
+
+            Assert.Same(first, vertex.Bone1);
+            Assert.Equal(1f, vertex.Weight1);
+            Assert.True(VertexWeights.IsSound(vertex));
+        }
+
+        [Fact]
+        public void RepointingTheHeavierBoneOfAnSdefVertexToNothingKeepsTheSlotOrder()
+        {
+            FakePmx pmx = new FakePmx();
+            FakeBone first = new FakeBone("先頭");
+            FakeBone held = new FakeBone("持つ");
+            FakeBone moved = new FakeBone("移す");
+            pmx.Bone.Add(first);
+            pmx.Bone.Add(held);
+            FakeVertex vertex = new FakeVertex
+            {
+                SDEF = true,
+                Bone1 = held,
+                Weight1 = 0.3f,
+                Bone2 = moved,
+                Weight2 = 0.7f,
+            };
+            pmx.Vertex.Add(vertex);
+
+            ReferenceCleanup.Repoint(
+                pmx, new Dictionary<IPXBone, IPXBone> { { moved, null } });
+
+            Assert.True(vertex.SDEF);
+            Assert.Same(held, vertex.Bone1);
+            Assert.Equal(0.3f, vertex.Weight1, 4);
+            Assert.Same(first, vertex.Bone2);
+            Assert.Equal(0.7f, vertex.Weight2, 4);
+        }
+
+        [Fact]
+        public void AnSdefVertexWhoseHeavierBoneLeftKeepsTheSlotOrder()
+        {
+            FakePmx pmx = new FakePmx();
+            FakeBone held = new FakeBone("持つ");
+            FakeBone root = new FakeBone("親");
+            FakeBone gone = new FakeBone("消えた") { Parent = root };
+            pmx.Bone.Add(held);
+            pmx.Bone.Add(root);
+            FakeVertex vertex = new FakeVertex
+            {
+                SDEF = true,
+                Bone1 = held,
+                Weight1 = 0.3f,
+                Bone2 = gone,
+                Weight2 = 0.7f,
+            };
+            pmx.Vertex.Add(vertex);
+
+            ReferenceCleanup.Sweep(pmx);
+
+            Assert.True(vertex.SDEF);
+            Assert.Same(held, vertex.Bone1);
+            Assert.Equal(0.3f, vertex.Weight1, 4);
+            Assert.Same(root, vertex.Bone2);
+            Assert.Equal(0.7f, vertex.Weight2, 4);
+        }
+
+        [Fact]
         public void AnSdefVertexThatKeepsTwoBonesStaysSdef()
         {
             FakePmx pmx = new FakePmx();

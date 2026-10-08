@@ -237,7 +237,29 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(moved));
             }
 
+            IPXPmx model = (IPXPmx)pmx;
+            IPXBone fallback = model.Bone.Count == 0 ? null : model.Bone[0];
+            List<KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>>> weighed =
+                new List<KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>>>();
+            foreach (IPXVertex vertex in model.Vertex)
+            {
+                IList<KeyValuePair<IPXBone, float>> held = VertexWeights.Read(vertex);
+                if (held.Any(share => moved.ContainsKey(share.Key)))
+                {
+                    weighed.Add(new KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>>(
+                        vertex,
+                        held.Select(share => new KeyValuePair<IPXBone, float>(
+                                Moved(moved, share.Key) ?? fallback, share.Value))
+                            .Where(share => share.Key != null)
+                            .ToList()));
+                }
+            }
+
             Retarget(pmx, ElementKinds.Bone, held => Moved(moved, (IPXBone)held));
+            foreach (KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>> one in weighed)
+            {
+                Rewritten(one.Key, one.Value);
+            }
         }
 
         private static void Retarget(object pmx, string kind, Func<object, object> moved)
@@ -377,25 +399,38 @@ namespace PmxEditorMcp
                     continue;
                 }
 
-                IList<KeyValuePair<IPXBone, float>> kept = VertexWeights.Settled(held
+                Rewritten(vertex, held
                     .Select(share => new KeyValuePair<IPXBone, float>(
                         LandingBone(share.Key, bones, fallback), share.Value))
-                    .Where(share => share.Key != null));
-                VertexWeights.Write(vertex, kept);
-                if (kept.Count < SdefBones)
-                {
-                    vertex.SDEF = false;
-                }
-
-                if (kept.Count == 0)
-                {
-                    vertex.QDEF = false;
-                }
-
+                    .Where(share => share.Key != null)
+                    .ToList());
                 repaired++;
             }
 
             return repaired;
+        }
+
+        private static void Rewritten(IPXVertex vertex, IList<KeyValuePair<IPXBone, float>> placed)
+        {
+            IList<KeyValuePair<IPXBone, float>> kept = VertexWeights.Settled(placed);
+            if (vertex.SDEF && kept.Count == SdefBones)
+            {
+                kept = kept
+                    .OrderBy(share => Enumerable.Range(0, placed.Count)
+                        .First(at => ReferenceEquals(placed[at].Key, share.Key)))
+                    .ToList();
+            }
+
+            VertexWeights.Write(vertex, kept);
+            if (kept.Count < SdefBones)
+            {
+                vertex.SDEF = false;
+            }
+
+            if (kept.Count == 0)
+            {
+                vertex.QDEF = false;
+            }
         }
 
         /// <summary>
