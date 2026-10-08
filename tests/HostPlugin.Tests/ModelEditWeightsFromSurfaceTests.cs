@@ -422,6 +422,24 @@ namespace PmxEditorMcp.Tests
             Near(0.0, Share(target, bones[3]));
         }
 
+        [Fact]
+        public void APickedCornerChangedEarlierIsReadWithTheWeightsItHeldBefore()
+        {
+            IList<IPXBone> bones = Bones("X", "Y");
+            FakeVertex[] corners = Triangle(bones[0], bones[1], bones[1]);
+            Weigh(corners[0], bones[0], 0.6f);
+            corners[0].Bone2 = bones[1];
+            corners[0].Weight2 = 0.4f;
+            FakeVertex target = Target(0.2f, 0.1f, 0.2f, bones[0]);
+
+            FromTheSurface(
+                ComposedEditFixture.Given("indices", new object[] { 0, 3 }),
+                ComposedEditFixture.Given(MaxBones, 1));
+
+            Near(1.0, Share(corners[0], bones[0]));
+            Near(1.0, Share(target, bones[1]));
+        }
+
         [Theory]
         [InlineData(1, 1.0, 0.0, 0.0)]
         [InlineData(2, 0.625, 0.375, 0.0)]

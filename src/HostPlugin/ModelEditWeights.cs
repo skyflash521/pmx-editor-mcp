@@ -270,6 +270,7 @@ namespace PmxEditorMcp
 
             IList<IList<KeyValuePair<IPXBone, float>>> before =
                 picked.Select(VertexWeights.All).ToList();
+            IList<V3[]> sdefBefore = picked.Select(Sdef).ToList();
             switch (operation)
             {
                 case Average:
@@ -342,7 +343,8 @@ namespace PmxEditorMcp
             int changed = 0;
             for (int at = 0; at < picked.Count; at++)
             {
-                changed += VertexWeights.Same(picked[at], before[at]) ? 0 : 1;
+                changed += VertexWeights.Same(picked[at], before[at])
+                    && SameSdef(picked[at], sdefBefore[at]) ? 0 : 1;
             }
 
             return ComposedEditResult.CompleteRewriting(
@@ -351,6 +353,29 @@ namespace PmxEditorMcp
                     { ChangedName, changed },
                 },
                 new[] { ScreenRefresh.WeightKind });
+        }
+
+        private static V3[] Sdef(IPXVertex vertex)
+        {
+            return vertex.SDEF
+                ? new[]
+                {
+                    Vectors.Copied(vertex.SDEF_C),
+                    Vectors.Copied(vertex.SDEF_R0),
+                    Vectors.Copied(vertex.SDEF_R1),
+                }
+                : null;
+        }
+
+        private static bool SameSdef(IPXVertex vertex, V3[] held)
+        {
+            V3[] now = Sdef(vertex);
+            if (now == null || held == null)
+            {
+                return now == held;
+            }
+
+            return Enumerable.Range(0, now.Length).All(at => Vectors.Same(now[at], held[at]));
         }
 
         private static bool TrySpatial(
@@ -437,11 +462,24 @@ namespace PmxEditorMcp
         {
             public IPXVertex Vertex { get; set; }
 
-            public SurfaceGeometry.Hit Hit { get; set; }
+            public SdefSource Sdef { get; set; }
 
             public double Fade { get; set; }
 
             public IList<KeyValuePair<IPXBone, float>> Copied { get; set; }
+        }
+
+        private sealed class SdefSource
+        {
+            public IPXBone Bone1 { get; set; }
+
+            public IPXBone Bone2 { get; set; }
+
+            public V3 C { get; set; }
+
+            public V3 R0 { get; set; }
+
+            public V3 R1 { get; set; }
         }
 
         private static bool TrySurface(
@@ -722,23 +760,13 @@ namespace PmxEditorMcp
 
         private static void Surfaced(IEnumerable<IPXVertex> picked, SurfaceInput input)
         {
-            bool smooths = input.SourceSmooth > 0f || (input.FalloffSmooth > 0f && input.Fades);
             List<Plan> plans = new List<Plan>();
             foreach (IPXVertex vertex in picked)
             {
                 Plan plan = Planned(vertex, input);
-                if (plan == null)
-                {
-                    continue;
-                }
-
-                if (smooths)
+                if (plan != null)
                 {
                     plans.Add(plan);
-                }
-                else
-                {
-                    Applied(plan);
                 }
             }
 
@@ -775,7 +803,7 @@ namespace PmxEditorMcp
             return new Plan
             {
                 Vertex = vertex,
-                Hit = hit,
+                Sdef = Sdefed(hit),
                 Fade = Faded(input, (hit.Point - at).Length),
                 Copied = Copied(hit, input),
             };
@@ -791,7 +819,7 @@ namespace PmxEditorMcp
                 return;
             }
 
-            if (fade == 0d && TrySdef(vertex, plan.Hit, copied))
+            if (fade == 0d && TrySdef(vertex, plan.Sdef, copied))
             {
                 return;
             }
@@ -937,8 +965,7 @@ namespace PmxEditorMcp
                 settled.Where((share, at) => at == 0 || share.Value >= input.MinWeight).ToList());
         }
 
-        private static bool TrySdef(
-            IPXVertex vertex, SurfaceGeometry.Hit hit, IList<KeyValuePair<IPXBone, float>> copied)
+        private static SdefSource Sdefed(SurfaceGeometry.Hit hit)
         {
             IPXVertex first = hit.Corners[0];
             if (!hit.Corners.All(corner => corner.SDEF
@@ -946,27 +973,46 @@ namespace PmxEditorMcp
                     && corner.Bone2 != null
                     && ReferenceEquals(corner.Bone1, first.Bone1)
                     && ReferenceEquals(corner.Bone2, first.Bone2))
-                || ReferenceEquals(first.Bone1, first.Bone2)
+                || ReferenceEquals(first.Bone1, first.Bone2))
+            {
+                return null;
+            }
+
+            double[] by = hit.Barycentric;
+
+            return new SdefSource
+            {
+                Bone1 = first.Bone1,
+                Bone2 = first.Bone2,
+                C = Blended(hit.Corners, by, corner => corner.SDEF_C),
+                R0 = Blended(hit.Corners, by, corner => corner.SDEF_R0),
+                R1 = Blended(hit.Corners, by, corner => corner.SDEF_R1),
+            };
+        }
+
+        private static bool TrySdef(
+            IPXVertex vertex, SdefSource source, IList<KeyValuePair<IPXBone, float>> copied)
+        {
+            if (source == null
                 || copied.Count != 2
-                || !copied.Any(share => ReferenceEquals(share.Key, first.Bone1))
-                || !copied.Any(share => ReferenceEquals(share.Key, first.Bone2)))
+                || !copied.Any(share => ReferenceEquals(share.Key, source.Bone1))
+                || !copied.Any(share => ReferenceEquals(share.Key, source.Bone2)))
             {
                 return false;
             }
 
-            double[] by = hit.Barycentric;
             vertex.SDEF = true;
-            vertex.Bone1 = first.Bone1;
-            vertex.Bone2 = first.Bone2;
+            vertex.Bone1 = source.Bone1;
+            vertex.Bone2 = source.Bone2;
             vertex.Bone3 = null;
             vertex.Bone4 = null;
-            vertex.Weight1 = copied.First(share => ReferenceEquals(share.Key, first.Bone1)).Value;
-            vertex.Weight2 = copied.First(share => ReferenceEquals(share.Key, first.Bone2)).Value;
+            vertex.Weight1 = copied.First(share => ReferenceEquals(share.Key, source.Bone1)).Value;
+            vertex.Weight2 = copied.First(share => ReferenceEquals(share.Key, source.Bone2)).Value;
             vertex.Weight3 = 0f;
             vertex.Weight4 = 0f;
-            vertex.SDEF_C = Blended(hit.Corners, by, corner => corner.SDEF_C);
-            vertex.SDEF_R0 = Blended(hit.Corners, by, corner => corner.SDEF_R0);
-            vertex.SDEF_R1 = Blended(hit.Corners, by, corner => corner.SDEF_R1);
+            vertex.SDEF_C = source.C;
+            vertex.SDEF_R0 = source.R0;
+            vertex.SDEF_R1 = source.R1;
 
             return true;
         }
@@ -1315,6 +1361,8 @@ namespace PmxEditorMcp
                 spots[Spot(vertex.Position)] = vertex;
             }
 
+            List<KeyValuePair<IPXVertex, IPXVertex>> pairs =
+                new List<KeyValuePair<IPXVertex, IPXVertex>>();
             foreach (IPXVertex vertex in picked)
             {
                 IPXVertex twin;
@@ -1324,12 +1372,22 @@ namespace PmxEditorMcp
                     continue;
                 }
 
+                pairs.Add(new KeyValuePair<IPXVertex, IPXVertex>(vertex, (IPXVertex)twin.Clone()));
+            }
+
+            foreach (KeyValuePair<IPXVertex, IPXVertex> pair in pairs)
+            {
+                IPXVertex vertex = pair.Key;
+                IPXVertex twin = pair.Value;
+                vertex.SDEF = false;
                 VertexWeights.Write(
                     vertex,
                     VertexWeights.Read(twin)
                         .Select(share => new KeyValuePair<IPXBone, float>(
                             Opposite(model, share.Key), share.Value))
                         .ToList());
+                vertex.SDEF = twin.SDEF;
+                VertexWeights.MirrorSdef(vertex, twin, point => Across(point, axis));
             }
         }
 

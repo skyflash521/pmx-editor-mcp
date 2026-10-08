@@ -424,6 +424,59 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TakingTheWeightFromMirrorsOnBothSidesReadsWhatEachHeldBefore()
+        {
+            IList<IPXBone> bones = Bones("左腕", "左ひじ", "右腕", "右ひじ");
+            FakeVertex left = Vertex(1f, 0f, 0f);
+            Now(left).SDEF = true;
+            Now(left).Bone1 = NowAll(bones)[0];
+            Now(left).Weight1 = 0.4f;
+            Now(left).Bone2 = NowAll(bones)[1];
+            Now(left).Weight2 = 0.6f;
+            FakeVertex right = Vertex(-1f, 0f, 0f);
+            Now(right).Bone1 = NowAll(bones)[2];
+            Now(right).Weight1 = 0.5f;
+            Now(right).Bone2 = NowAll(bones)[3];
+            Now(right).Weight2 = 0.5f;
+
+            Weights(
+                Operation(ModelEditWeights.FromMirror),
+                ComposedEditFixture.Given("indices", new object[] { 0, 1 }),
+                ComposedEditFixture.Given(ModelEditWeights.AxisName, ModelEditVertices.AxisX));
+
+            Assert.False(Now(left).SDEF);
+            Near(0.5, Share(left, NowAll(bones)[0]));
+            Assert.True(Now(right).SDEF);
+            Near(0.4, Share(right, NowAll(bones)[2]));
+            Near(0.6, Share(right, NowAll(bones)[3]));
+        }
+
+        [Fact]
+        public void TakingOnlyTheSdefFromTheMirrorCountsTheVertexAsChanged()
+        {
+            IList<IPXBone> bones = Bones("腕", "ひじ");
+            FakeVertex left = Vertex(1f, 0f, 0f);
+            Now(left).SDEF = true;
+            Now(left).Bone1 = NowAll(bones)[0];
+            Now(left).Weight1 = 0.4f;
+            Now(left).Bone2 = NowAll(bones)[1];
+            Now(left).Weight2 = 0.6f;
+            FakeVertex right = Vertex(-1f, 0f, 0f);
+            Now(right).Bone1 = NowAll(bones)[0];
+            Now(right).Weight1 = 0.4f;
+            Now(right).Bone2 = NowAll(bones)[1];
+            Now(right).Weight2 = 0.6f;
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Weights(
+                Operation(ModelEditWeights.FromMirror),
+                ComposedEditFixture.Given("indices", new object[] { 1 }),
+                ComposedEditFixture.Given(ModelEditWeights.AxisName, ModelEditVertices.AxisX)));
+
+            Assert.True(Now(right).SDEF);
+            Assert.Equal(1, value[ModelEditWeights.ChangedName]);
+        }
+
+        [Fact]
         public void TakingTheWeightFromAMirrorThatIsNotSdefLeavesNoSdef()
         {
             IList<IPXBone> bones = Bones("左腕", "左ひじ", "右腕", "右ひじ");
