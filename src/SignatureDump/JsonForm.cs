@@ -53,7 +53,7 @@ namespace PmxEditorMcp.SignatureDump
             return new CountForm();
         }
 
-        /// <summary>数。読めた値は整数か小数になる。</summary>
+        /// <summary>数。読めた値は整数か小数か、小数に収まらなければ倍精度になる。</summary>
         public static JsonForm Number()
         {
             return new NumberForm();
@@ -73,7 +73,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 形を問わない値。読めた値は、組なら名前から値へ引く表、並びなら値の並び、数なら整数か
-        /// 小数、そのほかはその値か null になる。
+        /// 小数か、小数に収まらなければ倍精度、そのほかはその値か null になる。
         /// </summary>
         public static JsonForm Any()
         {
@@ -184,7 +184,13 @@ namespace PmxEditorMcp.SignatureDump
                         return wide;
                     }
 
-                    return element.GetDecimal();
+                    decimal exact;
+                    if (element.TryGetDecimal(out exact))
+                    {
+                        return exact;
+                    }
+
+                    return element.GetDouble();
                 case JsonValueKind.True:
                     return true;
                 case JsonValueKind.False:
@@ -259,7 +265,7 @@ namespace PmxEditorMcp.SignatureDump
         {
             internal override object Read(object value, string path)
             {
-                if (!(value is int || value is long || value is decimal))
+                if (!(value is int || value is long || value is decimal || value is double))
                 {
                     throw Wrong(path, "数");
                 }

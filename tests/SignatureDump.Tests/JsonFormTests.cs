@@ -145,6 +145,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(-3, Value(form, "-3"));
             Assert.Equal(0.5m, Value(form, "0.5"));
+            Assert.Equal(3.4028234663852886e38, Value(form, "3.4028234663852886e38"));
             Assert.Contains(
                 "value は数でなければならない",
                 Assert.Throws<FormatException>(() => Value(form, "\"1\"")).Message,

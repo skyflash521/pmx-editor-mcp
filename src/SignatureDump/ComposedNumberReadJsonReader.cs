@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
-using System.Text.Json;
-using System.Text.Json.Nodes;
+using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -36,6 +36,32 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string RealReads = "real";
 
+        private const string TableName = "合成ツールの数の読み取りの表";
+
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                InputsName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(ToolName, JsonForm.Text()),
+                        JsonForm.Member(InputName, JsonForm.Text()),
+                        JsonForm.Member(ReadsName, JsonForm.Text()),
+                        JsonForm.Member(LeastName, JsonForm.Number()),
+                        JsonForm.Optional(LeastExcludedName, JsonForm.Flag()),
+                        JsonForm.Member(MostName, JsonForm.Number()),
+                        JsonForm.Member(BasisName, JsonForm.Text())),
+                    allowEmpty: true)),
+            JsonForm.Member(
+                ListsName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(ToolName, JsonForm.Text()),
+                        JsonForm.Member(InputName, JsonForm.Text()),
+                        JsonForm.Optional(LeastName, JsonForm.Number()),
+                        JsonForm.Optional(MostName, JsonForm.Number()),
+                        JsonForm.Member(BasisName, JsonForm.Text())),
+                    allowEmpty: true)));
+
         /// <summary>
         /// 表を読む。入力はツールの名前と入力の中の位置(組の項目は点で、並びの要素は [] で区切る)を
         /// 空白1つで区切って綴る。形が違えば <see cref="FormatException"/>。
@@ -47,30 +73,21 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            JsonNode root;
+            IDictionary<string, object> root;
             try
             {
-                root = JsonNode.Parse(json);
+                root = (IDictionary<string, object>)Form.Read(json);
             }
-            catch (JsonException exception)
+            catch (FormatException exception)
             {
-                throw new FormatException("合成ツールの数の読み取りの表がJSONとして読めない: " + exception.Message, exception);
-            }
-
-            JsonObject members = root as JsonObject;
-            JsonArray inputs = members == null ? null : members[InputsName] as JsonArray;
-            JsonArray lists = members == null ? null : members[ListsName] as JsonArray;
-            if (inputs == null || lists == null)
-            {
-                throw new FormatException(
-                    "合成ツールの数の読み取りの表は " + InputsName + " と " + ListsName + " の並びを持つ。");
+                throw new FormatException(TableName + ": " + exception.Message, exception);
             }
 
             Dictionary<string, HostNumberRead> numbers = new Dictionary<string, HostNumberRead>(StringComparer.Ordinal);
-            foreach (JsonNode row in inputs)
+            foreach (IDictionary<string, object> row in Rows(root, InputsName))
             {
                 string key = Key(row, numbers.ContainsKey);
-                string reads = Text(row, ReadsName);
+                string reads = (string)row[ReadsName];
                 if (!string.Equals(reads, IntegerReads, StringComparison.Ordinal)
                     && !string.Equals(reads, RealReads, StringComparison.Ordinal))
                 {
@@ -78,24 +95,25 @@ namespace PmxEditorMcp.SignatureDump
                         "合成ツールの数の読み取りは " + IntegerReads + " か " + RealReads + " である: " + key);
                 }
 
-                double? least = Number(row, LeastName, key);
-                double? most = Number(row, MostName, key);
-                if (least == null || most == null || least.Value > most.Value)
+                double least = Number(row, LeastName).Value;
+                double most = Number(row, MostName).Value;
+                if (least > most)
                 {
                     throw new FormatException(
                         "合成ツールの数の読み取りの表の行は、" + LeastName + " 以上 " + MostName
                             + " 以下となる2つの数を持つ: " + key);
                 }
 
+                object excluded;
                 numbers[key] = new HostNumberRead(
                     string.Equals(reads, IntegerReads, StringComparison.Ordinal),
-                    least.Value,
-                    Flag(row, LeastExcludedName, key),
-                    most.Value);
+                    least,
+                    row.TryGetValue(LeastExcludedName, out excluded) && (bool)excluded,
+                    most);
             }
 
             Dictionary<string, HostListLength> lengths = new Dictionary<string, HostListLength>(StringComparer.Ordinal);
-            foreach (JsonNode row in lists)
+            foreach (IDictionary<string, object> row in Rows(root, ListsName))
             {
                 string key = Key(row, lengths.ContainsKey);
                 int? least = Count(row, LeastName, key);
@@ -125,51 +143,34 @@ namespace PmxEditorMcp.SignatureDump
             return Path.Combine(Path.GetDirectoryName(Path.GetFullPath(ledgerPath)), FileName);
         }
 
-        private static string Key(JsonNode row, Func<string, bool> seen)
+        private static IEnumerable<IDictionary<string, object>> Rows(
+            IDictionary<string, object> root, string name)
         {
-            string key = Text(row, ToolName) + " " + Text(row, InputName);
+            return ((object[])root[name]).Cast<IDictionary<string, object>>();
+        }
+
+        private static string Key(IDictionary<string, object> row, Func<string, bool> seen)
+        {
+            string key = (string)row[ToolName] + " " + (string)row[InputName];
             if (seen(key))
             {
                 throw new FormatException("合成ツールの数の読み取りの表に同じ入力が二度在る: " + key);
             }
 
-            Text(row, BasisName);
-
             return key;
         }
 
-        private static string Text(JsonNode row, string name)
+        private static double? Number(IDictionary<string, object> row, string name)
         {
-            JsonValue value = row is JsonObject members ? members[name] as JsonValue : null;
-            string text;
-            if (value == null || !value.TryGetValue(out text) || text.Length == 0)
-            {
-                throw new FormatException("合成ツールの数の読み取りの表の行は " + name + " の文字列を持つ。");
-            }
-
-            return text;
+            object value;
+            return row.TryGetValue(name, out value)
+                ? Convert.ToDouble(value, CultureInfo.InvariantCulture)
+                : (double?)null;
         }
 
-        private static double? Number(JsonNode row, string name, string key)
+        private static int? Count(IDictionary<string, object> row, string name, string key)
         {
-            JsonNode node = ((JsonObject)row)[name];
-            if (node == null)
-            {
-                return null;
-            }
-
-            double number;
-            if (!(node is JsonValue value) || !value.TryGetValue(out number))
-            {
-                throw new FormatException("合成ツールの数の読み取りの表の " + name + " は数である: " + key);
-            }
-
-            return number;
-        }
-
-        private static int? Count(JsonNode row, string name, string key)
-        {
-            double? number = Number(row, name, key);
+            double? number = Number(row, name);
             if (number == null)
             {
                 return null;
@@ -181,23 +182,6 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return (int)number.Value;
-        }
-
-        private static bool Flag(JsonNode row, string name, string key)
-        {
-            JsonNode node = ((JsonObject)row)[name];
-            if (node == null)
-            {
-                return false;
-            }
-
-            bool flag;
-            if (!(node is JsonValue value) || !value.TryGetValue(out flag))
-            {
-                throw new FormatException("合成ツールの数の読み取りの表の " + name + " は真偽値である: " + key);
-            }
-
-            return flag;
         }
     }
 
