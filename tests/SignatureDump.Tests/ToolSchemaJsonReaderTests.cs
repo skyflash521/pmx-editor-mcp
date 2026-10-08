@@ -430,7 +430,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Theory]
-        [InlineData("0", "1以上でなければならない")]
+        [InlineData("0", "1以上の整数でなければならない")]
         [InlineData("1.5", "整数でなければならない")]
         [InlineData(@"""2""", "整数でなければならない")]
         public void RejectsAnItemCountLimitThatIsNotAPositiveInteger(
@@ -501,7 +501,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData(@"{ }", "少なくとも一方を持つ")]
         [InlineData(@"{ ""minimum"": 5, ""maximum"": 1 }", "下限が上限を超えている")]
-        [InlineData(@"{ ""minimum"": ""1"" }", "数値でなければならない")]
+        [InlineData(@"{ ""minimum"": ""1"" }", "minimum は数でなければならない")]
         public void RejectsBoundsThatAreNotAPairOfNumbersWithAtLeastOneEnd(
             string bounds, string fragment)
         {
@@ -553,7 +553,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void RejectsTheSameToolTwice()
         {
-            Rejects("同じツールの名前が二度現れる", Tools("model_list_vertices", "model_list_vertices"));
+            Rejects("二度現れる", Tools("model_list_vertices", "model_list_vertices"));
         }
 
         [Fact]

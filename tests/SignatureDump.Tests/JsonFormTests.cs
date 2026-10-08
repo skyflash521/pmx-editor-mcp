@@ -139,6 +139,38 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void ANumberIsReadAsAnIntegerOrADecimalAndAnotherKindOfValueIsRefused()
+        {
+            JsonForm form = JsonForm.Object(JsonForm.Member("value", JsonForm.Number()));
+
+            Assert.Equal(-3, Value(form, "-3"));
+            Assert.Equal(0.5m, Value(form, "0.5"));
+            Assert.Contains(
+                "value は数でなければならない",
+                Assert.Throws<FormatException>(() => Value(form, "\"1\"")).Message,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ADeferredFormReadsAShapeThatHoldsItself()
+        {
+            JsonForm node = null;
+            node = JsonForm.Object(
+                JsonForm.Member("name", JsonForm.Text()),
+                JsonForm.Optional("child", JsonForm.Deferred(() => node)));
+
+            IDictionary<string, object> read = (IDictionary<string, object>)node.Read(
+                "{\"name\":\"a\",\"child\":{\"name\":\"b\"}}");
+
+            Assert.Equal("b", ((IDictionary<string, object>)read["child"])["name"]);
+            Assert.Contains(
+                "child.name",
+                Assert.Throws<FormatException>(
+                    () => node.Read("{\"name\":\"a\",\"child\":{\"name\":\"\"}}")).Message,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void TheKeyOfAnArrayRefusesTheSameValueTwiceAndNamesTheLaterRow()
         {
             FormatException refused = Assert.Throws<FormatException>(() => Rows.Read(

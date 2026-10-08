@@ -53,6 +53,18 @@ namespace PmxEditorMcp.SignatureDump
             return new CountForm();
         }
 
+        /// <summary>数。読めた値は整数か小数になる。</summary>
+        public static JsonForm Number()
+        {
+            return new NumberForm();
+        }
+
+        /// <summary>読むときに <paramref name="form"/> が返す形。</summary>
+        public static JsonForm Deferred(Func<JsonForm> form)
+        {
+            return new DeferredForm(form);
+        }
+
         /// <summary>真偽。</summary>
         public static JsonForm Flag()
         {
@@ -240,6 +252,39 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 return value;
+            }
+        }
+
+        private sealed class NumberForm : JsonForm
+        {
+            internal override object Read(object value, string path)
+            {
+                if (!(value is int || value is long || value is decimal))
+                {
+                    throw Wrong(path, "数");
+                }
+
+                return value;
+            }
+        }
+
+        private sealed class DeferredForm : JsonForm
+        {
+            private readonly Func<JsonForm> _form;
+
+            internal DeferredForm(Func<JsonForm> form)
+            {
+                if (form == null)
+                {
+                    throw new ArgumentNullException(nameof(form));
+                }
+
+                _form = form;
+            }
+
+            internal override object Read(object value, string path)
+            {
+                return _form().Read(value, path);
             }
         }
 

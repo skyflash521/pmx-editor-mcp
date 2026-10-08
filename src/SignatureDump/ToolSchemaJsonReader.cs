@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -84,6 +83,47 @@ namespace PmxEditorMcp.SignatureDump
                 { "hostOutput", ItemOrigin.HostOutput },
             };
 
+        private static readonly JsonForm NamedItem = Item(true);
+
+        private static readonly JsonForm UnnamedItem = Item(false);
+
+        private static readonly JsonForm Items = JsonForm.Array(NamedItem, allowEmpty: true);
+
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                ToolsName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(ToolName, JsonForm.Text()),
+                        JsonForm.Member(
+                            BranchesName,
+                            JsonForm.Array(
+                                JsonForm.Object(
+                                    JsonForm.Member(BranchName, JsonForm.Text()),
+                                    JsonForm.Member(InputsName, Items),
+                                    JsonForm.Optional(
+                                        SelectorName,
+                                        JsonForm.Object(
+                                            JsonForm.Member(NameName, JsonForm.Text()),
+                                            JsonForm.Member(ValueName, JsonForm.Any()))),
+                                    JsonForm.Optional(
+                                        ChoicesName,
+                                        JsonForm.Array(
+                                            JsonForm.Object(
+                                                JsonForm.Member(
+                                                    NamesName, JsonForm.Array(JsonForm.Text())),
+                                                JsonForm.Member(RequiredName, JsonForm.Flag())),
+                                            allowEmpty: true))))),
+                        JsonForm.Member(OutputName, UnnamedItem),
+                        JsonForm.Optional(
+                            PayloadsName,
+                            JsonForm.Array(
+                                JsonForm.Object(
+                                    JsonForm.Member(TypeName, JsonForm.Text()),
+                                    JsonForm.Member(MembersName, Items))))),
+                    ToolName,
+                    allowEmpty: true)));
+
         /// <summary>
         /// ツールを書かれた順に返す。名前が昇順に重複なく並ぶことと、項目が形をちょうど1つで表す
         /// ことを求める。例外は2つで、SDKに由来する項目は綴りを持たず組と配列の入れ子だけを表し、
@@ -97,39 +137,49 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            object parsed;
-            try
-            {
-                parsed = new JavaScriptSerializer().DeserializeObject(json);
-            }
-            catch (Exception exception)
-            {
-                throw new FormatException("JSONとして読めない。", exception);
-            }
+            IDictionary<string, object> root = (IDictionary<string, object>)Form.Read(json);
 
-            List<ToolSchema> tools = new List<ToolSchema>();
-            string previous = null;
-            foreach (object item in Array(Members(parsed, ToolsName)[ToolsName], ToolsName))
-            {
-                ToolSchema tool = ReadTool(item);
-                RequireAscending(previous, tool.Tool);
-                previous = tool.Tool;
-                tools.Add(tool);
-            }
-
-            return new ToolSchemaTable(tools);
+            return new ToolSchemaTable(Each(root[ToolsName]).Select(ReadTool).ToList());
         }
 
-        private static ToolSchema ReadTool(object item)
+        private static JsonForm Item(bool named)
         {
-            Dictionary<string, object> members = Members(
-                item,
-                new[] { ToolName, BranchesName, OutputName },
-                new[] { PayloadsName });
+            List<JsonMember> members = new List<JsonMember>();
+            if (named)
+            {
+                members.Add(JsonForm.Member(NameName, JsonForm.Text()));
+            }
 
+            members.AddRange(new[]
+            {
+                JsonForm.Optional(OriginName, JsonForm.Text()),
+                JsonForm.Optional(ShapeName, JsonForm.Text()),
+                JsonForm.Optional(MembersName, JsonForm.Deferred(() => Items)),
+                JsonForm.Optional(ElementName, JsonForm.Deferred(() => UnnamedItem)),
+                JsonForm.Optional(RequiredName, JsonForm.Flag()),
+                JsonForm.Optional(DefaultName, JsonForm.Any()),
+                JsonForm.Optional(
+                    BoundsName,
+                    JsonForm.Object(
+                        JsonForm.Optional(MinimumName, JsonForm.Number()),
+                        JsonForm.Optional(MaximumName, JsonForm.Number()))),
+                JsonForm.Optional(NullableName, JsonForm.Flag()),
+                JsonForm.Optional(SourceName, JsonForm.Text()),
+                JsonForm.Optional(InjectedName, JsonForm.Flag()),
+                JsonForm.Optional(MaxItemsName, JsonForm.Count()),
+                JsonForm.Optional(EmptyAllowedName, JsonForm.Flag()),
+                JsonForm.Optional(UniqueItemsName, JsonForm.Flag()),
+                JsonForm.Optional(NullMeaningName, JsonForm.Text()),
+            });
+
+            return JsonForm.Object(members.ToArray());
+        }
+
+        private static ToolSchema ReadTool(IDictionary<string, object> members)
+        {
             List<SchemaBranch> branches = new List<SchemaBranch>();
             List<string> names = new List<string>();
-            foreach (object each in Array(members[BranchesName], BranchesName))
+            foreach (IDictionary<string, object> each in Each(members[BranchesName]))
             {
                 SchemaBranch branch = ReadBranch(each);
                 if (names.Contains(branch.Branch, StringComparer.Ordinal))
@@ -141,19 +191,14 @@ namespace PmxEditorMcp.SignatureDump
                 branches.Add(branch);
             }
 
-            if (branches.Count == 0)
-            {
-                throw new FormatException(BranchesName + " は1件以上でなければならない。");
-            }
-
             bool polls = members.ContainsKey(PayloadsName);
             try
             {
                 return new ToolSchema(
-                    Name(members[ToolName], ToolName),
+                    Name((string)members[ToolName], ToolName),
                     branches,
-                    ReadItem(members[OutputName], false, false, polls),
-                    members.ContainsKey(PayloadsName) ? ReadPayloads(members[PayloadsName]) : null);
+                    ReadItem((IDictionary<string, object>)members[OutputName], false, false, polls),
+                    polls ? ReadPayloads(members[PayloadsName]) : null);
             }
             catch (ArgumentException exception)
             {
@@ -161,12 +206,9 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        private static SchemaBranch ReadBranch(object item)
+        private static SchemaBranch ReadBranch(IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = Members(
-                item, new[] { BranchName, InputsName }, new[] { SelectorName, ChoicesName });
-
-            List<SchemaItem> inputs = ReadItems(members[InputsName], InputsName, true);
+            List<SchemaItem> inputs = ReadItems(members[InputsName], true);
             List<SchemaChoice> choices = members.ContainsKey(ChoicesName)
                 ? ReadChoices(members[ChoicesName], inputs)
                 : new List<SchemaChoice>();
@@ -175,9 +217,9 @@ namespace PmxEditorMcp.SignatureDump
             object selectorValue = null;
             if (members.ContainsKey(SelectorName))
             {
-                Dictionary<string, object> selector = Members(
-                    members[SelectorName], NameName, ValueName);
-                selectorName = Member(selector[NameName], NameName);
+                IDictionary<string, object> selector =
+                    (IDictionary<string, object>)members[SelectorName];
+                selectorName = Member((string)selector[NameName], NameName);
                 if (!inputs.Any(i => string.Equals(i.Name, selectorName, StringComparison.Ordinal)))
                 {
                     throw new FormatException("分岐を選ぶ項目が入力に無い: " + selectorName);
@@ -190,7 +232,7 @@ namespace PmxEditorMcp.SignatureDump
             try
             {
                 return new SchemaBranch(
-                    Member(members[BranchName], BranchName), selectorName, selectorValue,
+                    Member((string)members[BranchName], BranchName), selectorName, selectorValue,
                     inputs, choices);
             }
             catch (ArgumentException exception)
@@ -206,11 +248,10 @@ namespace PmxEditorMcp.SignatureDump
         {
             List<SchemaChoice> choices = new List<SchemaChoice>();
             List<string> taken = new List<string>();
-            foreach (object item in Array(value, ChoicesName))
+            foreach (IDictionary<string, object> members in Each(value))
             {
-                Dictionary<string, object> members = Members(item, NamesName, RequiredName);
                 List<string> names = new List<string>();
-                foreach (object each in Array(members[NamesName], NamesName))
+                foreach (string each in ((object[])members[NamesName]).Cast<string>())
                 {
                     string name = Member(each, NamesName);
                     if (!inputs.Any(i => string.Equals(i.Name, name, StringComparison.Ordinal)))
@@ -232,7 +273,7 @@ namespace PmxEditorMcp.SignatureDump
                     throw new FormatException(NamesName + " は2件以上でなければならない。");
                 }
 
-                choices.Add(new SchemaChoice(names, Flag(members[RequiredName], RequiredName)));
+                choices.Add(new SchemaChoice(names, (bool)members[RequiredName]));
             }
 
             return choices;
@@ -269,34 +310,26 @@ namespace PmxEditorMcp.SignatureDump
         {
             List<SchemaPayload> payloads = new List<SchemaPayload>();
             List<string> types = new List<string>();
-            foreach (object item in Array(value, PayloadsName))
+            foreach (IDictionary<string, object> members in Each(value))
             {
-                Dictionary<string, object> members = Members(item, TypeName, MembersName);
-                string type = Text(members[TypeName], TypeName);
+                string type = (string)members[TypeName];
                 if (types.Contains(type, StringComparer.Ordinal))
                 {
                     throw new FormatException("同じ分岐が二度現れる: " + type);
                 }
 
                 types.Add(type);
-                payloads.Add(new SchemaPayload(
-                    type, ReadItems(members[MembersName], MembersName, false)));
-            }
-
-            if (payloads.Count == 0)
-            {
-                throw new FormatException(PayloadsName + " は1件以上でなければならない。");
+                payloads.Add(new SchemaPayload(type, ReadItems(members[MembersName], false)));
             }
 
             return payloads;
         }
 
-        private static List<SchemaItem> ReadItems(
-            object value, string name, bool input, bool polls = false)
+        private static List<SchemaItem> ReadItems(object value, bool input, bool polls = false)
         {
             List<SchemaItem> items = new List<SchemaItem>();
             List<string> names = new List<string>();
-            foreach (object item in Array(value, name))
+            foreach (IDictionary<string, object> item in Each(value))
             {
                 SchemaItem read = ReadItem(item, true, input, polls);
                 if (names.Contains(read.Name, StringComparer.Ordinal))
@@ -316,19 +349,9 @@ namespace PmxEditorMcp.SignatureDump
         /// 持つので、3つの表し方のどれも持たない。
         /// </summary>
         private static SchemaItem ReadItem(
-            object item, bool named, bool input, bool polls = false)
+            IDictionary<string, object> members, bool named, bool input, bool polls = false)
         {
-            Dictionary<string, object> members = Members(
-                item,
-                named ? new[] { NameName } : new string[0],
-                new[]
-                {
-                    OriginName, ShapeName, MembersName, ElementName, RequiredName, DefaultName,
-                    BoundsName, NullableName, SourceName, InjectedName, MaxItemsName,
-                    EmptyAllowedName, UniqueItemsName, NullMeaningName,
-                });
-
-            string name = named ? Member(members[NameName], NameName) : null;
+            string name = named ? Member((string)members[NameName], NameName) : null;
             string[] forms = { ShapeName, MembersName, ElementName };
             int shapes = forms.Count(members.ContainsKey);
             bool payload = polls && string.Equals(name, PayloadName, StringComparison.Ordinal);
@@ -360,7 +383,7 @@ namespace PmxEditorMcp.SignatureDump
 
             ItemOrigin? origin = fromSdk
                 ? (ItemOrigin?)null
-                : Lookup(Origins, members[OriginName], OriginName);
+                : Lookup(Origins, (string)members[OriginName], OriginName);
             bool hasValue = members.ContainsKey(DefaultName) || members.ContainsKey(BoundsName);
             bool hasSource = members.ContainsKey(SourceName);
             bool hasCount = members.ContainsKey(MaxItemsName);
@@ -378,8 +401,7 @@ namespace PmxEditorMcp.SignatureDump
                     UniqueItemsName + " を書けるのは並びだけである: " + Written(members, NameName));
             }
 
-            if (members.ContainsKey(NullMeaningName)
-                && !(members.ContainsKey(NullableName) && Flag(members[NullableName], NullableName)))
+            if (members.ContainsKey(NullMeaningName) && !Flag(members, NullableName))
             {
                 throw new FormatException(
                     NullMeaningName + " を書けるのは、null を受ける項目だけである: "
@@ -427,47 +449,35 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             return new SchemaItem(
-                members.ContainsKey(ShapeName) ? Text(members[ShapeName], ShapeName) : null,
+                members.ContainsKey(ShapeName) ? (string)members[ShapeName] : null,
                 members.ContainsKey(MembersName)
-                    ? ReadItems(members[MembersName], MembersName, input, polls)
+                    ? ReadItems(members[MembersName], input, polls)
                     : null,
                 members.ContainsKey(ElementName)
-                    ? ReadItem(members[ElementName], false, input, polls)
+                    ? ReadItem((IDictionary<string, object>)members[ElementName], false, input, polls)
                     : null,
                 name,
                 origin,
-                members.ContainsKey(RequiredName)
-                    ? Flag(members[RequiredName], RequiredName)
-                    : (bool?)null,
+                members.ContainsKey(RequiredName) ? (bool)members[RequiredName] : (bool?)null,
                 defaultValue,
                 members.ContainsKey(DefaultName),
-                members.ContainsKey(BoundsName) ? ReadBounds(members[BoundsName]) : null,
-                members.ContainsKey(NullableName)
-                    ? Flag(members[NullableName], NullableName)
-                    : (bool?)null,
-                members.ContainsKey(SourceName) ? Text(members[SourceName], SourceName) : null,
-                members.ContainsKey(InjectedName) && Flag(members[InjectedName], InjectedName),
-                members.ContainsKey(MaxItemsName)
-                    ? Count(members[MaxItemsName], MaxItemsName)
-                    : (int?)null,
-                members.ContainsKey(EmptyAllowedName)
-                    && Flag(members[EmptyAllowedName], EmptyAllowedName),
-                members.ContainsKey(UniqueItemsName)
-                    && Flag(members[UniqueItemsName], UniqueItemsName),
-                members.ContainsKey(NullMeaningName)
-                    ? Text(members[NullMeaningName], NullMeaningName)
-                    : null);
+                members.ContainsKey(BoundsName)
+                    ? ReadBounds((IDictionary<string, object>)members[BoundsName])
+                    : null,
+                members.ContainsKey(NullableName) ? (bool)members[NullableName] : (bool?)null,
+                members.ContainsKey(SourceName) ? (string)members[SourceName] : null,
+                Flag(members, InjectedName),
+                members.ContainsKey(MaxItemsName) ? (int)members[MaxItemsName] : (int?)null,
+                Flag(members, EmptyAllowedName),
+                Flag(members, UniqueItemsName),
+                members.ContainsKey(NullMeaningName) ? (string)members[NullMeaningName] : null);
         }
 
-        private static ValueBounds ReadBounds(object value)
+        private static ValueBounds ReadBounds(IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = Members(
-                value, new string[0], new[] { MinimumName, MaximumName });
             try
             {
-                return new ValueBounds(
-                    members.ContainsKey(MinimumName) ? Number(members[MinimumName], MinimumName) : (double?)null,
-                    members.ContainsKey(MaximumName) ? Number(members[MaximumName], MaximumName) : (double?)null);
+                return new ValueBounds(Number(members, MinimumName), Number(members, MaximumName));
             }
             catch (ArgumentException exception)
             {
@@ -506,66 +516,28 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        private static string Written(Dictionary<string, object> members, string name)
+        private static string Written(IDictionary<string, object> members, string name)
         {
             object value;
             return members.TryGetValue(name, out value) ? value as string ?? "名前無し" : "名前無し";
         }
 
-        private static int Count(object value, string name)
+        private static double? Number(IDictionary<string, object> members, string name)
         {
-            if (!(value is int))
-            {
-                throw new FormatException(name + " は整数でなければならない。");
-            }
-
-            int count = (int)value;
-            if (count < 1)
-            {
-                throw new FormatException(name + " は1以上でなければならない。");
-            }
-
-            return count;
+            object value;
+            return members.TryGetValue(name, out value)
+                ? Convert.ToDouble(value, CultureInfo.InvariantCulture)
+                : (double?)null;
         }
 
-        private static double Number(object value, string name)
+        private static bool Flag(IDictionary<string, object> members, string name)
         {
-            if (value is int)
-            {
-                return (int)value;
-            }
-
-            if (value is long)
-            {
-                return (long)value;
-            }
-
-            if (value is double)
-            {
-                return (double)value;
-            }
-
-            if (value is decimal)
-            {
-                return (double)(decimal)value;
-            }
-
-            throw new FormatException(name + " は数値でなければならない。");
+            object value;
+            return members.TryGetValue(name, out value) && (bool)value;
         }
 
-        private static bool Flag(object value, string name)
+        private static string Member(string text, string name)
         {
-            if (!(value is bool))
-            {
-                throw new FormatException(name + " は真偽でなければならない。");
-            }
-
-            return (bool)value;
-        }
-
-        private static string Member(object value, string name)
-        {
-            string text = Text(value, name);
             if (!MemberName.IsMatch(text))
             {
                 throw new FormatException(
@@ -575,9 +547,8 @@ namespace PmxEditorMcp.SignatureDump
             return text;
         }
 
-        private static string Name(object value, string name)
+        private static string Name(string text, string name)
         {
-            string text = Text(value, name);
             if (!SnakeCaseName.IsMatch(text))
             {
                 throw new FormatException(
@@ -589,9 +560,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         private static TValue Lookup<TValue>(
-            Dictionary<string, TValue> table, object value, string name)
+            Dictionary<string, TValue> table, string text, string name)
         {
-            string text = Text(value, name);
             TValue found;
             if (!table.TryGetValue(text, out found))
             {
@@ -601,84 +571,9 @@ namespace PmxEditorMcp.SignatureDump
             return found;
         }
 
-        private static void RequireAscending(string previous, string current)
+        private static IEnumerable<IDictionary<string, object>> Each(object value)
         {
-            if (previous == null)
-            {
-                return;
-            }
-
-            int order = string.CompareOrdinal(previous, current);
-            if (order == 0)
-            {
-                throw new FormatException("同じツールの名前が二度現れる: " + current);
-            }
-
-            if (order > 0)
-            {
-                throw new FormatException("序数の昇順で並んでいない: " + current);
-            }
-        }
-
-        private static object[] Array(object value, string name)
-        {
-            object[] items = value as object[];
-            if (items == null)
-            {
-                throw new FormatException(name + " は項目の並びでなければならない。");
-            }
-
-            return items;
-        }
-
-        private static Dictionary<string, object> Members(object value, params string[] names)
-        {
-            return Members(value, names, new string[0]);
-        }
-
-        /// <summary>
-        /// 求める項目と持てる項目だけを持つ対象として読む。余分な項目を黙って捨てると、正本の形が
-        /// 崩れても気づけない。
-        /// </summary>
-        private static Dictionary<string, object> Members(
-            object value, string[] names, string[] optional)
-        {
-            Dictionary<string, object> members = value as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException("項目の組でなければならない。");
-            }
-
-            foreach (string name in names)
-            {
-                if (!members.ContainsKey(name))
-                {
-                    throw new FormatException("項目が無い: " + name);
-                }
-            }
-
-            foreach (string name in members.Keys)
-            {
-                if (!names.Contains(name, StringComparer.Ordinal)
-                    && !optional.Contains(name, StringComparer.Ordinal))
-                {
-                    throw new FormatException("知らない項目がある: " + name);
-                }
-            }
-
-            return members;
-        }
-
-        private static string Text(object value, string name)
-        {
-            string text = value as string;
-            if (string.IsNullOrEmpty(text) || text.Trim().Length == 0)
-            {
-                throw new FormatException(
-                    name + " は空でない文字列でなければならない(空白だけも不可)。");
-            }
-
-            return text;
+            return ((object[])value).Cast<IDictionary<string, object>>();
         }
     }
 }
