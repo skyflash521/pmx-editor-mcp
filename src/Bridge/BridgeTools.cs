@@ -115,18 +115,18 @@ namespace PmxEditorMcp.Bridge
         }
 
         /// <summary>語を当てる相手。ブリッジが自分で登録するツールも、組み立てた定義も入る。</summary>
-        private static IList<ToolSearch.Entry> Entries(
+        private static IList<ToolMatch.Entry> Entries(
             IDictionary<string, string> own, IReadOnlyList<GeneratedToolDefinition> generated)
         {
-            List<ToolSearch.Entry> entries = new List<ToolSearch.Entry>();
+            List<ToolMatch.Entry> entries = new List<ToolMatch.Entry>();
             foreach (KeyValuePair<string, string> fixedTool in own)
             {
-                entries.Add(new ToolSearch.Entry(fixedTool.Key, fixedTool.Value));
+                entries.Add(new ToolMatch.Entry(fixedTool.Key, fixedTool.Value));
             }
 
             foreach (GeneratedToolDefinition definition in generated)
             {
-                entries.Add(new ToolSearch.Entry(definition.Name, definition.Description));
+                entries.Add(new ToolMatch.Entry(definition.Name, definition.Description));
             }
 
             return entries;
@@ -136,7 +136,7 @@ namespace PmxEditorMcp.Bridge
         /// 語からツールを引くツールを作る。ホストへは渡らない——説明文はブリッジが持っている。
         /// </summary>
         private static McpServerTool FindTool(
-            IList<ToolSearch.Entry> entries,
+            IList<ToolMatch.Entry> entries,
             string description,
             HostIpcClient client,
             bool declared)

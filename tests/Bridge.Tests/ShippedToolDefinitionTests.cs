@@ -238,8 +238,8 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void EachTaskSearchedWithFindToolFindsExactlyItsTools()
         {
-            List<ToolSearch.Entry> entries = ShippedDescriptions(false)
-                .Select(d => new ToolSearch.Entry(d.Key, d.Value))
+            List<ToolMatch.Entry> entries = ShippedDescriptions(false)
+                .Select(d => new ToolMatch.Entry(d.Key, d.Value))
                 .ToList();
             JsonObject tasks = JsonNode.Parse(File.ReadAllText(Authored("discovery-tasks.json")))
                 .AsObject();
@@ -249,14 +249,8 @@ namespace PmxEditorMcp.Bridge.Tests
                 HashSet<string> found = new HashSet<string>(StringComparer.Ordinal);
                 foreach (JsonNode search in task["searches"].AsArray())
                 {
-                    IEnumerable<string> hit = null;
-                    foreach (string term in search.AsArray().Select(t => t.GetValue<string>()))
-                    {
-                        IList<string> named = ToolSearch.Found(new[] { term }, entries);
-                        hit = hit == null ? named : hit.Intersect(named, StringComparer.Ordinal).ToList();
-                    }
-
-                    found.UnionWith(hit ?? new string[0]);
+                    found.UnionWith(ToolMatch.Found(
+                        search.AsArray().Select(t => t.GetValue<string>()).ToList(), entries));
                 }
 
                 string[] expected = task["tools"].AsArray().Select(t => t.GetValue<string>())

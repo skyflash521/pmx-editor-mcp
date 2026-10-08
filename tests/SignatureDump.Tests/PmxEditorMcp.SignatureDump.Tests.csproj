@@ -22,10 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\src\Bridge\ToolSearch.cs" Link="ToolSearch.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\src\SignatureDump\PmxEditorMcp.SignatureDump.csproj" />
   </ItemGroup>
 

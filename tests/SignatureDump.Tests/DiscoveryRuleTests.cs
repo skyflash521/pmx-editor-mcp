@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using PmxEditorMcp.Bridge;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -148,8 +147,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static IList<string> FoundByFindTool(
             IDictionary<string, string> descriptions, IList<string> terms)
         {
-            return ToolSearch.Found(
-                terms, descriptions.Select(d => new ToolSearch.Entry(d.Key, d.Value)));
+            return ToolMatch.Found(
+                terms, descriptions.Select(d => new ToolMatch.Entry(d.Key, d.Value)));
         }
 
         private static DiscoveryTaskTable Table(IList<string> terms, IList<string> tools)

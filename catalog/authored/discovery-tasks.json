@@ -4,8 +4,7 @@
       "task": "モデルの構造の把握",
       "searches": [
         [
-          "動作 list",
-          "model_list_"
+          "動作 list / 出所 PEPlugin.Pmx"
         ]
       ],
       "tools": [
@@ -32,112 +31,85 @@
       "task": "要素の一括編集と取り消し",
       "searches": [
         [
-          "動作 add",
-          "対象 vertex /"
+          "対象 vertex / 動作 add"
         ],
         [
-          "動作 add",
-          "対象 bone /"
+          "対象 bone / 動作 add"
         ],
         [
-          "動作 add",
-          "対象 material /"
+          "対象 material / 動作 add"
         ],
         [
-          "動作 add",
-          "対象 morph /"
+          "対象 morph / 動作 add"
         ],
         [
-          "動作 add",
-          "対象 body /"
+          "対象 body / 動作 add"
         ],
         [
-          "動作 add",
-          "対象 joint /"
+          "対象 joint / 動作 add"
         ],
         [
-          "動作 add",
-          "対象 node /"
+          "対象 node / 動作 add"
         ],
         [
-          "動作 add",
-          "対象 soft_body /"
+          "対象 soft_body / 動作 add"
         ],
         [
-          "動作 remove",
-          "対象 vertex /"
+          "対象 vertex / 動作 remove"
         ],
         [
-          "動作 remove",
-          "対象 bone /"
+          "対象 bone / 動作 remove"
         ],
         [
-          "動作 remove",
-          "対象 material /"
+          "対象 material / 動作 remove"
         ],
         [
-          "動作 remove",
-          "対象 morph /"
+          "対象 morph / 動作 remove"
         ],
         [
-          "動作 remove",
-          "対象 body /"
+          "対象 body / 動作 remove"
         ],
         [
-          "動作 remove",
-          "対象 joint /"
+          "対象 joint / 動作 remove"
         ],
         [
-          "動作 remove",
-          "対象 node /"
+          "対象 node / 動作 remove"
         ],
         [
-          "動作 remove",
-          "対象 soft_body /"
+          "対象 soft_body / 動作 remove"
         ],
         [
-          "動作 update",
-          "対象 vertex /"
+          "対象 vertex / 動作 update"
         ],
         [
-          "動作 update",
-          "対象 bone /"
+          "対象 bone / 動作 update"
         ],
         [
-          "動作 update",
-          "対象 material /"
+          "対象 material / 動作 update"
         ],
         [
-          "動作 update",
-          "対象 morph /"
+          "対象 morph / 動作 update"
         ],
         [
-          "動作 update",
-          "対象 morph_offset /"
+          "対象 morph_offset / 動作 update"
         ],
         [
-          "動作 update",
-          "対象 body /"
+          "対象 body / 動作 update"
         ],
         [
-          "動作 update",
-          "対象 joint /"
+          "対象 joint / 動作 update"
         ],
         [
-          "動作 update",
-          "対象 node /"
+          "対象 node / 動作 update"
         ],
         [
-          "動作 update",
-          "対象 node_item /"
+          "対象 node_item / 動作 update"
         ],
         [
-          "動作 update",
-          "対象 soft_body /"
+          "対象 soft_body / 動作 update"
         ],
         [
-          "動作 update",
-          "対象 soft_body_anchor /"
+          "対象 soft_body_anchor / 動作 update"
         ],
         [
           "動作 undo"
@@ -184,12 +156,10 @@
           "動作 save_pmx_file"
         ],
         [
-          "ファイルから読み込み",
-          "対象 pmx"
+          "対象 pmx / 動作 from_file"
         ],
         [
-          "ファイルへ保存",
-          "対象 pmx"
+          "対象 pmx / 動作 to_file"
         ]
       ],
       "tools": [
@@ -220,12 +190,10 @@
       "task": "モーションの構築",
       "searches": [
         [
-          "VMD",
-          "新しく作る"
+          "動作 create_vmd"
         ],
         [
-          "対象 vmd_bone_key",
-          "動作 add"
+          "対象 vmd_bone_key / 動作 add"
         ],
         [
           "VMDファイルへ保存"
@@ -278,7 +246,6 @@
       "task": "TransformView の姿勢の焼き込み",
       "searches": [
         [
-          "姿勢",
           "焼き込"
         ]
       ],
@@ -290,9 +257,7 @@
       "task": "VMD の1フレームの姿勢を TransformView へ当てる",
       "searches": [
         [
-          "VMD",
-          "TransformView",
-          "姿勢"
+          "VMD の1フレームの姿勢"
         ]
       ],
       "tools": [
@@ -303,8 +268,7 @@
       "task": "TransformView の姿勢の取り消し",
       "searches": [
         [
-          "姿勢",
-          "取り消"
+          "姿勢とモーフの値を取り消し"
         ]
       ],
       "tools": [

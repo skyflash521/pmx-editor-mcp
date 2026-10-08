@@ -36,56 +36,6 @@ namespace PmxEditorMcp.Bridge
         /// <summary>包みの外側と、名前を隔てる引用符と読点の分。</summary>
         private const int WrapperChars = 64;
 
-        /// <summary>探す語を当てるツール1件。</summary>
-        public sealed class Entry
-        {
-            public Entry(string name, string description)
-            {
-                if (name == null)
-                {
-                    throw new ArgumentNullException(nameof(name));
-                }
-
-                Name = name;
-                Description = description;
-            }
-
-            public string Name { get; }
-
-            public string Description { get; }
-        }
-
-        /// <summary>
-        /// <paramref name="texts"/> のどれかを名前と説明文へ当てたツールの名前を、名前の昇順で返す。
-        /// </summary>
-        public static IList<string> Found(IList<string> texts, IEnumerable<Entry> entries)
-        {
-            if (texts == null)
-            {
-                throw new ArgumentNullException(nameof(texts));
-            }
-
-            if (entries == null)
-            {
-                throw new ArgumentNullException(nameof(entries));
-            }
-
-            List<string> found = new List<string>();
-            foreach (Entry entry in entries)
-            {
-                if (texts.Any(
-                    text => TextMatch.Contains(entry.Name, text)
-                        || TextMatch.Contains(entry.Description, text)))
-                {
-                    found.Add(entry.Name);
-                }
-            }
-
-            found.Sort(StringComparer.Ordinal);
-
-            return found;
-        }
-
         /// <summary>
         /// 語を当てた結果を、ホストが返すのと同じ形の包みにする。渡された値が範囲の外にあれば
         /// 断りの包みを返す。<paramref name="budgetChars"/> は応答の枠で、名前は件数と枠の
@@ -95,7 +45,7 @@ namespace PmxEditorMcp.Bridge
             IList<string> texts,
             int? limit,
             int? offset,
-            IEnumerable<Entry> entries,
+            IEnumerable<ToolMatch.Entry> entries,
             int budgetChars)
         {
             if (entries == null)
@@ -123,7 +73,7 @@ namespace PmxEditorMcp.Bridge
                 return Refusal("offset は0以上の整数でなければならない: " + Written(from));
             }
 
-            IList<string> found = Found(texts, entries);
+            IList<string> found = ToolMatch.Found(texts, entries);
             if (from > found.Count)
             {
                 return Refusal("offset が当たりの件数を超えている: " + Written(from)

@@ -20,6 +20,7 @@
   <ItemGroup>
     <Compile Include="..\SignatureDump\FixedToolTable.cs" Link="FixedToolTable.cs" />
     <Compile Include="..\SignatureDump\TextMatch.cs" Link="TextMatch.cs" />
+    <Compile Include="..\SignatureDump\ToolMatch.cs" Link="ToolMatch.cs" />
   </ItemGroup>
 
   <ItemGroup>

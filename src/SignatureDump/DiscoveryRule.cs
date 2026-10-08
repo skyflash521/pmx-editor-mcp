@@ -83,11 +83,8 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(terms));
             }
 
-            return new ReadOnlyCollection<string>(descriptions
-                .Where(d => Holds(d.Key, d.Value, terms))
-                .Select(d => d.Key)
-                .OrderBy(t => t, StringComparer.Ordinal)
-                .ToList());
+            return new ReadOnlyCollection<string>(ToolMatch.Found(
+                terms, descriptions.Select(d => new ToolMatch.Entry(d.Key, d.Value))));
         }
 
         /// <summary>その作業の検索をすべて投げて引き当てたツールの名前。</summary>
@@ -110,12 +107,6 @@ namespace PmxEditorMcp.SignatureDump
 
             return new ReadOnlyCollection<string>(
                 found.OrderBy(t => t, StringComparer.Ordinal).ToList());
-        }
-
-        private static bool Holds(string tool, string description, IList<string> terms)
-        {
-            return terms.Count != 0
-                && terms.All(t => TextMatch.Contains(tool, t) || TextMatch.Contains(description, t));
         }
     }
 }

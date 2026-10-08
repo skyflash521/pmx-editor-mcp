@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using PmxEditorMcp.Bridge;
+using PmxEditorMcp.SignatureDump;
 using Xunit;
 
 namespace PmxEditorMcp.Bridge.Tests
@@ -12,11 +13,11 @@ namespace PmxEditorMcp.Bridge.Tests
     {
         private const int Budget = 10000;
 
-        private static readonly ToolSearch.Entry[] Tools =
+        private static readonly ToolMatch.Entry[] Tools =
         {
-            new ToolSearch.Entry("model_edit_materials", "材質を結合・分割・取り出しする。"),
-            new ToolSearch.Entry("model_clone_face", "面を複製する。"),
-            new ToolSearch.Entry("view_filter_display", "絞込み表示を切り替える。"),
+            new ToolMatch.Entry("model_edit_materials", "材質を結合・分割・取り出しする。"),
+            new ToolMatch.Entry("model_clone_face", "面を複製する。"),
+            new ToolMatch.Entry("view_filter_display", "絞込み表示を切り替える。"),
         };
 
         [Fact]
@@ -107,10 +108,10 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void TheNamesStopAtTheRoomTheResponseHasEvenWhenTheCountWouldAllowMore()
         {
-            List<ToolSearch.Entry> many = new List<ToolSearch.Entry>();
+            List<ToolMatch.Entry> many = new List<ToolMatch.Entry>();
             for (int at = 0; at < 200; at++)
             {
-                many.Add(new ToolSearch.Entry("model_" + new string('x', 200) + at, "説明。"));
+                many.Add(new ToolMatch.Entry("model_" + new string('x', 200) + at, "説明。"));
             }
 
             JsonObject answer = ToolSearch.Answer(new[] { "model_" }, ToolSearch.MaximumLimit, null, many, 10000);
@@ -122,11 +123,11 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void TheArgumentsAreChecked()
         {
-            Assert.Throws<ArgumentNullException>(() => ToolSearch.Found(null, Tools));
-            Assert.Throws<ArgumentNullException>(() => ToolSearch.Found(new[] { "model_" }, null));
+            Assert.Throws<ArgumentNullException>(() => ToolMatch.Found(null, Tools));
+            Assert.Throws<ArgumentNullException>(() => ToolMatch.Found(new[] { "model_" }, null));
             Assert.Throws<ArgumentNullException>(
                 () => ToolSearch.Answer(new[] { "model_" }, null, null, null, Budget));
-            Assert.Throws<ArgumentNullException>(() => new ToolSearch.Entry(null, "説明。"));
+            Assert.Throws<ArgumentNullException>(() => new ToolMatch.Entry(null, "説明。"));
         }
 
         private static string[] Names(JsonObject answer)
