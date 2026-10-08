@@ -863,7 +863,7 @@ namespace PmxEditorMcp.Tests
                 envelope[ToolEnvelope.ValueName], CultureInfo.InvariantCulture);
 
             HandleReleaseResult released;
-            Assert.True(ledger.TryRelease(1, out released));
+            Assert.True(ledger.TryRelease(1, new InlineInvoker(), out released));
 
             Assert.Empty(released.Failed);
             Assert.False(ledger.IsValid(issued));
@@ -923,7 +923,7 @@ namespace PmxEditorMcp.Tests
                 "題材", ((IDictionary<string, object>)queued.Payload)["note"]);
 
             HandleReleaseResult released;
-            Assert.True(ledger.TryRelease(issued, out released));
+            Assert.True(ledger.TryRelease(issued, new InlineInvoker(), out released));
             Assert.True(detached);
         }
 
@@ -952,7 +952,7 @@ namespace PmxEditorMcp.Tests
             int issued = Convert.ToInt32(handed[0], CultureInfo.InvariantCulture);
 
             HandleReleaseResult released;
-            Assert.True(ledger.TryRelease(first, out released));
+            Assert.True(ledger.TryRelease(first, new InlineInvoker(), out released));
             Assert.False(ledger.IsValid(issued));
         }
 
@@ -1393,6 +1393,7 @@ namespace PmxEditorMcp.Tests
             Assert.True(ledger.TryRelease(
                 Convert.ToInt32(
                     envelope[ToolEnvelope.ValueName], CultureInfo.InvariantCulture),
+                new InlineInvoker(),
                 out released));
 
             Assert.Empty(released.Failed);
@@ -2053,7 +2054,11 @@ namespace PmxEditorMcp.Tests
         private SessionStore Store()
         {
             return new SessionStore(
-                _log, new HandleIdIssuer(), new EventSequenceIssuer(), new object());
+                _log,
+                new HandleIdIssuer(),
+                new EventSequenceIssuer(),
+                new object(),
+                () => _generation);
         }
 
         private HandleLedger Ledger()

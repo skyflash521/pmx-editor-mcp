@@ -218,8 +218,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 行キーからSDKへの中継と、読み込まれているSDKのバージョン、Undoの記録を戻す窓口も与えて
-        /// 生成する。窓口を渡さない接続は、戻しにいく機会を持たない。
+        /// 行キーからSDKへの中継と、読み込まれているSDKのバージョン、いまの稼働世代を返すもの、
+        /// Undoの記録を戻す窓口も与えて生成する。窓口を渡さない接続は、戻しにいく機会を持たない。
         /// </summary>
         public JsonRpcConnection(
             HostLog log,
@@ -228,6 +228,7 @@ namespace PmxEditorMcp
             int budgetChars,
             SdkRelayTable relays,
             string sdkVersion,
+            Func<IUiInvoker> currentUi,
             UndoRecovery recovery = null,
             ScreenTargets screen = null)
             : this(
@@ -241,7 +242,8 @@ namespace PmxEditorMcp
                 relays,
                 sdkVersion,
                 recovery,
-                screen)
+                screen,
+                currentUi: currentUi ?? throw new ArgumentNullException(nameof(currentUi)))
         {
         }
 
@@ -296,7 +298,8 @@ namespace PmxEditorMcp
         /// <summary>
         /// すべてを指定して生成する。<paramref name="clock"/> は単調に進む時刻で、省くとホストの読み込みから数えた
         /// 経過時間を用いる。<paramref name="gatePollInterval"/> は要求の処理を直列化する錠を待つ間に相手の切断を
-        /// 見に行く間隔で、省くと <see cref="DefaultGatePollInterval"/> を用いる。
+        /// 見に行く間隔で、省くと <see cref="DefaultGatePollInterval"/> を用いる。<paramref name="currentUi"/> は
+        /// セッションを終わらせるときにハンドルを手放す稼働世代を返すもので、省くと常に断る窓口を用いる。
         /// </summary>
         public JsonRpcConnection(
             HostLog log,
@@ -311,7 +314,8 @@ namespace PmxEditorMcp
             UndoRecovery recovery = null,
             ScreenTargets screen = null,
             Func<TimeSpan> clock = null,
-            TimeSpan? gatePollInterval = null)
+            TimeSpan? gatePollInterval = null,
+            Func<IUiInvoker> currentUi = null)
         {
             if (log == null)
             {
@@ -356,7 +360,12 @@ namespace PmxEditorMcp
             _screen = screen ?? ScreenTargets.None;
             _clock = clock ?? (() => SinceLoaded.Elapsed);
             _gatePollInterval = gatePollInterval ?? DefaultGatePollInterval;
-            _sessions = new SessionStore(log, _handleIds, _eventSequence, _requestGate);
+            _sessions = new SessionStore(
+                log,
+                _handleIds,
+                _eventSequence,
+                _requestGate,
+                currentUi ?? (() => DeclinedUiInvoker.Instance));
         }
 
         /// <summary>ホストが持つセッションの集まり。</summary>
@@ -974,7 +983,7 @@ namespace PmxEditorMcp
         /// <summary>結果が呼び出し側へ届かなかったときに、その処理が発行したハンドルを失効させる。</summary>
         private void DiscardHandles(ConnectionScope scope, int issuedBefore)
         {
-            HandleReleaseResult discarded = scope.Handles.ReleaseIssuedAfter(issuedBefore);
+            HandleReleaseResult discarded = scope.Handles.ReleaseIssuedAfter(issuedBefore, scope.Ui);
             if (discarded.Invalidated.Count > 0)
             {
                 _log.Write(

@@ -241,7 +241,11 @@ namespace PmxEditorMcp.Tests
         public void TheStoreRefusesAnIdentifierWhoseOwnerHasExited()
         {
             SessionStore store = new SessionStore(
-                _log, new HandleIdIssuer(), new EventSequenceIssuer(), new object());
+                _log,
+                new HandleIdIssuer(),
+                new EventSequenceIssuer(),
+                new object(),
+                () => new InlineInvoker());
             ClientProcess owner = StubClientProcess.Exited(ClientId);
 
             Session created;
@@ -257,16 +261,29 @@ namespace PmxEditorMcp.Tests
         public void TheStoreInputsAreRequired()
         {
             SessionStore store = new SessionStore(
-                _log, new HandleIdIssuer(), new EventSequenceIssuer(), new object());
+                _log,
+                new HandleIdIssuer(),
+                new EventSequenceIssuer(),
+                new object(),
+                () => new InlineInvoker());
             Session session;
 
             Assert.Throws<ArgumentNullException>(() => store.TryResolve(null, null, out session));
             Assert.Throws<ArgumentNullException>(
-                () => new SessionStore(null, new HandleIdIssuer(), new EventSequenceIssuer(), new object()));
+                () => new SessionStore(
+                    null, new HandleIdIssuer(), new EventSequenceIssuer(), new object(), () => new InlineInvoker()));
             Assert.Throws<ArgumentNullException>(
-                () => new SessionStore(_log, null, new EventSequenceIssuer(), new object()));
+                () => new SessionStore(
+                    _log, null, new EventSequenceIssuer(), new object(), () => new InlineInvoker()));
             Assert.Throws<ArgumentNullException>(
-                () => new SessionStore(_log, new HandleIdIssuer(), null, new object()));
+                () => new SessionStore(
+                    _log, new HandleIdIssuer(), null, new object(), () => new InlineInvoker()));
+            Assert.Throws<ArgumentNullException>(
+                () => new SessionStore(
+                    _log, new HandleIdIssuer(), new EventSequenceIssuer(), null, () => new InlineInvoker()));
+            Assert.Throws<ArgumentNullException>(
+                () => new SessionStore(
+                    _log, new HandleIdIssuer(), new EventSequenceIssuer(), new object(), null));
         }
 
         private JsonRpcConnection Connection(ClientProcessOpener opener)

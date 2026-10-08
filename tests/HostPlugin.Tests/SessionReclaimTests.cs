@@ -268,7 +268,11 @@ namespace PmxEditorMcp.Tests
         {
             object serialGate = new object();
             SessionStore store = new SessionStore(
-                _log, new HandleIdIssuer(), new EventSequenceIssuer(), serialGate);
+                _log,
+                new HandleIdIssuer(),
+                new EventSequenceIssuer(),
+                serialGate,
+                () => new InlineInvoker());
             ManualResetEvent exit = new ManualResetEvent(false);
 
             Session session;
@@ -326,7 +330,11 @@ namespace PmxEditorMcp.Tests
         private SessionStore Store()
         {
             return new SessionStore(
-                _log, new HandleIdIssuer(), new EventSequenceIssuer(), new object());
+                _log,
+                new HandleIdIssuer(),
+                new EventSequenceIssuer(),
+                new object(),
+                () => new InlineInvoker());
         }
 
         private JsonRpcConnection Connection(McpMethodTable methods)

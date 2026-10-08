@@ -82,11 +82,18 @@ namespace PmxEditorMcp
         /// </summary>
         private readonly object _serialGate;
 
+        private readonly Func<IUiInvoker> _currentUi;
+
+        /// <summary>
+        /// <paramref name="currentUi"/> は、終わらせるセッションのハンドルを手放す時点の稼働世代を返す。
+        /// 稼働世代が無いときは断る窓口を返す。
+        /// </summary>
         public SessionStore(
             HostLog log,
             HandleIdIssuer handleIds,
             EventSequenceIssuer eventSequence,
-            object serialGate)
+            object serialGate,
+            Func<IUiInvoker> currentUi)
         {
             if (log == null)
             {
@@ -108,10 +115,16 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(serialGate));
             }
 
+            if (currentUi == null)
+            {
+                throw new ArgumentNullException(nameof(currentUi));
+            }
+
             _log = log;
             _handleIds = handleIds;
             _eventSequence = eventSequence;
             _serialGate = serialGate;
+            _currentUi = currentUi;
         }
 
         /// <summary>いま持っているセッションの数。</summary>
@@ -230,7 +243,7 @@ namespace PmxEditorMcp
 
             try
             {
-                session.Handles.ReleaseAll();
+                session.Handles.ReleaseAll(_currentUi());
                 session.Events.Close();
             }
             finally

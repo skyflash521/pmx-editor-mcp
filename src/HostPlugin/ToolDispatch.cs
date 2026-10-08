@@ -1282,7 +1282,7 @@ namespace PmxEditorMcp
                 IDictionary<string, object> refused;
                 if (!TryMade(call, result, out made, out refused))
                 {
-                    context.Handles.ReleaseIssuedAfter(issuedBefore);
+                    context.Handles.ReleaseIssuedAfter(issuedBefore, context.Ui);
 
                     return refused;
                 }
@@ -1392,10 +1392,10 @@ namespace PmxEditorMcp
             int id = context.Handles.Issue(
                 call.Issues.FullName,
                 made,
-                () =>
+                ui =>
                 {
                     detach();
-                    Releasing(context, call, made, receiver)();
+                    Releasing(call, made, receiver)(ui);
                 },
                 Involved(context, call, Passed(context, call, at), held));
             detach = Listening(context, call.Issues.FullName, made, id);
@@ -1515,25 +1515,19 @@ namespace PmxEditorMcp
                 : new Dictionary<string, object>(StringComparer.Ordinal);
         }
 
-        /// <summary>
-        /// 預けた生成物を手放す手順。手放す行を持たない生成物では何もしない。手順を持つ生成物は
-        /// SDKを呼ぶので、ほかの中継と同じくUIスレッドで行う。
-        /// </summary>
-        private Action Releasing(
-            McpMethodContext context, ToolCall call, object result, object receiver)
+        private Action<IUiInvoker> Releasing(ToolCall call, object result, object receiver)
         {
             if (call.Releases == null)
             {
-                return () => { };
+                return ui => { };
             }
 
-            IUiInvoker invoker = context.Ui;
             object target = call.ReleasesIssued ? receiver : result;
             object[] arguments = call.ReleasesIssued ? new[] { result } : new object[0];
 
-            return () =>
+            return ui =>
             {
-                UiInvocation ran = invoker.TryInvokeOnUi(() =>
+                UiInvocation ran = ui.TryInvokeOnUi(() =>
                 {
                     object ignored;
                     SdkRelayRefusal refusal;
@@ -4002,6 +3996,7 @@ namespace PmxEditorMcp
             HandleReleaseResult released;
             context.Handles.TryReleaseAll(
                 handles.Select(id => (int)id).Where(context.Handles.IsValid).ToList(),
+                context.Ui,
                 out released);
         }
 

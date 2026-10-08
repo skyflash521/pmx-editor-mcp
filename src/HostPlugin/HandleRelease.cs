@@ -58,7 +58,7 @@ namespace PmxEditorMcp
 
             HandleReleaseResult released;
             if (!context.Handles.TryReleaseAll(
-                resolved.Handles.Select(id => (int)id), out released))
+                resolved.Handles.Select(id => (int)id), context.Ui, out released))
             {
                 return ToolEnvelope.Failure(
                     ToolEnvelope.InvalidHandle, HandlesName + " に使えないハンドルがある。");

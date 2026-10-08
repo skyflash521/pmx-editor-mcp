@@ -96,7 +96,7 @@ namespace PmxEditorMcp.Tests
         {
             int id = Issue(UiModel);
             HandleReleaseResult result;
-            _ledger.TryRelease(id, out result);
+            _ledger.TryRelease(id, new InlineInvoker(), out result);
 
             object found;
 
@@ -117,7 +117,7 @@ namespace PmxEditorMcp.Tests
         {
             int id = Issue(UiModel);
             HandleReleaseResult result;
-            _ledger.TryRelease(id, out result);
+            _ledger.TryRelease(id, new InlineInvoker(), out result);
 
             object found;
 
@@ -132,7 +132,7 @@ namespace PmxEditorMcp.Tests
 
             HandleReleaseResult result;
 
-            Assert.True(_ledger.TryRelease(id, out result));
+            Assert.True(_ledger.TryRelease(id, new InlineInvoker(), out result));
             Assert.Equal(new[] { id }, result.Invalidated);
             Assert.Empty(result.Failed);
             Assert.Equal(new[] { id }, _releases);
@@ -143,9 +143,9 @@ namespace PmxEditorMcp.Tests
         {
             int id = Issue(UiModel);
             HandleReleaseResult result;
-            _ledger.TryRelease(id, out result);
+            _ledger.TryRelease(id, new InlineInvoker(), out result);
 
-            Assert.False(_ledger.TryRelease(id, out result));
+            Assert.False(_ledger.TryRelease(id, new InlineInvoker(), out result));
             Assert.Null(result);
             Assert.Equal(new[] { id }, _releases);
         }
@@ -157,7 +157,7 @@ namespace PmxEditorMcp.Tests
             int listener = Issue(Listener, model);
 
             HandleReleaseResult result;
-            _ledger.TryRelease(model, out result);
+            _ledger.TryRelease(model, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { listener, model }, result.Invalidated);
             Assert.Equal(new[] { listener, model }, _releases);
@@ -171,7 +171,7 @@ namespace PmxEditorMcp.Tests
             int leaf = Issue(Listener, listener);
 
             HandleReleaseResult result;
-            _ledger.TryRelease(model, out result);
+            _ledger.TryRelease(model, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { leaf, listener, model }, result.Invalidated);
         }
@@ -185,7 +185,7 @@ namespace PmxEditorMcp.Tests
                 Listener, new object(), () => _releases.Add(3), new[] { model, connector });
 
             HandleReleaseResult result;
-            _ledger.TryRelease(connector, out result);
+            _ledger.TryRelease(connector, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { listener, connector }, result.Invalidated);
             Assert.True(_ledger.IsValid(model));
@@ -198,7 +198,7 @@ namespace PmxEditorMcp.Tests
             int listener = Issue(Listener, model);
 
             HandleReleaseResult result;
-            _ledger.TryRelease(listener, out result);
+            _ledger.TryRelease(listener, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { listener }, result.Invalidated);
             Assert.True(_ledger.IsValid(model));
@@ -212,7 +212,7 @@ namespace PmxEditorMcp.Tests
             int listener = Issue(Listener, model);
 
             HandleReleaseResult result;
-            _ledger.TryRelease(model, out result);
+            _ledger.TryRelease(model, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { listener, model }, result.Invalidated);
             Assert.Equal(new[] { model }, result.Failed);
@@ -231,7 +231,7 @@ namespace PmxEditorMcp.Tests
                 Listener, new object(), () => _releases.Add(4), new[] { left, right });
 
             HandleReleaseResult result;
-            _ledger.TryRelease(root, out result);
+            _ledger.TryRelease(root, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { leaf, right, left, root }, result.Invalidated);
             Assert.Equal(new[] { 4 }, _releases.Where(r => r == 4));
@@ -245,7 +245,7 @@ namespace PmxEditorMcp.Tests
 
             Stopwatch elapsed = Stopwatch.StartNew();
             HandleReleaseResult result;
-            _ledger.TryReleaseAll(issued, out result);
+            _ledger.TryReleaseAll(issued, new InlineInvoker(), out result);
             elapsed.Stop();
 
             Assert.Equal(ManyHandles, result.Invalidated.Count);
@@ -261,7 +261,7 @@ namespace PmxEditorMcp.Tests
             }
 
             Stopwatch elapsed = Stopwatch.StartNew();
-            HandleReleaseResult result = _ledger.ReleaseAll();
+            HandleReleaseResult result = _ledger.ReleaseAll(new InlineInvoker());
             elapsed.Stop();
 
             Assert.Equal(ManyHandles, result.Invalidated.Count);
@@ -280,7 +280,7 @@ namespace PmxEditorMcp.Tests
 
             Stopwatch elapsed = Stopwatch.StartNew();
             HandleReleaseResult result;
-            _ledger.TryRelease(root, out result);
+            _ledger.TryRelease(root, new InlineInvoker(), out result);
             elapsed.Stop();
 
             Assert.Equal(last, result.Invalidated[0]);
@@ -295,7 +295,7 @@ namespace PmxEditorMcp.Tests
             int listener = Issue(Listener, model);
             int other = Issue(UiModel);
 
-            HandleReleaseResult result = _ledger.ReleaseAll();
+            HandleReleaseResult result = _ledger.ReleaseAll(new InlineInvoker());
 
             Assert.Equal(0, _ledger.Count);
             Assert.Equal(3, result.Invalidated.Count);
@@ -311,7 +311,7 @@ namespace PmxEditorMcp.Tests
             Issue(UiModel);
 
             Assert.False(_ledger.IsClosed);
-            _ledger.ReleaseAll();
+            _ledger.ReleaseAll(new InlineInvoker());
 
             Assert.True(_ledger.IsClosed);
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -324,9 +324,9 @@ namespace PmxEditorMcp.Tests
         public void ReleasingEveryHandleTwiceIsAllowed()
         {
             Issue(UiModel);
-            _ledger.ReleaseAll();
+            _ledger.ReleaseAll(new InlineInvoker());
 
-            HandleReleaseResult result = _ledger.ReleaseAll();
+            HandleReleaseResult result = _ledger.ReleaseAll(new InlineInvoker());
 
             Assert.Empty(result.Invalidated);
             Assert.Equal(2, Lines().Count(l => l.Contains("全ハンドルの解放")));
@@ -335,7 +335,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ReleasingEveryHandleOfAnEmptyLedgerReleasesNothingButIsRecorded()
         {
-            HandleReleaseResult result = _ledger.ReleaseAll();
+            HandleReleaseResult result = _ledger.ReleaseAll(new InlineInvoker());
 
             Assert.Empty(result.Invalidated);
             Assert.Empty(result.Failed);
@@ -349,7 +349,7 @@ namespace PmxEditorMcp.Tests
             _ledger.Issue(
                 UiModel, new object(), () => { throw new InvalidOperationException("解放に失敗。"); });
 
-            _ledger.ReleaseAll();
+            _ledger.ReleaseAll(new InlineInvoker());
 
             Assert.Single(Lines(), l => l.Contains("全ハンドルの解放: 件数=2 失敗=1"));
         }
@@ -360,7 +360,7 @@ namespace PmxEditorMcp.Tests
             int id = Issue(UiModel);
             HandleReleaseResult result;
 
-            _ledger.TryRelease(id, out result);
+            _ledger.TryRelease(id, new InlineInvoker(), out result);
 
             Assert.Single(Lines(), l => l.Contains("ハンドルの解放: id=" + id + " type=" + UiModel));
         }
@@ -372,7 +372,7 @@ namespace PmxEditorMcp.Tests
                 UiModel, new object(), () => { throw new InvalidOperationException("解放に失敗。"); });
             HandleReleaseResult result;
 
-            _ledger.TryRelease(id, out result);
+            _ledger.TryRelease(id, new InlineInvoker(), out result);
 
             Assert.Single(Lines(), l => l.Contains("ハンドルの解放で例外が起きた: id=" + id));
         }
@@ -392,11 +392,21 @@ namespace PmxEditorMcp.Tests
             Assert.Throws<ArgumentNullException>(() => new HandleLedger(null, new HandleIdIssuer()));
             Assert.Throws<ArgumentNullException>(() => _ledger.Issue(null, new object(), () => { }));
             Assert.Throws<ArgumentNullException>(() => _ledger.Issue(UiModel, null, () => { }));
-            Assert.Throws<ArgumentNullException>(() => _ledger.Issue(UiModel, new object(), null));
+            Assert.Throws<ArgumentNullException>(
+                () => _ledger.Issue(UiModel, new object(), (Action)null));
+            Assert.Throws<ArgumentNullException>(
+                () => _ledger.Issue(UiModel, new object(), (Action<IUiInvoker>)null));
             Assert.Throws<ArgumentException>(() => _ledger.Issue("  ", new object(), () => { }));
 
             object found;
             Assert.Throws<ArgumentNullException>(() => _ledger.TryGet(1, null, out found));
+
+            HandleReleaseResult released;
+            Assert.Throws<ArgumentNullException>(() => _ledger.TryRelease(1, null, out released));
+            Assert.Throws<ArgumentNullException>(
+                () => _ledger.TryReleaseAll(new[] { 1 }, null, out released));
+            Assert.Throws<ArgumentNullException>(() => _ledger.ReleaseIssuedAfter(0, null));
+            Assert.Throws<ArgumentNullException>(() => _ledger.ReleaseAll(null));
         }
 
         [Fact]
@@ -424,7 +434,7 @@ namespace PmxEditorMcp.Tests
             int mark = _ledger.LastIssuedId;
             int later = Issue(UiModel);
 
-            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(mark);
+            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(mark, new InlineInvoker());
 
             Assert.Equal(new[] { later }, result.Invalidated);
             Assert.Empty(result.Failed);
@@ -439,7 +449,7 @@ namespace PmxEditorMcp.Tests
             int model = Issue(UiModel);
             int listener = Issue(Listener, model);
 
-            _ledger.ReleaseIssuedAfter(mark);
+            _ledger.ReleaseIssuedAfter(mark, new InlineInvoker());
 
             Assert.Equal(new[] { listener, model }, _releases);
         }
@@ -451,7 +461,7 @@ namespace PmxEditorMcp.Tests
             int mark = _ledger.LastIssuedId;
             int listener = Issue(Listener, model);
 
-            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(mark);
+            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(mark, new InlineInvoker());
 
             Assert.Equal(new[] { listener }, result.Invalidated);
             Assert.False(_ledger.IsValid(listener));
@@ -463,7 +473,7 @@ namespace PmxEditorMcp.Tests
         {
             Issue(UiModel);
 
-            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(_ledger.LastIssuedId);
+            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(_ledger.LastIssuedId, new InlineInvoker());
 
             Assert.Empty(result.Invalidated);
             Assert.Empty(result.Failed);
@@ -476,7 +486,7 @@ namespace PmxEditorMcp.Tests
             int mark = _ledger.LastIssuedId;
             Issue(UiModel);
 
-            _ledger.ReleaseIssuedAfter(mark);
+            _ledger.ReleaseIssuedAfter(mark, new InlineInvoker());
 
             Assert.False(_ledger.IsClosed);
             Assert.True(Issue(UiModel) > 0);

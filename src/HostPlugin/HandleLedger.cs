@@ -24,8 +24,7 @@ namespace PmxEditorMcp
     }
 
     /// <summary>
-    /// セッションが保つ長寿命オブジェクトの台帳。ツールはハンドルIDで参照し、実体はホストが持つ。
-    /// 解放の仕方は型ごとに違うので、発行するときに受け取って覚える。
+    /// 解放の処理には、解放を頼んだ呼び出しが渡すUIスレッドへの委譲の窓口が渡る。
     /// 複数のスレッドから同時に呼んでよい。解放の処理の中から台帳を呼んでもよい。
     /// </summary>
     public sealed class HandleLedger
@@ -97,13 +96,28 @@ namespace PmxEditorMcp
             }
         }
 
+        /// <summary>UIスレッドへの委譲を要さない解放の処理で、ハンドルを発行する。</summary>
+        public int Issue(
+            string type, object target, Action release, IEnumerable<int> dependencies = null)
+        {
+            if (release == null)
+            {
+                throw new ArgumentNullException(nameof(release));
+            }
+
+            return Issue(type, target, ui => release(), dependencies);
+        }
+
         /// <summary>
         /// ハンドルを発行する。<paramref name="dependencies"/> は生成に関与したハンドルで、
         /// この実体はそれらより先に解放される。有効でない依存元を渡すのは呼び出し側の誤り。
         /// 閉じた台帳では <see cref="InvalidOperationException"/>。
         /// </summary>
         public int Issue(
-            string type, object target, Action release, IEnumerable<int> dependencies = null)
+            string type,
+            object target,
+            Action<IUiInvoker> release,
+            IEnumerable<int> dependencies = null)
         {
             if (type == null)
             {
@@ -220,8 +234,13 @@ namespace PmxEditorMcp
         /// ハンドルを解放する。依存する子を先に解放してから自分を解放し、失効させる。知らない・
         /// 解放済みのハンドルでは偽。
         /// </summary>
-        public bool TryRelease(int id, out HandleReleaseResult result)
+        public bool TryRelease(int id, IUiInvoker ui, out HandleReleaseResult result)
         {
+            if (ui == null)
+            {
+                throw new ArgumentNullException(nameof(ui));
+            }
+
             result = null;
             List<Taken> taken;
             lock (_gate)
@@ -234,7 +253,7 @@ namespace PmxEditorMcp
                 taken = Take(Ordered(new[] { id }));
             }
 
-            result = ReleaseInOrder(taken);
+            result = ReleaseInOrder(taken, ui);
 
             return true;
         }
@@ -243,11 +262,16 @@ namespace PmxEditorMcp
         /// 指したハンドルをまとめて解放する。指したものとその依存子を合わせ、重なりを除いて
         /// それぞれをちょうど一度だけ解放する。どれか1つでも台帳に無ければ、何も解放せず偽。
         /// </summary>
-        public bool TryReleaseAll(IEnumerable<int> ids, out HandleReleaseResult result)
+        public bool TryReleaseAll(IEnumerable<int> ids, IUiInvoker ui, out HandleReleaseResult result)
         {
             if (ids == null)
             {
                 throw new ArgumentNullException(nameof(ids));
+            }
+
+            if (ui == null)
+            {
+                throw new ArgumentNullException(nameof(ui));
             }
 
             result = null;
@@ -263,7 +287,7 @@ namespace PmxEditorMcp
                 taken = Take(Ordered(listed));
             }
 
-            result = ReleaseInOrder(taken);
+            result = ReleaseInOrder(taken, ui);
 
             return true;
         }
@@ -272,8 +296,13 @@ namespace PmxEditorMcp
         /// 指定したIDより後に発行したハンドルを解放し、失効させる。解放の順はまとめて解放するときと
         /// 同じく子から依存元へ。結果を破棄する呼び出しの後始末に使うもので、台帳は閉じない。
         /// </summary>
-        public HandleReleaseResult ReleaseIssuedAfter(int id)
+        public HandleReleaseResult ReleaseIssuedAfter(int id, IUiInvoker ui)
         {
+            if (ui == null)
+            {
+                throw new ArgumentNullException(nameof(ui));
+            }
+
             List<Taken> taken;
             lock (_gate)
             {
@@ -281,15 +310,20 @@ namespace PmxEditorMcp
                     _entries.Keys.Where(i => i > id).OrderByDescending(i => i).ToList()));
             }
 
-            return ReleaseInOrder(taken);
+            return ReleaseInOrder(taken, ui);
         }
 
         /// <summary>
         /// すべてのハンドルを解放し、台帳を閉じる。セッションが終わるときに呼ぶ。解放の順は子から依存元へ。
         /// 1件も無くても記録を残す。閉じたあとは発行できない。二度呼んでもよい。
         /// </summary>
-        public HandleReleaseResult ReleaseAll()
+        public HandleReleaseResult ReleaseAll(IUiInvoker ui)
         {
+            if (ui == null)
+            {
+                throw new ArgumentNullException(nameof(ui));
+            }
+
             List<Taken> taken;
             lock (_gate)
             {
@@ -297,7 +331,7 @@ namespace PmxEditorMcp
                 taken = Take(Ordered(_entries.Keys.OrderByDescending(i => i).ToList()));
             }
 
-            HandleReleaseResult result = ReleaseInOrder(taken);
+            HandleReleaseResult result = ReleaseInOrder(taken, ui);
             _log.Write(
                 "全ハンドルの解放: 件数=" + result.Invalidated.Count
                     + " 失敗=" + result.Failed.Count);
@@ -390,7 +424,7 @@ namespace PmxEditorMcp
         /// <summary>
         /// 外した順に解放する。解放が例外になっても失効はそのままで、後続の解放は続ける。
         /// </summary>
-        private HandleReleaseResult ReleaseInOrder(IList<Taken> taken)
+        private HandleReleaseResult ReleaseInOrder(IList<Taken> taken, IUiInvoker ui)
         {
             List<int> invalidated = new List<int>();
             List<int> failed = new List<int>();
@@ -400,7 +434,7 @@ namespace PmxEditorMcp
                 invalidated.Add(item.Id);
                 try
                 {
-                    item.Entry.Release();
+                    item.Entry.Release(ui);
                     written.Add("ハンドルの解放: id=" + item.Id + " type=" + item.Entry.Type);
                 }
                 catch (Exception exception)
@@ -433,9 +467,10 @@ namespace PmxEditorMcp
 
         private sealed class Entry
         {
-            private readonly Action _release;
+            private readonly Action<IUiInvoker> _release;
 
-            public Entry(string type, object target, Action release, IList<int> dependencies)
+            public Entry(
+                string type, object target, Action<IUiInvoker> release, IList<int> dependencies)
             {
                 Type = type;
                 Target = target;
@@ -449,9 +484,9 @@ namespace PmxEditorMcp
 
             public IList<int> Dependencies { get; }
 
-            public void Release()
+            public void Release(IUiInvoker ui)
             {
-                _release();
+                _release(ui);
             }
         }
     }

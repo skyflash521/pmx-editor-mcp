@@ -137,9 +137,9 @@ namespace PmxEditorMcp.Tests
             int held = handles.Issue("題材", new object(), () => released = true);
             int gone = handles.Issue("題材", new object(), () => { });
             HandleReleaseResult result;
-            Assert.True(handles.TryRelease(gone, out result));
+            Assert.True(handles.TryRelease(gone, new InlineInvoker(), out result));
 
-            Assert.False(handles.TryReleaseAll(new[] { held, gone }, out result));
+            Assert.False(handles.TryReleaseAll(new[] { held, gone }, new InlineInvoker(), out result));
 
             Assert.Null(result);
             Assert.True(handles.IsValid(held));

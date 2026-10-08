@@ -99,6 +99,18 @@ namespace PmxEditorMcp
             }
         }
 
+        /// <summary>いまの稼働世代。止まっている間は、常に断る窓口。</summary>
+        public IUiInvoker CurrentUi
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    return (IUiInvoker)_current ?? DeclinedUiInvoker.Instance;
+                }
+            }
+        }
+
         /// <summary>クライアントと接続中かどうか。</summary>
         public bool IsClientConnected
         {

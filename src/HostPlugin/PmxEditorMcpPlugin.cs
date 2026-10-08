@@ -288,7 +288,7 @@ namespace PmxEditorMcp
                 DebugLargeText.AddTo(methods, debugHooks);
                 DebugConnectorExpiry.AddTo(methods, debugHooks, _resident);
                 _connection = new JsonRpcConnection(
-                    _log, methods, HostVersion, budget.Chars, relay, SdkVersion, recovery,
+                    _log, methods, HostVersion, budget.Chars, relay, SdkVersion, CurrentUi, recovery,
                     new ScreenTargets(
                         () => Receiver(receivers, ViewType), () => Receiver(receivers, FormType)));
 
@@ -404,6 +404,14 @@ namespace PmxEditorMcp
             return _modelUpdates == null
                 ? dispatcher
                 : new TransformViewFollowing(dispatcher, _modelUpdates, () => Receiver(receivers, TransformViewType));
+        }
+
+        /// <summary>要求を直列化する錠を持ったスレッドから呼ばれる。</summary>
+        private IUiInvoker CurrentUi()
+        {
+            McpHost host = _host;
+
+            return host == null ? DeclinedUiInvoker.Instance : host.CurrentUi;
         }
 
         private void StopByMessage()
