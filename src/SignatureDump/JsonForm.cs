@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web.Script.Serialization;
+using System.Text.Json;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -87,14 +87,66 @@ namespace PmxEditorMcp.SignatureDump
             object parsed;
             try
             {
-                parsed = new JavaScriptSerializer().DeserializeObject(json);
+                using (JsonDocument document = JsonDocument.Parse(json))
+                {
+                    parsed = Plain(document.RootElement, string.Empty);
+                }
             }
-            catch (Exception exception)
+            catch (JsonException exception)
             {
                 throw new FormatException("JSONとして読めない。", exception);
             }
 
             return Read(parsed, string.Empty);
+        }
+
+        private static object Plain(JsonElement element, string path)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    Dictionary<string, object> members =
+                        new Dictionary<string, object>(StringComparer.Ordinal);
+                    foreach (JsonProperty property in element.EnumerateObject())
+                    {
+                        string where = Where(path, property.Name);
+                        if (members.ContainsKey(property.Name))
+                        {
+                            throw new FormatException("同じ項目が二度現れる: " + where);
+                        }
+
+                        members.Add(property.Name, Plain(property.Value, where));
+                    }
+
+                    return members;
+                case JsonValueKind.Array:
+                    return element.EnumerateArray()
+                        .Select((item, at) => Plain(
+                            item, Where(path, at.ToString(CultureInfo.InvariantCulture))))
+                        .ToArray();
+                case JsonValueKind.String:
+                    return element.GetString();
+                case JsonValueKind.Number:
+                    int narrow;
+                    if (element.TryGetInt32(out narrow))
+                    {
+                        return narrow;
+                    }
+
+                    long wide;
+                    if (element.TryGetInt64(out wide))
+                    {
+                        return wide;
+                    }
+
+                    return element.GetDecimal();
+                case JsonValueKind.True:
+                    return true;
+                case JsonValueKind.False:
+                    return false;
+                default:
+                    return null;
+            }
         }
 
         internal abstract object Read(object value, string path);

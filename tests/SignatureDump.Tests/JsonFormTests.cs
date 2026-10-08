@@ -56,6 +56,18 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(reason, refused.Message, StringComparison.Ordinal);
         }
 
+        [Theory]
+        [InlineData(
+            "{\"rows\":[{\"name\":\"a\",\"name\":\"b\",\"count\":1,\"on\":true,\"note\":null}]}",
+            "rows.0.name")]
+        [InlineData("{\"rows\":[],\"rows\":[]}", "rows")]
+        public void AMemberWrittenTwiceInOneObjectIsRefusedWithItsPlace(string json, string place)
+        {
+            FormatException refused = Assert.Throws<FormatException>(() => Rows.Read(json));
+
+            Assert.Contains("同じ項目が二度現れる: " + place, refused.Message, StringComparison.Ordinal);
+        }
+
         [Fact]
         public void TheKeyOfAnArrayRefusesTheSameValueTwiceAndNamesTheLaterRow()
         {
