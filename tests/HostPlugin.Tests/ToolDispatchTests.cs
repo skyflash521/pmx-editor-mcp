@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using PEPlugin;
 using Xunit;
 
@@ -147,6 +149,8 @@ namespace PmxEditorMcp.Tests
         private int _poseStatesRelayed;
 
         private int _vmeResultsRelayed;
+
+        private HostGeneration _generation = Generation();
 
         public ToolDispatchTests()
         {
@@ -1396,6 +1400,69 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheReleaseToolLetsTheSdkGoOfWhatWasIssuedBeforeTheHostRestarted()
+        {
+            Target made = new Target();
+            HandleLedger ledger = Ledger();
+            int issued = IssueHeld(made, ledger, Events());
+
+            Restart();
+            McpMethodTable methods = new McpMethodTable();
+            HandleRelease.AddTo(methods);
+            McpMethod release;
+            Assert.True(methods.TryGet(HandleRelease.ToolName, out release));
+            IDictionary<string, object> envelope = (IDictionary<string, object>)release(
+                new McpMethodContext(
+                    Arguments(HandleRelease.HandlesName, new object[] { (long)issued }),
+                    _generation,
+                    100000,
+                    ledger,
+                    Events()));
+
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.False(envelope.ContainsKey(ToolEnvelope.WarningsName));
+            Assert.True(made.Dropped);
+        }
+
+        [Fact]
+        public void EndingTheSessionLetsTheSdkGoOfWhatWasIssuedBeforeTheHostRestarted()
+        {
+            Target made = new Target();
+            SessionStore store = Store();
+            Session session;
+            Assert.True(store.TryResolve(null, StubClientProcess.Living(4321), out session));
+            IssueHeld(made, session.Handles, session.Events);
+
+            Restart();
+            Assert.True(store.End(session.Id));
+
+            Assert.True(made.Dropped);
+        }
+
+        [Fact]
+        public void TheOwnerLeavingLetsTheSdkGoOfWhatWasIssuedBeforeTheHostRestarted()
+        {
+            Target made = new Target();
+            SessionStore store = Store();
+            ManualResetEvent exit = new ManualResetEvent(false);
+            Session session;
+            Assert.True(store.TryResolve(null, new ClientProcess(4321, exit), out session));
+            IssueHeld(made, session.Handles, session.Events);
+
+            Restart();
+            exit.Set();
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            while (!session.Events.IsClosed && elapsed.Elapsed < TimeSpan.FromSeconds(60))
+            {
+                Thread.Sleep(10);
+            }
+
+            Assert.True(session.Events.IsClosed, "所有者が終わってもセッションが回収されない。");
+            Assert.True(made.Dropped);
+        }
+
+        [Fact]
         public void TheUpdatingToolOnHeldTargetsTakesAValueForEach()
         {
             Target first = new Target();
@@ -1953,6 +2020,40 @@ namespace PmxEditorMcp.Tests
             Assert.True(methods.TryGet("session_count", out method));
 
             return method;
+        }
+
+        private static HostGeneration Generation()
+        {
+            return new HostGeneration(
+                new ImmediateDispatcher(), new NoModal(), TimeSpan.FromMilliseconds(1));
+        }
+
+        private void Restart()
+        {
+            _generation.RequestStop();
+            _generation = Generation();
+        }
+
+        /// <summary>
+        /// いまの世代で、手放すとSDKが <paramref name="made"/> を放す生成物を預け、そのハンドルを返す。
+        /// </summary>
+        private int IssueHeld(Target made, HandleLedger ledger, EventQueue events)
+        {
+            IDictionary<string, object> arguments = Arguments();
+            arguments.Add("source", (long)ledger.Issue(
+                typeof(Target).FullName, new Target { Made = made }, () => { }));
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_held")(
+                    new McpMethodContext(arguments, _generation, 100000, ledger, events));
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+
+            return Convert.ToInt32(envelope[ToolEnvelope.ValueName], CultureInfo.InvariantCulture);
+        }
+
+        private SessionStore Store()
+        {
+            return new SessionStore(
+                _log, new HandleIdIssuer(), new EventSequenceIssuer(), new object());
         }
 
         private HandleLedger Ledger()
@@ -3110,6 +3211,14 @@ namespace PmxEditorMcp.Tests
             public UiInvocation TryInvokeOnUi(Action action)
             {
                 return UiInvocation.Declined;
+            }
+        }
+
+        private sealed class NoModal : IModalWindowProbe
+        {
+            public string TryDescribe()
+            {
+                return null;
             }
         }
     }
