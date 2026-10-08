@@ -90,6 +90,14 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheScreenStructureMarksOnlyItemsThatOpenAModalWindowWithTheModalDanger()
+        {
+            Assert.Contains(UiStructureCatalog.ModalDanger, Dangers(MainForm, VersionPath));
+            Assert.DoesNotContain(
+                UiStructureCatalog.ModalDanger, Dangers(MainForm, "menuStrip1", "MenuItem_Edit", "MenuItem_TagEdit"));
+        }
+
+        [Fact]
         public void PressingAnItemThatOpensAModalWindowIsRefusedFromTheCatalogAlone()
         {
             int looked = 0;
@@ -137,6 +145,23 @@ namespace PmxEditorMcp.Tests
         private static bool Walkable(string window, params string[] path)
         {
             return UiStructureCatalog.Walkable(window, path);
+        }
+
+        private static string[] Dangers(string window, params string[] path)
+        {
+            McpMethodTable methods = new McpMethodTable();
+            UiTree.AddTo(methods, () => new Form[0]);
+            IDictionary<string, object> value = Value(Invoke(methods, UiTree.ToolName, new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { UiTree.WindowName, window },
+                { UiTree.PathName, path.Cast<object>().ToArray() },
+                { UiTree.DepthName, 0 },
+            }));
+            IDictionary<string, object> node = (IDictionary<string, object>)
+                ((IDictionary<string, object>)((object[])value["windows"])[0])["node"];
+            object dangers;
+
+            return node.TryGetValue(UiStructureCatalog.DangerName, out dangers) ? (string[])dangers : new string[0];
         }
 
         private static IDictionary<string, object> Invoke(
