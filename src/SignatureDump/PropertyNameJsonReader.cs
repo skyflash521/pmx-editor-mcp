@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Linq;
-using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -34,6 +32,24 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string MemberShapeText = "memberShape";
 
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                PropertyNamesName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(DeclaringTypeName, JsonForm.Text()),
+                        JsonForm.Member(MemberNameName, JsonForm.Text()),
+                        JsonForm.Member(JapaneseNameName, JsonForm.Text()),
+                        JsonForm.Member(
+                            BasisName,
+                            JsonForm.Object(
+                                JsonForm.Member(KindName, JsonForm.Text()),
+                                JsonForm.Optional(PathName, JsonForm.Text()),
+                                JsonForm.Optional(FirstLineName, JsonForm.Count()),
+                                JsonForm.Optional(LastLineName, JsonForm.Count()))),
+                        JsonForm.Member(OriginName, JsonForm.Text())),
+                    allowEmpty: true)));
+
         /// <summary>
         /// 名前を起こした項目を書かれた順に返す。並びは宣言型・メンバー名の序数の昇順で、重複が
         /// 無いことを求める(<see cref="RoleTypeProperties"/> の並びと同じ定義)。形が違えば
@@ -46,11 +62,12 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            object[] items = Array(Members(Parse(json), PropertyNamesName)[PropertyNamesName]);
+            IDictionary<string, object> root = (IDictionary<string, object>)Form.Read(json);
             List<PropertyNameRecord> records = new List<PropertyNameRecord>();
             PropertyNameRecord previous = null;
 
-            foreach (object item in items)
+            foreach (IDictionary<string, object> item in
+                ((object[])root[PropertyNamesName]).Cast<IDictionary<string, object>>())
             {
                 PropertyNameRecord record = ReadRecord(item);
                 if (previous != null)
@@ -82,18 +99,16 @@ namespace PmxEditorMcp.SignatureDump
             return order != 0 ? order : string.CompareOrdinal(left.MemberName, right.MemberName);
         }
 
-        private static PropertyNameRecord ReadRecord(object item)
+        private static PropertyNameRecord ReadRecord(IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = Members(
-                item, DeclaringTypeName, MemberNameName, JapaneseNameName, BasisName, OriginName);
             try
             {
                 return new PropertyNameRecord(
-                    Text(members[DeclaringTypeName], DeclaringTypeName),
-                    Text(members[MemberNameName], MemberNameName),
-                    Text(members[JapaneseNameName], JapaneseNameName),
-                    Basis(members[BasisName]),
-                    Text(members[OriginName], OriginName));
+                    (string)members[DeclaringTypeName],
+                    (string)members[MemberNameName],
+                    (string)members[JapaneseNameName],
+                    Basis((IDictionary<string, object>)members[BasisName]),
+                    (string)members[OriginName]);
             }
             catch (ArgumentException exception)
             {
@@ -101,113 +116,32 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        private static NameBasis Basis(object value)
+        private static NameBasis Basis(IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = Dictionary(value);
-            object kind;
-            if (!members.TryGetValue(KindName, out kind))
+            string kind = (string)members[KindName];
+            string[] located = { PathName, FirstLineName, LastLineName };
+            if (string.Equals(kind, DocumentSectionText, StringComparison.Ordinal))
             {
-                throw new FormatException("項目が無い: " + KindName);
-            }
-
-            string text = Text(kind, KindName);
-            if (string.Equals(text, DocumentSectionText, StringComparison.Ordinal))
-            {
-                Members(value, KindName, PathName, FirstLineName, LastLineName);
-                return NameBasis.FromDocumentSection(
-                    Text(members[PathName], PathName),
-                    Number(members[FirstLineName], FirstLineName),
-                    Number(members[LastLineName], LastLineName));
-            }
-
-            if (string.Equals(text, MemberShapeText, StringComparison.Ordinal))
-            {
-                Members(value, KindName);
-                return NameBasis.FromMemberShape();
-            }
-
-            throw new FormatException("知らない根拠の種別: " + text);
-        }
-
-        private static object Parse(string json)
-        {
-            try
-            {
-                return new JavaScriptSerializer().DeserializeObject(json);
-            }
-            catch (Exception exception)
-            {
-                throw new FormatException("JSONとして読めない。", exception);
-            }
-        }
-
-        private static object[] Array(object value)
-        {
-            object[] items = value as object[];
-            if (items == null)
-            {
-                throw new FormatException(PropertyNamesName + " は項目の並びでなければならない。");
-            }
-
-            return items;
-        }
-
-        private static Dictionary<string, object> Dictionary(object value)
-        {
-            Dictionary<string, object> members = value as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException("項目の組でなければならない。");
-            }
-
-            return members;
-        }
-
-        /// <summary>
-        /// 求める項目だけを持つ対象として読む。余分な項目を黙って捨てると、正本の形が崩れても
-        /// 気づけない。
-        /// </summary>
-        private static Dictionary<string, object> Members(object value, params string[] names)
-        {
-            Dictionary<string, object> members = Dictionary(value);
-            foreach (string name in names)
-            {
-                if (!members.ContainsKey(name))
+                foreach (string name in located.Where(n => !members.ContainsKey(n)))
                 {
                     throw new FormatException("項目が無い: " + name);
                 }
+
+                return NameBasis.FromDocumentSection(
+                    (string)members[PathName], (int)members[FirstLineName], (int)members[LastLineName]);
             }
 
-            foreach (string name in members.Keys)
+            if (string.Equals(kind, MemberShapeText, StringComparison.Ordinal))
             {
-                if (!names.Contains(name, StringComparer.Ordinal))
+                foreach (string name in located.Where(members.ContainsKey))
                 {
                     throw new FormatException("知らない項目がある: " + name);
                 }
+
+                return NameBasis.FromMemberShape();
             }
 
-            return members;
-        }
-
-        private static string Text(object value, string name)
-        {
-            string text = value as string;
-            if (string.IsNullOrEmpty(text))
-            {
-                throw new FormatException(name + " は空でない文字列でなければならない。");
-            }
-
-            return text;
-        }
-
-        private static int Number(object value, string name)
-        {
-            if (!(value is int))
-            {
-                throw new FormatException(name + " は整数でなければならない。");
-            }
-
-            return System.Convert.ToInt32(value, CultureInfo.InvariantCulture);
+            throw new FormatException("知らない根拠の種別: " + kind);
         }
     }
 }
