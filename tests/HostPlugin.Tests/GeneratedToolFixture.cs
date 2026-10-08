@@ -94,6 +94,7 @@ namespace PmxEditorMcp.Tests
                 GeneratedTools.Preconditions(),
                 new StillModifierKeys(),
                 new EventBindingTable(GeneratedTools.Attachments(), GeneratedTools.Payloads()),
+                _log,
                 new ScreenRefresh(() => View, () => Form),
                 new ScreenTargets(() => View, () => Form),
                 EditMeasure.ByRowKey());

@@ -1926,6 +1926,7 @@ namespace PmxEditorMcp.Tests
                 new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal),
                 new StillModifierKeys(),
                 events,
+                _log,
                 Refresh(),
                 Screen(),
                 Measures());
@@ -1993,6 +1994,7 @@ namespace PmxEditorMcp.Tests
                 },
                 modifiers,
                 EventBindingFixture.Empty(),
+                _log,
                 Refresh(),
                 Screen(),
                 new Dictionary<string, Func<object, object, object, IDictionary<string, object>>>(StringComparer.Ordinal));
@@ -2043,6 +2045,7 @@ namespace PmxEditorMcp.Tests
                 },
                 modifiers,
                 EventBindingFixture.Empty(),
+                _log,
                 Refresh(),
                 Screen(),
                 new Dictionary<string, Func<object, object, object, IDictionary<string, object>>>(StringComparer.Ordinal));

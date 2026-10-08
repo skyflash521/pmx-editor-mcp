@@ -131,6 +131,8 @@ namespace PmxEditorMcp
 
         private readonly EventBindingTable _events;
 
+        private readonly HostLog _log;
+
         private readonly ScreenRefresh _refresh;
 
         private readonly IDictionary<string, SdkReceiver> _receivers;
@@ -182,6 +184,7 @@ namespace PmxEditorMcp
             UndoRecovery recovery,
             IModifierKeys modifiers,
             EventBindingTable events,
+            HostLog log,
             ScreenRefresh refresh,
             ScreenTargets screen,
             IDictionary<string, Func<object, object, object, IDictionary<string, object>>> measures)
@@ -190,6 +193,7 @@ namespace PmxEditorMcp
             _measures = measures;
             _refresh = refresh;
             _events = events;
+            _log = log;
             _relay = relay;
             _receivers = receivers;
             _lists = lists;
@@ -216,6 +220,7 @@ namespace PmxEditorMcp
             IDictionary<string, ToolPrecondition> preconditions,
             IModifierKeys modifiers,
             EventBindingTable events,
+            HostLog log,
             ScreenRefresh refresh,
             ScreenTargets screen,
             IDictionary<string, Func<object, object, object, IDictionary<string, object>>> measures)
@@ -290,6 +295,11 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(events));
             }
 
+            if (log == null)
+            {
+                throw new ArgumentNullException(nameof(log));
+            }
+
             if (refresh == null)
             {
                 throw new ArgumentNullException(nameof(refresh));
@@ -306,7 +316,7 @@ namespace PmxEditorMcp
             }
 
             ToolDispatch dispatch = new ToolDispatch(
-                relay, receivers, lists, connection, pmx, bridged, recovery, modifiers, events,
+                relay, receivers, lists, connection, pmx, bridged, recovery, modifiers, events, log,
                 refresh, screen, measures);
             dispatch.IssuedReferences(calls, aggregations);
             dispatch.HeldKinds(calls, aggregations, elements);
@@ -1403,11 +1413,6 @@ namespace PmxEditorMcp
             return id;
         }
 
-        /// <summary>
-        /// 預けた実体がリスナなら、その公開イベントへ受け手を掛ける。掛けた受け手は、ハンドルが
-        /// 失効するときに外す。受け手はエディタのUIスレッドで走るので、溜め場へ入れるところで
-        /// 起きた誤りは記録だけにして、エディタの側へ返さない。
-        /// </summary>
         private Action Listening(
             McpMethodContext context, string typeName, object issued, int id)
         {
@@ -1419,14 +1424,21 @@ namespace PmxEditorMcp
 
             return attach(issued, (type, args) =>
             {
-                context.Events.Enqueue(type, id, Read(type, args));
+                try
+                {
+                    if (context.Events.Enqueue(type, id, Read(type, args)) == null)
+                    {
+                        _log.Write("溜め場が閉じた後に届いたイベントを捨てた: type=" + type + " handle=" + id);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    _log.WriteException(
+                        "イベントを溜め場へ入れられなかった: type=" + type + " handle=" + id, exception);
+                }
             });
         }
 
-        /// <summary>
-        /// イベント固有の値を組へ直す。写せなかった値は落として組を空にする——受け手はエディタの
-        /// UIスレッドで走るので、ここで投げるとエディタの側へ抜ける。
-        /// </summary>
         private object Read(string type, object args)
         {
             PayloadReader read;
@@ -1439,8 +1451,10 @@ namespace PmxEditorMcp
             {
                 return read(args);
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException exception)
             {
+                _log.WriteException("イベント固有の値を写せなかった: type=" + type, exception);
+
                 return null;
             }
         }

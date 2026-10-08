@@ -304,8 +304,8 @@ namespace PmxEditorMcp.Tests
 
             Assert.True(queue.IsClosed);
             Assert.Equal(0, queue.Count);
-            Assert.Throws<InvalidOperationException>(
-                () => queue.Enqueue("pmx_view.mouse_down", 1, null));
+            Assert.Null(queue.Enqueue("pmx_view.mouse_down", 1, null));
+            Assert.Equal(0, queue.Count);
             Assert.Throws<InvalidOperationException>(() => queue.Drain(1));
         }
 

@@ -144,7 +144,7 @@ namespace PmxEditorMcp
         /// <summary>
         /// イベントを溜める。溜められる件数を超えるときは、いちばん古いものを捨てて捨てた件数を
         /// 数える。<paramref name="sourceHandle"/> は購読しているリスナのハンドルIDで、
-        /// 正の整数でなければならない。
+        /// 正の整数でなければならない。閉じていれば溜めずに null を返す。
         /// </summary>
         public QueuedEvent Enqueue(string type, int sourceHandle, object payload)
         {
@@ -166,7 +166,11 @@ namespace PmxEditorMcp
 
             lock (_gate)
             {
-                RequireOpen();
+                if (_closed)
+                {
+                    return null;
+                }
+
                 _lastSeq = _issuer.Next();
                 QueuedEvent queued = new QueuedEvent(_lastSeq, type, sourceHandle, payload);
                 _events.Enqueue(queued);

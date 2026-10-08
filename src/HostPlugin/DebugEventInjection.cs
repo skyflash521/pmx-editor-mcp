@@ -49,6 +49,10 @@ namespace PmxEditorMcp
                 RequestParameter.Text(context.Params, TypeParameterName),
                 RequestParameter.PositiveInteger(context.Params, SourceHandleParameterName),
                 payload);
+            if (queued == null)
+            {
+                throw new InvalidOperationException("キューは閉じている。");
+            }
 
             return new Dictionary<string, object>(StringComparer.Ordinal) { { "seq", queued.Seq } };
         }

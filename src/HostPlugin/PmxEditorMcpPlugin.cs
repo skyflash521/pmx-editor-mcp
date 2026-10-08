@@ -249,6 +249,7 @@ namespace PmxEditorMcp
                     new PressedModifierKeys(),
                     new EventBindingTable(
                         tables.Attachments, tables.Payloads),
+                    _log,
                     refresh,
                     new ScreenTargets(
                         () => Receiver(receivers, ViewType), () => Receiver(receivers, FormType)),
