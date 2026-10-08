@@ -515,11 +515,11 @@ namespace PmxEditorMcp.Tests
                 using (Screen screen = new Screen())
                 {
                     List<DialogResult> answers = new List<DialogResult>();
-                    screen.Archive.Click += (sender, e) =>
+                    screen.BoneMorph.Click += (sender, e) =>
                         answers.Add(MessageBox.Show("追加しました.", "確認", MessageBoxButtons.OK));
                     Value(Call(screen, UiOpenWindow.ToolName, Transform));
 
-                    IDictionary<string, object> value = Value(Press(screen, Transform, ArchivePath));
+                    IDictionary<string, object> value = Value(Press(screen, Transform, BoneMorphPath));
 
                     Assert.Equal(new[] { DialogResult.OK }, answers);
                     Assert.Equal(new object[] { "追加しました." }, (object[])value[UiPressItem.MessagesName]);
@@ -535,11 +535,11 @@ namespace PmxEditorMcp.Tests
                 using (Screen screen = new Screen())
                 {
                     List<DialogResult> answers = new List<DialogResult>();
-                    screen.Archive.Click += (sender, e) => answers.Add(
+                    screen.BoneMorph.Click += (sender, e) => answers.Add(
                         MessageBox.Show("追加しますか？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question));
                     Value(Call(screen, UiOpenWindow.ToolName, Transform));
 
-                    IDictionary<string, object> refused = Press(screen, Transform, ArchivePath);
+                    IDictionary<string, object> refused = Press(screen, Transform, BoneMorphPath);
 
                     Assert.Equal(ToolEnvelope.OperationFailed, Code(refused));
                     Assert.Contains("追加しますか？", Said(refused));
@@ -556,11 +556,11 @@ namespace PmxEditorMcp.Tests
                 using (Screen screen = new Screen())
                 {
                     List<DialogResult> answers = new List<DialogResult>();
-                    screen.Archive.Click += (sender, e) => answers.Add(MessageBox.Show(
+                    screen.BoneMorph.Click += (sender, e) => answers.Add(MessageBox.Show(
                         "失敗しました.", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Exclamation));
                     Value(Call(screen, UiOpenWindow.ToolName, Transform));
 
-                    IDictionary<string, object> refused = Press(screen, Transform, ArchivePath);
+                    IDictionary<string, object> refused = Press(screen, Transform, BoneMorphPath);
 
                     Assert.Equal(ToolEnvelope.OperationFailed, Code(refused));
                     Assert.Contains("失敗しました.", Said(refused));
@@ -576,14 +576,14 @@ namespace PmxEditorMcp.Tests
             {
                 using (Screen screen = new Screen())
                 {
-                    screen.Archive.Click += (sender, e) =>
+                    screen.BoneMorph.Click += (sender, e) =>
                     {
                         MessageBox.Show("変更しました.", "結果", MessageBoxButtons.OK);
                         MessageBox.Show("続けますか？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                     };
                     Value(Call(screen, UiOpenWindow.ToolName, Transform));
 
-                    IDictionary<string, object> refused = Press(screen, Transform, ArchivePath);
+                    IDictionary<string, object> refused = Press(screen, Transform, BoneMorphPath);
 
                     Assert.Equal(ToolEnvelope.OperationFailed, Code(refused));
                     Assert.Contains("変更しました.", Said(refused));
@@ -681,11 +681,11 @@ namespace PmxEditorMcp.Tests
                 using (Screen screen = new Screen())
                 {
                     List<DialogResult> answers = new List<DialogResult>();
-                    screen.Archive.Click += (sender, e) =>
+                    screen.BoneMorph.Click += (sender, e) =>
                     {
                         using (Form asking = new Form
                         {
-                            Text = "頂点モーフ再計算用閾値",
+                            Text = "ボーンモーフ名",
                             ShowInTaskbar = false,
                             StartPosition = FormStartPosition.Manual,
                             Location = new Point(-32000, -32000),
@@ -696,10 +696,10 @@ namespace PmxEditorMcp.Tests
                     };
                     Value(Call(screen, UiOpenWindow.ToolName, Transform));
 
-                    IDictionary<string, object> refused = Press(screen, Transform, ArchivePath);
+                    IDictionary<string, object> refused = Press(screen, Transform, BoneMorphPath);
 
                     Assert.Equal(ToolEnvelope.OperationFailed, Code(refused));
-                    Assert.Contains("頂点モーフ再計算用閾値", Said(refused));
+                    Assert.Contains("ボーンモーフ名", Said(refused));
                     Assert.Equal(new[] { DialogResult.Cancel }, answers);
                     Assert.True(screen.Transform.Visible, "押した先のウィンドウまで閉じた。");
                 }
@@ -721,12 +721,12 @@ namespace PmxEditorMcp.Tests
                 })
                 {
                     int pressed = 0;
-                    screen.Archive.Click += (sender, e) => pressed++;
+                    screen.BoneMorph.Click += (sender, e) => pressed++;
                     Value(Call(screen, UiOpenWindow.ToolName, Transform));
                     asking.Show(screen.Main);
                     EnableWindow(screen.Main.Handle, false);
 
-                    Assert.Equal(ToolEnvelope.NotApplicable, Code(Press(screen, Transform, ArchivePath)));
+                    Assert.Equal(ToolEnvelope.NotApplicable, Code(Press(screen, Transform, BoneMorphPath)));
                     Assert.Equal(0, pressed);
                 }
             });
@@ -858,7 +858,7 @@ namespace PmxEditorMcp.Tests
             };
         }
 
-        private static readonly string[] ArchivePath = { "menuStrip1", "MenuItem_File", "MenuItem_PushArchive" };
+        private static readonly string[] BoneMorphPath = { "menuStrip1", "MenuItem_Edit", "MenuItem_AddBoneMorph" };
 
         private static void WithLimit(Action action)
         {
@@ -1061,7 +1061,7 @@ namespace PmxEditorMcp.Tests
                 Item.Click += (sender, e) =>
                 {
                     Transform = Shown("TransformView", "TransformView");
-                    Transform.Controls.Add(Strip(Menu("MenuItem_File", Normalize, Apply, Archive)));
+                    Transform.Controls.Add(Strip(Menu("MenuItem_File", Normalize, Apply), Menu("MenuItem_Edit", BoneMorph)));
                     SplitContainer split = new SplitContainer { Name = "splitContainer1" };
                     MenuStrip ext = new MenuStrip { Name = "extMenuStrip1" };
                     ext.Items.Add(Menu("MenuItem_Init", Initialize));
@@ -1084,7 +1084,7 @@ namespace PmxEditorMcp.Tests
                 Normalize = new ToolStripMenuItem("保存／更新時などの頂点モーフ正規化(&N)") { Name = "MenuItem_SaveNormalize" };
                 Apply = new ToolStripMenuItem("現在の変形状態でモデル形状を更新(&U)") { Name = "MenuItem_SetupCurrentPose" };
                 Initialize = new ToolStripMenuItem("全て初期化(&Q)") { Name = "MenuItem_Initialize" };
-                Archive = new ToolStripMenuItem("現在の形状をアーカイブ追加(&A)") { Name = "MenuItem_PushArchive" };
+                BoneMorph = new ToolStripMenuItem("現在の変形状態で新規ボーンモーフ追加(&M)") { Name = "MenuItem_AddBoneMorph" };
                 ScaleOffset = new CheckBox { Name = "chkScaleOffset", Text = "現在値へ積算" };
                 Scale = new Button { Name = "btnIScale", Text = "スケール" };
             }
@@ -1113,7 +1113,7 @@ namespace PmxEditorMcp.Tests
 
             internal ToolStripMenuItem Initialize { get; }
 
-            internal ToolStripMenuItem Archive { get; }
+            internal ToolStripMenuItem BoneMorph { get; }
 
             internal void Add(Form form)
             {
@@ -1133,10 +1133,10 @@ namespace PmxEditorMcp.Tests
                 }
             }
 
-            private static MenuStrip Strip(ToolStripMenuItem menu)
+            private static MenuStrip Strip(params ToolStripMenuItem[] menus)
             {
                 MenuStrip strip = new MenuStrip { Name = "menuStrip1" };
-                strip.Items.Add(menu);
+                strip.Items.AddRange(menus);
 
                 return strip;
             }
