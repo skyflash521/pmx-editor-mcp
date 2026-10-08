@@ -3391,8 +3391,8 @@
             "window": "PmxViewForm.TransformView",
             "path": [
               "menuStrip1",
-              "MenuItem_File",
-              "MenuItem_PushArchive"
+              "MenuItem_Edit",
+              "MenuItem_AddBoneMorph"
             ]
           },
           "expect": {
@@ -3401,7 +3401,7 @@
               {
                 "path": "messages",
                 "equals": [
-                  "追加しました."
+                  "ボーンモーフに記録できる変形状態がありません."
                 ]
               }
             ]

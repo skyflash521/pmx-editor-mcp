@@ -313,8 +313,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 深さの分だけ残した木。深さを渡さないときは下まで全部を残す。危険の区分は、台帳の区分と、
-        /// 台帳がクリップボードを読むか書くと印した部品の区分を合わせた並びにする。
+        /// 深さの分だけ残した木。深さを渡さないときは下まで全部を残す。
         /// </summary>
         private static object Cut(IDictionary<string, object> node, int depth)
         {
@@ -362,6 +361,11 @@ namespace PmxEditorMcp
             if (UiStructureCatalog.UsesClipboard(node))
             {
                 kinds.Add(UiStructureCatalog.ClipboardDanger);
+            }
+
+            if (UiStructureCatalog.ModalOpened(node) != null)
+            {
+                kinds.Add(UiStructureCatalog.ModalDanger);
             }
 
             return kinds.ToArray();

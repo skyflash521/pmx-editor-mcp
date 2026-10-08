@@ -81,8 +81,7 @@ namespace PmxEditorMcp
                     return ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, PathName + " に当たる部品が無い: " + step);
                 }
 
-                if (string.Equals(
-                    UiStructureCatalog.Text(node, UiStructureCatalog.TypeName), "ContextMenuStrip", StringComparison.Ordinal))
+                if (UiStructureCatalog.ContextMenu(node))
                 {
                     return ToolEnvelope.Failure(
                         ToolEnvelope.NotApplicable, "右クリックメニューの中の項目は押さない: " + string.Join("/", path));
@@ -114,6 +113,15 @@ namespace PmxEditorMcp
             if (danger != null)
             {
                 return ToolEnvelope.Failure(ToolEnvelope.NotApplicable, danger);
+            }
+
+            string modalOpened = UiStructureCatalog.ModalOpened(node);
+            if (modalOpened != null)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable,
+                    "押すとエディタが人の応答を待つ表示 " + modalOpened + " を開き、答えるのは人なので押さない: "
+                        + string.Join("/", path) + "。");
             }
 
             bool? wanted = null;

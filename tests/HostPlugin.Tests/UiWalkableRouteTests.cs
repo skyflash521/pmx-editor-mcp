@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Windows.Forms;
 using Xunit;
 
@@ -135,18 +134,9 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, looked);
         }
 
-        /// <summary>判定は窓の型の完全名と、窓の根から節までの名前の並びを受ける。</summary>
         private static bool Walkable(string window, params string[] path)
         {
-            MethodInfo walkable = typeof(UiStructureCatalog).GetMethod(
-                "Walkable",
-                BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public,
-                null,
-                new[] { typeof(string), typeof(IList<string>) },
-                null);
-            Assert.True(walkable != null, "押して辿れる節かの判定が無い。");
-
-            return (bool)walkable.Invoke(null, new object[] { window, path });
+            return UiStructureCatalog.Walkable(window, path);
         }
 
         private static IDictionary<string, object> Invoke(

@@ -7,11 +7,6 @@ namespace PmxEditorMcp
     /// <summary>
     /// 組み込んだ画面の構造の台帳を引く。台帳は初めて要るときに1度だけ解き、以後は同じものを
     /// 返す。
-    ///
-    /// ウィンドウの名前は型の完全名で、タイトルはフォーム自身の Text である。部品の節は、型・受け皿の名前・
-    /// 文言・指したときに出る説明・ショートカット・右クリックメニューの名前・断片のクラス・
-    /// 実行時に組み立てる印・開くウィンドウ・押したときの危険の区分・押すとクリップボードを読むか書くかの印・
-    /// 子を持ち、無い項目は省かれている。
     /// </summary>
     internal static class UiStructureCatalog
     {
@@ -51,11 +46,17 @@ namespace PmxEditorMcp
 
         internal const string DangerName = "danger";
 
-        /// <summary>押すとエディタがクリップボードを読むか書く部品の節が、真で持つ項目。</summary>
         internal const string ClipboardName = "clipboard";
 
-        /// <summary>画面の構造の応答で、クリップボードを読むか書く部品に付ける危険の区分。</summary>
         internal const string ClipboardDanger = "clipboard";
+
+        internal const string ModalName = "modal";
+
+        internal const string ModalDanger = "modal";
+
+        internal const string OpensName = "opens";
+
+        private const string ContextMenuType = "ContextMenuStrip";
 
         private static readonly HashSet<string> PressableTypes = new HashSet<string>(StringComparer.Ordinal)
         {
@@ -201,6 +202,71 @@ namespace PmxEditorMcp
         internal static bool Pressable(IDictionary<string, object> node)
         {
             return PressableTypes.Contains(Text(node, TypeName) ?? string.Empty);
+        }
+
+        internal static bool ContextMenu(IDictionary<string, object> node)
+        {
+            return string.Equals(Text(node, TypeName), ContextMenuType, StringComparison.Ordinal);
+        }
+
+        /// <summary>型の完全名のウィンドウを、エディタが人の応答を待つ表示として開くか。</summary>
+        internal static bool Modal(string form)
+        {
+            object given;
+            IDictionary<string, object> window = Window(form);
+
+            return window != null && window.TryGetValue(ModalName, out given) && given is bool && (bool)given;
+        }
+
+        /// <summary>その節が開くウィンドウのうち、人の応答を待つ表示として開くものの型の完全名。無ければ null。</summary>
+        internal static string ModalOpened(IDictionary<string, object> node)
+        {
+            foreach (string opened in Texts(node, OpensName))
+            {
+                if (Modal(opened))
+                {
+                    return opened;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>window はウィンドウの型の完全名、path はウィンドウの根から節までの名前の並び。</summary>
+        internal static bool Walkable(string window, IList<string> path)
+        {
+            IDictionary<string, object> at = Node(Window(window), RootName);
+            foreach (string step in path)
+            {
+                at = Child(at, step);
+                if (at == null || ContextMenu(at))
+                {
+                    return false;
+                }
+            }
+
+            return Pressable(at)
+                && Text(at, DangerName) == null
+                && !UsesClipboard(at)
+                && ModalOpened(at) == null;
+        }
+
+        internal static bool OpensOnly(string opener, IList<string> path, string named)
+        {
+            if (!Walkable(opener, path))
+            {
+                return false;
+            }
+
+            IDictionary<string, object> at = Node(Window(opener), RootName);
+            foreach (string step in path)
+            {
+                at = Child(at, step);
+            }
+
+            IList<string> opens = Texts(at, OpensName);
+
+            return opens.Count == 1 && string.Equals(opens[0], named, StringComparison.Ordinal);
         }
 
         /// <summary>台帳の節の、その名前の子。無ければ null。</summary>

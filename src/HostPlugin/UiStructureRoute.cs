@@ -60,7 +60,10 @@ namespace PmxEditorMcp
                 {
                     IDictionary<string, object> route = (IDictionary<string, object>)one;
                     string opener = UiStructureCatalog.Text(route, UiStructureCatalog.FormName);
-                    if (opener == null || !seen.Add(opener))
+                    if (opener == null
+                        || !UiStructureCatalog.OpensOnly(
+                            opener, UiStructureCatalog.Texts(route, UiStructureCatalog.PathName), at)
+                        || !seen.Add(opener))
                     {
                         continue;
                     }

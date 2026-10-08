@@ -70,7 +70,7 @@ namespace PmxEditorMcp
                     IDictionary<string, object> route = (IDictionary<string, object>)one;
                     string opener = UiStructureCatalog.Text(route, UiStructureCatalog.FormName);
                     IList<string> path = UiStructureCatalog.Texts(route, UiStructureCatalog.PathName);
-                    if (opener == null || !OpensOnly(opener, path, at) || !seen.Add(opener))
+                    if (opener == null || !UiStructureCatalog.OpensOnly(opener, path, at) || !seen.Add(opener))
                     {
                         continue;
                     }
@@ -98,29 +98,6 @@ namespace PmxEditorMcp
             return null;
         }
 
-        private static bool OpensOnly(string opener, IList<string> path, string named)
-        {
-            IDictionary<string, object> at = UiStructureCatalog.Node(
-                UiStructureCatalog.Window(opener), UiStructureCatalog.RootName);
-            foreach (string step in path)
-            {
-                at = UiStructureCatalog.Child(at, step);
-                if (at == null
-                    || string.Equals(
-                        UiStructureCatalog.Text(at, UiStructureCatalog.TypeName), "ContextMenuStrip",
-                        StringComparison.Ordinal))
-                {
-                    return false;
-                }
-            }
-
-            IList<string> opens = UiStructureCatalog.Texts(at, "opens");
-
-            return UiStructureCatalog.Pressable(at)
-                && opens.Count == 1
-                && string.Equals(opens[0], named, StringComparison.Ordinal);
-        }
-
         private static object Open(
             McpMethodContext context, Func<IEnumerable<Form>> forms, Func<string, IPEBaseWindowConnector> windows)
         {
@@ -131,6 +108,13 @@ namespace PmxEditorMcp
                 return ToolEnvelope.Failure(
                     ToolEnvelope.InvalidArgument,
                     WindowName + " はウィンドウの型の完全名で与える。名前は " + UiTree.ToolName + " の form で分かる。");
+            }
+
+            if (UiStructureCatalog.Modal(named))
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable,
+                    "そのウィンドウはエディタが人の応答を待つ表示として開き、答えるのは人なので開かない: " + named);
             }
 
             IList<KeyValuePair<string, IList<string>>> hops = null;
