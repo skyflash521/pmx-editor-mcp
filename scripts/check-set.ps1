@@ -1035,9 +1035,12 @@ $checks['文書のリンク'] = New-Check `
     -LimitSeconds 3 <# 変更禁止 #> `
     -Needs $noArtifact `
     -WithoutEditor `
-    -Run @('lychee', '--offline', '--no-progress', '--include-fragments',
-        '--exclude-path', '.scratch', '--exclude-path', 'docs/.scratch',
-        '--exclude-path', 'dist', '**/*.md')
+    -Body {
+        $documents = @(git -c core.quotepath=off ls-files --cached --others --exclude-standard -- '*.md')
+        if ($LASTEXITCODE -ne 0) { throw "文書の一覧を読めない。" }
+        $documents = @($documents | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf })
+        lychee --offline --no-progress --include-fragments @documents
+    }
 $checks[$derivation] = New-Check `
     -Groups @('定義') `
     -LimitSeconds 3 <# 変更禁止 #> `
