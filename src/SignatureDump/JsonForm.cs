@@ -8,7 +8,7 @@ namespace PmxEditorMcp.SignatureDump
 {
     public sealed class JsonMember
     {
-        internal JsonMember(string name, JsonForm form)
+        internal JsonMember(string name, JsonForm form, bool required)
         {
             PropertyRecord.RequireText(name, nameof(name));
             if (form == null)
@@ -18,11 +18,15 @@ namespace PmxEditorMcp.SignatureDump
 
             Name = name;
             Form = form;
+            Required = required;
         }
 
         public string Name { get; }
 
         public JsonForm Form { get; }
+
+        /// <summary>偽なら、組が持たなくてもよい。持たない項目は読めた表に入らない。</summary>
+        public bool Required { get; }
     }
 
     /// <summary>
@@ -55,7 +59,7 @@ namespace PmxEditorMcp.SignatureDump
             return new NullableForm(inner);
         }
 
-        /// <summary>並べた項目だけを持つ組。知らない項目も、欠けた項目も形が違う。</summary>
+        /// <summary>並べた項目だけを持つ組。知らない項目も、欠けた必須の項目も形が違う。</summary>
         public static JsonForm Object(params JsonMember[] members)
         {
             return new ObjectForm(members);
@@ -73,7 +77,12 @@ namespace PmxEditorMcp.SignatureDump
 
         public static JsonMember Member(string name, JsonForm form)
         {
-            return new JsonMember(name, form);
+            return new JsonMember(name, form, true);
+        }
+
+        public static JsonMember Optional(string name, JsonForm form)
+        {
+            return new JsonMember(name, form, false);
         }
 
         /// <summary>形が違えば <see cref="FormatException"/>。</summary>
@@ -251,6 +260,11 @@ namespace PmxEditorMcp.SignatureDump
                     object held;
                     if (!source.TryGetValue(member.Name, out held))
                     {
+                        if (!member.Required)
+                        {
+                            continue;
+                        }
+
                         throw new FormatException(
                             "項目が無い: " + Where(path, member.Name));
                     }

@@ -69,6 +69,26 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AnOptionalMemberMayBeAbsentAndIsLeftOutOfWhatIsRead()
+        {
+            JsonForm form = JsonForm.Object(
+                JsonForm.Member("name", JsonForm.Text()),
+                JsonForm.Optional("note", JsonForm.Text()));
+
+            IDictionary<string, object> absent =
+                (IDictionary<string, object>)form.Read("{\"name\":\"a\"}");
+            IDictionary<string, object> present =
+                (IDictionary<string, object>)form.Read("{\"name\":\"a\",\"note\":\"b\"}");
+
+            Assert.False(absent.ContainsKey("note"));
+            Assert.Equal("b", present["note"]);
+            Assert.Contains(
+                "空でない文字列",
+                Assert.Throws<FormatException>(() => form.Read("{\"name\":\"a\",\"note\":\"\"}")).Message,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void TheKeyOfAnArrayRefusesTheSameValueTwiceAndNamesTheLaterRow()
         {
             FormatException refused = Assert.Throws<FormatException>(() => Rows.Read(

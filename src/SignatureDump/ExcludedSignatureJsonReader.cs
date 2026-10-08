@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -25,6 +24,19 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string CategoryText = "category";
 
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                SignaturesName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(KeyName, JsonForm.Text()),
+                        JsonForm.Member(QualificationName, JsonForm.Text()),
+                        JsonForm.Optional(CapabilityIdName, JsonForm.Text()),
+                        JsonForm.Optional(CategoryName, JsonForm.Text()),
+                        JsonForm.Optional(AlternativeName, JsonForm.Text())),
+                    KeyName,
+                    allowEmpty: true)));
+
         private static readonly Dictionary<string, ExclusionCategory> Categories =
             new Dictionary<string, ExclusionCategory>(StringComparer.Ordinal)
             {
@@ -46,71 +58,38 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            object[] items = Array(Members(Parse(json), SignaturesName)[SignaturesName]);
-            List<ExcludedSignatureRecord> records = new List<ExcludedSignatureRecord>();
-            string previous = null;
-
-            foreach (object item in items)
-            {
-                ExcludedSignatureRecord record = ReadRecord(item);
-                if (previous != null)
-                {
-                    int order = string.CompareOrdinal(previous, record.Key);
-                    if (order == 0)
-                    {
-                        throw new FormatException("同じ行キーが二度現れる: " + record.Key);
-                    }
-
-                    if (order > 0)
-                    {
-                        throw new FormatException("序数の昇順で並んでいない: " + record.Key);
-                    }
-                }
-
-                previous = record.Key;
-                records.Add(record);
-            }
+            IDictionary<string, object> root = (IDictionary<string, object>)Form.Read(json);
+            List<ExcludedSignatureRecord> records = ((object[])root[SignaturesName])
+                .Cast<IDictionary<string, object>>()
+                .Select(ReadRecord)
+                .ToList();
 
             return new ReadOnlyCollection<ExcludedSignatureRecord>(records);
         }
 
-        private static ExcludedSignatureRecord ReadRecord(object item)
+        private static ExcludedSignatureRecord ReadRecord(IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = item as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException("項目の組でなければならない。");
-            }
-
-            object qualification;
-            if (!members.TryGetValue(QualificationName, out qualification))
-            {
-                throw new FormatException("項目が無い: " + QualificationName);
-            }
-
-            string text = Text(qualification, QualificationName);
+            string key = (string)members[KeyName];
+            string text = (string)members[QualificationName];
             try
             {
                 if (string.Equals(text, BaselineText, StringComparison.Ordinal))
                 {
-                    Members(item, KeyName, QualificationName, CapabilityIdName);
+                    Require(members, CapabilityIdName, CategoryName, AlternativeName);
                     return ExcludedSignatureRecord.FromBaseline(
-                        Text(members[KeyName], KeyName),
-                        Text(members[CapabilityIdName], CapabilityIdName));
+                        key, (string)members[CapabilityIdName]);
                 }
 
                 if (string.Equals(text, CategoryText, StringComparison.Ordinal))
                 {
-                    string alternative = members.ContainsKey(AlternativeName)
-                        ? Text(members[AlternativeName], AlternativeName)
-                        : string.Empty;
-                    Members(
-                        item,
-                        alternative.Length == 0
-                            ? new[] { KeyName, QualificationName, CategoryName }
-                            : new[] { KeyName, QualificationName, CategoryName, AlternativeName });
+                    Require(members, CategoryName, CapabilityIdName);
+                    object alternative;
                     return ExcludedSignatureRecord.FromCategory(
-                        Text(members[KeyName], KeyName), Category(members[CategoryName]), alternative);
+                        key,
+                        Category((string)members[CategoryName]),
+                        members.TryGetValue(AlternativeName, out alternative)
+                            ? (string)alternative
+                            : string.Empty);
                 }
             }
             catch (ArgumentException exception)
@@ -121,74 +100,23 @@ namespace PmxEditorMcp.SignatureDump
             throw new FormatException("知らない資格: " + text);
         }
 
-        private static object Parse(string json)
+        /// <summary>その資格が求める項目が無いか、持てない項目があれば <see cref="FormatException"/>。</summary>
+        private static void Require(
+            IDictionary<string, object> members, string required, params string[] forbidden)
         {
-            try
+            if (!members.ContainsKey(required))
             {
-                return new JavaScriptSerializer().DeserializeObject(json);
+                throw new FormatException("項目が無い: " + required);
             }
-            catch (Exception exception)
+
+            foreach (string name in forbidden.Where(members.ContainsKey))
             {
-                throw new FormatException("JSONとして読めない。", exception);
+                throw new FormatException("この資格が持てない項目がある: " + name);
             }
         }
 
-        private static object[] Array(object value)
+        private static ExclusionCategory Category(string text)
         {
-            object[] items = value as object[];
-            if (items == null)
-            {
-                throw new FormatException(SignaturesName + " は項目の並びでなければならない。");
-            }
-
-            return items;
-        }
-
-        /// <summary>
-        /// 求める項目だけを持つ対象として読む。余分な項目を黙って捨てると、正本の形が崩れても
-        /// 気づけない。
-        /// </summary>
-        private static Dictionary<string, object> Members(object value, params string[] names)
-        {
-            Dictionary<string, object> members = value as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException("項目の組でなければならない。");
-            }
-
-            foreach (string name in names)
-            {
-                if (!members.ContainsKey(name))
-                {
-                    throw new FormatException("項目が無い: " + name);
-                }
-            }
-
-            foreach (string name in members.Keys)
-            {
-                if (!names.Contains(name, StringComparer.Ordinal))
-                {
-                    throw new FormatException("知らない項目がある: " + name);
-                }
-            }
-
-            return members;
-        }
-
-        private static string Text(object value, string name)
-        {
-            string text = value as string;
-            if (string.IsNullOrEmpty(text))
-            {
-                throw new FormatException(name + " は空でない文字列でなければならない。");
-            }
-
-            return text;
-        }
-
-        private static ExclusionCategory Category(object value)
-        {
-            string text = Text(value, CategoryName);
             ExclusionCategory category;
             if (!Categories.TryGetValue(text, out category))
             {
