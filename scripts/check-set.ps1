@@ -1048,29 +1048,12 @@ $checks[$derivation] = New-Check `
         & $dump excluded-baseline $editorDir $ledger $baseline
         if ($LASTEXITCODE -eq 0) { & $dump excluded-signatures $editorDir $baseline $excluded }
     }
-$checks['要約の持ち主'] = New-Check `
+$checks['summaryコメントの位置'] = New-Check `
     -Groups @('コード') `
     -LimitSeconds 3 <# 変更禁止 #> `
     -Needs $noArtifact `
     -WithoutEditor `
-    -Body {
-        $follows = [regex]::new(
-            '^[^\S\n]*(?:/// </summary>|/// <summary>[^\n]*</summary>)[^\S\n]*(?=\n[^\S\n]*/// <summary>)',
-            [System.Text.RegularExpressions.RegexOptions]'Multiline, IgnoreCase, CultureInvariant')
-        $orphans = @()
-        foreach ($file in Get-ChildItem -Path src, tests -Recurse -Filter *.cs -File |
-            Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' }) {
-            $text = [System.IO.File]::ReadAllText($file.FullName) -replace "`r`n?", "`n"
-            foreach ($match in $follows.Matches($text)) {
-                $line = $text.Substring(0, $match.Index).Split("`n").Count + 1
-                $orphans += ('{0}:{1}' -f $file.FullName, $line)
-            }
-        }
-
-        if ($orphans.Count -ne 0) {
-            throw ('要約が持ち主から離れている: ' + ($orphans -join '・'))
-        }
-    }
+    -Run @('node', 'scripts/summary-placement.mjs')
 $checks['実行時リフレクション'] = New-Check `
     -Groups @('コード') `
     -LimitSeconds 3 <# 変更禁止 #> `
