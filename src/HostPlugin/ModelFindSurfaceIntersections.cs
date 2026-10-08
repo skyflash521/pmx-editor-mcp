@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.Script.Serialization;
 using PEPlugin.Pmx;
 using Vec = PmxEditorMcp.SurfaceGeometry.Vec;
 
@@ -46,8 +45,6 @@ namespace PmxEditorMcp
         public const string EndName = "end";
 
         public const string NextOffsetName = "nextOffset";
-
-        private static readonly JavaScriptSerializer Sizer = new JavaScriptSerializer();
 
         public static void AddTo(McpMethodTable methods, ComposedEdit edit)
         {
@@ -128,7 +125,7 @@ namespace PmxEditorMcp
                     offset,
                     limit,
                     ResponseSize.ValueChars(context.BudgetChars),
-                    taken => Sizer.Serialize(Valued(found, offset, taken)).Length,
+                    taken => ResponseSize.Serializer.Serialize(Valued(found, offset, taken)).Length,
                     out page))
             {
                 return ComposedEditResult.Refuse(

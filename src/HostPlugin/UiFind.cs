@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web.Script.Serialization;
 using PmxEditorMcp.SignatureDump;
 
 namespace PmxEditorMcp
@@ -50,8 +49,6 @@ namespace PmxEditorMcp
         /// <summary>並びの中で、当たり1件の手前に置く区切りの文字数。</summary>
         private const int SeparatorChars = 1;
 
-        private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
-
         /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods)
         {
@@ -97,7 +94,7 @@ namespace PmxEditorMcp
             int used = 0;
             for (int at = offset; at < found.Count && written.Count < limit; at++)
             {
-                int size = Serializer.Serialize(found[at]).Length + SeparatorChars;
+                int size = ResponseSize.Serializer.Serialize(found[at]).Length + SeparatorChars;
                 if (used + size > room)
                 {
                     break;
@@ -135,7 +132,7 @@ namespace PmxEditorMcp
         /// </summary>
         private static int Wrapper(int total)
         {
-            return Serializer.Serialize(new Dictionary<string, object>(StringComparer.Ordinal)
+            return ResponseSize.Serializer.Serialize(new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { UiStructureCatalog.EditorVersionName, UiStructureCatalog.EditorVersion },
                 { TotalName, total },

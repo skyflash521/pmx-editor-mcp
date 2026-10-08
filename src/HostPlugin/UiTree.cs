@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 namespace PmxEditorMcp
@@ -33,8 +32,6 @@ namespace PmxEditorMcp
         private const string TotalName = "total";
 
         private const string NextOffsetName = "nextOffset";
-
-        private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
 
         /// <param name="forms">開いているウィンドウを返す。UIスレッドで呼ばれる。</param>
         public static void AddTo(McpMethodTable methods, Func<IEnumerable<Form>> forms)
@@ -167,7 +164,7 @@ namespace PmxEditorMcp
             IList<string> warnings)
         {
             IDictionary<string, object> value = Value(windows, total, offset);
-            if (Serializer.Serialize(value).Length <= room)
+            if (ResponseSize.Serializer.Serialize(value).Length <= room)
             {
                 return ToolEnvelope.Success(value, warnings);
             }
@@ -196,7 +193,7 @@ namespace PmxEditorMcp
         {
             List<object> written = new List<object>(windows);
             while (written.Count > 0
-                && Serializer.Serialize(Value(written, total, offset)).Length > room)
+                && ResponseSize.Serializer.Serialize(Value(written, total, offset)).Length > room)
             {
                 written.RemoveAt(written.Count - 1);
             }

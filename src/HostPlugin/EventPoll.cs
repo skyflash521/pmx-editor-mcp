@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp
 {
@@ -35,14 +34,12 @@ namespace PmxEditorMcp
         /// <summary>並びの中で、イベント1件の手前に置く区切りの文字数。</summary>
         private const int SeparatorChars = 1;
 
-        private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
-
         /// <summary>
         /// 取り出した並びを包む分の文字数。並びを空にして、数の項目を採りうるいちばん長い値で
         /// 書いたものを採る——この枠を差し引いてから並びの件数を決めないと、収めたはずの応答が
         /// 値の枠を超えて、取り出したイベントが呼び出す側へ届かないまま消える。
         /// </summary>
-        private static readonly int Wrapper = Serializer.Serialize(
+        private static readonly int Wrapper = ResponseSize.Serializer.Serialize(
             new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { EventsName, new object[0] },
@@ -77,7 +74,7 @@ namespace PmxEditorMcp
             EventDrainResult drained = context.Events.Drain(limit, queued =>
             {
                 IDictionary<string, object> item = Item(queued);
-                int size = Serializer.Serialize(item).Length + SeparatorChars;
+                int size = ResponseSize.Serializer.Serialize(item).Length + SeparatorChars;
                 if (used + size <= room)
                 {
                     used += size;

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web.Script.Serialization;
 using PEPlugin.Pmx;
 
 namespace PmxEditorMcp
@@ -26,8 +25,6 @@ namespace PmxEditorMcp
         public const string UnnormalizedWeightsName = "unnormalizedWeights";
 
         public const string HiddenMorphsInExpressionFrameName = "hiddenMorphsInExpressionFrame";
-
-        private static readonly JavaScriptSerializer Sizer = new JavaScriptSerializer();
 
         public static IList<string> Locatable
         {
@@ -98,7 +95,7 @@ namespace PmxEditorMcp
                 offset,
                 limit,
                 ResponseSize.ValueChars(context.BudgetChars),
-                taken => Sizer.Serialize(Located(found, all.Count, offset, taken)).Length,
+                taken => ResponseSize.Serializer.Serialize(Located(found, all.Count, offset, taken)).Length,
                 out page))
             {
                 return ComposedEditResult.Refuse(

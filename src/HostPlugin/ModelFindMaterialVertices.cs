@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web.Script.Serialization;
 using PEPlugin.Pmx;
 
 namespace PmxEditorMcp
@@ -24,8 +23,6 @@ namespace PmxEditorMcp
         public const string VertexRunsName = "vertexRuns";
 
         public const string NextOffsetName = "nextOffset";
-
-        private static readonly JavaScriptSerializer Sizer = new JavaScriptSerializer();
 
         public static void AddTo(McpMethodTable methods, ComposedEdit edit)
         {
@@ -89,7 +86,7 @@ namespace PmxEditorMcp
                     offset,
                     limit,
                     ResponseSize.ValueChars(context.BudgetChars),
-                    taken => Sizer.Serialize(Valued(listed, all.Length, offset, taken)).Length,
+                    taken => ResponseSize.Serializer.Serialize(Valued(listed, all.Length, offset, taken)).Length,
                     out page))
             {
                 return ComposedEditResult.Refuse(

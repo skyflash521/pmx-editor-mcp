@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp
 {
@@ -45,8 +44,6 @@ namespace PmxEditorMcp
         public const string TotalName = "total";
 
         public const string NextOffsetName = "nextOffset";
-
-        private static readonly JavaScriptSerializer Sizer = new JavaScriptSerializer();
 
         public static IList<string> Details
         {
@@ -189,7 +186,7 @@ namespace PmxEditorMcp
                 0,
                 Math.Max(1, taken.Count),
                 ResponseSize.ValueChars(context.BudgetChars),
-                held => Sizer.Serialize(Valued(name, total, pointed, offset, held)).Length,
+                held => ResponseSize.Serializer.Serialize(Valued(name, total, pointed, offset, held)).Length,
                 out page))
             {
                 return ComposedEditResult.Refuse(

@@ -35,10 +35,13 @@ namespace PmxEditorMcp
             return budgetChars - WarningChars;
         }
 
+        public static JavaScriptSerializer Serializer { get; } =
+            new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+
         /// <summary>値をJSONに綴った長さが、ツールの値に充てる枠に収まるときは真。</summary>
         public static bool Fits(object value, int budgetChars)
         {
-            return new JavaScriptSerializer().Serialize(value).Length <= ValueChars(budgetChars);
+            return Serializer.Serialize(value).Length <= ValueChars(budgetChars);
         }
 
         /// <summary>

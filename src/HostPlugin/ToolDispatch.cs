@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp
 {
@@ -124,8 +123,6 @@ namespace PmxEditorMcp
 
         /// <summary>ハンドル1件が応答で使う文字数。IDの十進表記の最大の桁数と区切りの1文字。</summary>
         private const int HandleChars = 11;
-
-        private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
 
         private readonly SdkRelayTable _relay;
 
@@ -1811,7 +1808,7 @@ namespace PmxEditorMcp
 
             IList<object> answered = SetResponse.PerTarget(written, invoked);
             if (call.Paged
-                && Serializer.Serialize(answered).Length
+                && ResponseSize.Serializer.Serialize(answered).Length
                     > ResponseSize.ValueChars(context.BudgetChars))
             {
                 return ToolEnvelope.Failure(
@@ -3331,7 +3328,7 @@ namespace PmxEditorMcp
                 return null;
             }
 
-            return Same(wrote, read) ? null : Serializer.Serialize(read);
+            return Same(wrote, read) ? null : ResponseSize.Serializer.Serialize(read);
         }
 
         /// <summary>JSONへ写した2つの値が同じか。小数は有効数字7桁までを比べる。</summary>
@@ -4029,7 +4026,7 @@ namespace PmxEditorMcp
                 0,
                 limit,
                 ResponseSize.ValueChars(context.BudgetChars),
-                taken => Serializer.Serialize(ListedValue(taken, total, pointed, offset)).Length,
+                taken => ResponseSize.Serializer.Serialize(ListedValue(taken, total, pointed, offset)).Length,
                 out page))
             {
                 return ToolEnvelope.Failure(
@@ -4098,7 +4095,7 @@ namespace PmxEditorMcp
                 offset,
                 limit,
                 valueChars,
-                taken => Serializer.Serialize(PageValue(name, whole.Length, offset, taken)).Length,
+                taken => ResponseSize.Serializer.Serialize(PageValue(name, whole.Length, offset, taken)).Length,
                 out page))
             {
                 return ToolEnvelope.Failure(
