@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 
 namespace PmxEditorMcp.SignatureDump
@@ -36,7 +35,7 @@ namespace PmxEditorMcp.SignatureDump
 
             foreach (string chunk in Split(catalog))
             {
-                text.Append("            ").Append(Quote(chunk)).AppendLine(",");
+                text.Append("            ").Append(CSharpText.Quote(chunk)).AppendLine(",");
             }
 
             text.AppendLine("        };");
@@ -61,28 +60,6 @@ namespace PmxEditorMcp.SignatureDump
                 yield return catalog.Substring(at, take);
                 at += take;
             }
-        }
-
-        private static string Quote(string value)
-        {
-            StringBuilder text = new StringBuilder("\"");
-            foreach (char one in value)
-            {
-                if (one == '"' || one == '\\')
-                {
-                    text.Append('\\').Append(one);
-                }
-                else if (one >= ' ' && one <= '~')
-                {
-                    text.Append(one);
-                }
-                else
-                {
-                    text.Append("\\u").Append(((int)one).ToString("x4", CultureInfo.InvariantCulture));
-                }
-            }
-
-            return text.Append('"').ToString();
         }
     }
 }

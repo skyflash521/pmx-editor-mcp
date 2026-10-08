@@ -554,7 +554,7 @@ namespace PmxEditorMcp.SignatureDump
                 .ToArray();
             string[] outputs = signature.Parameters
                 .Where(p => p.Direction != ParameterDirection.In)
-                .Select(p => "new ToolArgument(" + Literal(p.Name) + ", " + TypeOf(p.TypeName) + ")")
+                .Select(p => "new ToolArgument(" + CSharpText.Quote(p.Name) + ", " + TypeOf(p.TypeName) + ")")
                 .ToArray();
 
             bool issuing = HandleIssuanceEvidence.Issues(row, signature);
@@ -584,10 +584,10 @@ namespace PmxEditorMcp.SignatureDump
             string readBack = ReadBackRule.Of(signature, signatures);
             string chosen = selected == null
                 ? string.Empty
-                : ", selectorName: " + Literal(selected.SelectorName)
-                    + ", selectorValue: " + Literal((string)selected.SelectorValue);
+                : ", selectorName: " + CSharpText.Quote(selected.SelectorName)
+                    + ", selectorValue: " + CSharpText.Quote((string)selected.SelectorValue);
 
-            return "new ToolCall(" + Literal(signature.Key) + ", "
+            return "new ToolCall(" + CSharpText.Quote(signature.Key) + ", "
                 + Receiver(
                     row,
                     signature,
@@ -603,7 +603,7 @@ namespace PmxEditorMcp.SignatureDump
                     : TypeOf(signature.ValueType))
                 + tail + chosen
                 + (PagedCallRule.Pages(row, signature) ? ", paged: true" : string.Empty)
-                + (readBack == null ? string.Empty : ", readBack: " + Literal(readBack)) + ")";
+                + (readBack == null ? string.Empty : ", readBack: " + CSharpText.Quote(readBack)) + ")";
         }
 
         /// <summary>
@@ -698,12 +698,12 @@ namespace PmxEditorMcp.SignatureDump
 
             if (callable.Length != 0)
             {
-                return new[] { Literal(callable[0].Key), "false" };
+                return new[] { CSharpText.Quote(callable[0].Key), "false" };
             }
 
             if (owned.Length != 0)
             {
-                return new[] { Literal(owned[0].Key), "true" };
+                return new[] { CSharpText.Quote(owned[0].Key), "true" };
             }
 
             if (members.Length != 0)
@@ -747,7 +747,7 @@ namespace PmxEditorMcp.SignatureDump
             ToolMap map = null,
             string tool = null)
         {
-            string written = "new ToolArgument(" + Literal(parameter.Name) + ", "
+            string written = "new ToolArgument(" + CSharpText.Quote(parameter.Name) + ", "
                 + TypeOf(parameter.TypeName);
             string typeName = TypeDefinitionName.OfElement(parameter.TypeName);
             if (string.Equals(typeName, PmxTypeName, StringComparison.Ordinal))
@@ -770,7 +770,7 @@ namespace PmxEditorMcp.SignatureDump
 
             if (byType.TryGetValue(typeName, out role) && role.Role == TypeRole.Connector)
             {
-                return written + ", true, null, false, null, " + Literal(typeName) + ")";
+                return written + ", true, null, false, null, " + CSharpText.Quote(typeName) + ")";
             }
 
             if (map != null && byType.TryGetValue(typeName, out role) && role.Role == TypeRole.Dto)
@@ -974,24 +974,24 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             string[] hops = path.Parents
-                .Select(p => "new ToolHop(" + Literal(p) + ", "
+                .Select(p => "new ToolHop(" + CSharpText.Quote(p) + ", "
                     + (ElementPathEvidence.Listed(signatures, p) ? "true" : "false") + ")")
                 .ToArray();
             string walked = "new ToolHop[] { " + string.Join(", ", hops) + " }, "
                 + (path.Listed ? "true" : "false");
             if (path.Kind == AccessPathKind.Child)
             {
-                return "new ToolAccess(ToolAccessKind.Child, " + Literal(path.RowKey)
+                return "new ToolAccess(ToolAccessKind.Child, " + CSharpText.Quote(path.RowKey)
                     + ", " + walked + ", null, null)";
             }
 
             TypeRoleRecord element;
             string noun = byType.TryGetValue(
                 TypeDefinitionName.OfElement(path.ElementType), out element)
-                    ? Literal(element.ElementNoun)
+                    ? CSharpText.Quote(element.ElementNoun)
                     : "null";
 
-            return "new ToolAccess(ToolAccessKind.Element, " + Literal(path.RowKey)
+            return "new ToolAccess(ToolAccessKind.Element, " + CSharpText.Quote(path.RowKey)
                 + ", " + walked + ", "
                 + TypeOf(path.ElementType) + ", item => item is " + Code(path.ElementType) + ", "
                 + noun + ", " + Items(path, signatures, concrete, byType) + ", "
@@ -1026,7 +1026,7 @@ namespace PmxEditorMcp.SignatureDump
 
             string[] items = listed
                 .Where(byType.ContainsKey)
-                .Select(t => "new ToolItem(" + Literal(byType[t].ElementNoun) + ", "
+                .Select(t => "new ToolItem(" + CSharpText.Quote(byType[t].ElementNoun) + ", "
                     + TypeOf(t) + ", item => item is " + Code(t) + ")")
                 .ToArray();
 
@@ -1082,8 +1082,8 @@ namespace PmxEditorMcp.SignatureDump
             bool refusesNull = false)
         {
             string written = "new ToolField("
-                + Literal(SdkShapeEvidence.MemberNameOf(signature.MemberName))
-                + ", " + Literal(signature.Key) + ", " + TypeOf(signature.ValueType);
+                + CSharpText.Quote(SdkShapeEvidence.MemberNameOf(signature.MemberName))
+                + ", " + CSharpText.Quote(signature.Key) + ", " + TypeOf(signature.ValueType);
             if (members == null && referenced == null)
             {
                 return written + ")";
@@ -1194,7 +1194,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 members.Add("new ToolValueMember("
-                    + Literal(SdkShapeEvidence.MemberNameOf(signature.MemberName)) + ", "
+                    + CSharpText.Quote(SdkShapeEvidence.MemberNameOf(signature.MemberName)) + ", "
                     + TypeOf(signature.ValueType) + ", (made, value) => ((" + Code(typeName)
                     + ")made)." + signature.MemberName + " = (" + Code(signature.ValueType)
                     + ")value)");
@@ -1283,10 +1283,10 @@ namespace PmxEditorMcp.SignatureDump
         {
             string declaring = TypeDefinitionName.OfElement(declaringType);
             bool rooted = Rooted(declaringType, path);
-            string type = isStatic || rooted ? "null" : Literal(declaring);
+            string type = isStatic || rooted ? "null" : CSharpText.Quote(declaring);
             if (held)
             {
-                return "new ToolReceiver(ToolReceiverKind.Handle, " + Literal(declaring)
+                return "new ToolReceiver(ToolReceiverKind.Handle, " + CSharpText.Quote(declaring)
                     + ", EditKind." + Edit(edit) + ", false, item => item is "
                     + Code(declaringType) + ")";
             }
@@ -1385,14 +1385,14 @@ namespace PmxEditorMcp.SignatureDump
         {
             string paired = Suppressing(signatures, commit)
                 ? string.Empty
-                : ", " + Literal(UndoRow(assignments, signatures, commit, StopUndoMember))
-                    + ", " + Literal(UndoRow(assignments, signatures, commit, ResumeUndoMember));
+                : ", " + CSharpText.Quote(UndoRow(assignments, signatures, commit, StopUndoMember))
+                    + ", " + CSharpText.Quote(UndoRow(assignments, signatures, commit, ResumeUndoMember));
             string partial = Partial(assignments, signatures, commit);
 
-            return "new PmxFlow(" + Literal(read) + ", " + Literal(commit) + ", "
-                + (received ? Literal(DeclaringTypeOf(read)) : "null") + ", "
+            return "new PmxFlow(" + CSharpText.Quote(read) + ", " + CSharpText.Quote(commit) + ", "
+                + (received ? CSharpText.Quote(DeclaringTypeOf(read)) : "null") + ", "
                 + Slots(signatures, read) + ", " + Slots(signatures, commit) + paired
-                + (partial == null ? string.Empty : ", partialCommit: " + Literal(partial)) + ")";
+                + (partial == null ? string.Empty : ", partialCommit: " + CSharpText.Quote(partial)) + ")";
         }
 
         /// <summary>
@@ -1510,7 +1510,7 @@ namespace PmxEditorMcp.SignatureDump
                 "                new Dictionary<string, EventAttach>(StringComparer.Ordinal);\n");
             foreach (KeyValuePair<string, List<string>> listener in listened)
             {
-                text.Append(Indent).Append("attachments.Add(").Append(Literal(listener.Key))
+                text.Append(Indent).Append("attachments.Add(").Append(CSharpText.Quote(listener.Key))
                     .Append(", (listener, sink) =>\n");
                 text.Append(Indent).Append("{\n");
                 text.Append(Indent).Append("    ").Append(Code(listener.Key))
@@ -1557,7 +1557,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 string[] parts = payload.Value.Split('|');
                 string[] members = parts[1].Length == 0 ? new string[0] : parts[1].Split(',');
-                text.Append(Indent).Append("payloads.Add(").Append(Literal(payload.Key))
+                text.Append(Indent).Append("payloads.Add(").Append(CSharpText.Quote(payload.Key))
                     .Append(", args =>\n");
                 text.Append(Indent).Append("{\n");
                 text.Append(Indent).Append("    Dictionary<string, object> read =\n");
@@ -1571,7 +1571,7 @@ namespace PmxEditorMcp.SignatureDump
 
                 foreach (string member in members)
                 {
-                    text.Append(Indent).Append("    read.Add(").Append(Literal(member))
+                    text.Append(Indent).Append("    read.Add(").Append(CSharpText.Quote(member))
                         .Append(", EventPayload.Of(taken.").Append(Declared(member))
                         .Append("));\n");
                 }
@@ -1603,11 +1603,6 @@ namespace PmxEditorMcp.SignatureDump
             return "typeof(" + Code(typeName) + ")";
         }
 
-        private static string Literal(string text)
-        {
-            return "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
-        }
-
         /// <summary>
         /// リスナの型ごとの、公開イベントへ受け手を掛ける文。掛けた受け手は同じ並びで外す。
         /// </summary>
@@ -1633,7 +1628,7 @@ namespace PmxEditorMcp.SignatureDump
                     (carried == null
                         ? "EventHandler"
                         : "EventHandler<" + Code(carried) + ">")
-                    + "|" + signature.MemberName + "|" + Literal(row.EventType)
+                    + "|" + signature.MemberName + "|" + CSharpText.Quote(row.EventType)
                     + "|" + (carried == null ? "null" : "e"));
             }
 
@@ -1726,9 +1721,9 @@ namespace PmxEditorMcp.SignatureDump
                 string[] tools = kind == PreconditionKind.PickedObjects ? picked : new string[0];
                 IList<string> rows = PreconditionRule.CountingsOf(signature, signatures.Values);
                 preconditions[tool] = "new ToolPrecondition(PreconditionKind." + kind
-                    + ", new string[] { " + string.Join(", ", tools.Select(Literal))
-                    + " }, new string[] { " + string.Join(", ", rows.Select(Literal))
-                    + " }, new string[] { " + Literal(signature.Key) + " })";
+                    + ", new string[] { " + string.Join(", ", tools.Select(CSharpText.Quote))
+                    + " }, new string[] { " + string.Join(", ", rows.Select(CSharpText.Quote))
+                    + " }, new string[] { " + CSharpText.Quote(signature.Key) + " })";
             }
 
             return preconditions;
@@ -1765,7 +1760,7 @@ namespace PmxEditorMcp.SignatureDump
                 "                new Dictionary<string, IList<ToolCall>>(StringComparer.Ordinal);\n");
             foreach (KeyValuePair<string, List<string>> call in calls)
             {
-                text.Append(Indent).Append("calls.Add(").Append(Literal(call.Key))
+                text.Append(Indent).Append("calls.Add(").Append(CSharpText.Quote(call.Key))
                     .Append(", new ToolCall[] { ").Append(string.Join(", ", call.Value))
                     .Append(" });\n");
             }
@@ -1783,7 +1778,7 @@ namespace PmxEditorMcp.SignatureDump
                 "                new Dictionary<string, ToolPrecondition>(StringComparer.Ordinal);\n");
             foreach (KeyValuePair<string, string> precondition in preconditions)
             {
-                text.Append(Indent).Append("preconditions.Add(").Append(Literal(precondition.Key))
+                text.Append(Indent).Append("preconditions.Add(").Append(CSharpText.Quote(precondition.Key))
                     .Append(", ").Append(precondition.Value).Append(");\n");
             }
 
@@ -1800,13 +1795,13 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("                new Dictionary<string, ToolFields>(StringComparer.Ordinal);\n");
             foreach (KeyValuePair<string, SortedDictionary<string, List<string>>> tool in fields)
             {
-                text.Append(Indent).Append("aggregations.Add(").Append(Literal(tool.Key))
+                text.Append(Indent).Append("aggregations.Add(").Append(CSharpText.Quote(tool.Key))
                     .Append(", ").Append(aggregated[tool.Key]).Append("\n");
                 text.Append(Indent).Append("{\n");
                 foreach (KeyValuePair<string, List<string>> set in tool.Value)
                 {
                     text.Append(Indent).Append("    new ToolFieldSet(")
-                        .Append(set.Key.Length == 0 ? "null" : Literal(set.Key))
+                        .Append(set.Key.Length == 0 ? "null" : CSharpText.Quote(set.Key))
                         .Append(", new ToolField[]\n");
                     text.Append(Indent).Append("    {\n");
                     foreach (string field in set.Value)
@@ -1831,7 +1826,7 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("                new Dictionary<string, ToolElements>(StringComparer.Ordinal);\n");
             foreach (KeyValuePair<string, string> element in elements)
             {
-                text.Append(Indent).Append("elements.Add(").Append(Literal(element.Key))
+                text.Append(Indent).Append("elements.Add(").Append(CSharpText.Quote(element.Key))
                     .Append(", ").Append(element.Value).Append(");\n");
             }
 
@@ -1849,7 +1844,7 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("                new Dictionary<string, SdkList>(StringComparer.Ordinal);\n");
             foreach (KeyValuePair<string, string> list in lists)
             {
-                text.Append(Indent).Append("lists.Add(").Append(Literal(list.Key)).Append(",\n");
+                text.Append(Indent).Append("lists.Add(").Append(CSharpText.Quote(list.Key)).Append(",\n");
                 text.Append(Indent).Append("    ").Append(list.Value).Append(");\n");
             }
 

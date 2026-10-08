@@ -31,7 +31,7 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("    internal static class GeneratedToolDefinitions\n");
             text.Append("    {\n");
             text.Append("        /// <summary>定義を作った能力対応表の指紋。</summary>\n");
-            text.Append("        internal const string ToolMapDigest = ").Append(Literal(toolMapDigest))
+            text.Append("        internal const string ToolMapDigest = ").Append(CSharpText.Quote(toolMapDigest))
                 .Append(";\n");
             text.Append("\n");
             text.Append("        internal static IReadOnlyList<GeneratedToolDefinition> Create()\n");
@@ -41,9 +41,9 @@ namespace PmxEditorMcp.SignatureDump
             foreach (ToolDefinition definition in definitions)
             {
                 text.Append("                new GeneratedToolDefinition(\n");
-                text.Append("                    ").Append(Literal(definition.Name)).Append(",\n");
-                text.Append("                    ").Append(Literal(definition.Description)).Append(",\n");
-                text.Append("                    ").Append(Literal(definition.InputSchema)).Append(",\n");
+                text.Append("                    ").Append(CSharpText.Quote(definition.Name)).Append(",\n");
+                text.Append("                    ").Append(CSharpText.Quote(definition.Description)).Append(",\n");
+                text.Append("                    ").Append(CSharpText.Quote(definition.InputSchema)).Append(",\n");
                 text.Append("                    ")
                     .Append(definition.ReturnsImage ? "true" : "false").Append("),\n");
             }
@@ -54,37 +54,6 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("}\n");
 
             return text.ToString();
-        }
-
-        private static string Literal(string text)
-        {
-            StringBuilder quoted = new StringBuilder("\"");
-            foreach (char letter in text)
-            {
-                switch (letter)
-                {
-                    case '\\':
-                        quoted.Append("\\\\");
-                        break;
-                    case '"':
-                        quoted.Append("\\\"");
-                        break;
-                    case '\n':
-                        quoted.Append("\\n");
-                        break;
-                    case '\r':
-                        quoted.Append("\\r");
-                        break;
-                    case '\t':
-                        quoted.Append("\\t");
-                        break;
-                    default:
-                        quoted.Append(letter);
-                        break;
-                }
-            }
-
-            return quoted.Append('"').ToString();
         }
     }
 }

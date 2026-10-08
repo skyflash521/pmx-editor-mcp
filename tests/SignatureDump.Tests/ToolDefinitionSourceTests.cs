@@ -35,7 +35,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "abc123");
 
             Assert.Contains("\"one\",", text);
-            Assert.Contains("\"受け持つこと\",", text);
+            Assert.Contains("\"\\u53d7\\u3051\\u6301\\u3064\\u3053\\u3068\",", text);
             Assert.Contains("\"{\\\"type\\\":\\\"object\\\"}\"", text);
         }
 
@@ -52,7 +52,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ALineBreakInTheTextIsEscaped()
         {
             Assert.Contains(
-                "\"a\\nb\"",
+                "\"a\\u000ab\"",
                 ToolDefinitionSource.Compose(
                     new[] { new ToolDefinition("one", "a\nb", "{}", false) }, "abc123"));
         }

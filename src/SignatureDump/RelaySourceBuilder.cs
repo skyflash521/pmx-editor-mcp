@@ -116,7 +116,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 resolved.Add(rowKey);
-                calls.Append(Indent).Append("calls.Add(").Append(Literal(rowKey)).Append(", ")
+                calls.Append(Indent).Append("calls.Add(").Append(CSharpText.Quote(rowKey)).Append(", ")
                     .Append(expression.StartsWith("(target", StringComparison.Ordinal)
                         ? expression
                         : "(target, arguments) => " + expression)
@@ -304,11 +304,6 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        private static string Literal(string text)
-        {
-            return "\"" + text.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
-        }
-
         private static string Compose(
             string calls,
             IList<string> unresolved,
@@ -326,11 +321,11 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("{\n");
             text.Append("    internal static class GeneratedSdkRelay\n");
             text.Append("    {\n");
-            text.Append("        internal const string SdkVersion = ").Append(Literal(sdkVersion))
+            text.Append("        internal const string SdkVersion = ").Append(CSharpText.Quote(sdkVersion))
                 .Append(";\n");
             text.Append("\n");
             text.Append("        /// <summary>中継を作った能力対応表の指紋。</summary>\n");
-            text.Append("        internal const string ToolMapDigest = ").Append(Literal(toolMapDigest))
+            text.Append("        internal const string ToolMapDigest = ").Append(CSharpText.Quote(toolMapDigest))
                 .Append(";\n");
             text.Append("\n");
             text.Append("        internal static SdkRelayTable Create()\n");
@@ -346,7 +341,7 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("            {\n");
             foreach (string key in unresolved)
             {
-                text.Append("                ").Append(Literal(key)).Append(",\n");
+                text.Append("                ").Append(CSharpText.Quote(key)).Append(",\n");
             }
 
             text.Append("            });\n");
@@ -370,7 +365,7 @@ namespace PmxEditorMcp.SignatureDump
             foreach (string name in combinableEnums.Distinct(StringComparer.Ordinal)
                 .OrderBy(n => n, StringComparer.Ordinal))
             {
-                text.Append("                ").Append(Literal(name)).Append(",\n");
+                text.Append("                ").Append(CSharpText.Quote(name)).Append(",\n");
             }
 
             text.Append("            };\n");
@@ -386,7 +381,7 @@ namespace PmxEditorMcp.SignatureDump
             foreach (KeyValuePair<string, ReceiverPath> receiver in receivers
                 .OrderBy(r => r.Key, StringComparer.Ordinal))
             {
-                text.Append(Indent).Append("receivers.Add(").Append(Literal(receiver.Key))
+                text.Append(Indent).Append("receivers.Add(").Append(CSharpText.Quote(receiver.Key))
                     .Append(", connection => ")
                     .Append(Receiver(receiver.Value)).Append(");\n");
             }
