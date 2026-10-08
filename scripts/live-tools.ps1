@@ -1,3 +1,4 @@
+# 能力対応表の行の自動E2E検査を実機で走らせる。-Since で版を指すと、その版から中身の変わった行に絞る。
 [CmdletBinding()]
 param(
     [string]$Since

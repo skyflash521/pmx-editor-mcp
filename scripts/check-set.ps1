@@ -1,3 +1,4 @@
+# 常設の検査の定義。
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -984,6 +985,53 @@ function Test-Changelog {
     }
 }
 
+function Get-CheckLimits {
+    param([string[]]$Lines, [string]$Source)
+
+    $limits = @{}
+    $name = $null
+    foreach ($line in $Lines) {
+        if ($line -match '^\$checks\[(.+?)\] = New-Check') {
+            if ($null -ne $name) { throw "$Source の $name の上限を読めない。" }
+            $name = $Matches[1]
+        } elseif ($null -ne $name -and $line -match '^\s*-LimitSeconds (\S+)') {
+            $limits[$name] = $Matches[1]
+            $name = $null
+        }
+    }
+    if ($null -ne $name) { throw "$Source の $name の上限を読めない。" }
+
+    $limits
+}
+
+function Test-CheckLimits {
+    $bases = @('HEAD')
+    $released = git merge-base HEAD origin/main 2>$null
+    if ($LASTEXITCODE -eq 0 -and $released) { $bases += $released }
+    $global:LASTEXITCODE = 0
+
+    $moved = @()
+    foreach ($file in @('scripts/check-set.ps1', 'scripts/live-checks.ps1')) {
+        $after = Get-CheckLimits -Lines (Get-Content -LiteralPath $file -Encoding UTF8) -Source $file
+        foreach ($base in $bases) {
+            $committed = @(git show "${base}:$file" 2>$null)
+            if ($LASTEXITCODE -ne 0) {
+                $global:LASTEXITCODE = 0
+                continue
+            }
+
+            $before = Get-CheckLimits -Lines $committed -Source "${base}:$file"
+            foreach ($name in $before.Keys) {
+                if ($after.Contains($name) -and $after[$name] -ne $before[$name]) {
+                    $moved += "${base}:$file の $name`: $($before[$name]) → $($after[$name])"
+                }
+            }
+        }
+    }
+
+    if ($moved) { throw ("コミット済みの検査の上限が変わっている: " + ($moved -join '・')) }
+}
+
 $build = 'ビルド'
 $derivation = '除外一覧の導出'
 
@@ -995,7 +1043,7 @@ $pathlessGroups = @('全件のみ')
 $checks = [ordered]@{}
 $checks[$build] = New-Check `
     -Groups $pathlessGroups `
-    -LimitSeconds 20 <# 変更禁止 #> `
+    -LimitSeconds 20 `
     -Needs $noArtifact `
     -Stage 1 `
     -Produces $buildOutput `
@@ -1003,7 +1051,7 @@ $checks[$build] = New-Check `
         '--no-incremental', '-p:UseSharedCompilation=false')
 $checks['スクリプト構文'] = New-Check `
     -Groups @('スクリプト') `
-    -LimitSeconds 5 <# 変更禁止 #> `
+    -LimitSeconds 5 `
     -Needs $noArtifact `
     -WithoutEditor `
     -Body {
@@ -1017,7 +1065,7 @@ $checks['スクリプト構文'] = New-Check `
     }
 $checks['スクリプト構文(PowerShell)'] = New-Check `
     -Groups @('スクリプト') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $noArtifact `
     -WithoutEditor `
     -Body {
@@ -1032,7 +1080,7 @@ $checks['スクリプト構文(PowerShell)'] = New-Check `
     }
 $checks['文書のリンク'] = New-Check `
     -Groups @('ドキュメント', '定義', 'スクリプト') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $noArtifact `
     -WithoutEditor `
     -Body {
@@ -1043,7 +1091,7 @@ $checks['文書のリンク'] = New-Check `
     }
 $checks[$derivation] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $buildOutput `
     -Bundle $exclusionBundle `
     -Produces $exclusionList `
@@ -1053,138 +1101,138 @@ $checks[$derivation] = New-Check `
     }
 $checks['summaryコメントの位置'] = New-Check `
     -Groups @('コード') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $noArtifact `
     -WithoutEditor `
     -Run @('node', 'scripts/summary-placement.mjs')
 $checks['実行時リフレクション'] = New-Check `
     -Groups @('コード') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $buildOutput `
     -Run @($dump, 'reflection-free', $editorDir, $hostDll)
 $checks['整形'] = New-Check `
     -Groups @('コード') `
-    -LimitSeconds 53 <# 変更禁止 #> `
+    -LimitSeconds 53 `
     -Needs $buildOutput `
     -Stage 3 `
     -Bundle $msbuildBundle `
     -Run @('dotnet', 'format', 'PmxEditorMcp.sln', '--verify-no-changes')
 $checks['テスト'] = New-Check `
     -Groups @('定義', 'コード') `
-    -LimitSeconds 62 <# 変更禁止 #> `
+    -LimitSeconds 62 `
     -Needs $buildOutput `
     -Stage 3 `
     -Run @('dotnet', 'test', 'PmxEditorMcp.sln', '--no-build')
 $checks['台帳とSDKの照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $exclusionList `
     -Bundle $exclusionBundle `
     -Run @($dump, 'ledger-coverage', $editorDir, $ledger, $excluded, $outOfScope)
 $checks['日本語名の照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $exclusionList `
     -Bundle $exclusionBundle `
     -Run @($dump, 'property-names', $editorDir, $ledger, $excluded, $names)
 $checks['型役割の照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $exclusionList `
     -Bundle $exclusionBundle `
     -Run @($dump, 'type-roles', $editorDir, $ledger, $excluded, $roles)
 $checks['共通契約割当の照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $exclusionList `
     -Bundle $exclusionBundle `
     -Run @($dump, 'common-assignments', $editorDir, $ledger, $excluded, $roles, $assignments)
 $checks['値の表現の照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $exclusionList `
     -Bundle $exclusionBundle `
     -Run @($dump, 'value-shapes', $editorDir, $ledger, $excluded, $contract)
 $checks['危険操作の照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $exclusionList `
     -Bundle $exclusionBundle `
     -Run @($dump, 'dangerous-operations', $editorDir, $ledger, $excluded)
 $checks['能力対応表の照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $exclusionList `
     -Bundle $exclusionBundle `
     -Run @($dump, 'tool-map', $editorDir, $ledger, $excluded, $roles, $assignments, $toolMap)
 $checks['提供対象の網羅'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $exclusionList `
     -Bundle $exclusionBundle `
     -Run @($dump, 'map-coverage', $editorDir, $ledger, $excluded, $roles, $toolMap)
 $checks['スキーマ定義の照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $buildOutput `
     -Run @($dump, 'tool-schemas', $contract, $toolMap, $toolSchemas)
 $checks['ツールの説明文の照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $buildOutput `
     -Run @($dump, 'tool-descriptions', $editorDir, $ledger, $contract, $roles, $names,
         $assignments, $toolMap, $toolSchemas)
 $checks['サンプル値の照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $buildOutput `
     -Run @($dump, 'sample-values', $editorDir, $contract, $sampleValues)
 $checks['発見可能性の照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $buildOutput `
     -Run @($dump, 'discovery', $editorDir, $ledger, $contract, $roles, $names,
         $assignments, $toolMap, $discoveryTasks, $toolSchemas)
 $checks['スキーマ対応の照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $buildOutput `
     -Run @($dump, 'schema-correspondence', $editorDir, $ledger, $roles, $assignments,
         $toolMap, $toolSchemas)
 $checks['ツールの検査の網羅'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 5 <# 変更禁止 #> `
+    -LimitSeconds 5 `
     -Needs $buildOutput `
     -Run @($dump, 'tool-coverage', $editorDir, $ledger, $contract, $roles, $names,
         $assignments, $toolMap, $toolSchemas, $sampleValues, $acceptance, $uncoveredTools)
 $checks['規則適合検査'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $buildOutput `
     -Run @($dump, 'tool-mapping', $editorDir, $ledger, $contract, $roles, $assignments,
         $toolMap, $toolSchemas)
 $checks['受入シナリオの照合'] = New-Check `
     -Groups @('定義') `
-    -LimitSeconds 5 <# 変更禁止 #> `
+    -LimitSeconds 5 `
     -Needs $buildOutput `
     -Run @($dump, 'acceptance-cases', $editorDir, $ledger, $contract, $roles, $names,
         $assignments, $toolMap, $toolSchemas, $acceptance, $acceptanceStub)
 $checks['ブリッジの単独起動'] = New-Check `
     -Groups @('ブリッジ配布') `
-    -LimitSeconds 17 <# 変更禁止 #> `
+    -LimitSeconds 17 `
     -Needs $noArtifact `
     -Stage 3 `
     -Bundle $msbuildBundle `
     -Run @('pwsh', '-NoProfile', '-File', 'scripts/bridge-standalone.ps1')
 $checks['形の導出の照合'] = New-Check `
     -Groups @('定義', 'スクリプト') `
-    -LimitSeconds 3 <# 変更禁止 #> `
+    -LimitSeconds 3 `
     -Needs $noArtifact `
     -WithoutEditor `
     -Body { Test-FormDerivation -Checks $checks }
 $checks['配布パッケージの生成'] = New-Check `
     -Groups @('ブリッジ配布') `
-    -LimitSeconds 21 <# 変更禁止 #> `
+    -LimitSeconds 21 `
     -Needs $noArtifact `
     -Stage 3 `
     -Bundle $msbuildBundle `
@@ -1205,9 +1253,15 @@ $checks['変更履歴'] = New-Check `
 
         Test-Changelog -Form $Form
     }
+$checks['検査の上限'] = New-Check `
+    -Groups @('スクリプト') `
+    -LimitSeconds 3 `
+    -Needs $noArtifact `
+    -WithoutEditor `
+    -Body { Test-CheckLimits }
 $checks['E2Eの実行器の照合'] = New-Check `
     -Groups @('スクリプト') `
-    -LimitSeconds 63 <# 変更禁止 #> `
+    -LimitSeconds 63 `
     -Needs $noArtifact `
     -WithoutEditor `
     -Forms {
@@ -1222,7 +1276,7 @@ $checks['E2Eの実行器の照合'] = New-Check `
     }
 $checks['検査の集計の照合'] = New-Check `
     -Groups @('スクリプト') `
-    -LimitSeconds 5 <# 変更禁止 #> `
+    -LimitSeconds 5 `
     -Needs $noArtifact `
     -WithoutEditor `
     -FormsInOrder `
@@ -1232,7 +1286,7 @@ $checks['検査の集計の照合'] = New-Check `
     -Run @('node', 'scripts/checks-stub-run.mjs')
 $checks['確認クライアントの照合'] = New-Check `
     -Groups @('スクリプト') `
-    -LimitSeconds 32 <# 変更禁止 #> `
+    -LimitSeconds 32 `
     -Needs $noArtifact `
     -WithoutEditor `
     -Forms { @($wholeForm) + @((Get-CheckClientForms).Keys) } `
@@ -1252,7 +1306,7 @@ $checks['MCPの確認クライアントの照合'] = New-Check `
     }
 $checks['実機動作確認の実行器の照合'] = New-Check `
     -Groups @('スクリプト') `
-    -LimitSeconds 37 <# 変更禁止 #> `
+    -LimitSeconds 37 `
     -Needs $noArtifact `
     -WithoutEditor `
     -Forms { @($wholeForm) + @((Get-LiveHostRunnerForms).Keys) } `
@@ -1262,7 +1316,7 @@ $checks['実機動作確認の実行器の照合'] = New-Check `
     }
 $checks['参照クライアントの実行器の照合'] = New-Check `
     -Groups @('スクリプト') `
-    -LimitSeconds 46 <# 変更禁止 #> `
+    -LimitSeconds 46 `
     -Needs $noArtifact `
     -WithoutEditor `
     -Forms { @($wholeForm) + @((Get-LiveClientRunnerForms).Keys) } `
@@ -1272,7 +1326,7 @@ $checks['参照クライアントの実行器の照合'] = New-Check `
     }
 $checks['受入の実行器の照合'] = New-Check `
     -Groups @('スクリプト') `
-    -LimitSeconds 120 <# 変更禁止 #> `
+    -LimitSeconds 120 `
     -Needs $noArtifact `
     -WithoutEditor `
     -Forms {

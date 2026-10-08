@@ -1,3 +1,4 @@
+# 検査の定義のうち、コマンドでなく本体を持つ検査を1件走らせる。形を持つ検査は形ごとの合否を -Results へ書く。
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][ValidateSet('standing', 'live')][string]$Set,
@@ -32,10 +33,7 @@ if (-not $checks.Contains($Name)) { throw "知らない検査: $Name" }
 $one = [Check]$checks[$Name]
 $global:LASTEXITCODE = 0
 try {
-    if ($one.Run) {
-        & $one.Run[0] @($one.Run | Select-Object -Skip 1)
-        $code = $LASTEXITCODE
-    } elseif ($one.Forms) {
+    if ($one.Forms) {
         $code = 0
         foreach ($named in ($Form -split ',')) {
             $global:LASTEXITCODE = 0

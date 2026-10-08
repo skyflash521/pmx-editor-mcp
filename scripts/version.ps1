@@ -1,3 +1,4 @@
+# 配布のバージョンを読む Get-Version を定義する。
 function Get-Version {
     $project = Join-Path (Split-Path -Parent $PSScriptRoot) "src/HostPlugin/PmxEditorMcp.HostPlugin.csproj"
     $said = dotnet msbuild $project -getProperty:Version

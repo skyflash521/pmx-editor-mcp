@@ -1,3 +1,4 @@
+# 検査の定義が共有する印と Check クラスの置き場。check-set.ps1 と live-checks.ps1 が dot-source する。
 <#
     出来上がりを要さない検査の印。
 #>
@@ -19,8 +20,6 @@ $exclusionList = '除外一覧'
 $liveSetup = '実機の前置'
 
 class Check {
-    # 合格の条件であって所要の見積りではない。一度決めた値は変更禁止とする——掛かる時間が上限へ
-    # 届いたら、上限ではなく掛かる時間を減らす。
     [double]$LimitSeconds
     [string]$Needs
     # 群は、その検査が読む入力ごとに分ける。数えるのは引数に現れるファイルだけではない——Body が

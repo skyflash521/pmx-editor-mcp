@@ -1,3 +1,4 @@
+# 実機に触る検査の定義。
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -14,7 +15,7 @@ $liveBundle = '実機'
 $checks = [ordered]@{}
 $checks['配置と組み立て'] = New-Check `
     -Groups @('実機') `
-    -LimitSeconds 17 <# 変更禁止 #> `
+    -LimitSeconds 17 `
     -Needs $noArtifact `
     -Stage 1 `
     -Produces $liveSetup `
@@ -28,25 +29,25 @@ $checks['配置と組み立て'] = New-Check `
     }
 $checks['自動E2E検査'] = New-Check `
     -Groups @('実機') `
-    -LimitSeconds 36 <# 変更禁止 #> `
+    -LimitSeconds 36 `
     -Needs $liveSetup `
     -Bundle $liveBundle `
     -Run @('pwsh', '-NoProfile', '-File', 'scripts/live-tools.ps1')
 $checks['実機動作確認'] = New-Check `
     -Groups @('実機') `
-    -LimitSeconds 10 <# 変更禁止 #> `
+    -LimitSeconds 10 `
     -Needs $liveSetup `
     -Bundle $liveBundle `
     -Run @('pwsh', '-NoProfile', '-File', 'scripts/live-host.ps1')
 $checks['参照クライアントの実機動作確認'] = New-Check `
     -Groups @('実機') `
-    -LimitSeconds 30 <# 変更禁止 #> `
+    -LimitSeconds 30 `
     -Needs $liveSetup `
     -Bundle $liveBundle `
     -Run @('node', 'scripts/live-client.mjs')
 $checks['受入シナリオ'] = New-Check `
     -Groups @('実機') `
-    -LimitSeconds 62 <# 変更禁止 #> `
+    -LimitSeconds 62 `
     -Needs $liveSetup `
     -Bundle $liveBundle `
     -Run @('node', 'scripts/acceptance.mjs',

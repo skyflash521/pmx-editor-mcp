@@ -10,5 +10,10 @@ Set-Location (Split-Path -Parent $PSScriptRoot)
 $given = @('scripts/verify.mjs', '--set', 'standing')
 if ($All) { $given += '--all' }
 
+if (-not (Get-Command node -ErrorAction Ignore)) {
+    Write-Error 'node が見つからない。' -ErrorAction Continue
+    exit 1
+}
+
 node @given
 exit $LASTEXITCODE

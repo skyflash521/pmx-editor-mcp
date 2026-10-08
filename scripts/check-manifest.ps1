@@ -1,3 +1,4 @@
+# 常設の検査か実機に触る検査の定義を、検証の実行器が読む JSON の一覧として書き出す。
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][ValidateSet('standing', 'live')][string]$Set

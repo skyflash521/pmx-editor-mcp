@@ -1,3 +1,4 @@
+// 常設の検査「summaryコメントの位置」が直接走らせる検査スクリプト。
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 

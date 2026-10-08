@@ -1,3 +1,4 @@
+// node:test のテスト。tests/SignatureDump.Tests の E2eSetupsScriptTests が node で走らせる。
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { dropRedundantSetups } from "./e2e-setups.mjs";

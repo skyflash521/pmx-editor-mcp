@@ -1,3 +1,4 @@
+// 常設の検査「検査の集計の照合」が形ごとに走らせる題材。
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';

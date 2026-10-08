@@ -1,3 +1,4 @@
+// 検証の実行器が使う部品。
 import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { closeSync, openSync, readFileSync, rmSync } from 'node:fs';
