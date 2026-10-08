@@ -5,7 +5,6 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>凍結した除外の組の正本をJSONから読み取る。</summary>
     public static class FrozenExclusionJsonReader
     {
         private const string CapabilitiesName = "capabilities";
