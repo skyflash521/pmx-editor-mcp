@@ -97,5 +97,4 @@ Claude Code のセッションの中では、ホストの配置とエディタ�
 変更を確定させる前に通す検査の走らせ方は[検証手順](docs/conventions/verification.md)が定める。
 
 CI(GitHub Actions)が走らせるのは、[check-set.ps1](scripts/check-set.ps1) が `-WithoutEditor` の印を
-付けた検査だけである。印の無い検査は、手元で走らせる[検証手順](docs/conventions/verification.md)の
-検査でだけ確かめられる。
+付けた検査だけである。
