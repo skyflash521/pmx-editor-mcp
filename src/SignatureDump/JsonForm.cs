@@ -89,7 +89,15 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>並べた項目だけを持つ組。知らない項目も、欠けた必須の項目も形が違う。</summary>
         public static JsonForm Object(params JsonMember[] members)
         {
-            return new ObjectForm(members);
+            return new ObjectForm(members, false);
+        }
+
+        /// <summary>
+        /// 並べた項目を読む組。ほかの項目は問わず、読めた表にも入らない。欠けた必須の項目は形が違う。
+        /// </summary>
+        public static JsonForm Part(params JsonMember[] members)
+        {
+            return new ObjectForm(members, true);
         }
 
         /// <summary>
@@ -139,7 +147,7 @@ namespace PmxEditorMcp.SignatureDump
             }
             catch (JsonException exception)
             {
-                throw new FormatException("JSONとして読めない。", exception);
+                throw new FormatException("JSONとして読めない: " + exception.Message, exception);
             }
 
             return Read(parsed, string.Empty);
@@ -331,7 +339,9 @@ namespace PmxEditorMcp.SignatureDump
         {
             private readonly IList<JsonMember> _members;
 
-            internal ObjectForm(JsonMember[] members)
+            private readonly bool _ignoresOthers;
+
+            internal ObjectForm(JsonMember[] members, bool ignoresOthers)
             {
                 if (members == null || members.Length == 0)
                 {
@@ -339,6 +349,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 _members = members;
+                _ignoresOthers = ignoresOthers;
             }
 
             internal override object Read(object value, string path)
@@ -369,7 +380,8 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 foreach (string name in source.Keys
-                    .Where(n => !_members.Any(m => string.Equals(m.Name, n, StringComparison.Ordinal))))
+                    .Where(n => !_ignoresOthers
+                        && !_members.Any(m => string.Equals(m.Name, n, StringComparison.Ordinal))))
                 {
                     throw new FormatException("知らない項目がある: " + Where(path, name));
                 }

@@ -172,6 +172,21 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void APartReadsItsMembersAndLeavesTheOthersOut()
+        {
+            JsonForm form = JsonForm.Part(JsonForm.Member("name", JsonForm.Text()));
+
+            IDictionary<string, object> read =
+                (IDictionary<string, object>)form.Read("{\"name\":\"a\",\"other\":[1,2]}");
+
+            Assert.Equal(new[] { "name" }, read.Keys);
+            Assert.Contains(
+                "項目が無い: name",
+                Assert.Throws<FormatException>(() => form.Read("{\"other\":1}")).Message,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void TheKeyOfAnArrayRefusesTheSameValueTwiceAndNamesTheLaterRow()
         {
             FormatException refused = Assert.Throws<FormatException>(() => Rows.Read(

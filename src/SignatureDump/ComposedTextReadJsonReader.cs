@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -42,6 +40,38 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string FormName = "form";
 
+        private const string TableName = "合成ツールの文字の読み取りの表";
+
+        private const string UiStructureName = "観測台帳";
+
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                InputsName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(ToolName, JsonForm.Text()),
+                        JsonForm.Member(InputName, JsonForm.Text()),
+                        JsonForm.Optional(ChoicesName, JsonForm.Array(JsonForm.Text())),
+                        JsonForm.Optional(ChoicesFromName, JsonForm.Text()),
+                        JsonForm.Optional(MinLengthName, JsonForm.Count()),
+                        JsonForm.Member(BasisName, JsonForm.Text())),
+                    allowEmpty: true)),
+            JsonForm.Member(
+                ListsName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(ToolName, JsonForm.Text()),
+                        JsonForm.Member(InputName, JsonForm.Text()),
+                        JsonForm.Optional(LeastName, JsonForm.Count()),
+                        JsonForm.Member(BasisName, JsonForm.Text())),
+                    allowEmpty: true)));
+
+        private static readonly JsonForm UiStructure = JsonForm.Part(
+            JsonForm.Member(
+                WindowsName,
+                JsonForm.Array(
+                    JsonForm.Part(JsonForm.Member(FormName, JsonForm.Text())), allowEmpty: true)));
+
         /// <summary>
         /// 表を読む。<paramref name="windowForms"/> は観測台帳のウィンドウの form。入力はツールの名前と
         /// 入力の中の位置(組の項目は点で、並びの要素は [] で区切る)を空白1つで区切って綴る。形が違えば
@@ -59,24 +89,16 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(windowForms));
             }
 
-            JsonObject members = Parse(json, "合成ツールの文字の読み取りの表") as JsonObject;
-            JsonArray inputs = members == null ? null : members[InputsName] as JsonArray;
-            JsonArray lists = members == null ? null : members[ListsName] as JsonArray;
-            if (inputs == null || lists == null)
-            {
-                throw new FormatException(
-                    "合成ツールの文字の読み取りの表は " + InputsName + " と " + ListsName + " の並びを持つ。");
-            }
-
+            IDictionary<string, object> root = Read(Form, json, TableName);
             Dictionary<string, HostTextRead> texts = new Dictionary<string, HostTextRead>(StringComparer.Ordinal);
-            foreach (JsonNode row in inputs)
+            foreach (IDictionary<string, object> row in Rows(root, InputsName))
             {
                 string key = Key(row, texts.ContainsKey);
-                JsonObject held = (JsonObject)row;
                 IList<string> choices = null;
-                if (held[ChoicesFromName] != null)
+                object value;
+                if (row.TryGetValue(ChoicesFromName, out value))
                 {
-                    if (!string.Equals(Text(row, ChoicesFromName), WindowFormsSource, StringComparison.Ordinal)
+                    if (!string.Equals((string)value, WindowFormsSource, StringComparison.Ordinal)
                         || windowForms.Count == 0)
                     {
                         throw new FormatException(
@@ -87,20 +109,19 @@ namespace PmxEditorMcp.SignatureDump
                     choices = windowForms.ToList();
                 }
 
-                if (held[ChoicesName] != null)
+                if (row.TryGetValue(ChoicesName, out value))
                 {
-                    JsonArray listed = held[ChoicesName] as JsonArray;
-                    if (choices != null || listed == null || listed.Count == 0)
+                    if (choices != null)
                     {
                         throw new FormatException(
-                            "合成ツールの文字の読み取りの " + ChoicesName + " は1つ以上の文字の並びで、"
+                            "合成ツールの文字の読み取りの " + ChoicesName + " は "
                                 + ChoicesFromName + " と一緒に書かない: " + key);
                     }
 
-                    choices = listed.Select(v => Choice(v, key)).ToList();
+                    choices = ((object[])value).Cast<string>().ToList();
                 }
 
-                int? minLength = Count(held, MinLengthName, key);
+                int? minLength = row.TryGetValue(MinLengthName, out value) ? (int)value : (int?)null;
                 if (choices != null && minLength.HasValue)
                 {
                     throw new FormatException(
@@ -111,10 +132,12 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             Dictionary<string, HostListLength> lengths = new Dictionary<string, HostListLength>(StringComparer.Ordinal);
-            foreach (JsonNode row in lists)
+            foreach (IDictionary<string, object> row in Rows(root, ListsName))
             {
                 string key = Key(row, lengths.ContainsKey);
-                lengths[key] = new HostListLength(Count((JsonObject)row, LeastName, key), null);
+                object least;
+                lengths[key] = new HostListLength(
+                    row.TryGetValue(LeastName, out least) ? (int)least : (int?)null, null);
             }
 
             return new ComposedTextReads(texts, lengths);
@@ -128,14 +151,9 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            JsonObject root = Parse(json, "観測台帳") as JsonObject;
-            JsonArray windows = root == null ? null : root[WindowsName] as JsonArray;
-            if (windows == null)
-            {
-                throw new FormatException("観測台帳は " + WindowsName + " の並びを持つ。");
-            }
-
-            return windows.Select(w => Text(w, FormName)).ToList();
+            return Rows(Read(UiStructure, json, UiStructureName), WindowsName)
+                .Select(window => (string)window[FormName])
+                .ToList();
         }
 
         /// <summary>
@@ -164,69 +182,33 @@ namespace PmxEditorMcp.SignatureDump
             return Path.GetDirectoryName(Path.GetFullPath(ledgerPath));
         }
 
-        private static JsonNode Parse(string json, string what)
+        private static IDictionary<string, object> Read(JsonForm form, string json, string what)
         {
             try
             {
-                return JsonNode.Parse(json);
+                return (IDictionary<string, object>)form.Read(json);
             }
-            catch (JsonException exception)
+            catch (FormatException exception)
             {
-                throw new FormatException(what + "がJSONとして読めない: " + exception.Message, exception);
+                throw new FormatException(what + ": " + exception.Message, exception);
             }
         }
 
-        private static string Key(JsonNode row, Func<string, bool> seen)
+        private static IEnumerable<IDictionary<string, object>> Rows(
+            IDictionary<string, object> root, string name)
         {
-            string key = Text(row, ToolName) + " " + Text(row, InputName);
+            return ((object[])root[name]).Cast<IDictionary<string, object>>();
+        }
+
+        private static string Key(IDictionary<string, object> row, Func<string, bool> seen)
+        {
+            string key = (string)row[ToolName] + " " + (string)row[InputName];
             if (seen(key))
             {
                 throw new FormatException("合成ツールの文字の読み取りの表に同じ入力が二度在る: " + key);
             }
 
-            Text(row, BasisName);
-
             return key;
-        }
-
-        private static string Text(JsonNode row, string name)
-        {
-            JsonValue value = row is JsonObject members ? members[name] as JsonValue : null;
-            string text;
-            if (value == null || !value.TryGetValue(out text) || text.Length == 0)
-            {
-                throw new FormatException("合成ツールの文字の読み取りの表の行は " + name + " の文字列を持つ。");
-            }
-
-            return text;
-        }
-
-        private static string Choice(JsonNode node, string key)
-        {
-            string text;
-            if (!(node is JsonValue value) || !value.TryGetValue(out text) || text.Length == 0)
-            {
-                throw new FormatException("合成ツールの文字の読み取りの値は空でない文字である: " + key);
-            }
-
-            return text;
-        }
-
-        private static int? Count(JsonObject row, string name, string key)
-        {
-            JsonNode node = row[name];
-            if (node == null)
-            {
-                return null;
-            }
-
-            int count;
-            if (!(node is JsonValue value) || !value.TryGetValue(out count) || count < 1)
-            {
-                throw new FormatException("合成ツールの文字の読み取りの " + name + " は1以上の整数である: " + key);
-            }
-
-            return count;
         }
     }
 

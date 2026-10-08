@@ -63,7 +63,7 @@ namespace PmxEditorMcp.SignatureDump
             }
             catch (JsonException exception)
             {
-                throw new FormatException("JSONとして読めない。", exception);
+                throw new FormatException("JSONとして読めない: " + exception.Message, exception);
             }
 
             EvaluationResults evaluated = Schema().Evaluate(
