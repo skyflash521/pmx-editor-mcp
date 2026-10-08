@@ -349,6 +349,12 @@ namespace PmxEditorMcp.Tests
         public void AMaterialMorphIsAddedThatHoldsWhatTheMaterialsNowShow()
         {
             FakeMaterial material = new FakeMaterial("材質");
+            material.Diffuse = new V4(0.1f, 0.2f, 0.3f, 0.4f);
+            material.Specular = new V3(0.5f, 0.6f, 0.7f);
+            material.Ambient = new V3(0.8f, 0.9f, 0.25f);
+            material.EdgeColor = new V4(0.15f, 0.35f, 0.45f, 0.55f);
+            material.EdgeSize = 1.5f;
+            material.Power = 12f;
             _fixture.Model.Material.Add(material);
 
             Morphs(
@@ -356,7 +362,33 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(ModelEditMorphs.NameName, "いまの色"));
 
             IPXMorph made = _fixture.Model.Morph.Single(morph => Now(morph).Kind == MorphKind.Material);
-            Assert.Same(Now(material), ((IPXMaterialMorphOffset)Assert.Single(made.Offsets)).Material);
+            Assert.Equal(2, made.Offsets.Count);
+            IPXMaterialMorphOffset cleared = (IPXMaterialMorphOffset)made.Offsets[0];
+            IPXMaterialMorphOffset painted = (IPXMaterialMorphOffset)made.Offsets[1];
+
+            Assert.Same(Now(material), cleared.Material);
+            Assert.Equal(0, cleared.Op);
+            Assert.Equal(new[] { 0f, 0f, 0f, 0f }, Four(cleared.Diffuse));
+            Assert.Equal(new[] { 0f, 0f, 0f }, Three(cleared.Specular));
+            Assert.Equal(new[] { 0f, 0f, 0f }, Three(cleared.Ambient));
+            Assert.Equal(new[] { 0f, 0f, 0f, 0f }, Four(cleared.EdgeColor));
+            Assert.Equal(0f, cleared.EdgeSize);
+            Assert.Equal(0f, cleared.Power);
+            Assert.Equal(new[] { 1f, 1f, 1f, 1f }, Four(cleared.Tex));
+            Assert.Equal(new[] { 1f, 1f, 1f, 1f }, Four(cleared.Sphere));
+            Assert.Equal(new[] { 1f, 1f, 1f, 1f }, Four(cleared.Toon));
+
+            Assert.Same(Now(material), painted.Material);
+            Assert.Equal(1, painted.Op);
+            Assert.Equal(new[] { 0.1f, 0.2f, 0.3f, 0.4f }, Four(painted.Diffuse));
+            Assert.Equal(new[] { 0.5f, 0.6f, 0.7f }, Three(painted.Specular));
+            Assert.Equal(new[] { 0.8f, 0.9f, 0.25f }, Three(painted.Ambient));
+            Assert.Equal(new[] { 0.15f, 0.35f, 0.45f, 0.55f }, Four(painted.EdgeColor));
+            Assert.Equal(1.5f, painted.EdgeSize);
+            Assert.Equal(12f, painted.Power);
+            Assert.Equal(new[] { 0f, 0f, 0f, 0f }, Four(painted.Tex));
+            Assert.Equal(new[] { 0f, 0f, 0f, 0f }, Four(painted.Sphere));
+            Assert.Equal(new[] { 0f, 0f, 0f, 0f }, Four(painted.Toon));
         }
 
         [Fact]
@@ -1387,6 +1419,16 @@ namespace PmxEditorMcp.Tests
         private static void Near(double wanted, double found)
         {
             Assert.Equal(wanted, found, Digits);
+        }
+
+        private static float[] Four(V4 value)
+        {
+            return new[] { value.X, value.Y, value.Z, value.W };
+        }
+
+        private static float[] Three(V3 value)
+        {
+            return new[] { value.X, value.Y, value.Z };
         }
     }
 }

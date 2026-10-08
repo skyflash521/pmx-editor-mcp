@@ -2355,7 +2355,10 @@ namespace PmxEditorMcp.Tests
 
         public IPXMaterialMorphOffset MaterialMorphOffset()
         {
-            return new FakeMaterialMorphOffset();
+            FakeMaterialMorphOffset made = new FakeMaterialMorphOffset();
+            made.Clear(0f);
+
+            return made;
         }
 
         public IPXGroupMorphOffset GroupMorphOffset()
