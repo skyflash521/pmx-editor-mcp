@@ -90,6 +90,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 source.Text);
         }
 
+        [Fact]
+        public void AnAwkwardTextIsWrittenAsALiteralThatCompilesBackToItself()
+        {
+            ToolBindingSource source = Build(
+                Dispatched(
+                    "session_open_pmx_file",
+                    Method("OpenPMXFile", "System.Boolean", CompiledLiteral.Awkward)));
+
+            Assert.Equal(
+                CompiledLiteral.Awkward,
+                CompiledLiteral.Between(
+                    source.Text, "new ToolArgument(", ", typeof(global::System.String))"));
+        }
+
         [Theory]
         [InlineData("System.Int32[]")]
         [InlineData("System.Boolean[]")]

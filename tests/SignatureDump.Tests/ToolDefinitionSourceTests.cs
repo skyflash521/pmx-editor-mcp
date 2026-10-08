@@ -10,6 +10,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
     public sealed class ToolDefinitionSourceTests
     {
         [Fact]
+        public void AnAwkwardTextIsWrittenAsALiteralThatCompilesBackToItself()
+        {
+            string text = ToolDefinitionSource.Compose(new ToolDefinition[0], CompiledLiteral.Awkward);
+
+            Assert.Equal(
+                CompiledLiteral.Awkward,
+                CompiledLiteral.Between(text, "internal const string ToolMapDigest = ", ";\n"));
+        }
+
+        [Fact]
         public void TheDigestIsCarriedIntoTheText()
         {
             Assert.Contains(

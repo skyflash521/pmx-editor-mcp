@@ -195,6 +195,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AnAwkwardTextIsWrittenAsALiteralThatCompilesBackToItself()
+        {
+            RelaySource source = RelaySourceBuilder.Build(
+                new string[0],
+                Inventory(),
+                CompiledLiteral.Awkward,
+                new string[0],
+                Digest,
+                NoReceivers);
+
+            Assert.Equal(
+                CompiledLiteral.Awkward,
+                CompiledLiteral.Between(source.Text, "internal const string SdkVersion = ", ";\n"));
+        }
+
+        [Fact]
         public void TheEnumsThatTakeNamesSpelledOutAreCarriedInTheText()
         {
             RelaySource source = RelaySourceBuilder.Build(
