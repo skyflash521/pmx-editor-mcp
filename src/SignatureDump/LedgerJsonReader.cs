@@ -65,6 +65,12 @@ namespace PmxEditorMcp.SignatureDump
                 { "変形・モーション", CapabilityOwner.MotionTransform },
             };
 
+        /// <summary>台帳の分類の綴りが表す分類。知らない綴りなら <see cref="FormatException"/>。</summary>
+        public static CapabilityStatus StatusOf(string spelling, string id)
+        {
+            return Lookup(Statuses, spelling, "分類", id);
+        }
+
         /// <summary>形が違えば <see cref="FormatException"/>。</summary>
         public static IList<CapabilityRecord> Read(string json)
         {

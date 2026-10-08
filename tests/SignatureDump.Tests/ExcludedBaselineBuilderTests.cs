@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -914,6 +916,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 bool.Parse(parts[3]));
         }
 
+        private static IList<FrozenExclusion> Frozen([CallerFilePath] string here = null)
+        {
+            return FrozenExclusionJsonReader.Read(File.ReadAllText(Path.Combine(
+                Path.GetDirectoryName(here), "..", "..", "catalog", "observed", "frozen-exclusions.json")));
+        }
+
         private static string[][] Describe(IList<ExcludedBaselineEntry> entries)
         {
             return entries
@@ -924,7 +932,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void FreezesSignatureSetPerCapability()
         {
-            Assert.Equal(Expected, Describe(ExcludedBaselineBuilder.Build(Ledger(), Signatures())));
+            Assert.Equal(Expected, Describe(ExcludedBaselineBuilder.Build(Ledger(), Signatures(), Frozen())));
         }
 
         [Fact]
@@ -933,13 +941,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IList<CapabilityRecord> reversed = Ledger().Reverse().ToList();
             IList<SignatureRecord> shuffled = Signatures().Reverse().ToList();
 
-            Assert.Equal(Expected, Describe(ExcludedBaselineBuilder.Build(reversed, shuffled)));
+            Assert.Equal(Expected, Describe(ExcludedBaselineBuilder.Build(reversed, shuffled, Frozen())));
         }
 
         [Fact]
         public void TheSameSignatureIsNotPlacedUnderTwoCapabilities()
         {
-            IList<string> all = ExcludedBaselineBuilder.Build(Ledger(), Signatures())
+            IList<string> all = ExcludedBaselineBuilder.Build(Ledger(), Signatures(), Frozen())
                 .SelectMany(e => e.Signatures).ToList();
 
             Assert.Equal(all.Count, all.Distinct(StringComparer.Ordinal).Count());
@@ -957,7 +965,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 .ToList();
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ExcludedBaselineBuilder.Build(Ledger(), signatures));
+                () => ExcludedBaselineBuilder.Build(Ledger(), signatures, Frozen()));
 
             Assert.Contains(
                 "CAP-463 の非対応記載が他の能力と重なる: " + Shared,
@@ -970,7 +978,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             IList<CapabilityRecord> ledger = Ledger().Where(c => c.Id != "CAP-459").ToList();
 
-            Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(ledger, Signatures()));
+            Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(ledger, Signatures(), Frozen()));
         }
 
         [Fact]
@@ -979,7 +987,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IList<SignatureRecord> signatures = Signatures()
                 .Where(s => s.DeclaringType != "PEPlugin.PECheckResult").ToList();
 
-            Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures));
+            Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures, Frozen()));
         }
 
         [Fact]
@@ -988,7 +996,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IList<SignatureRecord> signatures = Signatures()
                 .Where(s => s.Key != "PEPlugin.Pmx.IPXPmx.ToStream(System.IO.Stream)").ToList();
 
-            Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures));
+            Assert.Throws<InvalidOperationException>(() => ExcludedBaselineBuilder.Build(Ledger(), signatures, Frozen()));
         }
 
         [Fact]
@@ -998,7 +1006,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 .Select(c => c.Id == "CAP-459" ? WithStatus(c, CapabilityStatus.Provided, "モデル") : c)
                 .ToList();
             InvalidOperationException status = Assert.Throws<InvalidOperationException>(
-                () => ExcludedBaselineBuilder.Build(provided, Signatures()));
+                () => ExcludedBaselineBuilder.Build(provided, Signatures(), Frozen()));
             Assert.Contains("CAP-459", status.Message, StringComparison.Ordinal);
 
             // 分類が提供の能力は、どのシグネチャを対象外とするかを備考が決めているので備考も見る。
@@ -1006,7 +1014,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 .Select(c => c.Id == "CAP-114" ? WithRemarks(c, "PMX+VMD版と引数なし版を対象") : c)
                 .ToList();
             InvalidOperationException remarks = Assert.Throws<InvalidOperationException>(
-                () => ExcludedBaselineBuilder.Build(silent, Signatures()));
+                () => ExcludedBaselineBuilder.Build(silent, Signatures(), Frozen()));
             Assert.Contains("CAP-114", remarks.Message, StringComparison.Ordinal);
 
             // 対象の欄が変われば、同じ分類・備考でも指している先が変わる。
@@ -1014,7 +1022,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 .Select(c => c.Id == "CAP-459" ? WithTarget(c, "IPEPlugin / PEPluginClass") : c)
                 .ToList();
             InvalidOperationException target = Assert.Throws<InvalidOperationException>(
-                () => ExcludedBaselineBuilder.Build(moved, Signatures()));
+                () => ExcludedBaselineBuilder.Build(moved, Signatures(), Frozen()));
             Assert.Contains("CAP-459", target.Message, StringComparison.Ordinal);
         }
 
@@ -1025,7 +1033,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             ledger.Add(WithTarget(ledger.Single(c => c.Id == "CAP-459"), "IPEPlugin"));
 
             InvalidOperationException doubled = Assert.Throws<InvalidOperationException>(
-                () => ExcludedBaselineBuilder.Build(ledger, Signatures()));
+                () => ExcludedBaselineBuilder.Build(ledger, Signatures(), Frozen()));
 
             Assert.Contains("CAP-459", doubled.Message, StringComparison.Ordinal);
         }
@@ -1034,12 +1042,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void FailureReasonCarriesTheComparedSignatureCount()
         {
             InvalidOperationException empty = Assert.Throws<InvalidOperationException>(
-                () => ExcludedBaselineBuilder.Build(Ledger(), new List<SignatureRecord>()));
+                () => ExcludedBaselineBuilder.Build(Ledger(), new List<SignatureRecord>(), Frozen()));
             Assert.Contains("突き合わせたシグネチャ: 0 件", empty.Message, StringComparison.Ordinal);
 
             IList<CapabilityRecord> ledger = Ledger().Where(c => c.Id != "CAP-114").ToList();
             InvalidOperationException missing = Assert.Throws<InvalidOperationException>(
-                () => ExcludedBaselineBuilder.Build(ledger, Signatures()));
+                () => ExcludedBaselineBuilder.Build(ledger, Signatures(), Frozen()));
             Assert.Contains(
                 "突き合わせたシグネチャ: " + SignatureRows.Length.ToString(CultureInfo.InvariantCulture) + " 件",
                 missing.Message,
@@ -1049,8 +1057,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void MissingLedgerOrEnumerationThrows()
         {
-            Assert.Throws<ArgumentNullException>(() => ExcludedBaselineBuilder.Build(null, Signatures()));
-            Assert.Throws<ArgumentNullException>(() => ExcludedBaselineBuilder.Build(Ledger(), null));
+            Assert.Throws<ArgumentNullException>(() => ExcludedBaselineBuilder.Build(null, Signatures(), Frozen()));
+            Assert.Throws<ArgumentNullException>(() => ExcludedBaselineBuilder.Build(Ledger(), null, Frozen()));
+            Assert.Throws<ArgumentNullException>(() => ExcludedBaselineBuilder.Build(Ledger(), Signatures(), null));
         }
     }
 }

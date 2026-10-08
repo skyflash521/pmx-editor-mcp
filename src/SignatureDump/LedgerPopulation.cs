@@ -14,21 +14,6 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public sealed class LedgerPopulation
     {
-        private const string BuilderType = "PEPlugin.IPEBuilder";
-
-        private static readonly Dictionary<string, string> PatternNamespaces =
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                { "CAP-463", "PEPlugin.Pmd." },
-                { "CAP-466", "PEPlugin.SDX." },
-            };
-
-        private static readonly Dictionary<string, string> PatternCreated =
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                { "CAP-463", "PEPlugin.Pmd." },
-            };
-
         private LedgerPopulation(
             ISet<string> types,
             ISet<string> signatures,
@@ -89,13 +74,11 @@ namespace PmxEditorMcp.SignatureDump
                 new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
             Dictionary<string, ISet<string>> written =
                 new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
-            HashSet<string> patternRows = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (CapabilityRecord row in ledger)
             {
                 if (row.TargetKind == CapabilityTargetKind.Pattern)
                 {
-                    patternRows.Add(row.Id);
                     ResolvePattern(row, index, types, owners, named);
                     continue;
                 }
@@ -105,8 +88,6 @@ namespace PmxEditorMcp.SignatureDump
                     ResolveName(row, name, index, types, owners, named, written);
                 }
             }
-
-            RequirePatternRules(patternRows);
 
             return new LedgerPopulation(
                 types,
@@ -124,9 +105,13 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, ISet<string>> named)
         {
             string prefix;
-            if (!PatternNamespaces.TryGetValue(row.Id, out prefix))
+            try
             {
-                throw Unresolved(row, "まとめて指す書き方の解決規則が無い");
+                prefix = LedgerPattern.Prefix(row);
+            }
+            catch (InvalidOperationException exception)
+            {
+                throw Unresolved(row, exception.Message);
             }
 
             foreach (TypeRecord type in index.Types)
@@ -148,16 +133,14 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
-            string created;
-            if (!PatternCreated.TryGetValue(row.Id, out created))
+            if (!LedgerPattern.CoversCreation(row))
             {
                 return;
             }
 
-            foreach (SignatureRecord signature in index.Declared(BuilderType))
+            foreach (SignatureRecord signature in index.Declared(LedgerPattern.BuilderType))
             {
-                if (signature.ValueType != null
-                    && signature.ValueType.StartsWith(created, StringComparison.Ordinal))
+                if (LedgerPattern.Covers(row, signature))
                 {
                     Own(owners, signature.Key, row.Id);
                 }
@@ -249,18 +232,6 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             ids.Add(id);
-        }
-
-        private static void RequirePatternRules(ICollection<string> patternRows)
-        {
-            foreach (string id in PatternNamespaces.Keys)
-            {
-                if (!patternRows.Contains(id))
-                {
-                    throw new InvalidOperationException(
-                        "まとめて指す書き方の解決規則に対応する行が台帳に無い: " + id);
-                }
-            }
         }
 
         private static InvalidOperationException Unresolved(CapabilityRecord row, string reason)

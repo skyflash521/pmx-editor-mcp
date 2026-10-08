@@ -260,7 +260,9 @@ namespace PmxEditorMcp.SignatureDump
         {
             error.WriteLine(SignaturesCommand + " <PMXエディタ導入ディレクトリ> <書き出し先パス>");
             error.WriteLine(
-                ExcludedBaselineCommand + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <書き出し先パス>");
+                ExcludedBaselineCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <凍結した除外の組の正本のパス>"
+                    + " <書き出し先パス>");
             error.WriteLine(
                 ExcludedSignaturesCommand
                     + " <PMXエディタ導入ディレクトリ> <ベースライン正本のパス> <書き出し先パス>");

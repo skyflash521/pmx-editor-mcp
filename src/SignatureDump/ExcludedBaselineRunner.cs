@@ -29,15 +29,18 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (args.Length != 3)
+            if (args.Length != 4)
             {
-                error.WriteLine("引数は3つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス> <書き出し先パス>");
+                error.WriteLine(
+                    "引数は4つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                        + " <凍結した除外の組の正本のパス> <書き出し先パス>");
                 return ExitCodes.InvalidArguments;
             }
 
             string editorDirectory = args[0];
             string ledgerPath = args[1];
-            string outputPath = args[2];
+            string frozenPath = args[2];
+            string outputPath = args[3];
             string assemblyPath = SdkAssemblyLocator.GetAssemblyPath(editorDirectory);
 
             if (!File.Exists(assemblyPath))
@@ -71,6 +74,18 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
+            IList<FrozenExclusion> frozen;
+            try
+            {
+                frozen = FrozenExclusionJsonReader.Read(File.ReadAllText(frozenPath));
+            }
+            catch (Exception exception)
+            {
+                error.WriteLine("凍結した除外の組の正本を読めない: " + frozenPath);
+                error.WriteLine(exception.Message);
+                return ExitCodes.InputUnavailable;
+            }
+
             InventoryRecord inventory;
             try
             {
@@ -86,7 +101,7 @@ namespace PmxEditorMcp.SignatureDump
             IList<ExcludedBaselineEntry> entries;
             try
             {
-                entries = ExcludedBaselineBuilder.Build(ledger, inventory.Signatures);
+                entries = ExcludedBaselineBuilder.Build(ledger, inventory.Signatures, frozen);
             }
             catch (InvalidOperationException exception)
             {

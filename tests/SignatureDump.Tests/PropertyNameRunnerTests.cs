@@ -129,7 +129,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new[]
                 {
                     Sdk(),
-                    Write("empty.json", new LedgerJsonBuilder().ToString()),
+                    Write(
+                        "unresolved.json",
+                        new LedgerJsonBuilder()
+                            .Add("CAP-001", "標本", "* のまとめ", "非対応", string.Empty, string.Empty)
+                            .ToString()),
                     Write("e.json", EmptyExcluded),
                     Write("n.json", EmptyNames),
                 },

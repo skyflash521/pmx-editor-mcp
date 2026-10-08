@@ -17,6 +17,7 @@ $observed = 'catalog/observed'
 $authored = 'catalog/authored'
 $ledger = "$observed/capability-ledger.json"
 $outOfScope = "$observed/ledger-out-of-scope.json"
+$frozenExclusions = "$observed/frozen-exclusions.json"
 $roles = "$authored/type-roles.json"
 $names = "$authored/property-names.json"
 $assignments = "$authored/common-assignments.json"
@@ -1096,7 +1097,7 @@ $checks[$derivation] = New-Check `
     -Bundle $exclusionBundle `
     -Produces $exclusionList `
     -Body {
-        & $dump excluded-baseline $editorDir $ledger $baseline
+        & $dump excluded-baseline $editorDir $ledger $frozenExclusions $baseline
         if ($LASTEXITCODE -eq 0) { & $dump excluded-signatures $editorDir $baseline $excluded }
     }
 $checks['summaryコメントの位置'] = New-Check `

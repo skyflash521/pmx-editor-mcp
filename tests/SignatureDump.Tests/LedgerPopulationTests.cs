@@ -341,21 +341,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void PatternRowWithoutAResolutionRuleCannotBeResolved()
+        public void PatternRowWithoutANamespaceCannotBeResolved()
         {
             Assert.Throws<InvalidOperationException>(() => Resolve(
                 Inventory(Types(), Signatures()),
                 Pattern("CAP-463"),
                 Pattern("CAP-466"),
-                Pattern("CAP-900")));
-        }
-
-        [Fact]
-        public void MissingRowForAResolutionRuleCannotBeResolved()
-        {
-            Assert.Throws<InvalidOperationException>(() => Resolve(
-                Inventory(Types(), Signatures()),
-                Pattern("CAP-463")));
+                Pattern("CAP-900", "* のまとめ")));
         }
 
         [Fact]
@@ -428,10 +420,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static CapabilityRecord Pattern(string id)
         {
+            return Pattern(
+                id,
+                string.Equals(id, "CAP-463", StringComparison.Ordinal)
+                    ? "PEPlugin.Pmd.* のコネクタ・データ型と IPEBuilder のPMD/X系生成"
+                    : "PEPlugin.SDX.*(M・Q・V2・V3・V4)");
+        }
+
+        private static CapabilityRecord Pattern(string id, string target)
+        {
             return new CapabilityRecord(
                 id,
                 "大分類",
-                "N.* のまとめ",
+                target,
                 CapabilityTargetKind.Pattern,
                 new List<string>(),
                 CapabilityStatus.NotSupported,

@@ -1,0 +1,131 @@
+{
+  "capabilities": [
+    {
+      "capabilityId": "CAP-114",
+      "status": "提供",
+      "target": "IPXPmxViewConnector.BootupVmdView",
+      "remarks": "非対応件数: 1。PMX+VMD版と引数なし版を対象。契約注記: PMDを引数に取る版はレガシーのため対象外",
+      "signatures": [
+        "PEPlugin.View.IPEPMDViewConnector.BootupVmdView(PEPlugin.Pmd.IPEPmd,PEPlugin.Vmd.IPEVmd)"
+      ],
+      "types": []
+    },
+    {
+      "capabilityId": "CAP-269",
+      "status": "提供",
+      "target": "IPXSystemControl.GetCPluginInfo",
+      "remarks": "非対応件数: 1。Int32版を提供。契約注記: IPXCPluginを引数に取る版は対象外。取得経路(GetCPluginRunArgsClone)は一次資料で利用非推奨",
+      "signatures": [
+        "PXCPlugin.IPXSystemControl.GetCPluginInfo(PXCPlugin.IPXCPlugin)"
+      ],
+      "types": []
+    },
+    {
+      "capabilityId": "CAP-304",
+      "status": "非対応",
+      "target": "IPXUIModel.SetAutoRelease",
+      "remarks": null,
+      "signatures": [
+        "PXCPlugin.UIModel.IPXUIModel.SetAutoRelease(PXCPlugin.IPXCPlugin)"
+      ],
+      "types": []
+    },
+    {
+      "capabilityId": "CAP-339",
+      "status": "提供",
+      "target": "IPXPmx",
+      "remarks": "非対応件数: 2。全公開メンバー(型単位)。契約注記: FromStream/ToStreamはファイルパス版で代替し対象外",
+      "signatures": [
+        "PEPlugin.Pmx.IPXPmx.FromStream(System.IO.Stream)",
+        "PEPlugin.Pmx.IPXPmx.ToStream(System.IO.Stream)"
+      ],
+      "types": []
+    },
+    {
+      "capabilityId": "CAP-390",
+      "status": "提供",
+      "target": "IPEBuilder.CreateVmd",
+      "remarks": "非対応件数: 2。他のオーバーロードを提供。契約注記: PMDを引数に取る版はレガシーのため対象外",
+      "signatures": [
+        "PEPlugin.IPEBuilder.CreateVmd(PEPlugin.Pmd.IPEPmd)",
+        "PEPlugin.IPEBuilder.CreateVmd(PEPlugin.Pmd.IPEPmd,System.String)"
+      ],
+      "types": []
+    },
+    {
+      "capabilityId": "CAP-398",
+      "status": "提供",
+      "target": "IPEBuilder.CreateVme",
+      "remarks": "非対応件数: 1。契約注記: PMDを引数に取る版はレガシーのため対象外",
+      "signatures": [
+        "PEPlugin.IPEBuilder.CreateVme(PEPlugin.Pmd.IPEPmd)"
+      ],
+      "types": []
+    },
+    {
+      "capabilityId": "CAP-459",
+      "status": "非対応",
+      "target": "IPEPlugin / PEPluginClass / PEPluginOption / IPERunArgs / PECheckResult",
+      "remarks": null,
+      "signatures": [],
+      "types": [
+        "PEPlugin.IPEPlugin",
+        "PEPlugin.PEPluginClass",
+        "PEPlugin.PEPluginOption",
+        "PEPlugin.IPERunArgs",
+        "PEPlugin.PECheckResult"
+      ]
+    },
+    {
+      "capabilityId": "CAP-461",
+      "status": "非対応",
+      "target": "PEStaticBuilder / IPEShortBuilder",
+      "remarks": null,
+      "signatures": [],
+      "types": [
+        "PEPlugin.PEStaticBuilder",
+        "PEPlugin.IPEShortBuilder"
+      ]
+    },
+    {
+      "capabilityId": "CAP-462",
+      "status": "非対応",
+      "target": "IPECheckerPlugin / IPEImportPlugin / IPEExportPlugin",
+      "remarks": null,
+      "signatures": [],
+      "types": [
+        "PEPlugin.IPECheckerPlugin",
+        "PEPlugin.IPEImportPlugin",
+        "PEPlugin.IPEExportPlugin"
+      ]
+    },
+    {
+      "capabilityId": "CAP-463",
+      "status": "非対応",
+      "target": "PEPlugin.Pmd.* のコネクタ・データ型と IPEBuilder のPMD/X系生成",
+      "remarks": null,
+      "signatures": [],
+      "types": []
+    },
+    {
+      "capabilityId": "CAP-465",
+      "status": "非対応",
+      "target": "PXCPlugin.RegisterBase / IPXCPlugin / PXCPluginClass",
+      "remarks": null,
+      "signatures": [],
+      "types": [
+        "PXCPlugin.RegisterBase",
+        "PXCPlugin.IPXCPlugin",
+        "PXCPlugin.PXCPluginClass"
+      ]
+    },
+    {
+      "capabilityId": "CAP-466",
+      "status": "非対応",
+      "target": "PEPlugin.SDX.*(M・Q・V2・V3・V4)",
+      "remarks": null,
+      "signatures": [],
+      "types": []
+    }
+  ]
+}

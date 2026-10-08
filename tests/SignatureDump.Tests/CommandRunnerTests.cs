@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using PmxEditorMcp.SignatureDump.Tests.Sample;
 using Xunit;
 
@@ -85,6 +86,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
             }
 
             return editorDirectory;
+        }
+
+        private static string FrozenPath([CallerFilePath] string here = null)
+        {
+            return Path.Combine(
+                Path.GetDirectoryName(here), "..", "..", "catalog", "observed", "frozen-exclusions.json");
         }
 
         private string CreateLedger()
@@ -178,7 +185,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string ledgerPath = Path.Combine(_root, "names-ledger.md");
             File.WriteAllText(
                 ledgerPath,
-                new LedgerJsonBuilder().ToString());
+                new LedgerJsonBuilder()
+                    .Add("CAP-001", "標本", "* のまとめ", "非対応", string.Empty, string.Empty)
+                    .ToString());
             string excludedPath = Path.Combine(_root, "names-excluded.json");
             File.WriteAllText(excludedPath, "{\"signatures\":[]}");
             string namesPath = Path.Combine(_root, "property-names.json");
@@ -653,7 +662,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 StringComparison.Ordinal);
             Assert.Contains(
                 CommandRunner.ExcludedBaselineCommand
-                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <書き出し先パス>",
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <凍結した除外の組の正本のパス>"
+                    + " <書き出し先パス>",
                 usage,
                 StringComparison.Ordinal);
             Assert.Contains(
@@ -860,7 +870,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = CommandRunner.Run(
-                new[] { CommandRunner.ExcludedBaselineCommand, CreateEditorDirectory(), CreateLedger(), outputPath },
+                new[] { CommandRunner.ExcludedBaselineCommand, CreateEditorDirectory(), CreateLedger(), FrozenPath(), outputPath },
                 new StringWriter(),
                 error);
 
@@ -873,7 +883,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter missingError = new StringWriter();
 
             int missingCode = CommandRunner.Run(
-                new[] { CommandRunner.ExcludedBaselineCommand, missing, CreateLedger(), outputPath },
+                new[] { CommandRunner.ExcludedBaselineCommand, missing, CreateLedger(), FrozenPath(), outputPath },
                 new StringWriter(),
                 missingError);
 
@@ -918,6 +928,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     CommandRunner.ExcludedBaselineCommand,
                     CreateEditorDirectory(),
                     CreateLedger(),
+                    FrozenPath(),
                     Path.Combine(_root, "from-main-baseline.json"),
                 });
             }
@@ -945,6 +956,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     CommandRunner.ExcludedBaselineCommand,
                     missing,
                     CreateLedger(),
+                    FrozenPath(),
                     Path.Combine(_root, "from-main-missing.json"),
                 });
             }

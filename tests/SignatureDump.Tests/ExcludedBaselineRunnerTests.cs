@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using PmxEditorMcp.SignatureDump.Tests.Sample;
 using Xunit;
@@ -123,6 +124,28 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return path;
         }
 
+        private static string FrozenPath([CallerFilePath] string here = null)
+        {
+            return Path.Combine(
+                Path.GetDirectoryName(here), "..", "..", "catalog", "observed", "frozen-exclusions.json");
+        }
+
+        [Fact]
+        public void MissingFrozenExclusionsIsInputUnavailable()
+        {
+            string outputPath = CreateExistingOutput();
+            StringWriter error = new StringWriter();
+
+            int code = ExcludedBaselineRunner.Run(
+                new[] { CreateEditorDirectory(), CreateLedger(), Path.Combine(_root, "none.json"), outputPath },
+                new StringWriter(),
+                error);
+
+            Assert.Equal(ExitCodes.InputUnavailable, code);
+            Assert.Contains("none.json", error.ToString(), StringComparison.Ordinal);
+            Assert.Equal(Existing, File.ReadAllText(outputPath));
+        }
+
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
@@ -131,7 +154,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new string[0],
                 new[] { "a" },
                 new[] { "a", "b" },
-                new[] { "a", "b", "c", "d" },
+                new[] { "a", "b", "c" },
+                new[] { "a", "b", "c", "d", "e" },
             };
 
             foreach (string[] args in wrong)
@@ -152,7 +176,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = ExcludedBaselineRunner.Run(
-                new[] { Path.Combine(_root, "empty"), CreateLedger(), outputPath },
+                new[] { Path.Combine(_root, "empty"), CreateLedger(), FrozenPath(), outputPath },
                 new StringWriter(),
                 error);
 
@@ -168,7 +192,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = ExcludedBaselineRunner.Run(
-                new[] { CreateEditorDirectory(), Path.Combine(_root, "none.md"), outputPath },
+                new[] { CreateEditorDirectory(), Path.Combine(_root, "none.md"), FrozenPath(), outputPath },
                 new StringWriter(),
                 error);
 
@@ -184,7 +208,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = ExcludedBaselineRunner.Run(
-                new[] { CreateEditorDirectory(), CreateLedger(), outputPath },
+                new[] { CreateEditorDirectory(), CreateLedger(), FrozenPath(), outputPath },
                 new StringWriter(),
                 error);
 
@@ -210,7 +234,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = ExcludedBaselineRunner.Run(
-                new[] { editorDirectory, CreateLedger(), outputPath }, new StringWriter(), error);
+                new[] { editorDirectory, CreateLedger(), FrozenPath(), outputPath }, new StringWriter(), error);
 
             Assert.Equal(ExitCodes.InputUnavailable, code);
             Assert.Contains(
@@ -233,7 +257,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 FileShare.None))
             {
                 code = ExcludedBaselineRunner.Run(
-                    new[] { editorDirectory, CreateLedger(), outputPath }, new StringWriter(), error);
+                    new[] { editorDirectory, CreateLedger(), FrozenPath(), outputPath }, new StringWriter(), error);
             }
 
             Assert.Equal(ExitCodes.InputUnavailable, code);
@@ -252,7 +276,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             using (new FileStream(ledgerPath, FileMode.Open, FileAccess.Read, FileShare.None))
             {
                 code = ExcludedBaselineRunner.Run(
-                    new[] { CreateEditorDirectory(), ledgerPath, outputPath }, new StringWriter(), error);
+                    new[] { CreateEditorDirectory(), ledgerPath, FrozenPath(), outputPath }, new StringWriter(), error);
             }
 
             Assert.Equal(ExitCodes.InputUnavailable, code);
@@ -299,7 +323,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string outputPath = Path.Combine(_root, name + ".json");
 
             int code = ExcludedBaselineRunner.Run(
-                new[] { editorDirectory, ledgerPath, outputPath }, new StringWriter(), new StringWriter());
+                new[] { editorDirectory, ledgerPath, FrozenPath(), outputPath }, new StringWriter(), new StringWriter());
 
             Assert.NotEqual(ExitCodes.Success, code);
             return File.Exists(outputPath);
@@ -314,7 +338,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = ExcludedBaselineRunner.Run(
-                new[] { CreateEditorDirectory(), path, outputPath }, new StringWriter(), error);
+                new[] { CreateEditorDirectory(), path, FrozenPath(), outputPath }, new StringWriter(), error);
 
             Assert.Equal(ExitCodes.InputUnavailable, code);
             Assert.False(string.IsNullOrWhiteSpace(error.ToString()));
@@ -330,7 +354,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             StringWriter error = new StringWriter();
 
             int code = ExcludedBaselineRunner.Run(
-                new[] { CreateEditorDirectory(), path, outputPath }, new StringWriter(), error);
+                new[] { CreateEditorDirectory(), path, FrozenPath(), outputPath }, new StringWriter(), error);
 
             Assert.Equal(ExitCodes.Unresolved, code);
             Assert.Contains("CAP-114", error.ToString(), StringComparison.Ordinal);
