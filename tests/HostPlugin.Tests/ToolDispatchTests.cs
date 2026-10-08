@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using PEPlugin;
 using Xunit;
@@ -925,6 +926,35 @@ namespace PmxEditorMcp.Tests
             HandleReleaseResult released;
             Assert.True(ledger.TryRelease(issued, new InlineInvoker(), out released));
             Assert.True(detached);
+        }
+
+        [Fact]
+        public void AnEventArrivingAfterTheQueueClosedIsRecordedWithoutReachingTheEditor()
+        {
+            EventQueue queue = Events();
+            EventSink sink = HeldSink(
+                queue,
+                args => new Dictionary<string, object>(StringComparer.Ordinal) { { "note", args } });
+            queue.Close();
+
+            Exception thrown = Record.Exception(() => sink("session_made", "題材"));
+
+            Assert.Null(thrown);
+            Assert.Contains("session_made", Logged());
+        }
+
+        [Fact]
+        public void AnEventWhosePayloadCannotBeReadIsRecordedWithoutReachingTheEditor()
+        {
+            EventQueue queue = Events();
+            EventSink sink = HeldSink(
+                queue,
+                args => throw new ArgumentOutOfRangeException(nameof(args), "読めない値"));
+
+            Exception thrown = Record.Exception(() => sink("session_made", "題材"));
+
+            Assert.Null(thrown);
+            Assert.Contains("読めない値", Logged());
         }
 
         [Theory]
@@ -2049,6 +2079,41 @@ namespace PmxEditorMcp.Tests
             Assert.True(ToolEnvelope.Succeeded(envelope));
 
             return Convert.ToInt32(envelope[ToolEnvelope.ValueName], CultureInfo.InvariantCulture);
+        }
+
+        private EventSink HeldSink(EventQueue queue, PayloadReader read)
+        {
+            IDictionary<string, object> arguments = Arguments();
+            HandleLedger ledger = Ledger();
+            arguments.Add("source", (long)ledger.Issue(
+                typeof(Target).FullName, new Target { Made = new Target() }, () => { }));
+            EventSink held = null;
+            EventBindingTable events = new EventBindingTable(
+                new Dictionary<string, EventAttach>(StringComparer.Ordinal)
+                {
+                    {
+                        typeof(Target).FullName,
+                        (listener, sink) =>
+                        {
+                            held = sink;
+
+                            return () => { };
+                        }
+                    },
+                },
+                new Dictionary<string, PayloadReader>(StringComparer.Ordinal) { { "session_made", read } });
+            IDictionary<string, object> envelope = (IDictionary<string, object>)
+                Method("session_make_held", events)(
+                    new McpMethodContext(arguments, new InlineInvoker(), 100000, ledger, queue));
+            Assert.True(ToolEnvelope.Succeeded(envelope));
+            Assert.NotNull(held);
+
+            return held;
+        }
+
+        private string Logged()
+        {
+            return File.Exists(_log.FilePath) ? File.ReadAllText(_log.FilePath, Encoding.UTF8) : string.Empty;
         }
 
         private SessionStore Store()
