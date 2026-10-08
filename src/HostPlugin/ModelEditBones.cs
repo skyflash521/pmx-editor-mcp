@@ -386,6 +386,7 @@ namespace PmxEditorMcp
             Vec[] before = ModelCompareShape.Positions(based);
             Vec[] now = ModelCompareShape.Positions(model);
             int changed = 0;
+            HashSet<IPXBone> followed = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
             foreach (int at in chosen.Distinct())
             {
                 IPXBone bone = model.Bone[at];
@@ -417,6 +418,11 @@ namespace PmxEditorMcp
                     offset = new V3((float)turned.X, (float)turned.Y, (float)turned.Z);
                 }
 
+                if (!Vectors.Same(bone.Position, position))
+                {
+                    followed.Add(bone);
+                }
+
                 if (!Vectors.Same(bone.Position, position) || !Vectors.Same(bone.ToOffset, offset))
                 {
                     bone.Position = position;
@@ -424,6 +430,8 @@ namespace PmxEditorMcp
                     changed++;
                 }
             }
+
+            VertexWeights.ProjectSdefCenters(model.Vertex, followed);
 
             return Answer(new int[0], changed, 0, new[] { ElementKinds.Bone });
         }
@@ -466,6 +474,7 @@ namespace PmxEditorMcp
             }
 
             int changed = 0;
+            HashSet<IPXBone> displaced = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
             foreach (KeyValuePair<IPXBone, KeyValuePair<V3, V3>> each in made)
             {
                 if (Vectors.Same(each.Key.Position, each.Value.Key)
@@ -474,10 +483,17 @@ namespace PmxEditorMcp
                     continue;
                 }
 
+                if (!Vectors.Same(each.Key.Position, each.Value.Key))
+                {
+                    displaced.Add(each.Key);
+                }
+
                 each.Key.Position = each.Value.Key;
                 each.Key.ToOffset = each.Value.Value;
                 changed++;
             }
+
+            VertexWeights.ProjectSdefCenters(model.Vertex, displaced);
 
             return Answer(new int[0], changed, 0, new[] { ElementKinds.Bone });
         }
@@ -861,6 +877,7 @@ namespace PmxEditorMcp
             }
 
             bone.Position = across;
+            VertexWeights.ProjectSdefCenters(model.Vertex, new[] { bone });
 
             return true;
         }

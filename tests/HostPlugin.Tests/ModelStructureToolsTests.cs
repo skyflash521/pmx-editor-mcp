@@ -946,6 +946,21 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheSdefCentreGoesBackToTheCopyWithThePosition()
+        {
+            FakePmx held = new FakePmx();
+            held.Vertex.Add(new FakeVertex(1f, 0f, 0f) { SDEF_C = new V3(1f, 5f, 0f) });
+            _fixture.Model.Vertex.Add(new FakeVertex(3f, 0f, 0f) { SDEF_C = new V3(3f, 5f, 0f) });
+            int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, held, () => { });
+
+            ComposedEditFixture.Value(FromMoved(
+                ComposedEditFixture.Given(ModelMorphFromMoved.NameName, "伸ばした分"),
+                ComposedEditFixture.Given(ModelMorphFromMoved.BasePmxHandleName, (long)handle)));
+
+            Assert.Equal(1f, _fixture.Model.Vertex[0].SDEF_C.X, 3);
+        }
+
+        [Fact]
         public void ACopyThatHoldsItsOwnBonesIsStillTakenWhenTheyStandInTheSamePlaces()
         {
             FakePmx copy = new FakePmx();

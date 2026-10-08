@@ -120,6 +120,7 @@ namespace PmxEditorMcp
                 offset.Offset = moved;
                 morph.Offsets.Add(offset);
                 model.Vertex[at].Position = based.Vertex[at].Position;
+                model.Vertex[at].SDEF_C = based.Vertex[at].SDEF_C;
             }
 
             model.Morph.Add(morph);
@@ -272,7 +273,7 @@ namespace PmxEditorMcp
         }
 
         /// <returns>
-        /// 座標を除いて同じ頂点なら真。ボーンは並びの中の位置で見る。重みを持つ枠のボーンと重みの組は
+        /// 座標と、座標に従う SDEF の中心を除いて同じ頂点なら真。ボーンは並びの中の位置で見る。重みを持つ枠のボーンと重みの組は
         /// 枠の並びを問わずに比べる。そのうえで、ボーン・重み・変形方式・SDEFの参照点を、エディタが
         /// 反映のたびにかける正規化を両方へかけてから比べる。
         /// </returns>
@@ -291,7 +292,6 @@ namespace PmxEditorMcp
                 && basedWeights.SameAs(weights)
                 && based.EdgeScale == vertex.EdgeScale
                 && Same(based.Normal, vertex.Normal)
-                && Same(based.SDEF_C, vertex.SDEF_C)
                 && based.UV.X == vertex.UV.X
                 && based.UV.Y == vertex.UV.Y
                 && Same(based.UVA1, vertex.UVA1)

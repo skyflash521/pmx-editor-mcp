@@ -203,6 +203,107 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TranslatingASdefVertexAloneSetsItsCentreOnTheBoneAxisAndKeepsItsReferencePoints()
+        {
+            FakeVertex vertex = Sdef(Bone(0f, 0f, 0f), Bone(0f, 10f, 0f), 1f, 2f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(0f, 3f, 0f),
+                Targets(Target(ElementKinds.Vertex, 0)));
+
+            Near(0.0, Now(vertex).SDEF_C.X);
+            Near(5.0, Now(vertex).SDEF_C.Y);
+            Near(0.0, Now(vertex).SDEF_R0.Y);
+            Near(10.0, Now(vertex).SDEF_R1.Y);
+        }
+
+        [Fact]
+        public void TurningASdefVertexWithBothItsBonesTurnsItsReferencePointsAndCentre()
+        {
+            FakeVertex vertex = Sdef(Bone(0f, 0f, 0f), Bone(0f, 10f, 0f), 1f, 2f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.RotateBy),
+                Triple(ModelPlaceElements.RotationAxisName, 0f, 0f, 1f),
+                ComposedEditFixture.Given(ModelPlaceElements.RotationAngleName, 90f),
+                Targets(
+                    Target(ElementKinds.Vertex, 0),
+                    new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        { ModelPlaceElements.KindName, ElementKinds.Bone },
+                        { "indices", new object[] { 0, 1 } },
+                    }));
+
+            Near(-2.0, Now(vertex).SDEF_C.X);
+            Near(0.0, Now(vertex).SDEF_C.Y);
+            Near(-10.0, Now(vertex).SDEF_R1.X);
+            Near(0.0, Now(vertex).SDEF_R1.Y);
+        }
+
+        [Fact]
+        public void ReferencePointsStayWhenTheRampMovesTheVertexAndItsBonesByDifferentAmounts()
+        {
+            FakeVertex vertex = Sdef(Bone(0f, 0f, 0f), Bone(0f, 10f, 0f), 1f, 2f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(4f, 0f, 0f),
+                Ramp(ModelEditVertices.AxisY, 0f, 10f),
+                Targets(
+                    Target(ElementKinds.Vertex, 0),
+                    new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        { ModelPlaceElements.KindName, ElementKinds.Bone },
+                        { "indices", new object[] { 0, 1 } },
+                    }));
+
+            Near(0.0, Now(vertex).SDEF_R0.X);
+            Near(0.0, Now(vertex).SDEF_R1.X);
+        }
+
+        [Fact]
+        public void TheCentreOfASdefVertexThatDoesNotMoveIsKept()
+        {
+            FakeVertex vertex = Sdef(Bone(0f, 0f, 0f), Bone(0f, 10f, 0f), 1f, 2f, 0f);
+            Now(vertex).SDEF_C = new V3(0.5f, 5f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(4f, 0f, 0f),
+                Ramp(ModelEditVertices.AxisY, 5f, 10f),
+                Targets(
+                    Target(ElementKinds.Vertex, 0),
+                    new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        { ModelPlaceElements.KindName, ElementKinds.Bone },
+                        { "indices", new object[] { 0 } },
+                    }));
+
+            Near(0.5, Now(vertex).SDEF_C.X);
+            Near(5.0, Now(vertex).SDEF_C.Y);
+        }
+
+        [Fact]
+        public void MovingTheBonesOfASdefVertexSetsItsCentreOnTheirNewAxis()
+        {
+            FakeVertex vertex = Sdef(Bone(0f, 0f, 0f), Bone(0f, 10f, 0f), 1f, 2f, 0f);
+
+            Place(
+                Operation(ModelPlaceElements.TranslateBy),
+                Offset(4f, 0f, 0f),
+                Targets(new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { ModelPlaceElements.KindName, ElementKinds.Bone },
+                    { "indices", new object[] { 0, 1 } },
+                }));
+
+            Near(4.0, Now(vertex).SDEF_C.X);
+            Near(2.0, Now(vertex).SDEF_C.Y);
+            Near(0.0, Now(vertex).SDEF_R1.X);
+        }
+
+        [Fact]
         public void TranslatingRefusesThePlaceToAlignTo()
         {
             Bone(2f, 2f, 2f);
@@ -1219,6 +1320,21 @@ namespace PmxEditorMcp.Tests
         {
             FakeBone made = new FakeBone("ボーン") { Position = new V3(x, y, z) };
             _fixture.Model.Bone.Add(made);
+
+            return made;
+        }
+
+        private FakeVertex Sdef(FakeBone first, FakeBone second, float x, float y, float z)
+        {
+            FakeVertex made = Vertex(x, y, z);
+            made.Bone1 = first;
+            made.Bone2 = second;
+            made.Weight1 = 0.5f;
+            made.Weight2 = 0.5f;
+            made.SDEF = true;
+            made.SDEF_C = new V3(first.Position.X, y, first.Position.Z);
+            made.SDEF_R0 = first.Position;
+            made.SDEF_R1 = second.Position;
 
             return made;
         }

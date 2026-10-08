@@ -433,6 +433,7 @@ namespace PmxEditorMcp
             foreach (KeyValuePair<IPXVertex, V3> move in moves)
             {
                 move.Key.Position = move.Value;
+                VertexWeights.ProjectSdefCenter(move.Key);
             }
 
             return Answer(moves.Count, 0, 0, None(model), new[] { ElementKinds.Vertex });
@@ -601,6 +602,7 @@ namespace PmxEditorMcp
                 if (now.X != was.X || now.Y != was.Y || now.Z != was.Z)
                 {
                     each[at].Position = now;
+                    VertexWeights.ProjectSdefCenter(each[at]);
                     changed++;
                 }
 
@@ -673,6 +675,7 @@ namespace PmxEditorMcp
                 if (made.X != was.X || made.Y != was.Y || made.Z != was.Z)
                 {
                     model.Vertex[at].Position = made;
+                    VertexWeights.ProjectSdefCenter(model.Vertex[at]);
                     changed++;
                 }
             }
@@ -780,6 +783,7 @@ namespace PmxEditorMcp
 
                 vertex.Position = each.Value.Key;
                 vertex.Normal = each.Value.Value;
+                VertexWeights.ProjectSdefCenter(vertex);
                 changed++;
             }
 
@@ -836,6 +840,7 @@ namespace PmxEditorMcp
                 if (made.X != was.X || made.Y != was.Y || made.Z != was.Z)
                 {
                     model.Vertex[each.Key].Position = made;
+                    VertexWeights.ProjectSdefCenter(model.Vertex[each.Key]);
                     changed++;
                 }
             }
@@ -886,6 +891,7 @@ namespace PmxEditorMcp
             foreach (KeyValuePair<int, V3> each in made)
             {
                 model.Vertex[each.Key].Position = each.Value;
+                VertexWeights.ProjectSdefCenter(model.Vertex[each.Key]);
             }
 
             return Answer(made.Count, 0, 0, None(model), new[] { ElementKinds.Vertex });
@@ -1070,7 +1076,12 @@ namespace PmxEditorMcp
             float middle = picked.Select(v => Component(v.Position, axis)).Sum() / picked.Count;
             foreach (IPXVertex vertex in picked)
             {
-                vertex.Position = Written(vertex.Position, axis, middle);
+                V3 placed = Written(vertex.Position, axis, middle);
+                if (!Vectors.Same(vertex.Position, placed))
+                {
+                    vertex.Position = placed;
+                    VertexWeights.ProjectSdefCenter(vertex);
+                }
             }
 
             return Answer(picked.Count, 0, 0, None(model), new[] { ElementKinds.Vertex });
@@ -1125,6 +1136,7 @@ namespace PmxEditorMcp
             vertex.Position = Written(
                 vertex.Position, axis, -Component(vertex.Position, axis));
             vertex.Normal = Written(vertex.Normal, axis, -Component(vertex.Normal, axis));
+            VertexWeights.ProjectSdefCenter(vertex);
         }
 
         private static float Component(V3 given, string axis)

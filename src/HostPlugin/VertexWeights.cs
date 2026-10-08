@@ -173,6 +173,20 @@ namespace PmxEditorMcp
             vertex.SDEF_C = mirror(source.SDEF_C);
             vertex.SDEF_R0 = mirror(source.SDEF_R0);
             vertex.SDEF_R1 = mirror(source.SDEF_R1);
+            ProjectSdefCenter(vertex);
+        }
+
+        /// <summary>
+        /// SDEF の頂点の C を、いまの頂点の位置から2つのボーンを結ぶ軸へ下ろした足に置く。SDEF でない頂点、
+        /// ボーンが欠けた頂点、2つのボーンが同じ位置の頂点は変えない。
+        /// </summary>
+        public static void ProjectSdefCenter(IPXVertex vertex)
+        {
+            if (vertex == null)
+            {
+                throw new ArgumentNullException(nameof(vertex));
+            }
+
             if (!vertex.SDEF || vertex.Bone1 == null || vertex.Bone2 == null)
             {
                 return;
@@ -185,6 +199,35 @@ namespace PmxEditorMcp
                 vertex.SDEF_C = Vectors.Add(
                     from,
                     Vectors.Scale(along, Vectors.Dot(along, Vectors.Apart(vertex.Position, from, 1f))));
+            }
+        }
+
+        /// <summary><paramref name="bones"/> のどれかを SDEF の2つのボーンに持つ頂点の C を置き直す。</summary>
+        public static void ProjectSdefCenters(IEnumerable<IPXVertex> vertices, ICollection<IPXBone> bones)
+        {
+            if (vertices == null)
+            {
+                throw new ArgumentNullException(nameof(vertices));
+            }
+
+            if (bones == null)
+            {
+                throw new ArgumentNullException(nameof(bones));
+            }
+
+            if (bones.Count == 0)
+            {
+                return;
+            }
+
+            foreach (IPXVertex vertex in vertices)
+            {
+                if (vertex.SDEF
+                    && ((vertex.Bone1 != null && bones.Contains(vertex.Bone1))
+                        || (vertex.Bone2 != null && bones.Contains(vertex.Bone2))))
+                {
+                    ProjectSdefCenter(vertex);
+                }
             }
         }
 

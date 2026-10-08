@@ -150,7 +150,13 @@ namespace PmxEditorMcp
             foreach (KeyValuePair<string, IList<int>> target in targets)
             {
                 IList<object> held = Held(model, target.Key);
-                changes.AddRange(target.Value.Select(at => plan(held[at], weight(Spot(held[at])))));
+                foreach (int at in target.Value)
+                {
+                    float strength = weight(Spot(held[at]));
+                    Change change = plan(held[at], strength);
+                    change.Strength = strength;
+                    changes.Add(change);
+                }
             }
             if (!changes.All(c => c.Finite))
             {
@@ -159,10 +165,28 @@ namespace PmxEditorMcp
                     operation + " で動かすと、有限の数で表せない値になる要素がある。");
             }
 
+            Dictionary<IPXBone, float> strengths = new Dictionary<IPXBone, float>(ReferenceComparer<IPXBone>.Instance);
+            foreach (Change change in changes.Where(c => c.Item is IPXBone))
+            {
+                strengths[(IPXBone)change.Item] = change.Strength;
+            }
+
+            int changed = changes.Count(c => c.Apply(strengths));
+            foreach (IPXVertex vertex in changes.Where(c => c.Moved).Select(c => c.Item).OfType<IPXVertex>())
+            {
+                VertexWeights.ProjectSdefCenter(vertex);
+            }
+
+            VertexWeights.ProjectSdefCenters(
+                model.Vertex,
+                new HashSet<IPXBone>(
+                    changes.Where(c => c.Moved).Select(c => c.Item).OfType<IPXBone>(),
+                    ReferenceComparer<IPXBone>.Instance));
+
             return ComposedEditResult.CompleteRewriting(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
-                    { ChangedName, changes.Count(c => c.Apply()) },
+                    { ChangedName, changed },
                 },
                 targets.Select(t => t.Key).ToList());
         }
@@ -198,7 +222,19 @@ namespace PmxEditorMcp
                         return false;
                     }
 
-                    plan = (item, strength) => Change.Of(item, Vectors.Add(Spot(item), Vectors.Scale(given, strength)));
+                    plan = (item, strength) =>
+                    {
+                        V3 offset = Vectors.Scale(given, strength);
+                        Change made = Change.Of(item, Vectors.Add(Spot(item), offset));
+                        IPXVertex vertex = item as IPXVertex;
+                        if (vertex != null)
+                        {
+                            made.SdefR0 = Vectors.Add(vertex.SDEF_R0, offset);
+                            made.SdefR1 = Vectors.Add(vertex.SDEF_R1, offset);
+                        }
+
+                        return made;
+                    };
 
                     return true;
 
@@ -433,6 +469,8 @@ namespace PmxEditorMcp
             if (vertex != null)
             {
                 made.Normal = turn.Transform(vertex.Normal);
+                made.SdefR0 = turn.TransformAbout(vertex.SDEF_R0, center);
+                made.SdefR1 = turn.TransformAbout(vertex.SDEF_R1, center);
             }
 
             V3 rotation = Rotation(item);
@@ -510,6 +548,12 @@ namespace PmxEditorMcp
         {
             Change made = Change.Of(item, stretch.TransformAbout(Spot(item), center));
             IPXVertex vertex = item as IPXVertex;
+            if (vertex != null)
+            {
+                made.SdefR0 = stretch.TransformAbout(vertex.SDEF_R0, center);
+                made.SdefR1 = stretch.TransformAbout(vertex.SDEF_R1, center);
+            }
+
             if (vertex != null && normalStretch != null)
             {
                 V3 turned = normalStretch.Transform(vertex.Normal);
@@ -817,11 +861,24 @@ namespace PmxEditorMcp
 
             public V3 Size { get; set; }
 
+            public V3 SdefR0 { get; set; }
+
+            public V3 SdefR1 { get; set; }
+
+            public float Strength { get; set; }
+
+            public bool Moved { get; private set; }
+
+            public object Item
+            {
+                get { return _item; }
+            }
+
             public bool Finite
             {
                 get
                 {
-                    return new[] { _position, Normal, Rotation, Size }
+                    return new[] { _position, Normal, Rotation, Size, SdefR0, SdefR1 }
                         .Where(v => v != null)
                         .All(Vectors.Finite);
                 }
@@ -832,13 +889,17 @@ namespace PmxEditorMcp
                 return new Change(item, position);
             }
 
-            /// <summary>書いた値のどれかが前と違っていれば真。</summary>
-            public bool Apply()
+            /// <summary>
+            /// 書いた値のどれかが前と違っていれば真。SDEF の R0・R1 は、頂点の2つのボーンがどちらも
+            /// <paramref name="strengths"/> にあり、頂点と同じ強さで動かすときだけ書く。
+            /// </summary>
+            public bool Apply(IDictionary<IPXBone, float> strengths)
             {
                 bool changed = false;
                 if (!Vectors.Same(Spot(_item), _position))
                 {
                     Put(_item, _position);
+                    Moved = true;
                     changed = true;
                 }
 
@@ -846,6 +907,16 @@ namespace PmxEditorMcp
                 if (Normal != null && vertex != null && !Vectors.Same(vertex.Normal, Normal))
                 {
                     vertex.Normal = Normal;
+                    changed = true;
+                }
+
+                if (SdefR0 != null && vertex != null && vertex.SDEF
+                    && SameStrength(strengths, vertex.Bone1)
+                    && SameStrength(strengths, vertex.Bone2)
+                    && (!Vectors.Same(vertex.SDEF_R0, SdefR0) || !Vectors.Same(vertex.SDEF_R1, SdefR1)))
+                {
+                    vertex.SDEF_R0 = SdefR0;
+                    vertex.SDEF_R1 = SdefR1;
                     changed = true;
                 }
 
@@ -870,6 +941,13 @@ namespace PmxEditorMcp
                 }
 
                 return changed;
+            }
+
+            private bool SameStrength(IDictionary<IPXBone, float> strengths, IPXBone bone)
+            {
+                float strength;
+
+                return bone != null && strengths.TryGetValue(bone, out strength) && strength == Strength;
             }
         }
     }

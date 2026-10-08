@@ -179,6 +179,42 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ARaisedCopyOfASdefVertexHasItsCentreOnTheBoneAxisAtItsNewHeight()
+        {
+            IList<IPXVertex> vertices = Triangle();
+            Material("材質", Face(vertices, 0, 1, 2));
+            SdefAlongZ(vertices[1]);
+
+            EditFaces(
+                Operation(ModelEditFaces.Extrude),
+                ComposedEditFixture.Given("parentAll", true),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditFaces.DistanceName, 2.0));
+
+            IPXVertex raised = _fixture.Model.Vertex.Single(
+                v => v.SDEF && Math.Abs(v.Position.Z - 2f) < 0.0001f);
+            Assert.Equal(0f, raised.SDEF_C.X);
+            Assert.Equal(2f, raised.SDEF_C.Z);
+        }
+
+        [Fact]
+        public void AligningASdefVertexPutsItsCentreOnTheBoneAxisAtItsNewPlace()
+        {
+            FakeVertex vertex = new FakeVertex(1f, 0f, 2f);
+            _fixture.Model.Vertex.Add(vertex);
+            _fixture.Model.Vertex.Add(new FakeVertex(1f, 0f, 6f));
+            SdefAlongZ(vertex);
+
+            EditVertices(
+                Operation(ModelEditVertices.Align),
+                ComposedEditFixture.Given("all", true),
+                ComposedEditFixture.Given(ModelEditVertices.AxisName, ModelEditVertices.AxisZ));
+
+            Assert.Equal(0f, _fixture.Model.Vertex[0].SDEF_C.X);
+            Assert.Equal(4f, _fixture.Model.Vertex[0].SDEF_C.Z);
+        }
+
+        [Fact]
         public void ExtrudingAFaceRaisesItAndWallsInEveryEdgeItLeavesBehind()
         {
             IList<IPXVertex> vertices = Triangle();
@@ -1284,6 +1320,22 @@ namespace PmxEditorMcp.Tests
             }
 
             return made;
+        }
+
+        private void SdefAlongZ(IPXVertex vertex)
+        {
+            FakeBone first = new FakeBone("根") { Position = new V3(0f, 0f, 0f) };
+            FakeBone second = new FakeBone("先") { Position = new V3(0f, 0f, 10f) };
+            _fixture.Model.Bone.Add(first);
+            _fixture.Model.Bone.Add(second);
+            vertex.Bone1 = first;
+            vertex.Bone2 = second;
+            vertex.Weight1 = 0.5f;
+            vertex.Weight2 = 0.5f;
+            vertex.SDEF = true;
+            vertex.SDEF_C = new V3(0f, 0f, vertex.Position.Z);
+            vertex.SDEF_R0 = first.Position;
+            vertex.SDEF_R1 = second.Position;
         }
 
         /// <summary>同じ平面の上で四角を作る、共線でない4つの頂点。</summary>

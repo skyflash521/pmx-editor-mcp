@@ -58,6 +58,33 @@ namespace PmxEditorMcp.Tests
             AssertPosition(2, Elsewhere.X, Elsewhere.Y, Elsewhere.Z);
         }
 
+        [Fact]
+        public void ASdefVertexWeighedToTheMovedPartnerHasItsCentreOnTheNewBoneAxis()
+        {
+            int handle = Standard("x");
+            IPXVertex vertex = _fixture.Model.Vertex[0];
+            vertex.Bone1 = _fixture.Model.Bone[1];
+            vertex.Bone2 = _fixture.Model.Bone[2];
+            vertex.Weight1 = 0.5f;
+            vertex.Weight2 = 0.5f;
+            vertex.SDEF = true;
+            vertex.SDEF_C = new V3(99f, 99f, 99f);
+
+            ComposedEditFixture.Value(Run(Full(handle, "x", 0)));
+
+            IPXVertex now = _fixture.Model.Vertex[0];
+            V3 from = _fixture.Model.Bone[1].Position;
+            V3 to = _fixture.Model.Bone[2].Position;
+            double[] along = { to.X - from.X, to.Y - from.Y, to.Z - from.Z };
+            double length = Math.Sqrt((along[0] * along[0]) + (along[1] * along[1]) + (along[2] * along[2]));
+            double[] unit = along.Select(a => a / length).ToArray();
+            double reach = (unit[0] * (now.Position.X - from.X)) + (unit[1] * (now.Position.Y - from.Y))
+                + (unit[2] * (now.Position.Z - from.Z));
+            Assert.Equal(from.X + (unit[0] * reach), now.SDEF_C.X, Digits);
+            Assert.Equal(from.Y + (unit[1] * reach), now.SDEF_C.Y, Digits);
+            Assert.Equal(from.Z + (unit[2] * reach), now.SDEF_C.Z, Digits);
+        }
+
         [Theory]
         [InlineData("x", -2f, 1f, -3f)]
         [InlineData("y", 2f, -1f, -3f)]

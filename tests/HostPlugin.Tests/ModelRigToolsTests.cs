@@ -364,6 +364,33 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ASdefVertexWeighedToAMirroredBoneHasItsCentreOnTheNewBoneAxis()
+        {
+            IList<IPXBone> bones = Bones("左腕", "右腕", "首");
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(2f, 1f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(9f, 9f, 9f);
+            ((FakeBone)NowAll(bones)[2]).Position = new V3(-2f, 5f, 0f);
+            FakeVertex vertex = new FakeVertex(-1f, 3f, 0f)
+            {
+                Bone1 = NowAll(bones)[1],
+                Bone2 = NowAll(bones)[2],
+                Weight1 = 0.5f,
+                Weight2 = 0.5f,
+                SDEF = true,
+                SDEF_C = new V3(99f, 99f, 99f),
+            };
+            _fixture.Model.Vertex.Add(vertex);
+
+            Bone(
+                Operation(ModelEditBones.MirrorPosition),
+                ComposedEditFixture.Given("indices", new object[] { 1 }),
+                ComposedEditFixture.Given(ModelEditBones.AxisName, ModelEditVertices.AxisX));
+
+            Near(-2.0, _fixture.Model.Vertex[0].SDEF_C.X);
+            Near(3.0, _fixture.Model.Vertex[0].SDEF_C.Y);
+        }
+
+        [Fact]
         public void ABoneNamedForTheOtherSideIsMovedToTheMirroredSpot()
         {
             IList<IPXBone> bones = Bones("左腕", "右腕");

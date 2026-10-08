@@ -353,6 +353,7 @@ namespace PmxEditorMcp
                 made.Position = Vectors.Add(
                     lifted.Key.Position,
                     Vectors.Scale(Vectors.Normalized(lifted.Value), distance));
+                VertexWeights.ProjectSdefCenter(made);
                 model.Vertex.Add(made);
                 raised[lifted.Key] = made;
             }

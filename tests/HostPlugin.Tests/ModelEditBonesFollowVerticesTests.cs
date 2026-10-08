@@ -75,6 +75,38 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ASdefVertexWeighedToTheFollowingBoneHasItsCentreOnTheNewBoneAxis()
+        {
+            int handle = Around4(QuarterTurnAboutY);
+            AddBone("腕", BoneAt, BoneAt, Offset, Offset);
+            AddBone("先", new V3(10f, 0f, 0f), new V3(10f, 0f, 0f), Offset, Offset);
+            foreach (FakePmx model in new[] { _held, _fixture.Model })
+            {
+                IPXVertex far = model.Vertex[Around.Length];
+                far.Bone1 = model.Bone[0];
+                far.Bone2 = model.Bone[1];
+                far.Weight1 = 0.5f;
+                far.Weight2 = 0.5f;
+                far.SDEF = true;
+                far.SDEF_C = new V3(99f, 99f, 99f);
+            }
+
+            ComposedEditFixture.Value(Run(Full(handle, 1.0, new[] { 0 })));
+
+            IPXVertex now = _fixture.Model.Vertex[Around.Length];
+            V3 from = _fixture.Model.Bone[0].Position;
+            V3 to = _fixture.Model.Bone[1].Position;
+            double[] along = { to.X - from.X, to.Y - from.Y, to.Z - from.Z };
+            double length = Math.Sqrt((along[0] * along[0]) + (along[1] * along[1]) + (along[2] * along[2]));
+            double[] unit = along.Select(a => a / length).ToArray();
+            double reach = (unit[0] * (now.Position.X - from.X)) + (unit[1] * (now.Position.Y - from.Y))
+                + (unit[2] * (now.Position.Z - from.Z));
+            Assert.Equal(from.X + (unit[0] * reach), now.SDEF_C.X, Digits);
+            Assert.Equal(from.Y + (unit[1] * reach), now.SDEF_C.Y, Digits);
+            Assert.Equal(from.Z + (unit[2] * reach), now.SDEF_C.Z, Digits);
+        }
+
+        [Fact]
         public void ABoneWhoseTipIsAnotherBoneMovesAndKeepsItsTipAndItsOffset()
         {
             int handle = Around4(QuarterTurnAboutY);
