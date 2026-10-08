@@ -178,12 +178,23 @@ namespace PmxEditorMcp.SignatureDump
 
         public bool AfterViews { get; private set; }
 
+        /// <summary>どのツールの検査として組まれたか。どのツールにも属さない段取りは null。</summary>
+        public string Owner { get; private set; }
+
         public E2eCase RunAfterViews()
         {
             E2eCase moved = (E2eCase)MemberwiseClone();
             moved.AfterViews = true;
 
             return moved;
+        }
+
+        public E2eCase OwnedBy(string tool)
+        {
+            E2eCase owned = (E2eCase)MemberwiseClone();
+            owned.Owner = tool;
+
+            return owned;
         }
     }
 }

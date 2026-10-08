@@ -376,14 +376,17 @@ namespace PmxEditorMcp.SignatureDump
                     wiring,
                     fixedLeading).ToList();
                 held.AddRange(
-                    group.Any(c => string.Equals(c.Tool, OpenWindowToolName, StringComparison.Ordinal))
+                    (group.Any(c => string.Equals(c.Tool, OpenWindowToolName, StringComparison.Ordinal))
                         ? group.Select(c => c.RunAfterViews())
-                        : group);
-                cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages));
-                cases.AddRange(ReadingCases(row, schema, connectionPaths, reading));
+                        : group).Select(c => c.OwnedBy(schema.Tool)));
+                cases.AddRange(ImageCases(row, schema, connectionPaths, viewImages)
+                    .Select(c => c.OwnedBy(schema.Tool)));
+                cases.AddRange(ReadingCases(row, schema, connectionPaths, reading)
+                    .Select(c => c.OwnedBy(schema.Tool)));
                 cases.AddRange(PositionCases(
                     row, schema, schemas, connectionPaths, sdkTypes, positioned, dangerous,
-                    readers, unkept, factories, parents, addersByTool, addersByType, wiring));
+                    readers, unkept, factories, parents, addersByTool, addersByType, wiring)
+                    .Select(c => c.OwnedBy(schema.Tool)));
             }
 
             cases.AddRange(trailing);

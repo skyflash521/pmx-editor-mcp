@@ -43,6 +43,11 @@ namespace PmxEditorMcp.SignatureDump
                 .Add("arguments", Arguments(one.Arguments))
                 .AddText("expect", Spelling(one.Expectation));
 
+            if (one.Owner != null)
+            {
+                written.AddText("owner", one.Owner);
+            }
+
             if (one.Code != null)
             {
                 written.AddText("code", one.Code);

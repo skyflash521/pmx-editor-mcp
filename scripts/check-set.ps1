@@ -1348,7 +1348,8 @@ $checks['受入の実行器の照合'] = New-Check `
 $groupPaths = [ordered]@{
     'ドキュメント' = @('*.md')
     '定義' = @('catalog/*', 'src/SignatureDump/*', 'scripts/acceptance-stub-cases.json',
-        'scripts/e2e-stub-cases.json', 'scripts/e2e-setups.mjs', 'scripts/e2e-setups.test.mjs')
+        'scripts/e2e-stub-cases.json', 'scripts/e2e-setups.mjs', 'scripts/e2e-setups.test.mjs',
+        'scripts/e2e-rows.mjs', 'scripts/e2e-rows.test.mjs')
     'コード' = @('src/*', 'tests/*')
     'スクリプト' = @('scripts/*')
     'ブリッジ配布' = @('src/Bridge/*', 'src/HostPlugin/*', 'src/SignatureDump/*',

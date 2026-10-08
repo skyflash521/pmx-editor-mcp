@@ -1,4 +1,5 @@
-# 能力対応表の行の自動E2E検査を実機で走らせる。-Since で版を指すと、その版から中身の変わった行に絞る。
+# 能力対応表の行の自動E2E検査を実機で走らせる。-Since で版を指すと、その版から中身の変わった行と、
+# 段取りの変わったツールに絞る。
 [CmdletBinding()]
 param(
     [string]$Since
@@ -70,7 +71,7 @@ try {
     if ($Since) { $rows = Get-ChangedRows -Ref $Since }
 
     if ($rows -and -not (Get-Content $rows)) {
-        Write-Host "指した版から中身の変わった行が無い。"
+        Write-Host "指した版から中身の変わった行も段取りも無い。"
         return
     }
 
