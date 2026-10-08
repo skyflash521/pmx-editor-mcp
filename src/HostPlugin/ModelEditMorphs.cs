@@ -610,6 +610,8 @@ namespace PmxEditorMcp
             }
         }
 
+        private const int Multiplying = 0;
+
         private const int Adding = 1;
 
         private static ComposedEditResult Merged(
@@ -1086,22 +1088,40 @@ namespace PmxEditorMcp
             morph.Kind = MorphKind.Material;
             foreach (IPXMaterial material in model.Material)
             {
-                IPXMaterialMorphOffset offset = made.MaterialMorphOffset();
-                offset.Material = material;
-                offset.Diffuse = new V4(
+                IPXMaterialMorphOffset cleared = made.MaterialMorphOffset();
+                cleared.Material = material;
+                cleared.Op = Multiplying;
+                cleared.Diffuse = new V4(0f, 0f, 0f, 0f);
+                cleared.Specular = new V3(0f, 0f, 0f);
+                cleared.Power = 0f;
+                cleared.Ambient = new V3(0f, 0f, 0f);
+                cleared.EdgeColor = new V4(0f, 0f, 0f, 0f);
+                cleared.EdgeSize = 0f;
+                cleared.Tex = new V4(1f, 1f, 1f, 1f);
+                cleared.Sphere = new V4(1f, 1f, 1f, 1f);
+                cleared.Toon = new V4(1f, 1f, 1f, 1f);
+                morph.Offsets.Add(cleared);
+
+                IPXMaterialMorphOffset painted = made.MaterialMorphOffset();
+                painted.Material = material;
+                painted.Op = Adding;
+                painted.Diffuse = new V4(
                     material.Diffuse.X, material.Diffuse.Y, material.Diffuse.Z, material.Diffuse.W);
-                offset.Specular = new V3(
+                painted.Specular = new V3(
                     material.Specular.X, material.Specular.Y, material.Specular.Z);
-                offset.Ambient = new V3(
+                painted.Ambient = new V3(
                     material.Ambient.X, material.Ambient.Y, material.Ambient.Z);
-                offset.EdgeColor = new V4(
+                painted.EdgeColor = new V4(
                     material.EdgeColor.X,
                     material.EdgeColor.Y,
                     material.EdgeColor.Z,
                     material.EdgeColor.W);
-                offset.EdgeSize = material.EdgeSize;
-                offset.Power = material.Power;
-                morph.Offsets.Add(offset);
+                painted.EdgeSize = material.EdgeSize;
+                painted.Power = material.Power;
+                painted.Tex = new V4(0f, 0f, 0f, 0f);
+                painted.Sphere = new V4(0f, 0f, 0f, 0f);
+                painted.Toon = new V4(0f, 0f, 0f, 0f);
+                morph.Offsets.Add(painted);
             }
 
             model.Morph.Add(morph);
