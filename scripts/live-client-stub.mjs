@@ -26,8 +26,14 @@ const DRAWN = "iVBORw0KGgo=";
 
 /** 違え方の名前。実行器が見る項目ごとに1つずつ置く。 */
 const BROKEN = [
-    "call", "arguments", "result", "refused", "image.missing", "image.extra", "unreached", "isError",
+    "call", "arguments", "result", "refused", "image.missing", "image.extra", "unreached", "isError", "ended",
 ];
+
+/** 許した応答の数を使い切って終わったことを指す、結果の行の印。実物の終わり方と同じ。 */
+const MAX_TURNS_REACHED = "error_max_turns";
+
+/** 応答の数を使い切って終わったときの終了コード。実物と同じ。 */
+const EXIT_MAX_TURNS = 1;
 
 const EXIT_INVALID_ARGUMENTS = 2;
 
@@ -127,6 +133,8 @@ function transcribe(broken) {
         });
     }
 
+    lines.push({ type: "result", subtype: broken === "ended" ? "error_during_execution" : MAX_TURNS_REACHED });
+
     return lines.map((line) => JSON.stringify(line)).join("\n") + "\n";
 }
 
@@ -137,3 +145,4 @@ if (read.error !== undefined) {
 }
 
 process.stdout.write(transcribe(read.broken));
+process.exitCode = EXIT_MAX_TURNS;

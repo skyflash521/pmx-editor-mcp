@@ -69,6 +69,15 @@ const CONTROL_TIMEOUT_MS = 180000;
 /** 参照クライアントを待つ上限。ツールを数件呼ぶ往復に、起動と後始末を足した値。 */
 const CLIENT_TIMEOUT_MS = 300000;
 
+/**
+ * 参照クライアントは、最後に許した応答で呼んだツールも実行し、その返りを流れる記録へ出してから
+ * error_max_turns・終了コード1で終わる。
+ */
+const MAX_TURNS = "2";
+
+/** 許した応答の数を使い切って参照クライアントが終わったことを指す、結果の行の印。 */
+const MAX_TURNS_REACHED = "error_max_turns";
+
 const EXIT_SUCCESS = 0;
 const EXIT_FAILED = 1;
 const EXIT_INVALID_ARGUMENTS = 2;
@@ -139,6 +148,23 @@ function carries(actual, expected) {
 
     return Object.keys(expected).every(
         (name) => JSON.stringify(actual[name]) === JSON.stringify(expected[name]));
+}
+
+/** 参照クライアントの出力の、結果の行の印。結果の行が無ければ null。 */
+function endedAs(text) {
+    let ended = null;
+    for (const line of text.split(/\r?\n/)) {
+        try {
+            const message = JSON.parse(line);
+            if (message.type === "result") {
+                ended = message.subtype ?? null;
+            }
+        } catch {
+            continue;
+        }
+    }
+
+    return ended;
 }
 
 /** 参照クライアントの出力から、ツールの呼び出しと返りを拾う。 */
@@ -280,6 +306,7 @@ try {
             "--strict-mcp-config",
             "--no-session-persistence",
             "--effort", "low",
+            "--max-turns", MAX_TURNS,
             "--allowedTools", quoted(naming.join(",")),
             "--output-format", "stream-json",
             "--verbose",
@@ -289,13 +316,16 @@ try {
             timeout: CLIENT_TIMEOUT_MS,
             shell: true,
             env: { ...process.env, [UNATTENDED_NAME]: "1" },
-            input: "次のツールを、書いてある引数のとおりに1回ずつ呼べ。互いに独立なので、1つの応答の中で全部を並べて同時に呼べ。結果は要らない。\n"
+            input: "まず ToolSearch を1回だけ、query に select:" + naming.join(",")
+                + " を渡して呼び、次のツールを読み込め。続く1つの応答の中で、次のツールを書いてある引数のとおりに"
+                + "1回ずつ、全部を並べて同時に呼べ。結果は要らない。\n"
                 + orders,
         });
     if (said.error !== undefined && said.error !== null) {
         console.error("参照クライアントを起こせません: " + said.error.message);
         code = EXIT_INPUT_UNAVAILABLE;
-    } else if (said.status !== 0) {
+    } else if (said.status !== 0 && endedAs(said.stdout) !== MAX_TURNS_REACHED) {
+        fell.add(7);
         console.error("参照クライアントが " + said.status + " で終わりました。\n" + said.stderr);
         code = EXIT_FAILED;
     } else {

@@ -344,6 +344,7 @@ function Get-LiveClientRunnerForms {
         'image.extra' = 4
         'unreached' = 5
         'isError' = 6
+        'ended' = 7
     }
 }
 
