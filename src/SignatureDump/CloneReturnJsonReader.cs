@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
-using System.Text.Json.Nodes;
+using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -21,6 +20,16 @@ namespace PmxEditorMcp.SignatureDump
         private const string BasisName = "basis";
 
         private const string FileName = "clone-returns.json";
+
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                RowsName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(KeyName, JsonForm.Text()),
+                        JsonForm.Member(ReturnsName, JsonForm.Text()),
+                        JsonForm.Member(BasisName, JsonForm.Text())),
+                    allowEmpty: true)));
 
         /// <summary>
         /// 表のパス。表は、<paramref name="ledgerPath"/> の能力台帳と同じ観測データの置き場に在る。
@@ -43,48 +52,30 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            JsonNode root;
+            IDictionary<string, object> root;
             try
             {
-                root = JsonNode.Parse(json);
+                root = (IDictionary<string, object>)Form.Read(json);
             }
-            catch (JsonException exception)
+            catch (FormatException exception)
             {
-                throw new FormatException("エディタが返す型の表がJSONとして読めない: " + exception.Message, exception);
-            }
-
-            JsonArray rows = root is JsonObject members ? members[RowsName] as JsonArray : null;
-            if (rows == null)
-            {
-                throw new FormatException("エディタが返す型の表は " + RowsName + " の並びを持つ。");
+                throw new FormatException("エディタが返す型の表: " + exception.Message, exception);
             }
 
             Dictionary<string, string> returns = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (JsonNode row in rows)
+            foreach (IDictionary<string, object> row in
+                ((object[])root[RowsName]).Cast<IDictionary<string, object>>())
             {
-                string key = Text(row, KeyName);
+                string key = (string)row[KeyName];
                 if (returns.ContainsKey(key))
                 {
                     throw new FormatException("エディタが返す型の表に同じ行が二度在る: " + key);
                 }
 
-                Text(row, BasisName);
-                returns.Add(key, Text(row, ReturnsName));
+                returns.Add(key, (string)row[ReturnsName]);
             }
 
             return returns;
-        }
-
-        private static string Text(JsonNode row, string name)
-        {
-            JsonValue value = row is JsonObject members ? members[name] as JsonValue : null;
-            string text;
-            if (value == null || !value.TryGetValue(out text) || text.Length == 0)
-            {
-                throw new FormatException("エディタが返す型の表の行は " + name + " の文字列を持つ。");
-            }
-
-            return text;
         }
     }
 }
