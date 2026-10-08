@@ -383,6 +383,72 @@ namespace PmxEditorMcp.Tests
             Near(1.0, Share(right, NowAll(bones)[1]));
         }
 
+        [Theory]
+        [InlineData(ModelEditVertices.AxisX)]
+        [InlineData(ModelEditVertices.AxisY)]
+        [InlineData(ModelEditVertices.AxisZ)]
+        public void TakingTheWeightFromAnSdefMirrorTakesItsPointsTurnedAcrossTheAxis(string axis)
+        {
+            IList<IPXBone> bones = Bones("左腕", "左ひじ", "右腕", "右ひじ");
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(1f, 1f, 1f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(1f, 3f, 3f);
+            ((FakeBone)NowAll(bones)[2]).Position = Across(new V3(1f, 1f, 1f), axis);
+            ((FakeBone)NowAll(bones)[3]).Position = Across(new V3(1f, 3f, 3f), axis);
+            FakeVertex left = Vertex(2f, 3f, 1f);
+            Now(left).SDEF = true;
+            Now(left).Bone1 = NowAll(bones)[0];
+            Now(left).Weight1 = 0.4f;
+            Now(left).Bone2 = NowAll(bones)[1];
+            Now(left).Weight2 = 0.6f;
+            Now(left).SDEF_C = new V3(1.5f, 2f, 2f);
+            Now(left).SDEF_R0 = new V3(1f, 1.5f, 1.25f);
+            Now(left).SDEF_R1 = new V3(1f, 2.5f, 2.75f);
+            V3 across = Across(new V3(2f, 3f, 1f), axis);
+            FakeVertex right = Vertex(across.X, across.Y, across.Z);
+            Weigh(right, NowAll(bones)[2], 1f);
+
+            Weights(
+                Operation(ModelEditWeights.FromMirror),
+                ComposedEditFixture.Given("indices", new object[] { 1 }),
+                ComposedEditFixture.Given(ModelEditWeights.AxisName, axis));
+
+            IPXVertex now = Now(right);
+            Assert.True(now.SDEF);
+            Near(0.4, Share(right, NowAll(bones)[2]));
+            Near(0.6, Share(right, NowAll(bones)[3]));
+            V3 upper = now.Bone1.Name == "右腕" ? now.SDEF_R0 : now.SDEF_R1;
+            V3 lower = now.Bone1.Name == "右腕" ? now.SDEF_R1 : now.SDEF_R0;
+            NearPoint(Across(new V3(1f, 1.5f, 1.25f), axis), upper);
+            NearPoint(Across(new V3(1f, 2.5f, 2.75f), axis), lower);
+            NearPoint(Across(new V3(1f, 2f, 2f), axis), now.SDEF_C);
+        }
+
+        [Fact]
+        public void TakingTheWeightFromAMirrorThatIsNotSdefLeavesNoSdef()
+        {
+            IList<IPXBone> bones = Bones("左腕", "左ひじ", "右腕", "右ひじ");
+            FakeVertex left = Vertex(1f, 0f, 0f);
+            Now(left).Bone1 = NowAll(bones)[0];
+            Now(left).Weight1 = 0.4f;
+            Now(left).Bone2 = NowAll(bones)[1];
+            Now(left).Weight2 = 0.6f;
+            FakeVertex right = Vertex(-1f, 0f, 0f);
+            Now(right).SDEF = true;
+            Now(right).Bone1 = NowAll(bones)[2];
+            Now(right).Weight1 = 0.5f;
+            Now(right).Bone2 = NowAll(bones)[3];
+            Now(right).Weight2 = 0.5f;
+
+            Weights(
+                Operation(ModelEditWeights.FromMirror),
+                ComposedEditFixture.Given("indices", new object[] { 1 }),
+                ComposedEditFixture.Given(ModelEditWeights.AxisName, ModelEditVertices.AxisX));
+
+            Assert.False(Now(right).SDEF);
+            Near(0.4, Share(right, NowAll(bones)[2]));
+            Near(0.6, Share(right, NowAll(bones)[3]));
+        }
+
         [Fact]
         public void ReplacingTheBoneMovesItsShareToTheOtherBoneOnlyOnThePickedVerticesHoldingIt()
         {
@@ -1227,6 +1293,28 @@ namespace PmxEditorMcp.Tests
         private static void Near(double wanted, double found)
         {
             Assert.Equal(wanted, found, Digits);
+        }
+
+        private static void NearPoint(V3 wanted, V3 found)
+        {
+            Near(wanted.X, found.X);
+            Near(wanted.Y, found.Y);
+            Near(wanted.Z, found.Z);
+        }
+
+        private static V3 Across(V3 given, string axis)
+        {
+            switch (axis)
+            {
+                case ModelEditVertices.AxisX:
+                    return new V3(-given.X, given.Y, given.Z);
+
+                case ModelEditVertices.AxisY:
+                    return new V3(given.X, -given.Y, given.Z);
+
+                default:
+                    return new V3(given.X, given.Y, -given.Z);
+            }
         }
     }
 }
