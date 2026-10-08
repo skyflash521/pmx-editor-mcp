@@ -246,6 +246,18 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AListWhoseItemsAreLongerThanTheSerializerDefaultIsRefusedAsTooLarge()
+        {
+            _model.Items.Add(new Item { Label = new string('一', 1100000) });
+            _model.Items.Add(new Item { Label = new string('二', 1100000) });
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_items", Arguments(TargetNames.Element.All, true));
+
+            Assert.Equal(ToolEnvelope.ResponseTooLarge, Code(envelope));
+        }
+
+        [Fact]
         public void TheWholeListComesBackWhenTheRequestPointsAtEveryElement()
         {
             _model.Items.Add(new Item { Label = "一" });

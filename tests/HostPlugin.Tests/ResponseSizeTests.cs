@@ -16,6 +16,14 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AValueLongerThanTheSerializerDefaultDoesNotFit()
+        {
+            string value = new string('x', 2200000);
+
+            Assert.False(ResponseSize.Fits(value, ResponseBudget.MaximumChars));
+        }
+
+        [Fact]
         public void ABudgetUnderTheLowerBoundStops()
         {
             Assert.Throws<ArgumentOutOfRangeException>(
