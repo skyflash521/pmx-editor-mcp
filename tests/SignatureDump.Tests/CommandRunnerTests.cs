@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using PmxEditorMcp.SignatureDump.Tests.Sample;
 using Xunit;
 
@@ -860,6 +861,41 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(ExitCodes.InputUnavailable, failed);
             Assert.False(string.IsNullOrWhiteSpace(failedError.ToString()));
+        }
+
+        [Fact]
+        public void AnUnexpectedExceptionEndsWithUnresolvedAndWritesItsStackTrace()
+        {
+            string before = Path.Combine(_root, "before.json");
+            string after = Path.Combine(_root, "after.json");
+            File.WriteAllText(
+                before,
+                "{ \"rows\": [{ \"signatureKey\": \"T.M()\", \"editKind\": \"read\", \"basis\": \"根拠。\" }] }");
+            File.WriteAllText(
+                after,
+                "{ \"rows\": [{ \"signatureKey\": \"T.M()\", \"editKind\": \"read\", \"basis\": \"別の根拠。\" }] }");
+            StringWriter error = new StringWriter();
+
+            int code = CommandRunner.Run(
+                new[] { CommandRunner.ChangedRowsCommand, before, after },
+                new RefusingWriter(),
+                error);
+
+            Assert.Equal(ExitCodes.Unresolved, code);
+            Assert.Contains(RefusingWriter.Refusal, error.ToString(), StringComparison.Ordinal);
+            Assert.Contains(nameof(RefusingWriter), error.ToString(), StringComparison.Ordinal);
+        }
+
+        private sealed class RefusingWriter : TextWriter
+        {
+            public const string Refusal = "書き出し先が受け付けない。";
+
+            public override Encoding Encoding => Encoding.UTF8;
+
+            public override void Write(char value)
+            {
+                throw new InvalidOperationException(Refusal);
+            }
         }
 
         [Fact]

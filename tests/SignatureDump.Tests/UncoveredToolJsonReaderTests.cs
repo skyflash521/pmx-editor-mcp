@@ -26,6 +26,30 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AToolListedTwiceStops()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => UncoveredToolJsonReader.Read(@"{ ""tools"": [
+  { ""tool"": ""model_clone_ik"", ""reason"": ""noCase"" },
+  { ""tool"": ""model_clone_ik"", ""reason"": ""noEffectCheck"" }
+] }"));
+
+            Assert.Contains("model_clone_ik", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ToolsOutOfOrdinalOrderStop()
+        {
+            FormatException error = Assert.Throws<FormatException>(
+                () => UncoveredToolJsonReader.Read(@"{ ""tools"": [
+  { ""tool"": ""model_ik_link"", ""reason"": ""noEffectCheck"" },
+  { ""tool"": ""model_clone_ik"", ""reason"": ""noCase"" }
+] }"));
+
+            Assert.Contains("model_clone_ik", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void AnEmptyListIsRead()
         {
             Assert.Empty(UncoveredToolJsonReader.Read(@"{ ""tools"": [] }").Tools);
