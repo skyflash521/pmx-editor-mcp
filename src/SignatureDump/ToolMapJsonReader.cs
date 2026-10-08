@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -60,6 +59,58 @@ namespace PmxEditorMcp.SignatureDump
         private const string ArgsName = "args";
 
         private const string OutName = "out";
+
+        private static readonly JsonForm Setup = JsonForm.Array(
+            JsonForm.Object(
+                JsonForm.Member(TagName, JsonForm.Text()),
+                JsonForm.Optional(ElementTypeName, JsonForm.Text()),
+                JsonForm.Optional(ToolName, JsonForm.Text()),
+                JsonForm.Optional(ArgsName, JsonForm.Map(JsonForm.Any(), allowEmpty: true)),
+                JsonForm.Optional(OutName, JsonForm.Text())));
+
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                RowsName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(SignatureKeyName, JsonForm.Text()),
+                        JsonForm.Member(EditKindName, JsonForm.Text()),
+                        JsonForm.Member(BasisName, JsonForm.Text()),
+                        JsonForm.Optional(
+                            UpdateSpecName,
+                            JsonForm.Object(
+                                JsonForm.Member(
+                                    RefreshName, JsonForm.Array(JsonForm.Text(), allowEmpty: true)),
+                                JsonForm.Optional(UpdateName, JsonForm.Text()))),
+                        JsonForm.Optional(
+                            PostconditionName,
+                            JsonForm.Array(
+                                JsonForm.Object(
+                                    JsonForm.Member(EffectTypeName, JsonForm.Text()),
+                                    JsonForm.Member(EffectKeyName, JsonForm.TextOrEmpty()),
+                                    JsonForm.Member(KindName, JsonForm.Text()),
+                                    JsonForm.Member(ComparisonName, JsonForm.Text()),
+                                    JsonForm.Optional(ObserverToolName, JsonForm.Text()),
+                                    JsonForm.Optional(
+                                        ObserverArgsName,
+                                        JsonForm.Map(JsonForm.Text(), allowEmpty: true)),
+                                    JsonForm.Optional(ValuePathName, JsonForm.TextOrEmpty()),
+                                    JsonForm.Optional(ExpectedName, JsonForm.Any()),
+                                    JsonForm.Optional(SetupName, Setup)))),
+                        JsonForm.Optional(EventTypeName, JsonForm.Text()),
+                        JsonForm.Optional(EmbeddedInName, JsonForm.Array(JsonForm.Text())),
+                        JsonForm.Optional(SetupName, Setup),
+                        JsonForm.Optional(ArgumentTypesName, JsonForm.Map(JsonForm.Text()))),
+                    SignatureKeyName,
+                    allowEmpty: true)),
+            JsonForm.Optional(
+                ToolSetupsName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(ToolName, JsonForm.Text()),
+                        JsonForm.Member(SetupName, Setup)),
+                    ToolName,
+                    allowEmpty: true)));
 
         private static readonly Regex SnakeCaseName = new Regex(
             "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", RegexOptions.CultureInvariant);
@@ -186,27 +237,8 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            object parsed;
-            try
-            {
-                parsed = new JavaScriptSerializer().DeserializeObject(json);
-            }
-            catch (Exception exception)
-            {
-                throw new FormatException("JSONとして読めない。", exception);
-            }
-
-            List<ToolMapRow> rows = new List<ToolMapRow>();
-            string previous = null;
-            Dictionary<string, object> root = Members(
-                parsed, new[] { RowsName }, new[] { ToolSetupsName });
-            foreach (object item in Array(root[RowsName], RowsName))
-            {
-                ToolMapRow row = ReadRow(item);
-                RequireAscending(previous, row.SignatureKey);
-                previous = row.SignatureKey;
-                rows.Add(row);
-            }
+            IDictionary<string, object> root = (IDictionary<string, object>)Form.Read(json);
+            List<ToolMapRow> rows = Items(root[RowsName]).Select(ReadRow).ToList();
 
             return new ToolMap(rows, ReadToolSetups(root));
         }
@@ -217,57 +249,45 @@ namespace PmxEditorMcp.SignatureDump
         {
             Dictionary<string, IList<SetupOperation>> setups =
                 new Dictionary<string, IList<SetupOperation>>(StringComparer.Ordinal);
-            if (root == null || !root.ContainsKey(ToolSetupsName))
+            object items;
+            if (!root.TryGetValue(ToolSetupsName, out items))
             {
                 return setups;
             }
 
-            string previous = null;
-            foreach (object item in Array(root[ToolSetupsName], ToolSetupsName))
+            foreach (IDictionary<string, object> members in Items(items))
             {
-                Dictionary<string, object> members = Members(
-                    item, new[] { ToolName, SetupName }, new string[0]);
-                string tool = Name(members[ToolName], ToolName);
-                RequireAscending(previous, tool);
-                previous = tool;
-                setups[tool] = ReadSetup(members[SetupName]);
+                setups[Name((string)members[ToolName], ToolName)] = ReadSetup(members[SetupName]);
             }
 
             return setups;
         }
 
-        private static ToolMapRow ReadRow(object item)
+        private static ToolMapRow ReadRow(IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = Members(
-                item,
-                new[] { SignatureKeyName, EditKindName, BasisName },
-                new[]
-                {
-                    UpdateSpecName, PostconditionName, EventTypeName, EmbeddedInName, SetupName,
-                    ArgumentTypesName,
-                });
-
-            ToolMapEditKind editKind = Lookup(EditKinds, members[EditKindName], EditKindName);
+            ToolMapEditKind editKind = Lookup(EditKinds, (string)members[EditKindName], EditKindName);
             RequirePresence(members, UpdateSpecName, editKind == ToolMapEditKind.DuplicateEdit);
 
             return new ToolMapRow(
-                Text(members[SignatureKeyName], SignatureKeyName),
+                (string)members[SignatureKeyName],
                 editKind,
-                members.ContainsKey(UpdateSpecName) ? ReadUpdateSpec(members[UpdateSpecName]) : null,
-                Text(members[BasisName], BasisName),
+                members.ContainsKey(UpdateSpecName)
+                    ? ReadUpdateSpec((IDictionary<string, object>)members[UpdateSpecName])
+                    : null,
+                (string)members[BasisName],
                 members.ContainsKey(PostconditionName)
                     ? ReadPostcondition(members[PostconditionName])
                     : null,
-                members.ContainsKey(EventTypeName) ? Text(members[EventTypeName], EventTypeName) : null,
+                members.ContainsKey(EventTypeName) ? (string)members[EventTypeName] : null,
                 members.ContainsKey(EmbeddedInName) ? ReadEmbeddedIn(members[EmbeddedInName]) : null,
                 members.ContainsKey(SetupName) ? ReadSetup(members[SetupName]) : null,
                 members.ContainsKey(ArgumentTypesName)
-                    ? ReadArgumentTypes(members[ArgumentTypesName])
+                    ? ReadArgumentTypes((IDictionary<string, object>)members[ArgumentTypesName])
                     : null);
         }
 
         private static void RequirePresence(
-            Dictionary<string, object> members, string name, bool required)
+            IDictionary<string, object> members, string name, bool required)
         {
             if (required && !members.ContainsKey(name))
             {
@@ -283,9 +303,8 @@ namespace PmxEditorMcp.SignatureDump
         private static IList<string> ReadEmbeddedIn(object value)
         {
             List<string> names = new List<string>();
-            foreach (object item in Array(value, EmbeddedInName))
+            foreach (string name in ((object[])value).Cast<string>())
             {
-                string name = Text(item, EmbeddedInName);
                 if (names.Contains(name, StringComparer.Ordinal))
                 {
                     throw new FormatException("同じ埋め込み先が二度現れる: " + name);
@@ -294,20 +313,13 @@ namespace PmxEditorMcp.SignatureDump
                 names.Add(name);
             }
 
-            if (names.Count == 0)
-            {
-                throw new FormatException(EmbeddedInName + " は1件以上でなければならない。");
-            }
-
             return names;
         }
 
-        private static UpdateSpec ReadUpdateSpec(object value)
+        private static UpdateSpec ReadUpdateSpec(IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = Members(
-                value, new[] { RefreshName }, new[] { UpdateName });
             List<RefreshTarget> refresh = new List<RefreshTarget>();
-            foreach (object item in Array(members[RefreshName], RefreshName))
+            foreach (string item in ((object[])members[RefreshName]).Cast<string>())
             {
                 RefreshTarget target = Lookup(RefreshTargets, item, RefreshName);
                 if (refresh.Contains(target))
@@ -321,7 +333,7 @@ namespace PmxEditorMcp.SignatureDump
             string update = null;
             if (members.ContainsKey(UpdateName))
             {
-                update = Text(members[UpdateName], UpdateName);
+                update = (string)members[UpdateName];
                 if (!EnumeratorName.IsMatch(update))
                 {
                     throw new FormatException("反映の指定が列挙子の名前でない: " + update);
@@ -335,7 +347,7 @@ namespace PmxEditorMcp.SignatureDump
         {
             List<Postcondition> judgements = new List<Postcondition>();
             List<string> seen = new List<string>();
-            foreach (object item in Array(value, PostconditionName))
+            foreach (IDictionary<string, object> item in Items(value))
             {
                 Postcondition judgement = ReadJudgement(item);
                 if (seen.Contains(judgement.EffectId, StringComparer.Ordinal))
@@ -347,24 +359,15 @@ namespace PmxEditorMcp.SignatureDump
                 judgements.Add(judgement);
             }
 
-            if (judgements.Count == 0)
-            {
-                throw new FormatException(PostconditionName + " は1件以上でなければならない。");
-            }
-
             return judgements;
         }
 
-        private static Postcondition ReadJudgement(object item)
+        private static Postcondition ReadJudgement(IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = Members(
-                item,
-                new[] { EffectTypeName, EffectKeyName, KindName, ComparisonName },
-                new[] { ObserverToolName, ObserverArgsName, ValuePathName, ExpectedName, SetupName });
-
-            EffectType effectType = Lookup(EffectTypes, members[EffectTypeName], EffectTypeName);
-            EffectCheckKind kind = Lookup(CheckKinds, members[KindName], KindName);
-            string effectKey = EffectKey(members[EffectKeyName]);
+            EffectType effectType =
+                Lookup(EffectTypes, (string)members[EffectTypeName], EffectTypeName);
+            EffectCheckKind kind = Lookup(CheckKinds, (string)members[KindName], KindName);
+            string effectKey = (string)members[EffectKeyName];
             if (kind == EffectCheckKind.File && effectKey.Length == 0)
             {
                 throw new FormatException(
@@ -373,7 +376,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             EffectComparison comparison = Lookup(
-                Comparisons, members[ComparisonName], ComparisonName);
+                Comparisons, (string)members[ComparisonName], ComparisonName);
 
             bool observed = (kind == EffectCheckKind.Readback || kind == EffectCheckKind.Handle)
                 && comparison != EffectComparison.AnyChanged;
@@ -408,13 +411,13 @@ namespace PmxEditorMcp.SignatureDump
                 effectKey,
                 kind,
                 members.ContainsKey(ObserverToolName)
-                    ? Name(members[ObserverToolName], ObserverToolName)
+                    ? Name((string)members[ObserverToolName], ObserverToolName)
                     : null,
                 members.ContainsKey(ObserverArgsName)
-                    ? ReadObserverArgs(members[ObserverArgsName])
+                    ? ReadObserverArgs((IDictionary<string, object>)members[ObserverArgsName])
                     : null,
                 members.ContainsKey(ValuePathName)
-                    ? Path(members[ValuePathName], ValuePathName)
+                    ? Path((string)members[ValuePathName], ValuePathName)
                     : null,
                 comparison,
                 expected,
@@ -570,14 +573,9 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        private static IDictionary<string, string> ReadObserverArgs(object value)
+        private static IDictionary<string, string> ReadObserverArgs(
+            IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = value as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException(ObserverArgsName + " は項目の組でなければならない。");
-            }
-
             Dictionary<string, string> bindings = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, object> pair in members)
             {
@@ -586,7 +584,7 @@ namespace PmxEditorMcp.SignatureDump
                     throw new FormatException("観測ツールの引数の名前でない: " + pair.Key);
                 }
 
-                string reference = Text(pair.Value, ObserverArgsName);
+                string reference = (string)pair.Value;
                 RequireReference(reference, ObserverArgsName);
                 bindings.Add(pair.Key, reference);
             }
@@ -598,7 +596,7 @@ namespace PmxEditorMcp.SignatureDump
         {
             List<SetupOperation> operations = new List<SetupOperation>();
             List<string> names = new List<string>();
-            foreach (object item in Array(value, SetupName))
+            foreach (IDictionary<string, object> item in Items(value))
             {
                 SetupOperation operation = ReadSetupOperation(item);
                 if (operation.Out != null)
@@ -614,45 +612,26 @@ namespace PmxEditorMcp.SignatureDump
                 operations.Add(operation);
             }
 
-            if (operations.Count == 0)
-            {
-                throw new FormatException(SetupName + " は1件以上でなければならない。");
-            }
-
             return operations;
         }
 
         /// <summary>引数の名前から、そこへ渡す相手の型へ。</summary>
-        private static IDictionary<string, string> ReadArgumentTypes(object value)
+        private static IDictionary<string, string> ReadArgumentTypes(
+            IDictionary<string, object> members)
         {
-            IDictionary<string, object> members = value as IDictionary<string, object>;
-            if (members == null || members.Count == 0)
-            {
-                throw new FormatException(
-                    members == null
-                        ? ArgumentTypesName + " が組でない。"
-                        : ArgumentTypesName + " は1件以上でなければならない。");
-            }
-
             Dictionary<string, string> types =
                 new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, object> one in members)
             {
-                types[Name(one.Key, ArgumentTypesName)] =
-                    Text(one.Value, ArgumentTypesName + "." + one.Key);
+                types[Name(one.Key, ArgumentTypesName)] = (string)one.Value;
             }
 
             return types;
         }
 
-        private static SetupOperation ReadSetupOperation(object item)
+        private static SetupOperation ReadSetupOperation(IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = Members(
-                item,
-                new[] { TagName },
-                new[] { ElementTypeName, ToolName, ArgsName, OutName });
-
-            SetupTag tag = Lookup(SetupTags, members[TagName], TagName);
+            SetupTag tag = Lookup(SetupTags, (string)members[TagName], TagName);
             RequirePresence(members, ElementTypeName, tag == SetupTag.AddElement);
             RequirePresence(members, ToolName, tag == SetupTag.CallTool);
             RequirePresence(members, ArgsName, tag == SetupTag.CallTool);
@@ -661,7 +640,7 @@ namespace PmxEditorMcp.SignatureDump
                 throw new FormatException("値を出さない用意の操作が " + OutName + " を持つ。");
             }
 
-            string outName = members.ContainsKey(OutName) ? Text(members[OutName], OutName) : null;
+            string outName = members.ContainsKey(OutName) ? (string)members[OutName] : null;
             if (outName != null && !MemberName.IsMatch(outName))
             {
                 throw new FormatException("用意の操作が出す値の名前でない: " + outName);
@@ -673,24 +652,20 @@ namespace PmxEditorMcp.SignatureDump
                     return SetupOperation.InitPmx();
                 case SetupTag.AddElement:
                     return SetupOperation.AddElement(
-                        Name(members[ElementTypeName], ElementTypeName), outName);
+                        Name((string)members[ElementTypeName], ElementTypeName), outName);
                 default:
                     return SetupOperation.CallTool(
-                        Name(members[ToolName], ToolName), ReadSetupArgs(members[ArgsName]), outName);
+                        Name((string)members[ToolName], ToolName),
+                        ReadSetupArgs((IDictionary<string, object>)members[ArgsName]),
+                        outName);
             }
         }
 
         /// <summary>
         /// 呼ぶときの束縛。参照元とJSONのリテラルに加えて、型ごとに定めたサンプル値を指せる。
         /// </summary>
-        private static IDictionary<string, object> ReadSetupArgs(object value)
+        private static IDictionary<string, object> ReadSetupArgs(IDictionary<string, object> members)
         {
-            Dictionary<string, object> members = value as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException(ArgsName + " は項目の組でなければならない。");
-            }
-
             Dictionary<string, object> args = new Dictionary<string, object>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, object> pair in members)
             {
@@ -727,21 +702,9 @@ namespace PmxEditorMcp.SignatureDump
             throw new FormatException(name + " は参照元でなければならない: " + text);
         }
 
-        private static string EffectKey(object value)
+        private static string Path(string text, string name)
         {
-            string text = value as string;
-            if (text == null)
-            {
-                throw new FormatException(EffectKeyName + " は文字列でなければならない。");
-            }
-
-            return text;
-        }
-
-        private static string Path(object value, string name)
-        {
-            string text = value as string;
-            if (text == null || !ValuePath.IsMatch(text))
+            if (!ValuePath.IsMatch(text))
             {
                 throw new FormatException(name + " が比べる値の位置の形でない。");
             }
@@ -749,9 +712,8 @@ namespace PmxEditorMcp.SignatureDump
             return text;
         }
 
-        private static string Name(object value, string name)
+        private static string Name(string text, string name)
         {
-            string text = Text(value, name);
             if (!SnakeCaseName.IsMatch(text))
             {
                 throw new FormatException(
@@ -763,9 +725,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         private static TValue Lookup<TValue>(
-            Dictionary<string, TValue> table, object value, string name)
+            Dictionary<string, TValue> table, string text, string name)
         {
-            string text = Text(value, name);
             TValue found;
             if (!table.TryGetValue(text, out found))
             {
@@ -775,84 +736,9 @@ namespace PmxEditorMcp.SignatureDump
             return found;
         }
 
-        private static void RequireAscending(string previous, string current)
+        private static IEnumerable<IDictionary<string, object>> Items(object value)
         {
-            if (previous == null)
-            {
-                return;
-            }
-
-            int order = string.CompareOrdinal(previous, current);
-            if (order == 0)
-            {
-                throw new FormatException("同じ行キーが二度現れる: " + current);
-            }
-
-            if (order > 0)
-            {
-                throw new FormatException("序数の昇順で並んでいない: " + current);
-            }
-        }
-
-        private static object[] Array(object value, string name)
-        {
-            object[] items = value as object[];
-            if (items == null)
-            {
-                throw new FormatException(name + " は項目の並びでなければならない。");
-            }
-
-            return items;
-        }
-
-        private static Dictionary<string, object> Members(object value, params string[] names)
-        {
-            return Members(value, names, new string[0]);
-        }
-
-        /// <summary>
-        /// 求める項目と持てる項目だけを持つ対象として読む。余分な項目を黙って捨てると、正本の形が
-        /// 崩れても気づけない。
-        /// </summary>
-        private static Dictionary<string, object> Members(
-            object value, string[] names, string[] optional)
-        {
-            Dictionary<string, object> members = value as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException("項目の組でなければならない。");
-            }
-
-            foreach (string name in names)
-            {
-                if (!members.ContainsKey(name))
-                {
-                    throw new FormatException("項目が無い: " + name);
-                }
-            }
-
-            foreach (string name in members.Keys)
-            {
-                if (!names.Contains(name, StringComparer.Ordinal)
-                    && !optional.Contains(name, StringComparer.Ordinal))
-                {
-                    throw new FormatException("知らない項目がある: " + name);
-                }
-            }
-
-            return members;
-        }
-
-        private static string Text(object value, string name)
-        {
-            string text = value as string;
-            if (string.IsNullOrEmpty(text) || text.Trim().Length == 0)
-            {
-                throw new FormatException(
-                    name + " は空でない文字列でなければならない(空白だけも不可)。");
-            }
-
-            return text;
+            return ((object[])value).Cast<IDictionary<string, object>>();
         }
     }
 }

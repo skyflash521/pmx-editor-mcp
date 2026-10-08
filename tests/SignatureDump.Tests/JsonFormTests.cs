@@ -120,6 +120,25 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AMapReadsEveryNameButHoldsEachValueToItsForm()
+        {
+            JsonForm form = JsonForm.Map(JsonForm.Text());
+
+            Assert.Equal(
+                "b",
+                ((IDictionary<string, object>)form.Read("{\"a\":\"b\",\"c\":\"d\"}"))["a"]);
+            Assert.Contains(
+                "c は空でない文字列",
+                Assert.Throws<FormatException>(() => form.Read("{\"a\":\"b\",\"c\":\"\"}")).Message,
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "1件以上",
+                Assert.Throws<FormatException>(() => form.Read("{}")).Message,
+                StringComparison.Ordinal);
+            Assert.Empty((IDictionary<string, object>)JsonForm.Map(JsonForm.Text(), allowEmpty: true).Read("{}"));
+        }
+
+        [Fact]
         public void TheKeyOfAnArrayRefusesTheSameValueTwiceAndNamesTheLaterRow()
         {
             FormatException refused = Assert.Throws<FormatException>(() => Rows.Read(

@@ -81,6 +81,15 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
+        /// 名前を問わない項目の組で、どの値も <paramref name="value"/> の形を持つ。読めた値は名前から
+        /// 値へ引く表になる。<paramref name="allowEmpty"/> を真にすると、項目の無い組も受け付ける。
+        /// </summary>
+        public static JsonForm Map(JsonForm value, bool allowEmpty = false)
+        {
+            return new MapForm(value, allowEmpty);
+        }
+
+        /// <summary>
         /// 1件以上の並び。鍵の名前を渡すと、その項目が二度現れないことと、序数の昇順に並ぶことを
         /// 併せて求める。<paramref name="allowEmpty"/> を真にすると、1件も無い並びも受け付ける
         /// ——載せるものが無いこと自体が正しい表がある。
@@ -312,6 +321,48 @@ namespace PmxEditorMcp.SignatureDump
                     .Where(n => !_members.Any(m => string.Equals(m.Name, n, StringComparison.Ordinal))))
                 {
                     throw new FormatException("知らない項目がある: " + Where(path, name));
+                }
+
+                return read;
+            }
+        }
+
+        private sealed class MapForm : JsonForm
+        {
+            private readonly JsonForm _value;
+
+            private readonly bool _allowEmpty;
+
+            internal MapForm(JsonForm value, bool allowEmpty)
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException(nameof(value));
+                }
+
+                _value = value;
+                _allowEmpty = allowEmpty;
+            }
+
+            internal override object Read(object value, string path)
+            {
+                Dictionary<string, object> source = value as Dictionary<string, object>;
+                if (source == null)
+                {
+                    throw Wrong(path, "項目の組");
+                }
+
+                if (source.Count == 0 && !_allowEmpty)
+                {
+                    throw new FormatException(
+                        (path.Length == 0 ? "根" : path) + " は1件以上でなければならない。");
+                }
+
+                Dictionary<string, object> read =
+                    new Dictionary<string, object>(StringComparer.Ordinal);
+                foreach (KeyValuePair<string, object> member in source)
+                {
+                    read.Add(member.Key, _value.Read(member.Value, Where(path, member.Key)));
                 }
 
                 return read;
