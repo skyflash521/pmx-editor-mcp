@@ -10,6 +10,12 @@
        未定義のままホストをビルドしたときに明示エラーで失敗させる。 -->
   <Import Project="$(MSBuildThisFileDirectory)local.props" Condition="Exists('$(MSBuildThisFileDirectory)local.props')" />
 
+  <!-- local.props の取り込みより前に置くと local.props で上書きできる。 -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <MSBuildTreatWarningsAsErrors>true</MSBuildTreatWarningsAsErrors>
+  </PropertyGroup>
+
   <!-- 未定義のまま進むことを、SDKを要るプロジェクトのビルドとデプロイの前で止める。要るかどうかは
        各プロジェクトが RequiresPmxEditorDir で名乗る——SDKを読まないプロジェクトまで導入を必須に
        しない。 -->

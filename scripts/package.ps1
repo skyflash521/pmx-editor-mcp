@@ -31,7 +31,7 @@ function Publish-Host {
     #>
     param([string]$Into, [string]$Ledger)
 
-    dotnet publish $hostProject -c Release -warnaserror -o $Into `
+    dotnet publish $hostProject -c Release -o $Into `
         "-p:CustomAfterMicrosoftCommonTargets=$ledgerTargets" `
         "-p:ShippingLedgerPath=$Ledger" | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "ホストの発行に失敗した。" }
@@ -53,7 +53,7 @@ $work = Join-Path ([System.IO.Path]::GetTempPath()) ('package-' + [guid]::NewGui
 New-Item -ItemType Directory -Force -Path $work | Out-Null
 
 try {
-    dotnet build $generatorProject -c Release -warnaserror | Out-Null
+    dotnet build $generatorProject -c Release | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "組み立て器の用意に失敗した。" }
 
     # 出荷台帳は、出荷する実行ファイルを作ったその発行が書き出す。数えた物と出荷した物が同じ

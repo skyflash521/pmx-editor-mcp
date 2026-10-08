@@ -999,7 +999,7 @@ $checks[$build] = New-Check `
     -Needs $noArtifact `
     -Stage 1 `
     -Produces $buildOutput `
-    -Run @('dotnet', 'build', 'PmxEditorMcp.sln', '-warnaserror',
+    -Run @('dotnet', 'build', 'PmxEditorMcp.sln',
         '--no-incremental', '-p:UseSharedCompilation=false')
 $checks['スクリプト構文'] = New-Check `
     -Groups @('スクリプト') `

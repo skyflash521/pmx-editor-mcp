@@ -49,7 +49,7 @@ PMXエディタをMCP経由で操作可能にするプラグイン。実体は2�
 4. ビルドが通ることを確認する。
 
    ```
-   dotnet build PmxEditorMcp.sln -warnaserror
+   dotnet build PmxEditorMcp.sln
    ```
 
 ### 動かす
