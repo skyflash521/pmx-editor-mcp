@@ -395,7 +395,7 @@ namespace PmxEditorMcp.Tests
                 }
             }
 
-            foreach (KeyValuePair<string, IList<ToolCall>> tool in GeneratedTools.Calls())
+            foreach (KeyValuePair<string, IList<ToolCall>> tool in GeneratedTools.Calls(new List<string>()))
             {
                 foreach (ToolArgument argument in tool.Value.SelectMany(c => c.Arguments)
                     .Where(a => !a.Injected && a.Referenced == null))

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -12,9 +13,9 @@ namespace PmxEditorMcp.Tests
         {
             HostTables together = HostTables.Start();
 
-            Assert.Equal(GeneratedTools.Calls().Count, together.Calls.Count);
-            Assert.Equal(GeneratedTools.Aggregations().Count, together.Aggregations.Count);
-            Assert.Equal(GeneratedTools.Elements().Count, together.Elements.Count);
+            Assert.Equal(GeneratedTools.Calls(new List<string>()).Count, together.Calls.Count);
+            Assert.Equal(GeneratedTools.Aggregations(new List<string>()).Count, together.Aggregations.Count);
+            Assert.Equal(GeneratedTools.Elements(new List<string>()).Count, together.Elements.Count);
             Assert.Equal(GeneratedTools.Preconditions().Count, together.Preconditions.Count);
             Assert.Equal(GeneratedTools.Attachments().Count, together.Attachments.Count);
             Assert.Equal(GeneratedTools.Payloads().Count, together.Payloads.Count);

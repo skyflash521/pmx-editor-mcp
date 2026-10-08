@@ -14,7 +14,7 @@ namespace PmxEditorMcp.Bridge.Tests
         private const int HostLeast = 0;
 
         private static readonly Regex EntryPattern = new Regex(
-            "(calls|aggregations|elements|preconditions)\\.Add\\(\"([a-z0-9_]+)\", ");
+            "(?:GeneratedRows\\.Add\\()?(calls|aggregations|elements|preconditions)(?:\\.Add\\(|, unresolved, )\"([a-z0-9_]+)\", ");
 
         private static readonly ISet<string> NoValueRefused = new HashSet<string>(StringComparer.Ordinal)
         {

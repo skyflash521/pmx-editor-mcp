@@ -12,7 +12,7 @@ namespace PmxEditorMcp.Tests
 
         public static PositionCaller Open(string tool, string need)
         {
-            if (GeneratedTools.Calls().ContainsKey(tool))
+            if (GeneratedTools.Calls(new List<string>()).ContainsKey(tool))
             {
                 return new GeneratedCaller();
             }

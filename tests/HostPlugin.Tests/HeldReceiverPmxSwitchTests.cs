@@ -15,7 +15,7 @@ namespace PmxEditorMcp.Tests
         {
             ISet<string> shown = ToolsShowingThePmxSwitch();
             List<string> disagreeing = new List<string>();
-            foreach (KeyValuePair<string, IList<ToolCall>> tool in GeneratedTools.Calls())
+            foreach (KeyValuePair<string, IList<ToolCall>> tool in GeneratedTools.Calls(new List<string>()))
             {
                 bool held = tool.Value.Any(c => c.Receiver.Kind == ToolReceiverKind.Handle);
                 bool accepts = tool.Value.Any(
@@ -34,7 +34,7 @@ namespace PmxEditorMcp.Tests
         {
             ISet<string> shown = ToolsShowingThePmxSwitch();
             List<string> disagreeing = new List<string>();
-            foreach (KeyValuePair<string, IList<ToolCall>> tool in GeneratedTools.Calls())
+            foreach (KeyValuePair<string, IList<ToolCall>> tool in GeneratedTools.Calls(new List<string>()))
             {
                 bool accepts = tool.Value.Any(ToolDispatch.Accepts);
                 if (accepts != shown.Contains(tool.Key))

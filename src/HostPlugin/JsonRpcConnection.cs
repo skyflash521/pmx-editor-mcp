@@ -843,9 +843,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 稼働しているSDKのバージョン・生成に使ったSDKのバージョン・中継を作れなかった行・呼び出しの失敗で
-        /// 無効にした行・このホストがツールとして答える名前を返す。名前に基盤メソッドは入らない
-        /// ——それは表に載らず、この接続自身が受け持つ。
+        /// 答える名前に基盤メソッドは入らない——それは表に載らず、この接続自身が受け持つ。
         /// </summary>
         private IDictionary<string, object> BuildSdkStatusResult()
         {
@@ -855,6 +853,7 @@ namespace PmxEditorMcp
                 { "generatedSdkVersion", _relays.GeneratedSdkVersion },
                 { "unresolvedRows", _relays.Unresolved },
                 { "disabledRows", _relays.Disabled },
+                { "refusedTools", _relays.RefusedTools },
                 { "toolNames", _methods.Names },
             };
         }

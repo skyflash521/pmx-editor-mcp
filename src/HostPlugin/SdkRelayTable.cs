@@ -49,6 +49,8 @@ namespace PmxEditorMcp
 
         private readonly HashSet<string> _disabled = new HashSet<string>(StringComparer.Ordinal);
 
+        private readonly HashSet<string> _refusedTools = new HashSet<string>(StringComparer.Ordinal);
+
         private readonly object _gate = new object();
 
         /// <summary>
@@ -108,6 +110,31 @@ namespace PmxEditorMcp
                 {
                     return Sorted(_disabled);
                 }
+            }
+        }
+
+        /// <summary>名前の序数昇順。</summary>
+        public IList<string> RefusedTools
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    return Sorted(_refusedTools);
+                }
+            }
+        }
+
+        public void RefuseTools(IEnumerable<string> tools)
+        {
+            if (tools == null)
+            {
+                throw new ArgumentNullException(nameof(tools));
+            }
+
+            lock (_gate)
+            {
+                _refusedTools.UnionWith(tools);
             }
         }
 
@@ -184,7 +211,7 @@ namespace PmxEditorMcp
         /// 公開をやめた場合も届かないので、どちらも同じ扱いにする。処理そのものの失敗は含めない
         /// ——含めると、SDKが返した誤りをバージョンの違いとして無効化してしまう。
         /// </summary>
-        private static bool IsResolutionFailure(Exception exception)
+        internal static bool IsResolutionFailure(Exception exception)
         {
             return exception is MemberAccessException
                 || exception is TypeLoadException

@@ -203,6 +203,7 @@ namespace PmxEditorMcp.Tests
             object result;
             SdkRelayRefusal refusal;
             Assert.False(table.TryInvoke(LostKey, null, null, out result, out refusal));
+            table.RefuseTools(new[] { "model_lost" });
 
             JsonRpcConnection connection = Connection(table, "0.0.9.0");
             IDictionary<string, object> body = ResultOf(
@@ -212,6 +213,7 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(GeneratedVersion, body["generatedSdkVersion"]);
             Assert.Equal(new object[] { UnresolvedKey }, Assert.IsType<object[]>(body["unresolvedRows"]));
             Assert.Equal(new object[] { LostKey }, Assert.IsType<object[]>(body["disabledRows"]));
+            Assert.Equal(new object[] { "model_lost" }, Assert.IsType<object[]>(body["refusedTools"]));
         }
 
         /// <summary>

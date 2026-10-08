@@ -116,9 +116,9 @@ namespace PmxEditorMcp.Tests
                 new PmxSession(
                     relay, receivers, resident, GeneratedSdkFlows.Bridge, GeneratedSdkFlows.Pmx, undo),
                 new UndoRecovery(undo, current.UndoLock),
-                GeneratedTools.Calls(),
-                GeneratedTools.Aggregations(),
-                GeneratedTools.Elements(),
+                GeneratedTools.Calls(new List<string>()),
+                GeneratedTools.Aggregations(new List<string>()),
+                GeneratedTools.Elements(new List<string>()),
                 GeneratedTools.Preconditions(),
                 new StillModifierKeys(),
                 new EventBindingTable(GeneratedTools.Attachments(), GeneratedTools.Payloads()),

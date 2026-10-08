@@ -163,7 +163,7 @@ namespace PmxEditorMcp.Tests
         private static IEnumerable<string> Pointing()
         {
             List<string> named = new List<string>();
-            foreach (KeyValuePair<string, ToolFields> one in GeneratedTools.Aggregations())
+            foreach (KeyValuePair<string, ToolFields> one in GeneratedTools.Aggregations(new List<string>()))
             {
                 if (Takes(one.Value.Access, one.Value.Receiver))
                 {
@@ -171,7 +171,7 @@ namespace PmxEditorMcp.Tests
                 }
             }
 
-            foreach (KeyValuePair<string, ToolElements> one in GeneratedTools.Elements())
+            foreach (KeyValuePair<string, ToolElements> one in GeneratedTools.Elements(new List<string>()))
             {
                 if (one.Value.Kind != ToolElementKind.Add
                     && Takes(one.Value.Access, one.Value.Receiver))
@@ -180,7 +180,7 @@ namespace PmxEditorMcp.Tests
                 }
             }
 
-            foreach (KeyValuePair<string, IList<ToolCall>> one in GeneratedTools.Calls())
+            foreach (KeyValuePair<string, IList<ToolCall>> one in GeneratedTools.Calls(new List<string>()))
             {
                 if (one.Value.Any(call => Takes(call.Access, call.Receiver)))
                 {
@@ -194,9 +194,9 @@ namespace PmxEditorMcp.Tests
         /// <summary>結び付きの表が持つツールの名前。</summary>
         private static IEnumerable<string> Registered()
         {
-            return GeneratedTools.Aggregations().Keys
-                .Concat(GeneratedTools.Elements().Keys)
-                .Concat(GeneratedTools.Calls().Keys);
+            return GeneratedTools.Aggregations(new List<string>()).Keys
+                .Concat(GeneratedTools.Elements(new List<string>()).Keys)
+                .Concat(GeneratedTools.Calls(new List<string>()).Keys);
         }
 
         private static bool Takes(ToolAccess access, ToolReceiver receiver)

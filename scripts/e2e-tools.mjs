@@ -324,7 +324,6 @@ async function agreed(client, schemasPath) {
         .join("\n");
 }
 
-/** 走らせた後に、中継を作れなかった行も無効にした行も残っていないことを確かめる。 */
 async function settled(client) {
     const said = await askStatus(client);
     if (said.status === null) {
@@ -334,6 +333,7 @@ async function settled(client) {
     const left = [
         ["中継を作れなかった行", said.status.unresolvedRows ?? []],
         ["呼び出しの失敗で無効にした行", said.status.disabledRows ?? []],
+        ["組み立てられず断るツール", said.status.refusedTools ?? []],
     ].filter((pair) => pair[1].length !== 0);
 
     return left.length === 0

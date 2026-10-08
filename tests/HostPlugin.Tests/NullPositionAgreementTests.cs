@@ -16,7 +16,7 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, IList<bool>> defined = Defined();
             List<string> wrong = new List<string>();
             int checkedFields = 0;
-            foreach (KeyValuePair<string, ToolFields> tool in GeneratedTools.Aggregations()
+            foreach (KeyValuePair<string, ToolFields> tool in GeneratedTools.Aggregations(new List<string>())
                 .Where(t => t.Value.Writes))
             {
                 foreach (ToolField field in tool.Value.Fields.Where(f => f.Referenced != null && !f.Listed))
@@ -45,7 +45,7 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, IList<bool>> defined = Defined();
             List<string> wrong = new List<string>();
             int checkedArguments = 0;
-            foreach (KeyValuePair<string, IList<ToolCall>> tool in GeneratedTools.Calls())
+            foreach (KeyValuePair<string, IList<ToolCall>> tool in GeneratedTools.Calls(new List<string>()))
             {
                 foreach (ToolCall call in tool.Value)
                 {

@@ -1857,7 +1857,7 @@ namespace PmxEditorMcp.Bridge.Tests
         private sealed class HostBinding
         {
             private static readonly Regex EntryPattern = new Regex(
-                "(calls|aggregations|elements|preconditions)\\.Add\\(\"([a-z0-9_]+)\", ");
+                "(?:GeneratedRows\\.Add\\()?(calls|aggregations|elements|preconditions)(?:\\.Add\\(|, unresolved, )\"([a-z0-9_]+)\", ");
 
             private static readonly Regex EditPattern = new Regex("EditKind\\.([A-Za-z]+)");
 

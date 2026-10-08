@@ -220,7 +220,8 @@ namespace PmxEditorMcp
             HostLog log,
             ScreenRefresh refresh,
             ScreenTargets screen,
-            IDictionary<string, Func<object, object, object, IDictionary<string, object>>> measures)
+            IDictionary<string, Func<object, object, object, IDictionary<string, object>>> measures,
+            IEnumerable<string> unresolved = null)
         {
             if (methods == null)
             {
@@ -315,10 +316,19 @@ namespace PmxEditorMcp
             ToolDispatch dispatch = new ToolDispatch(
                 relay, receivers, lists, connection, pmx, bridged, recovery, modifiers, events, log,
                 refresh, screen, measures);
-            dispatch.IssuedReferences(calls, aggregations);
+            HashSet<string> refused = new HashSet<string>(
+                unresolved ?? Enumerable.Empty<string>(), StringComparer.Ordinal);
+            dispatch.IssuedReferences(calls, aggregations, refused);
+            RefuseReadingRefused(calls, preconditions, refused);
+            relay.RefuseTools(refused);
             dispatch.HeldKinds(calls, aggregations, elements);
             foreach (KeyValuePair<string, IList<ToolCall>> call in calls)
             {
+                if (refused.Contains(call.Key))
+                {
+                    continue;
+                }
+
                 IList<ToolCall> bound = call.Value;
                 ResolvedPrecondition precondition = Required(preconditions, calls, call.Key);
                 methods.Add(
@@ -355,14 +365,55 @@ namespace PmxEditorMcp
                         ScreenRefresh.Needed(bound.Receiver.Edit, new string[0]),
                         context => Acting(dispatch, bound)(context)));
             }
+
+            foreach (string name in refused)
+            {
+                string named = name;
+                methods.Add(
+                    named,
+                    context => ToolEnvelope.Failure(
+                        ToolEnvelope.NotApplicable, "このバージョンのSDKでは組み立てられなかったツール: " + named));
+            }
+        }
+
+        private static void RefuseReadingRefused(
+            IDictionary<string, IList<ToolCall>> calls,
+            IDictionary<string, ToolPrecondition> preconditions,
+            HashSet<string> refused)
+        {
+            if (refused.Count == 0)
+            {
+                return;
+            }
+
+            bool added = true;
+            while (added)
+            {
+                added = false;
+                foreach (string tool in calls.Keys)
+                {
+                    ToolPrecondition precondition;
+                    if (!refused.Contains(tool)
+                        && preconditions.TryGetValue(tool, out precondition)
+                        && precondition.Reading.Any(refused.Contains))
+                    {
+                        refused.Add(tool);
+                        added = true;
+                    }
+                }
+            }
         }
 
         /// <summary>
         /// 生成物を預ける呼び出しの位置で受け取る引数を、生成物の型の書き込める項目のうち同じ名前で
-        /// 同じリストを指すものと組にする。組にできない引数があれば登録を止める。
+        /// 同じリストを指すものと組にする。組にできない引数があれば登録を止める。ただし
+        /// <paramref name="refused"/> が空でないときは、組にできない引数を持つツールを
+        /// <paramref name="refused"/> へ足して続ける。
         /// </summary>
         private void IssuedReferences(
-            IDictionary<string, IList<ToolCall>> calls, IDictionary<string, ToolFields> aggregations)
+            IDictionary<string, IList<ToolCall>> calls,
+            IDictionary<string, ToolFields> aggregations,
+            HashSet<string> refused)
         {
             List<ToolField> writable = aggregations.Values
                 .Where(a => a.Writes)
@@ -384,6 +435,13 @@ namespace PmxEditorMcp
                                 && string.Equals(Declaring(f.RowKey), call.Issues.FullName, StringComparison.Ordinal)
                                 && string.Equals(
                                     f.Referenced.RowKey, argument.Referenced.RowKey, StringComparison.Ordinal));
+                        if (field == null && refused.Count > 0)
+                        {
+                            refused.Add(named.Key);
+
+                            continue;
+                        }
+
                         if (field == null)
                         {
                             throw new InvalidOperationException(

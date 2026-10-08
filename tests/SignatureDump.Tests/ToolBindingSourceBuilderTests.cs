@@ -81,7 +81,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Dispatched("session_open_pmx_file", Method("OpenPMXFile", "System.Boolean", "path")));
 
             Assert.Contains(
-                "calls.Add(\"session_open_pmx_file\", new ToolCall[] { new ToolCall(\"" + Form
+                "GeneratedRows.Add(calls, unresolved, \"session_open_pmx_file\", () => new ToolCall[] { new ToolCall(\"" + Form
                     + ".OpenPMXFile(System.String)\", new ToolReceiver(ToolReceiverKind.Connection,"
                     + " \"" + Form + "\", EditKind.DirectChange), ToolAccess.Whole(),"
                     + " DangerKind.None, new ToolArgument[] { new ToolArgument(\"path\","
@@ -335,7 +335,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private static string[] DangersOf(string text, string tool)
         {
-            string head = "calls.Add(\"" + tool + "\", ";
+            string head = "GeneratedRows.Add(calls, unresolved, \"" + tool + "\", () => ";
             int from = text.IndexOf(head, StringComparison.Ordinal);
             Assert.True(from >= 0, "ツールの呼び出しが組み立て文に無い: " + tool);
             int end = text.IndexOf('\n', from);
@@ -357,12 +357,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(new[] { GetTool, UpdateTool }, source.Aggregations.ToArray());
             Assert.Contains(
-                "aggregations.Add(\"" + GetTool + "\", new ToolFields(false, false,"
+                "GeneratedRows.Add(aggregations, unresolved, \"" + GetTool + "\", () => new ToolFields(false, false,"
                     + " new ToolReceiver(ToolReceiverKind.Connection, \"" + Form
                     + "\", EditKind.Read), ToolAccess.Whole(), new ToolFieldSet[]",
                 source.Text);
             Assert.Contains(
-                "aggregations.Add(\"" + UpdateTool + "\", new ToolFields(true, false,"
+                "GeneratedRows.Add(aggregations, unresolved, \"" + UpdateTool + "\", () => new ToolFields(true, false,"
                     + " new ToolReceiver(ToolReceiverKind.Connection, \"" + Form
                     + "\", EditKind.ViewSession), ToolAccess.Whole(), new ToolFieldSet[]",
                 source.Text);
@@ -409,14 +409,14 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(
                 new[] { "model_add_vertices", "model_remove_vertices" }, source.Elements.ToArray());
             Assert.Contains(
-                "elements.Add(\"model_add_vertices\", new ToolElements(ToolElementKind.Add,"
+                "GeneratedRows.Add(elements, unresolved, \"model_add_vertices\", () => new ToolElements(ToolElementKind.Add,"
                     + " new ToolReceiver(ToolReceiverKind.Pmx, null, EditKind.DuplicateEdit),"
                     + " new ToolAccess(ToolAccessKind.Element, \"" + ListKey
                     + "\", new ToolHop[] {  }, true, typeof(global::" + Vertex
                     + "), item => item is global::" + Vertex + ", \"vertex\", null, null)));",
                 source.Text);
             Assert.Contains(
-                "elements.Add(\"model_remove_vertices\", new ToolElements(ToolElementKind.Remove,", source.Text);
+                "GeneratedRows.Add(elements, unresolved, \"model_remove_vertices\", () => new ToolElements(ToolElementKind.Remove,", source.Text);
         }
 
         /// <summary>
@@ -440,7 +440,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 },
                 source.Elements.ToArray());
             Assert.Contains(
-                "elements.Add(\"model_hold_weight\", new ToolElements(ToolElementKind.Hold,"
+                "GeneratedRows.Add(elements, unresolved, \"model_hold_weight\", () => new ToolElements(ToolElementKind.Hold,"
                     + " new ToolReceiver(ToolReceiverKind.Pmx, null, EditKind.Read),",
                 source.Text);
         }
@@ -470,7 +470,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Kinds(Kept, KeptLeaf),
                 Kepts());
 
-            Assert.Contains("elements.Add(\"model_add_kepts\",", source.Text);
+            Assert.Contains("GeneratedRows.Add(elements, unresolved, \"model_add_kepts\",", source.Text);
             Assert.Contains("typeof(global::" + Kept + "), item => item is global::" + Kept, source.Text);
             Assert.DoesNotContain("new ToolItem(", source.Text);
         }

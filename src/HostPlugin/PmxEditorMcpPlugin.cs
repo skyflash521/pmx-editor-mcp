@@ -253,7 +253,14 @@ namespace PmxEditorMcp
                     refresh,
                     new ScreenTargets(
                         () => Receiver(receivers, ViewType), () => Receiver(receivers, FormType)),
-                    EditMeasure.ByRowKey());
+                    EditMeasure.ByRowKey(),
+                    tables.UnresolvedTools);
+                if (relay.RefusedTools.Count > 0)
+                {
+                    _log.Write(
+                        "読み込まれたSDKでは組み立てられず、断るツール: " + string.Join(", ", relay.RefusedTools));
+                }
+
                 ComposedModelTools.AddTo(
                     methods,
                     new ComposedEdit(current, new UndoBarrier(recovery), refresh),

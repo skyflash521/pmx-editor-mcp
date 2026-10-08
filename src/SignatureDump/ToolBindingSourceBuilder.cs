@@ -1753,15 +1753,15 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("    {\n");
             text.Append("        /// <summary>SDKのメンバーへ中継するツール。</summary>\n");
             text.Append(
-                "        internal static Dictionary<string, IList<ToolCall>> Calls()\n");
+                "        internal static Dictionary<string, IList<ToolCall>> Calls(ICollection<string> unresolved)\n");
             text.Append("        {\n");
             text.Append("            Dictionary<string, IList<ToolCall>> calls =\n");
             text.Append(
                 "                new Dictionary<string, IList<ToolCall>>(StringComparer.Ordinal);\n");
             foreach (KeyValuePair<string, List<string>> call in calls)
             {
-                text.Append(Indent).Append("calls.Add(").Append(CSharpText.Quote(call.Key))
-                    .Append(", new ToolCall[] { ").Append(string.Join(", ", call.Value))
+                text.Append(Indent).Append("GeneratedRows.Add(calls, unresolved, ").Append(CSharpText.Quote(call.Key))
+                    .Append(", () => new ToolCall[] { ").Append(string.Join(", ", call.Value))
                     .Append(" });\n");
             }
 
@@ -1789,14 +1789,15 @@ namespace PmxEditorMcp.SignatureDump
             Payloads(text, payloads);
             text.Append("\n");
             text.Append("        /// <summary>項目を集めるツール。</summary>\n");
-            text.Append("        internal static Dictionary<string, ToolFields> Aggregations()\n");
+            text.Append(
+                "        internal static Dictionary<string, ToolFields> Aggregations(ICollection<string> unresolved)\n");
             text.Append("        {\n");
             text.Append("            Dictionary<string, ToolFields> aggregations =\n");
             text.Append("                new Dictionary<string, ToolFields>(StringComparer.Ordinal);\n");
             foreach (KeyValuePair<string, SortedDictionary<string, List<string>>> tool in fields)
             {
-                text.Append(Indent).Append("aggregations.Add(").Append(CSharpText.Quote(tool.Key))
-                    .Append(", ").Append(aggregated[tool.Key]).Append("\n");
+                text.Append(Indent).Append("GeneratedRows.Add(aggregations, unresolved, ")
+                    .Append(CSharpText.Quote(tool.Key)).Append(", () => ").Append(aggregated[tool.Key]).Append("\n");
                 text.Append(Indent).Append("{\n");
                 foreach (KeyValuePair<string, List<string>> set in tool.Value)
                 {
@@ -1820,14 +1821,15 @@ namespace PmxEditorMcp.SignatureDump
             text.Append("        }\n");
             text.Append("\n");
             text.Append("        /// <summary>所有するリストへ加える・から取り除くツール。</summary>\n");
-            text.Append("        internal static Dictionary<string, ToolElements> Elements()\n");
+            text.Append(
+                "        internal static Dictionary<string, ToolElements> Elements(ICollection<string> unresolved)\n");
             text.Append("        {\n");
             text.Append("            Dictionary<string, ToolElements> elements =\n");
             text.Append("                new Dictionary<string, ToolElements>(StringComparer.Ordinal);\n");
             foreach (KeyValuePair<string, string> element in elements)
             {
-                text.Append(Indent).Append("elements.Add(").Append(CSharpText.Quote(element.Key))
-                    .Append(", ").Append(element.Value).Append(");\n");
+                text.Append(Indent).Append("GeneratedRows.Add(elements, unresolved, ")
+                    .Append(CSharpText.Quote(element.Key)).Append(", () => ").Append(element.Value).Append(");\n");
             }
 
             text.Append("\n");

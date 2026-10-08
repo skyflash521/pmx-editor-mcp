@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PmxEditorMcp
@@ -23,12 +24,18 @@ namespace PmxEditorMcp
 
         private readonly Task<Dictionary<string, PayloadReader>> _payloads;
 
+        private readonly List<string> _unresolvedCalls = new List<string>();
+
+        private readonly List<string> _unresolvedAggregations = new List<string>();
+
+        private readonly List<string> _unresolvedElements = new List<string>();
+
         private HostTables()
         {
             _relay = Task.Run(() => GeneratedSdkRelay.Create());
-            _calls = Task.Run(() => GeneratedTools.Calls());
-            _aggregations = Task.Run(() => GeneratedTools.Aggregations());
-            _elements = Task.Run(() => GeneratedTools.Elements());
+            _calls = Task.Run(() => GeneratedTools.Calls(_unresolvedCalls));
+            _aggregations = Task.Run(() => GeneratedTools.Aggregations(_unresolvedAggregations));
+            _elements = Task.Run(() => GeneratedTools.Elements(_unresolvedElements));
             _preconditions = Task.Run(() => GeneratedTools.Preconditions());
             _attachments = Task.Run(() => GeneratedTools.Attachments());
             _payloads = Task.Run(() => GeneratedTools.Payloads());
@@ -73,6 +80,18 @@ namespace PmxEditorMcp
         internal Dictionary<string, PayloadReader> Payloads
         {
             get { return _payloads.GetAwaiter().GetResult(); }
+        }
+
+        internal IList<string> UnresolvedTools
+        {
+            get
+            {
+                _calls.GetAwaiter().GetResult();
+                _aggregations.GetAwaiter().GetResult();
+                _elements.GetAwaiter().GetResult();
+
+                return _unresolvedCalls.Concat(_unresolvedAggregations).Concat(_unresolvedElements).ToList();
+            }
         }
     }
 }
