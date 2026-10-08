@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -43,6 +42,26 @@ namespace PmxEditorMcp.SignatureDump
 
         private const char PatternMark = '*';
 
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                SourceName,
+                JsonForm.Object(
+                    JsonForm.Member(DistributionName, JsonForm.Text()),
+                    JsonForm.Member(AssemblyName, JsonForm.Text()),
+                    JsonForm.Member(AssemblyVersionName, JsonForm.Text()),
+                    JsonForm.Member(FrameworkName, JsonForm.Text()))),
+            JsonForm.Member(
+                CapabilitiesName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(IdName, JsonForm.Text()),
+                        JsonForm.Member(CategoryName, JsonForm.TextOrEmpty()),
+                        JsonForm.Member(TargetName, JsonForm.Text()),
+                        JsonForm.Member(StatusName, JsonForm.TextOrEmpty()),
+                        JsonForm.Member(OwnerName, JsonForm.TextOrEmpty()),
+                        JsonForm.Member(RemarksName, JsonForm.TextOrEmpty())),
+                    allowEmpty: true)));
+
         /// <summary>型引数の数は1以上で、先頭に0を置いた書き方もしない。</summary>
         private static readonly Regex GenericAritySuffix =
             new Regex("`[1-9][0-9]*$", RegexOptions.CultureInvariant);
@@ -79,54 +98,33 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            Dictionary<string, object> root = Members(Parse(json), SourceName, CapabilitiesName);
-            Dictionary<string, object> source = Members(
-                root[SourceName],
-                DistributionName,
-                AssemblyName,
-                AssemblyVersionName,
-                FrameworkName);
-            foreach (string name in source.Keys)
-            {
-                Text(source[name], name);
-            }
-
-            List<CapabilityRecord> records = new List<CapabilityRecord>();
-            foreach (object item in Array(root[CapabilitiesName], CapabilitiesName))
-            {
-                records.Add(Build(Members(
-                    item,
-                    IdName,
-                    CategoryName,
-                    TargetName,
-                    StatusName,
-                    OwnerName,
-                    RemarksName)));
-            }
+            IDictionary<string, object> root = (IDictionary<string, object>)Form.Read(json);
+            List<CapabilityRecord> records = ((object[])root[CapabilitiesName])
+                .Cast<IDictionary<string, object>>()
+                .Select(Build)
+                .ToList();
 
             return records.AsReadOnly();
         }
 
-        private static CapabilityRecord Build(Dictionary<string, object> members)
+        private static CapabilityRecord Build(IDictionary<string, object> members)
         {
-            string id = Text(members[IdName], IdName);
-            string target = Text(members[TargetName], TargetName);
+            string id = (string)members[IdName];
+            string target = (string)members[TargetName];
             CapabilityTargetKind kind = ClassifyTarget(target);
-            CapabilityStatus status = Lookup(
-                Statuses, Optional(members[StatusName], StatusName), "分類", id);
-            CapabilityOwner owner = Lookup(
-                Owners, Optional(members[OwnerName], OwnerName), "担当", id);
+            CapabilityStatus status = Lookup(Statuses, (string)members[StatusName], "分類", id);
+            CapabilityOwner owner = Lookup(Owners, (string)members[OwnerName], "担当", id);
             RequireOwnerMatchesStatus(id, status, owner);
 
             return new CapabilityRecord(
                 id,
-                Optional(members[CategoryName], CategoryName),
+                (string)members[CategoryName],
                 target,
                 kind,
                 ExtractNames(target, kind),
                 status,
                 owner,
-                Optional(members[RemarksName], RemarksName));
+                (string)members[RemarksName]);
         }
 
         private static CapabilityTargetKind ClassifyTarget(string target)
@@ -193,83 +191,6 @@ namespace PmxEditorMcp.SignatureDump
                 id,
                 status,
                 owner));
-        }
-
-        private static object Parse(string json)
-        {
-            try
-            {
-                return new JavaScriptSerializer().DeserializeObject(json);
-            }
-            catch (Exception exception)
-            {
-                throw new FormatException("JSONとして読めない。", exception);
-            }
-        }
-
-        private static object[] Array(object value, string name)
-        {
-            object[] items = value as object[];
-            if (items == null)
-            {
-                throw new FormatException(name + " は項目の並びでなければならない。");
-            }
-
-            return items;
-        }
-
-        /// <summary>
-        /// 求める項目だけを持つ対象として読む。余分な項目を黙って捨てると、正本の形が崩れても
-        /// 気づけない。
-        /// </summary>
-        private static Dictionary<string, object> Members(object value, params string[] names)
-        {
-            Dictionary<string, object> members = value as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException("項目の組でなければならない。");
-            }
-
-            foreach (string name in names)
-            {
-                if (!members.ContainsKey(name))
-                {
-                    throw new FormatException("項目が無い: " + name);
-                }
-            }
-
-            foreach (string name in members.Keys)
-            {
-                if (!names.Contains(name, StringComparer.Ordinal))
-                {
-                    throw new FormatException("知らない項目がある: " + name);
-                }
-            }
-
-            return members;
-        }
-
-        private static string Text(object value, string name)
-        {
-            string text = value as string;
-            if (string.IsNullOrEmpty(text))
-            {
-                throw new FormatException(name + " は空でない文字列でなければならない。");
-            }
-
-            return text;
-        }
-
-        /// <summary>空でよい項目。書かれていない値は空文字列として読む。</summary>
-        private static string Optional(object value, string name)
-        {
-            string text = value as string;
-            if (text == null)
-            {
-                throw new FormatException(name + " は文字列でなければならない。");
-            }
-
-            return text;
         }
     }
 }

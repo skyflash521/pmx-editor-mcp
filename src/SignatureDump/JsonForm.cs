@@ -41,6 +41,12 @@ namespace PmxEditorMcp.SignatureDump
             return new TextForm();
         }
 
+        /// <summary>空でもよい文字列。</summary>
+        public static JsonForm TextOrEmpty()
+        {
+            return new TextOrEmptyForm();
+        }
+
         /// <summary>1以上の整数。</summary>
         public static JsonForm Count()
         {
@@ -182,6 +188,19 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 return text;
+            }
+        }
+
+        private sealed class TextOrEmptyForm : JsonForm
+        {
+            internal override object Read(object value, string path)
+            {
+                if (!(value is string))
+                {
+                    throw Wrong(path, "文字列");
+                }
+
+                return value;
             }
         }
 

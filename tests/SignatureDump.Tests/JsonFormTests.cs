@@ -89,6 +89,20 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TextThatMayBeEmptyReadsAnEmptyStringButRefusesAnotherKindOfValue()
+        {
+            JsonForm form = JsonForm.Object(JsonForm.Member("note", JsonForm.TextOrEmpty()));
+
+            Assert.Equal(
+                string.Empty,
+                ((IDictionary<string, object>)form.Read("{\"note\":\"\"}"))["note"]);
+            Assert.Contains(
+                "文字列",
+                Assert.Throws<FormatException>(() => form.Read("{\"note\":null}")).Message,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void TheKeyOfAnArrayRefusesTheSameValueTwiceAndNamesTheLaterRow()
         {
             FormatException refused = Assert.Throws<FormatException>(() => Rows.Read(
