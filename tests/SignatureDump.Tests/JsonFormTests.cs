@@ -103,6 +103,23 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void AnyValueIsReadAsTheShapeItIsWrittenIn()
+        {
+            JsonForm form = JsonForm.Object(JsonForm.Member("value", JsonForm.Any()));
+
+            Assert.Null(Value(form, "null"));
+            Assert.Equal(1, Value(form, "1"));
+            Assert.Equal(1.5m, Value(form, "1.5"));
+            Assert.Equal(new object[] { "a", true }, (object[])Value(form, "[\"a\",true]"));
+            Assert.Equal(2, ((IDictionary<string, object>)Value(form, "{\"b\":2}"))["b"]);
+        }
+
+        private static object Value(JsonForm form, string written)
+        {
+            return ((IDictionary<string, object>)form.Read("{\"value\":" + written + "}"))["value"];
+        }
+
+        [Fact]
         public void TheKeyOfAnArrayRefusesTheSameValueTwiceAndNamesTheLaterRow()
         {
             FormatException refused = Assert.Throws<FormatException>(() => Rows.Read(

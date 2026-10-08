@@ -59,6 +59,15 @@ namespace PmxEditorMcp.SignatureDump
             return new FlagForm();
         }
 
+        /// <summary>
+        /// 形を問わない値。読めた値は、組なら名前から値へ引く表、並びなら値の並び、数なら整数か
+        /// 小数、そのほかはその値か null になる。
+        /// </summary>
+        public static JsonForm Any()
+        {
+            return new AnyForm();
+        }
+
         /// <summary>その形か、null。</summary>
         public static JsonForm OrNull(JsonForm inner)
         {
@@ -188,6 +197,14 @@ namespace PmxEditorMcp.SignatureDump
                 }
 
                 return text;
+            }
+        }
+
+        private sealed class AnyForm : JsonForm
+        {
+            internal override object Read(object value, string path)
+            {
+                return value;
             }
         }
 

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.SignatureDump
 {
@@ -155,6 +154,32 @@ namespace PmxEditorMcp.SignatureDump
 
         private const string PurposeName = "purpose";
 
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                TypesName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(TypeNameName, JsonForm.Text()),
+                        JsonForm.Member(DefaultName, JsonForm.Any()),
+                        JsonForm.Member(SecondName, JsonForm.Any()),
+                        JsonForm.Optional(
+                            FileName,
+                            JsonForm.Object(
+                                JsonForm.Member(KindName, JsonForm.Text()),
+                                JsonForm.Member(ExtensionName, JsonForm.Text()),
+                                JsonForm.Member(PurposeName, JsonForm.Text())))),
+                    allowEmpty: true)),
+            JsonForm.Member(
+                RowsName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(SignatureKeyName, JsonForm.Text()),
+                        JsonForm.Member(ArgumentsName, JsonForm.Any()),
+                        JsonForm.Member(BasisName, JsonForm.Text()),
+                        JsonForm.Optional(RefusedName, JsonForm.Text()),
+                        JsonForm.Optional(SaysName, JsonForm.Text())),
+                    allowEmpty: true)));
+
         /// <summary>形が違えば <see cref="FormatException"/>。</summary>
         public static SampleValueTable Read(string json)
         {
@@ -163,15 +188,13 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(json));
             }
 
-            Dictionary<string, object> root = Members(Parse(json), TypesName, RowsName);
+            IDictionary<string, object> root = (IDictionary<string, object>)Form.Read(json);
             List<SampleValueRow> rows = new List<SampleValueRow>();
             HashSet<string> kinds = new HashSet<string>(StringComparer.Ordinal);
             string previous = null;
-            foreach (object item in Array(root[TypesName], TypesName))
+            foreach (IDictionary<string, object> members in Items(root, TypesName))
             {
-                Dictionary<string, object> members =
-                    Members(item, new[] { TypeNameName, DefaultName, SecondName }, FileName);
-                string typeName = Text(members[TypeNameName], TypeNameName);
+                string typeName = (string)members[TypeNameName];
                 if (previous != null
                     && string.CompareOrdinal(previous, typeName) > 0)
                 {
@@ -193,26 +216,21 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>行ごとに渡す値。行キーの序数の昇順で並ぶ。</summary>
-        private static IList<SampleCallRow> Calls(Dictionary<string, object> root)
+        private static IList<SampleCallRow> Calls(IDictionary<string, object> root)
         {
             List<SampleCallRow> calls = new List<SampleCallRow>();
             string previous = null;
-            foreach (object item in Array(root[RowsName], RowsName))
+            foreach (IDictionary<string, object> members in Items(root, RowsName))
             {
-                Dictionary<string, object> members = Members(
-                    item,
-                    new[] { SignatureKeyName, ArgumentsName, BasisName },
-                    RefusedName,
-                    SaysName);
-                string key = Text(members[SignatureKeyName], SignatureKeyName);
+                string key = (string)members[SignatureKeyName];
                 if (previous != null && string.CompareOrdinal(previous, key) > 0)
                 {
                     throw new FormatException("序数の昇順で並んでいない: " + key);
                 }
 
                 previous = key;
-                Dictionary<string, object> arguments =
-                    members[ArgumentsName] as Dictionary<string, object>;
+                IDictionary<string, object> arguments =
+                    members[ArgumentsName] as IDictionary<string, object>;
                 if (arguments == null)
                 {
                     throw new FormatException(ArgumentsName + " は項目の組でなければならない。");
@@ -230,16 +248,16 @@ namespace PmxEditorMcp.SignatureDump
                 calls.Add(new SampleCallRow(
                     key,
                     arguments,
-                    Text(members[BasisName], BasisName),
-                    denies ? Text(refused, RefusedName) : null,
-                    denies ? Text(says, SaysName) : null));
+                    (string)members[BasisName],
+                    denies ? (string)refused : null,
+                    denies ? (string)says : null));
             }
 
             return calls;
         }
 
         /// <summary>ファイルの決めごと。持たない行では null。拡張子は点から始まる。</summary>
-        private static SampleFile File(Dictionary<string, object> members)
+        private static SampleFile File(IDictionary<string, object> members)
         {
             object value;
             if (!members.TryGetValue(FileName, out value))
@@ -247,91 +265,20 @@ namespace PmxEditorMcp.SignatureDump
                 return null;
             }
 
-            Dictionary<string, object> file = Members(value, KindName, ExtensionName, PurposeName);
-            string extension = Text(file[ExtensionName], ExtensionName);
+            IDictionary<string, object> file = (IDictionary<string, object>)value;
+            string extension = (string)file[ExtensionName];
             if (!extension.StartsWith(".", StringComparison.Ordinal) || extension.Length < 2)
             {
                 throw new FormatException(ExtensionName + " は点から始まらなければならない。");
             }
 
-            return new SampleFile(
-                Text(file[KindName], KindName), extension, Text(file[PurposeName], PurposeName));
+            return new SampleFile((string)file[KindName], extension, (string)file[PurposeName]);
         }
 
-        private static object Parse(string json)
+        private static IEnumerable<IDictionary<string, object>> Items(
+            IDictionary<string, object> root, string name)
         {
-            try
-            {
-                return new JavaScriptSerializer().DeserializeObject(json);
-            }
-            catch (Exception exception)
-            {
-                throw new FormatException("JSONとして読めない。", exception);
-            }
-        }
-
-        private static object[] Array(object value, string name)
-        {
-            object[] items = value as object[];
-            if (items == null)
-            {
-                throw new FormatException(name + " は項目の並びでなければならない。");
-            }
-
-            return items;
-        }
-
-        /// <summary>
-        /// 求める項目だけを持つ対象として読む。余分な項目を黙って捨てると、正本の形が崩れても
-        /// 気づけない。
-        /// </summary>
-        private static Dictionary<string, object> Members(object value, params string[] names)
-        {
-            return Members(value, names, new string[0]);
-        }
-
-        /// <summary>
-        /// 求める項目と、在ってもよい項目だけを持つ対象として読む。余分な項目を黙って捨てると、
-        /// 正本の形が崩れても気づけない。
-        /// </summary>
-        private static Dictionary<string, object> Members(
-            object value, string[] names, params string[] optional)
-        {
-            Dictionary<string, object> members = value as Dictionary<string, object>;
-            if (members == null)
-            {
-                throw new FormatException("項目の組でなければならない。");
-            }
-
-            foreach (string name in names)
-            {
-                if (!members.ContainsKey(name))
-                {
-                    throw new FormatException("項目が無い: " + name);
-                }
-            }
-
-            foreach (string name in members.Keys)
-            {
-                if (!names.Contains(name, StringComparer.Ordinal)
-                    && !optional.Contains(name, StringComparer.Ordinal))
-                {
-                    throw new FormatException("知らない項目がある: " + name);
-                }
-            }
-
-            return members;
-        }
-
-        private static string Text(object value, string name)
-        {
-            string text = value as string;
-            if (string.IsNullOrEmpty(text))
-            {
-                throw new FormatException(name + " は空でない文字列でなければならない。");
-            }
-
-            return text;
+            return ((object[])root[name]).Cast<IDictionary<string, object>>();
         }
     }
 }
