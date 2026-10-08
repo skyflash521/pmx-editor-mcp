@@ -65,6 +65,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return "{ \"rows\": [" + string.Join(",", rows) + "] }";
         }
 
+        private static string MapWithSetups(string[] setups, params string[] rows)
+        {
+            return "{ \"toolSetups\": [" + string.Join(",", setups) + "], \"rows\": ["
+                + string.Join(",", rows) + "] }";
+        }
+
+        private static string Setup(string tool, string window)
+        {
+            return @"{ ""tool"": """ + tool + @""", ""setup"": [{ ""tag"": ""callTool"",
+                       ""tool"": ""editor_open_window"", ""args"": { ""window"": """ + window
+                + @""" } }] }";
+        }
+
         /// <summary>2つの版を一時の置き場へ書いて、そのパスを渡す形にする。</summary>
         private string[] Paths(string before, string after)
         {
@@ -139,6 +152,59 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void LeavesOutRowsThatDidNotChange()
         {
             string map = Map(Row("T.M()"), Row("T.N()"));
+
+            Assert.Empty(Selected(map, map));
+        }
+
+        [Fact]
+        public void WritesTheToolWhoseSetupAloneChanged()
+        {
+            string[] selected = Selected(
+                MapWithSetups(
+                    new[] { Setup("motion_a", "A"), Setup("motion_b", "A") }, Row("T.M()")),
+                MapWithSetups(
+                    new[] { Setup("motion_a", "B"), Setup("motion_b", "A") }, Row("T.M()")));
+
+            Assert.Equal(new[] { "motion_a" }, selected);
+        }
+
+        [Fact]
+        public void WritesTheToolsWhoseSetupWasAddedOrRemoved()
+        {
+            string[] selected = Selected(
+                MapWithSetups(new[] { Setup("motion_a", "A") }, Row("T.M()")),
+                MapWithSetups(new[] { Setup("motion_b", "A") }, Row("T.M()")));
+
+            Assert.Equal(new[] { "motion_a", "motion_b" }, selected);
+        }
+
+        [Fact]
+        public void WritesTheToolsWhoseSetupsAppearedWhereNoneWereBefore()
+        {
+            string[] selected = Selected(
+                Map(Row("T.M()")),
+                MapWithSetups(new[] { Setup("motion_a", "A") }, Row("T.M()")));
+
+            Assert.Equal(new[] { "motion_a" }, selected);
+        }
+
+        [Fact]
+        public void WritesBothTheChangedRowsAndTheToolsWhoseSetupChanged()
+        {
+            string[] selected = Selected(
+                MapWithSetups(new[] { Setup("motion_a", "A") }, Row("T.M()"), Row("T.N()")),
+                MapWithSetups(
+                    new[] { Setup("motion_a", "B") },
+                    Row("T.M()"),
+                    Row("T.N()", "read", "別の根拠。")));
+
+            Assert.Equal(new[] { "T.N()", "motion_a" }, selected);
+        }
+
+        [Fact]
+        public void LeavesOutToolsWhoseSetupDidNotChange()
+        {
+            string map = MapWithSetups(new[] { Setup("motion_a", "A") }, Row("T.M()"));
 
             Assert.Empty(Selected(map, map));
         }

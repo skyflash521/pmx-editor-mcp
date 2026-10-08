@@ -6,15 +6,17 @@ using Xunit;
 namespace PmxEditorMcp.SignatureDump.Tests
 {
     /// <summary>
-    /// 自動E2E検査の段取りの重複を省く規則は、scripts/e2e-setups.mjs が持ち、同じ場所の
-    /// e2e-setups.test.mjs が確かめる。ここでは、その確認を node で走らせて、外れないことを見る。
+    /// 自動E2E検査の実行器が持つ規則は、scripts の *.test.mjs が確かめる。ここでは、その確認を node で
+    /// 走らせて、外れないことを見る。
     /// </summary>
-    public sealed class E2eSetupsScriptTests
+    public sealed class E2eScriptTests
     {
-        [Fact]
-        public void TheRuleThatDropsRedundantSetupsHoldsForItsCases()
+        [Theory]
+        [InlineData("e2e-setups.test.mjs")]
+        [InlineData("e2e-rows.test.mjs")]
+        public void TheRuleOfTheRunnerHoldsForItsCases(string name)
         {
-            string script = Path.Combine(RepositoryRoot(), "scripts", "e2e-setups.test.mjs");
+            string script = Path.Combine(RepositoryRoot(), "scripts", name);
             using (Process node = Process.Start(new ProcessStartInfo
             {
                 FileName = "node",

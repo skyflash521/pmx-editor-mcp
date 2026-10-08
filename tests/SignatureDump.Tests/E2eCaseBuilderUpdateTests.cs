@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Nodes;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -269,6 +270,50 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.True(Updated(cases).AfterViews, "段取りより前の呼び出しが先に回っている。");
             Assert.All(backs, c => Assert.True(c.AfterViews, "段取りに続く読み返しが先に回っている。"));
             Assert.All(others, c => Assert.False(c.AfterViews, "段取りを含まない組が後へ回っている。"));
+        }
+
+        [Fact]
+        public void EachCaseIsWrittenWithTheToolWhoseChecksItBelongsTo()
+        {
+            IList<E2eCase> cases = Built(
+                new Dictionary<string, IList<SetupOperation>>(StringComparer.Ordinal)
+                {
+                    {
+                        Reading,
+                        new[]
+                        {
+                            SetupOperation.CallTool(
+                                OpenWindow,
+                                new Dictionary<string, object>(StringComparer.Ordinal)
+                                {
+                                    { "window", "PmxViewForm.TransformView" },
+                                },
+                                null),
+                        }
+                    },
+                });
+            IList<JsonNode> written = JsonNode.Parse(E2eCaseJson.Compose(cases))["cases"]
+                .AsArray()
+                .ToList();
+            IList<JsonNode> writing = written
+                .Where(c => string.Equals(Text(c, "tool"), Writing, StringComparison.Ordinal))
+                .ToList();
+            IList<JsonNode> opening = written
+                .Where(c => string.Equals(Text(c, "tool"), OpenWindow, StringComparison.Ordinal))
+                .ToList();
+
+            Assert.NotEmpty(writing);
+            Assert.All(writing, c => Assert.Equal(Writing, Text(c, "owner")));
+            Assert.NotEmpty(opening);
+            Assert.All(opening, c => Assert.NotNull(Text(c, "owner")));
+            Assert.Contains(Writing, opening.Select(c => Text(c, "owner")));
+        }
+
+        private static string Text(JsonNode node, string name)
+        {
+            JsonNode value = node[name];
+
+            return value == null ? null : value.GetValue<string>();
         }
 
         [Fact]
