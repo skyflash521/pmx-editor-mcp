@@ -50,14 +50,11 @@ $released = gh release list -R $github --limit 1000 --json tagName --jq '.[].tag
 if ($LASTEXITCODE -ne 0) { throw "$github の Release の一覧を読めない。" }
 if (@($released) -contains $tag) { throw "RELEASE_EXISTS: $tag の Release は既に在る。" }
 
-$changelog = Join-Path ([System.IO.Path]::GetTempPath()) ("changelog-" + [guid]::NewGuid().ToString("N") + ".md")
-git show "${tag}:CHANGELOG.md" | Set-Content -Path $changelog -Encoding UTF8
-if ($LASTEXITCODE -ne 0) { throw "RELEASE_CHANGELOG: タグ $tag のコミットに CHANGELOG.md が無い。" }
-try {
-    $notes = (& (Join-Path $PSScriptRoot "changelog.ps1") -Path $changelog -Version $version -Notes) -join "`n"
-} finally {
-    Remove-Item -Path $changelog -Force -ErrorAction Ignore
+$changelog = Join-Path $repository "CHANGELOG.md"
+if (-not (Test-Path -LiteralPath $changelog -PathType Leaf)) {
+    throw "RELEASE_CHANGELOG: タグ $tag のコミットに CHANGELOG.md が無い。"
 }
+$notes = (& (Join-Path $PSScriptRoot "changelog.ps1") -Path $changelog -Version $version -Notes) -join "`n"
 
 $archive = @(pwsh -NoProfile -File (Join-Path $PSScriptRoot "package.ps1"))[-1]
 if ($LASTEXITCODE -ne 0) { throw "配布パッケージを組み立てられない。" }
