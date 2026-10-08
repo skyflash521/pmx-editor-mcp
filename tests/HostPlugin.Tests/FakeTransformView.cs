@@ -109,8 +109,15 @@ namespace PmxEditorMcp.Tests
 
         public FormWindowState WindowState { get; set; }
 
+        public bool FailsToUpdate { get; set; }
+
         public void UpdateView()
         {
+            if (FailsToUpdate)
+            {
+                throw new InvalidOperationException("TransformView を読み直せない。");
+            }
+
             Updates++;
         }
 
