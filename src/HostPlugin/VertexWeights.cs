@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using PEPlugin.Pmx;
+using PEPlugin.SDX;
 
 namespace PmxEditorMcp
 {
@@ -150,6 +151,41 @@ namespace PmxEditorMcp
             }
 
             return true;
+        }
+
+        public static void MirrorSdef(IPXVertex vertex, IPXVertex source, Func<V3, V3> mirror)
+        {
+            if (vertex == null)
+            {
+                throw new ArgumentNullException(nameof(vertex));
+            }
+
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (mirror == null)
+            {
+                throw new ArgumentNullException(nameof(mirror));
+            }
+
+            vertex.SDEF_C = mirror(source.SDEF_C);
+            vertex.SDEF_R0 = mirror(source.SDEF_R0);
+            vertex.SDEF_R1 = mirror(source.SDEF_R1);
+            if (!vertex.SDEF || vertex.Bone1 == null || vertex.Bone2 == null)
+            {
+                return;
+            }
+
+            V3 from = vertex.Bone1.Position;
+            V3 along = Vectors.Toward(vertex.Bone2.Position, from);
+            if (Vectors.HasLength(along))
+            {
+                vertex.SDEF_C = Vectors.Add(
+                    from,
+                    Vectors.Scale(along, Vectors.Dot(along, Vectors.Apart(vertex.Position, from, 1f))));
+            }
         }
 
         /// <summary>ボーンの入った枠を、先に現れた順に重なりなく並べる。</summary>

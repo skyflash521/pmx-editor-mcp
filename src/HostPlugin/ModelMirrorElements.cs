@@ -268,19 +268,13 @@ namespace PmxEditorMcp
             IPXVertex made = (IPXVertex)vertex.Clone();
             made.Position = Aside(vertex.Position);
             made.Normal = Aside(vertex.Normal);
-            made.SDEF_C = Aside(vertex.SDEF_C);
-            made.SDEF_R0 = Aside(vertex.SDEF_R0);
-            made.SDEF_R1 = Aside(vertex.SDEF_R1);
             VertexWeights.Write(
                 made,
                 VertexWeights.All(vertex)
                     .Select(share => new KeyValuePair<IPXBone, float>(
                         Instead(bones, share.Key, true), share.Value))
                     .ToList());
-            if (made.SDEF && made.Bone1 != null && made.Bone2 != null)
-            {
-                made.SDEF_C = Projected(made);
-            }
+            VertexWeights.MirrorSdef(made, vertex, Aside);
 
             return made;
         }
@@ -314,24 +308,6 @@ namespace PmxEditorMcp
             }
 
             return added;
-        }
-
-        /// <summary>
-        /// SDEFの中心を、2つのボーンを結ぶ線の上へ頂点を落とした点にする。2つのボーンが同じ位置に
-        /// あるときはいまの中心をそのまま返す。
-        /// </summary>
-        private static V3 Projected(IPXVertex vertex)
-        {
-            V3 from = vertex.Bone1.Position;
-            V3 along = Vectors.Toward(vertex.Bone2.Position, from);
-            if (!Vectors.HasLength(along))
-            {
-                return vertex.SDEF_C;
-            }
-
-            return Vectors.Add(
-                from,
-                Vectors.Scale(along, Vectors.Dot(along, Vectors.Apart(vertex.Position, from, 1f))));
         }
 
         private static int Deformed(
