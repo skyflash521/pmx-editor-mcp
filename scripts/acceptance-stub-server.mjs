@@ -1,8 +1,8 @@
 // 受入の実行器を確かめるための、応答を作って返すだけのMCPサーバー。
 // 定義が書いた段の順に呼ばれているかを見て、期待どおりの応答と、期待と違う応答を選んで返す。
-// 実機のエディタもブリッジも要らないので、常設の検査から走らせられる。
-// 起動したことにするエディタの番号と、写したことにするビューの大きさは前置から受け取る
-// ——同じ値を操作役の相手も使うので、決めるのは1か所にする。
+// 実機のエディタもブリッジも要らない。
+// 起動したことにするエディタの番号と、写したことにするビューの大きさは前置から受け取る。操作役の
+// 相手も同じ値を使う。
 
 import fs from "node:fs";
 import path from "node:path";
@@ -117,7 +117,7 @@ function differ(value) {
     return null;
 }
 
-/** 覚えた値を差し込む。実行器と同じ差し込み方をしないと、引数を突き合わせられない。 */
+/** 覚えた値を差し込む。差し込み方は実行器と同じにする。 */
 function fill(node, remembered) {
     if (Array.isArray(node)) {
         return node.map((item) => fill(item, remembered));
@@ -143,12 +143,9 @@ function fill(node, remembered) {
     return filled;
 }
 
-/**
- * 指定した大きさのPNGを詰めた文字列。中身は shade の一色で塗る——先に返した画像と違う
- * ものを返す段が、大きさを変えずに別の画像を作れるようにするためである。
- */
+/** 指定した大きさのPNGを詰めた文字列。中身は shade の一色で塗る。 */
 function png(width, height, shade) {
-    // 各行の先頭の1バイトは絞り方の指定なので0のまま置き、その後ろだけを塗る。
+    // 各行の先頭の1バイトは、絞り方の指定である。
     const line = Buffer.alloc(width * 3 + 1);
     line.fill(shade, 1);
     const raw = Buffer.concat(Array.from({ length: height }, () => line));
@@ -177,10 +174,8 @@ function png(width, height, shade) {
 }
 
 /**
- * 段が画像を期待していれば、返す画像を詰めた文字列。違えるときは大きさを変える——写した実寸と
- * 合わないので、突き合わせている実行器だけが落ちる。先に覚えた画像と違うことを求める段では、
- * 塗る値を変えて別の画像を返す。大きさで違えると、写した実寸との突き合わせを同じ段へ書けなく
- * なる。違えるときだけ同じ値で塗る——同じ画像を通す実行器がそこで落ちる。
+ * 段が画像を期待していれば、返す画像を詰めた文字列。違えるときは大きさを変える。先に覚えた画像と
+ * 違うことを求める段では、塗る値を変えて別の画像を返し、違えるときだけ同じ値で塗る。
  */
 function drawn(broken, options, differing) {
     const shade = differing && broken !== "image.differsFrom" ? DIFFERING_SHADE : PLAIN_SHADE;
@@ -189,8 +184,7 @@ function drawn(broken, options, differing) {
 }
 
 /**
- * 接続先の知らせの行。期待が相手を述べていれば、その相手を名乗る。違えるときは別の相手を
- * 名乗る——知らせだけが期待から外れるので、知らせを突き合わせている実行器だけが落ちる。
+ * 接続先の知らせの行。期待が相手を述べていれば、その相手を名乗る。違えるときは別の相手を名乗る。
  */
 function notice(expect, remembered, firstEditor, broken) {
     const shift = broken ? 1 : 0;
@@ -221,8 +215,6 @@ function compose(step, broken, recorded, options, remembered) {
     }
 
     if (expect.image !== undefined) {
-        // 画像は画像の塊で返すので本文は空にする。文字列で返させるのは違え方の1つで、画像を
-        // 本文から読んでいる実行器がそれで通ってしまう。
         return options.broken === "imageAsText"
             ? JSON.stringify(drawn(broken, options, expect.image.differsFrom !== undefined))
             : "";
@@ -232,8 +224,6 @@ function compose(step, broken, recorded, options, remembered) {
     if (expect.values !== undefined) {
         value = {};
         for (const wanted of expect.values) {
-            // 返らないことを求める項目は載せない。違えるときだけ載せる——載っていても通す
-            // 実行器がそこで落ちる。
             if (wanted.absent === true) {
                 if (broken === "values.absent") {
                     put(value, wanted.path, 0);
@@ -242,8 +232,6 @@ function compose(step, broken, recorded, options, remembered) {
                 continue;
             }
 
-            // 返ること自体を求める項目は、値を選ばずに載せる。違えるときは載せない——返らなくても
-            // 通す実行器がそこで落ちる。
             if (wanted.present === true) {
                 if (broken !== "values.present") {
                     put(value, wanted.path, 0);
@@ -259,7 +247,6 @@ function compose(step, broken, recorded, options, remembered) {
     if (expect.events !== undefined) {
         const wanted = fill(expect.events, remembered);
         value = value ?? {};
-        // 違えるときは並びを逆にする——同じものが揃っていても順が違えば期待を満たさない。
         const told = broken === "events" ? [...wanted.types].reverse() : wanted.types;
         value.events = told.map((type, at) => ({
             seq: at + 1, type, sourceHandle: wanted.sourceHandle, payload: {},
@@ -282,8 +269,6 @@ function compose(step, broken, recorded, options, remembered) {
 
     value = value ?? {};
 
-    // 載せないと決めた道へは、覚えさせる値も載せない。ここで載せ直すと、違えた回でも項目が
-    // 揃ってしまい、落ちるはずの実行器が通る。
     if (!omitted(step.expect.values, broken, step.record.path)) {
         put(value, step.record.path, recorded);
     }
@@ -326,11 +311,8 @@ if (error !== undefined) {
 
 const read = JSON.parse(fs.readFileSync(parsed.cases, "utf8"));
 
-// 実行器はシナリオを順に通し、覚えた値をまたいで持ち越すので、こちらも1つの並びとして扱う。
 const steps = read.scenarios.flatMap((one) => one.steps);
 
-// 進み具合は持ち越す。サーバーを起こし直す段があるので、この手続きの中だけでは続かない。
-// 起こされた回数も数える——起こし直す段をこなしたかどうかは、これでしか外から分からない。
 const held = fs.existsSync(parsed.progress)
     ? JSON.parse(fs.readFileSync(parsed.progress, "utf8"))
     : { pos: 0, calls: 0, launched: 0, starts: 0, remembered: {} };
@@ -353,8 +335,8 @@ function keep() {
 keep();
 
 /**
- * ツールを呼ぶ段まで進める。間に挟まる段は実行器の側がこなすので、ここでは覚える値だけを
- * 同じ順に作って辻褄を合わせる——起動したエディタの番号は操作役の相手と同じ並びになる。
+ * ツールを呼ぶ段まで進める。間に挟まる段は実行器の側がこなす。ここでは覚える値だけを同じ順に作る。
+ * 起動したエディタの番号は、操作役の相手と同じ並びになる。
  */
 function advance() {
     while (pos < steps.length && steps[pos].kind !== "tool") {
@@ -385,28 +367,19 @@ function call(id, params) {
 
     const broken = mismatch(step, params.name, params.arguments, remembered);
     if (broken !== null) {
-        // 呼ばれ方が定義と違うことは、実行器の側の誤りである。期待を満たしえない本文で知らせる。
         keep();
         reply(id, { isError: true, content: [{ type: "text", text: broken }] });
 
         return;
     }
 
-    // 覚えさせる値は段ごとに違えておく——同じ値を返すと、借りる名前を取り違えた実行器の引数も
-    // 定義どおりに見えてしまう。
     if (step.record !== undefined) {
         remembered.set(step.record.name, calls);
     }
 
-    // 違えるのは、指定した番の呼び出しの、指定した形だけとする。まとめて違えると、どの形を
-    // 突き合わせているのかを見分けられない——本文が違うだけで落ちるので、知らせも成否も見て
-    // いない実行器が通ってしまう。
     const spoiled = parsed.at === calls ? parsed.broken : null;
     const ok = step.expect.ok !== false;
 
-    // 書き込みに成功したことにした段では、渡された置き場を実際に作る。後の段がその実在を
-    // 確かめるので、作らないと実行器の側の誤りに見える。作らないこと自体も違え方の1つで、
-    // 実在を確かめる段をこなしていない実行器がこれで落ちる。
     // 置き場は、直に受け取るツールと、受け手ごとの組で受け取るツールのどちらの綴りでも来る。
     const written = typeof params.arguments.path === "string"
         ? params.arguments.path

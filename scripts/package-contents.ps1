@@ -1,8 +1,6 @@
 # 組み立てた配布パッケージの中身を確かめる。
 # 並べたものが過不足なく在ること、再配布を禁じられている物が混じっていないこと、写しが元と
 # バイトで一致すること、実行ファイルが名乗るバージョンが渡されたバージョンと合うことを見る。
-# 組み立てと別に呼べるようにしてあるのは、中身を違えたときに落ちることを確かめられるようにする
-# ためである——落ちない検査は、通っても何も言っていない。
 [CmdletBinding()]
 param(
     # 確かめる中身の置き場。
@@ -51,8 +49,6 @@ if ($List) {
 
 $found = @(Get-ChildItem -Path $Staged -Recurse -File | ForEach-Object { $_.Name } | Sort-Object)
 
-# 混じってはならない物を先に見る。過不足を先に見ると、混じった物は数の違いで落ちて、この判定へ
-# 届かない。
 foreach ($name in $Forbidden) {
     if ($found -contains $name) { throw "PACKAGE_FORBIDDEN: 再配布できない物が混じっている: $name" }
 }
@@ -71,9 +67,7 @@ foreach ($name in $Copies.Keys) {
     }
 }
 
-# 名乗るバージョンは4つ組で、与えられたバージョンは3つ組で書く。書き出しが同じだけでは合ったことにならない
-# ——末尾の数が桁を増やした成果物が、与えられたバージョンを前に置いた一致で通ってしまう。数の組にそろえてから
-# 比べる。
+# 名乗るバージョンは4つ組で、与えられたバージョンは3つ組で書く。
 $wanted = [version]$Version
 foreach ($name in $Versioned) {
     $said = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $Staged $name)).FileVersion

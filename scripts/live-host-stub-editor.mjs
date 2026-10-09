@@ -1,9 +1,6 @@
 // 実機動作確認を確かめるための、待受だけを持つエディタの代わり。
 // 自分のプロセスIDから待受の名前とログの道を決め、状態の綴りを見て待受を開け閉めする。閉じよと
-// 言われたら終わる。実機のエディタもホストも要らないので、常設の検査から走らせられる。
-//
-// 待受を実物と同じ名前で本当に開くのは、実行器が待受の有無を名前の一覧から見るからである。
-// 一覧に現れるのは開いている待受だけなので、有無を作って見せることはできない。
+// 言われたら終わる。実機のエディタもホストも要らない。
 
 import fs from "node:fs";
 import net from "node:net";
@@ -74,7 +71,6 @@ function tick() {
     try {
         wanted = fs.readFileSync(state, "utf8").trim();
     } catch {
-        // 置き場がまだ無い回は、起こされた直後として開けたままにする。
     }
 
     if (wanted === CLOSED) {
@@ -83,8 +79,6 @@ function tick() {
         process.exit(0);
     }
 
-    // 停めても待受を残すのが、待受の有無を見る側を違える形である。残すのは1つ目の停止だけに
-    // する——どの停止でも残すと、切断を待つ側が待ちきれるまで実行が止まる。
     const stopped = wanted !== RUNNING;
     if (stopped && broken === "pipe" && !claimed && !fs.existsSync(marker)) {
         fs.writeFileSync(marker, String(process.pid), "utf8");

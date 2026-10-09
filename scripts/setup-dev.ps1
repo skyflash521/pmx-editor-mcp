@@ -15,7 +15,6 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# 外部コマンドの非0終了は終了エラーにしない。終了コードを見て自分で失敗させる。
 $PSNativeCommandUseErrorActionPreference = $false
 
 $root = Split-Path -Parent $PSScriptRoot

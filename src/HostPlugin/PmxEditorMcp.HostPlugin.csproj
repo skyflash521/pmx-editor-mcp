@@ -2,12 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
-    <!-- 実行対象は x64 版エディタ(PmxEditor_x64.exe)のプロセスだが、
-         ホストは呼び出し側のビット数に依存しないため AnyCPU でビルドする。 -->
     <PlatformTarget>AnyCPU</PlatformTarget>
     <AssemblyName>PmxEditorMcp</AssemblyName>
     <RootNamespace>PmxEditorMcp</RootNamespace>
-    <!-- SDKを読むので、導入ディレクトリの指定が要る。 -->
     <RequiresPmxEditorDir>true</RequiresPmxEditorDir>
   </PropertyGroup>
 
@@ -23,7 +20,6 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
-    <!-- 同梱依存ゼロでJSONを扱うため、.NET Framework 付属の JavaScriptSerializer を使う。 -->
     <Reference Include="System.Web.Extensions" />
   </ItemGroup>
 
@@ -31,10 +27,8 @@
     <Compile Include="..\SignatureDump\TextMatch.cs" Link="TextMatch.cs" />
   </ItemGroup>
 
-  <!-- 行キーからSDKへの中継は、ビルドのたびに作り直して組み込む。配布物へ入るのは出来た本文
-       だけで、呼び出し先を名前で引く経路は持たない。 -->
   <PropertyGroup>
-    <!-- 中間の置き場は本文の評価の時点では決まっていないので、その元から組み立てる。 -->
+    <!-- 本文の評価の時点では、中間の置き場はまだ決まっていない。 -->
     <RelaySourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedSdkRelay.g.cs</RelaySourcePath>
     <ToolBindingSourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedTools.g.cs</ToolBindingSourcePath>
     <UiStructureSourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedUiStructure.g.cs</UiStructureSourcePath>
@@ -47,8 +41,7 @@
     <CommonContractPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\common-contract.json</CommonContractPath>
   </PropertyGroup>
 
-  <!-- 生成器の在り処は、組み立てた側が返すものを使う。組み立ての指定によって出力先は動くので、
-       こちらで綴りから組み立てると、実際に出来た場所と食い違う。 -->
+  <!-- 生成器の出力先は、組み立ての指定によって動く。 -->
   <Target Name="BuildRelayGenerator">
     <MSBuild Projects="$(MSBuildThisFileDirectory)..\SignatureDump\PmxEditorMcp.SignatureDump.csproj"
              Properties="Configuration=$(Configuration)">
@@ -59,7 +52,6 @@
     </PropertyGroup>
   </Target>
 
-  <!-- 作り直しの要否は生成器の側が中身で判じるので、ここでは入力と出力の比べをしない。 -->
   <Target Name="GenerateRelaySource"
           BeforeTargets="BeforeCompile"
           DependsOnTargets="EnsurePmxEditorDir;BuildRelayGenerator">
@@ -69,7 +61,6 @@
     </ItemGroup>
   </Target>
 
-  <!-- ツールの名前から呼ぶ行への結び付きも、同じ定義からビルドのたびに作り直して組み込む。 -->
   <Target Name="GenerateToolBindingSource"
           BeforeTargets="BeforeCompile"
           DependsOnTargets="EnsurePmxEditorDir;BuildRelayGenerator">
@@ -79,7 +70,6 @@
     </ItemGroup>
   </Target>
 
-  <!-- 画面の構造の台帳も、ビルドのたびに本文へ直して組み込む。埋め込み資源にはしない。 -->
   <Target Name="GenerateUiStructureSource"
           BeforeTargets="BeforeCompile"
           DependsOnTargets="BuildRelayGenerator">

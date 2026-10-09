@@ -1,14 +1,12 @@
 # ホストを、このセッションの導入先(editor-dir.ps1 の Get-SessionEditorDirectory)へ配置する。
-# 配置先は起動中のエディタがロックしているので、まずその導入先から動いているエディタを閉じる。
+# 配置先は起動中のエディタがロックしている。その導入先から動いているエディタを閉じてから配置し、
 # ほかの導入先から動いているエディタには触れない。
-# 配置の指定はこの1本が持つ——受入の前置も実機動作確認もここを通すので、配置の仕方が分かれない。
 [CmdletBinding()]
 param()
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# 外部コマンドの非0終了は終了エラーにしない。終了コードを見て自分で失敗させる。
 $PSNativeCommandUseErrorActionPreference = $false
 
 . (Join-Path $PSScriptRoot 'editor-dir.ps1')
@@ -27,7 +25,7 @@ $PluginDirectoryName = "_plugin"
 $PathFileName = "user.path"
 
 # 振り替えの指定のファイルで、行頭に置くと注記になる文字。導入物が既定で置いていく説明と例が
-# この形で並ぶので、参照先として読むと在りもしないドライブを指すことになる。
+# この形で並ぶ。
 $NoteMark = ";"
 
 function Get-LoadDirectories {
@@ -48,8 +46,7 @@ function Get-LoadDirectories {
     }
 }
 
-# 配置先は起動中のエディタがロックしている。開いたままだとコピーに失敗する(MSB3027/MSB3021)ので
-# 先に閉じる。数えるのは動いているエディタで、待受ではない——ホストを停止させたエディタはパイプを
+# 配置先を開いたままだとコピーに失敗する(MSB3027/MSB3021)。ホストを停止させたエディタはパイプを
 # 持たないが、配置先のDLLは掴んだままである。
 & $control -Action editors |
     ForEach-Object { [int]$_ } |
@@ -63,8 +60,6 @@ $pluginDirectory = Join-Path $editorDirectory $PluginDirectoryName
 $deployed = Join-Path (Join-Path $pluginDirectory "User") $HostAssemblyName
 if (-not (Test-Path $deployed)) { throw "配置したはずのホストが無い: $deployed" }
 
-# 組み立てにドライブの解決を伴わせない。読み込み元として書かれていない行が紛れていても、
-# 在りもしないドライブを指す旨で落ちるのではなく、そこに複製が無いこととして流す。
 $duplicates = @(Get-LoadDirectories -PluginDirectory $pluginDirectory |
     ForEach-Object { [System.IO.Path]::Combine($_, $HostAssemblyName) } |
     Where-Object { Test-Path -LiteralPath $_ -ErrorAction Ignore })

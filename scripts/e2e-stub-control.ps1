@@ -7,8 +7,7 @@ param(
     [ValidateSet("answer", "capture", "open")]
     [string]$Action,
 
-    # 操作の相手を指す名前。代わりでは使わないが、実行器が必ず渡す。実機のプロセスIDと紛れない
-    # 名前を使うので、数に限らない。
+    # 操作の相手を指す名前。代わりでは使わないが、実行器が必ず渡す。
     [string]$ProcessId,
 
     # 写し取るビューの名前。capture で使う。実物と同じく、並べて渡された分をまとめて相手にする。
@@ -29,7 +28,6 @@ switch ($Action) {
     'open' {
     }
     'answer' {
-        # 応答待ちの表示は出ないので、閉じたものは無い。
     }
     'capture' {
         $names = @($View)

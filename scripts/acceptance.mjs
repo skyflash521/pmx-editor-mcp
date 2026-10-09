@@ -15,9 +15,7 @@ import { McpClient } from "./mcp-client.mjs";
 
 /**
  * 操作役と前置を待つ上限。操作役は1回の呼び出しの中で待ちを最大3つ重ねる(押す・待受が
- * 消える・状態区分が変わる)ので、その1つあたりの上限の3倍を上回る値を採る。ここが先に
- * 切れると、操作役が自分の上限で諦める前に外から打ち切ることになり、何が起きたのかが
- * 分からなくなる。
+ * 消える・状態区分が変わる)。その1つあたりの上限の3倍を上回る値を採る。
  */
 const CONTROL_TIMEOUT_MS = 180000;
 
@@ -36,11 +34,7 @@ const HOST_VERSION_CLOSE = ")";
 /** 警告の行の書き出し。ブリッジの実装が定める。 */
 const WARNING_PREFIX = "警告: ";
 
-/**
- * エディタとホストの操作役。画面と稼働状態を触るのはこの1本に寄せる。
- * 差し替えられるのは、実行器そのものを実機のエディタ無しで確かめるためである——既定は実物で、
- * 開くのは実行時の引数に限る。
- */
+/** エディタとホストの操作役。既定は実物で、差し替えは実行時の引数に限る。 */
 const CONTROL_SCRIPT = path.join(
     path.dirname(url.fileURLToPath(import.meta.url)), "host-control.ps1");
 
@@ -56,7 +50,7 @@ const EXIT_INVALID_ARGUMENTS = 2;
 const EXIT_INPUT_UNAVAILABLE = 3;
 
 /**
- * 引数を読み分ける。前置のスクリプトとその引数は差し替え点なので、この実行器は中身を解さず
+ * 引数を読み分ける。前置のスクリプトとその引数は差し替え点で、この実行器は中身を解さず
  * そのまま渡す。
  */
 function parseArguments(args) {
@@ -93,8 +87,7 @@ function parseArguments(args) {
 
 /**
  * PowerShellのスクリプトを起こし、書き出したものと、落ちたときの事情を返す。
- * 出力の文字コードは端末の設定で変わるので、読めない並びは読めないまま置いて、数と綴りだけを
- * 確かに読めるようにする。
+ * 出力の文字コードは端末の設定で変わる。読めない並びは読めないまま置く。
  */
 function invokeScript(script, args, timeoutMs) {
     const done = spawnSync(
@@ -285,8 +278,7 @@ function prepare(setup, setupArgs) {
 
 /**
  * 覚えた値を差し込む。差し込む先は定義の中の `$from` の組で、覚えていなければ投げる。
- * 文字列は環境変数の名前も広げる——置き場を指す値は、ファイルの用意に渡す先とツールへ渡す先の
- * 両方に現れるので、片方だけを広げると別の場所を指すことになる。
+ * 文字列は環境変数の名前も広げる。
  */
 function fill(node, remembered) {
     if (Array.isArray(node)) {
@@ -342,8 +334,6 @@ function split(text) {
     const lines = body.split("\n");
     const warned = (line) => line.startsWith(WARNING_PREFIX);
 
-    // 警告は書き出しで見分ける。先頭の1行を値と決め打つと、値の行を持たない画像のツールで、
-    // 警告を値と読み違える。
     return {
         notice,
         value: lines.filter((line) => !warned(line)).join("\n"),
@@ -413,11 +403,8 @@ function describeSize(size) {
 }
 
 /**
- * 画像の期待を確かめる。返った画像が写しより小さければ縮小の警告が要り、同じ大きさなら要らない
- * ——どちらであるかは、写した実寸と返った画像の実寸だけで決まる。
- *
- * 画像は本文でなくMCPの画像の塊で返る。本文の文字列から読むと、文字列で返してしまっていても
- * 気づけない。
+ * 画像の期待を確かめる。返った画像が写しより小さければ縮小の警告が要り、同じ大きさなら要らない。
+ * 画像は本文でなくMCPの画像の塊で返る。
  */
 function judgeImage(expected, response, parsed, remembered) {
     if (response.images.length !== 1) {
@@ -439,14 +426,12 @@ function judgeImage(expected, response, parsed, remembered) {
             return "まだ覚えていない画像を指しています: " + expected.differsFrom;
         }
 
-        // 視点を変えて撮った2枚が同じ中身なら、指した視点が画像へ効いていない。
         if (remembered.get(expected.differsFrom) === image.data) {
             return "覚えた画像と同じものが返りました: " + expected.differsFrom;
         }
     }
 
     if (expected.capturedAs === undefined) {
-        // 写しと結び付けない画像でも、縮めたと言うからには縮めた先を述べていなければならない。
         const named = parsed.warnings.some((warning) => warning.includes(describeSize(returned)));
 
         return parsed.warnings.length === 0 || named
@@ -480,10 +465,7 @@ function judgeImage(expected, response, parsed, remembered) {
     return null;
 }
 
-/**
- * 取り出したイベントの期待を確かめる。並べた種別は、その順に現れることまで見る——起きた順に
- * 読み戻せることが要求なので、揃っているだけでは足りない。
- */
+/** 取り出したイベントの期待を確かめる。並べた種別は、その順に現れることまで見る。 */
 function judgeEvents(expected, parsed, remembered) {
     let value;
     try {
@@ -637,7 +619,6 @@ function takeFromResponse(step, response) {
         return null;
     }
 
-    // 画像は本文に現れないので、返った画像そのものを覚える。
     if (step.record.shape === "image") {
         if (response.images.length !== 1) {
             throw new Error(
@@ -653,8 +634,8 @@ function takeFromResponse(step, response) {
 }
 
 /**
- * 動いているエディタのプロセスID。待受で数えない——ホストを停止させたエディタはパイプを
- * 持たないが、実行ファイルは掴んだまま残るので、閉じ残すと次の配置が失敗する。
+ * 動いているエディタのプロセスID。待受では数えない。ホストを停止させたエディタはパイプを
+ * 持たないが、実行ファイルは掴んだまま残る。
  */
 async function listEditors(control) {
     const done = await control.run(["-Action", "editors"], CONTROL_TIMEOUT_MS);
@@ -667,10 +648,7 @@ async function listEditors(control) {
         .filter((id) => Number.isInteger(id));
 }
 
-/**
- * 後始末をして、成ったかどうかを返す。ここで投げさせると、走らせた結果の判定も終了区分も
- * 書き出す前に失われる。
- */
+/** 後始末をして、成ったかどうかを返す。 */
 async function cleanUp(control) {
     try {
         await closeEditors(control);
@@ -776,7 +754,7 @@ function handleFile(step) {
 
 /**
  * 1本のシナリオを走らせ、こなした段の数を数える。合っていれば理由は null、違っていればその理由を
- * 返す。数を返すのは、途中で飛ばした実行器を合格と見分けるためである。
+ * 返す。
  */
 async function runScenario(scenario, client, remembered, control) {
     let done = 0;

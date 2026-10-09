@@ -2,14 +2,11 @@
 # 合否は、実行したコマンドとクライアントが返す出力と終了コードだけで決める——画面の見た目は
 # 材料にしない。
 #
-# エディタは1つだけ起こし、件を順に通す。起こし直すと、確かめる事柄の数だけ起動の待ち時間が
-# 積み上がる。状態を変えたまま終わるのは最後の件だけで、途中の件は変えたものをその件の中で
-# 元へ戻す——持ち越す状態が無いので、1つを使い回しても、どの件が何を確かめたのかは実行ごとに
-# 変わらない。
+# エディタは1つだけ起こし、件を順に通す。状態を変えたまま終わるのは最後の件だけで、途中の件は
+# 変えたものをその件の中で元へ戻す。
 [CmdletBinding()]
 param(
-    # エディタとホストの操作役。差し替えられるのは、この実行器そのものを実機のエディタ無しで
-    # 確かめるためである——既定は実物で、開くのは実行時の引数に限る。
+    # エディタとホストの操作役。既定は実物で、差し替えは実行時の引数に限る。
     [string]$Control = 'scripts/host-control.ps1',
 
     # 待受へ繋いで応答を確かめる確認クライアント。
@@ -22,7 +19,6 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# 外部コマンドの非0終了は終了エラーにしない。終了コードを見て自分で合否にする。
 $PSNativeCommandUseErrorActionPreference = $false
 
 Set-Location (Split-Path -Parent $PSScriptRoot)
@@ -64,8 +60,7 @@ $RenewalMarks = @('取得', '失効', '取得')
 # ホストのログが1行の頭に置く時刻の書き方。
 $LogTimeFormat = 'yyyy-MM-dd HH:mm:ss.fff'
 
-# 確認クライアントが待ちへ入るのと終わるのを待つ上限の秒数。諦める値なので、この実行器を囲う
-# 検査の上限より内側に置く——外側で先に打ち切られると、諦めたことを言う経路へ一度も入らない。
+# 確認クライアントが待ちへ入るのと終わるのを待つ上限の秒数。この実行器を囲う検査の上限より内側に置く。
 $WaitSeconds = 3
 
 function Get-PipeName {
@@ -113,8 +108,7 @@ function Set-EnvironmentValue {
 function Start-Editor {
     <#
         .SYNOPSIS
-        エディタを1つ起こし、そのプロセスIDを返す。応答サイズ予算の環境変数は、ホストが起動時に
-        一度だけ読むので、設定したまま起こさないよう外してから起こす。
+        エディタを1つ起こし、そのプロセスIDを返す。応答サイズ予算の環境変数は、ホストが起動時に一度だけ読む。
     #>
     param([switch]$WithDebugHooks)
 
@@ -139,7 +133,7 @@ function Get-SharedEditor {
     <#
         .SYNOPSIS
         件が共有するエディタ。初めて要るときに起こし、最後の件が閉じるまで開いたままにする。
-        検査からだけ使う入口を開いて起こす——コネクタの取り直しがその入口を要る。
+        検査からだけ使う入口を開いて起こす。コネクタの取り直しには、その入口が要る。
     #>
     if ($script:SharedEditor -eq 0) {
         $script:SharedEditor = Start-Editor -WithDebugHooks
@@ -151,8 +145,7 @@ function Get-SharedEditor {
 function Clear-SharedEditor {
     <#
         .SYNOPSIS
-        共有しているものを閉じた件が、閉じたことを知らせる。閉じ終えた相手をもう一度閉じにいかない
-        ようにする。
+        共有しているものを閉じた件が、閉じたことを知らせる。
     #>
     $script:SharedEditor = 0
 }
@@ -179,8 +172,8 @@ function Stop-Editor {
 function Invoke-Client {
     <#
         .SYNOPSIS
-        確認クライアントを走らせ、書き出したものと終了コードを返す。要求を省略したときは
-        クライアント自身が応答の中身まで確かめるので、終了コードだけで合否を判じてよい。
+        確認クライアントを走らせ、書き出したものと終了コードを返す。要求を省略したときは、
+        クライアント自身が応答の中身まで確かめる。
     #>
     param([int]$EditorProcessId, [string[]]$Requests = @())
 
@@ -242,8 +235,8 @@ function Start-HoldingClient {
 function Wait-HoldingClient {
     <#
         .SYNOPSIS
-        接続を保つクライアントが終わるのを待ち、書き出したものと終了コードを返す。終わらない
-        ことも結果なので、待ちきれなければそうと分かる形で失敗させる。
+        接続を保つクライアントが終わるのを待ち、書き出したものと終了コードを返す。待ちきれなければ、
+        そうと分かる形で失敗させる。
     #>
     param($Held)
 
@@ -262,8 +255,8 @@ function Wait-HoldingClient {
 function Get-HostLogLines {
     <#
         .SYNOPSIS
-        今回の起動以降に書かれた、その印を持つログの行。ログはプロセスIDごとのファイルへ追記する
-        ので、同じプロセスIDが再び割り当てられると前回の記録も残る。起動の時刻で切って数える。
+        今回の起動以降に書かれた、その印を持つログの行。ログはプロセスIDごとのファイルへ追記され、
+        同じプロセスIDが再び割り当てられると前回の記録も残る。
     #>
     param([int]$EditorProcessId, [string]$Mark)
 
@@ -293,13 +286,12 @@ function Assert-Client {
     }
 }
 
-# 実行器が先に配置を済ませていれば繰り返さない。単独で走らせたときは印が無いので自分で行う。
 if ($env:PMX_EDITOR_MCP_PREPARED -ne '1') { & $deploy | Out-Null }
 
 $cases = [ordered]@{}
 
 $cases['起動の記録'] = {
-    # 共有するエディタを起こす最初の件。起こした直後の記録を見るので、この順でなければならない。
+    # 起こした直後の記録を見る件で、共有するエディタを起こす最初の件でなければならない。
     $editor = Get-SharedEditor
     $started = @(Get-HostLogLines -EditorProcessId $editor -Mark $StartedMark)
     if ($started.Count -ne 1) {
@@ -311,8 +303,8 @@ $cases['バージョンの食い違い'] = {
     # 断られるのは繋ぎに来た側だけで、待受もホストの状態も変わらない。
     $editor = Get-SharedEditor
 
-    # バージョンが合わなければホストは断って接続を切る。切ったことは、こちらから閉じずに待てば分かる
-    # ——クライアントは、切断が要るエラー応答のあとの切断を専用の終了コードで名乗る。
+    # バージョンが合わなければホストは断って接続を切る。クライアントは、切断が要るエラー応答の
+    # あとの切断を専用の終了コードで名乗る。
     $ran = Invoke-Client -EditorProcessId $editor -Requests @('handshake', '{"protocol":2}')
     Assert-Client -Ran $ran -Code $ClosedAfterDisconnectingErrorCode -What 'バージョンの食い違い'
 }
@@ -336,8 +328,7 @@ $cases['パイプの権限'] = {
 }
 
 $cases['コネクタの取り直し'] = {
-    # 失効させて取り直させるだけで、待受は変わらない。共有するエディタは検査からだけ使う入口を
-    # 開いて起きているので、失効を頼める。
+    # 失効させて取り直させるだけで、待受は変わらない。
     $editor = Get-SharedEditor
     $ran = Invoke-Client -EditorProcessId $editor `
         -Requests @('handshake', '{"protocol":1}', $ExpireMethod)
@@ -354,7 +345,7 @@ $cases['コネクタの取り直し'] = {
 }
 
 $cases['エディタの終了'] = {
-    # 状態を変える唯一の件なので最後に置く。共有しているものを閉じるので、これより後の件は無い。
+    # 状態を変える唯一の件で、共有しているものを閉じる。これより後の件は無い。
     $editor = Get-SharedEditor
     try {
         $held = Start-HoldingClient -EditorProcessId $editor
@@ -372,7 +363,7 @@ $failed = @()
 $fell = @()
 $walked = @()
 
-# 確認クライアントが書くのはUTF-8なので、端末の設定のまま読むと合否の手がかりが崩れる。
+# 確認クライアントが書くのはUTF-8である。
 $spoken = [Console]::OutputEncoding
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 try {
@@ -393,8 +384,7 @@ try {
     }
 } finally {
     [Console]::OutputEncoding = $spoken
-    # 最後の件まで届かずに落ちた実行では、共有したエディタが開いたまま残る。ここで閉じないと、
-    # 次の実行の配置が動いているエディタを閉じるところでつまずく。
+    # 最後の件まで届かずに落ちた実行では、共有したエディタが開いたまま残る。
     Close-SharedEditor
 }
 

@@ -3,8 +3,8 @@
 function Get-EditorDirectory {
     <#
         .SYNOPSIS
-        PMXエディタの導入先を local.props から読む。XMLとして読むのは、値に含まれる実体参照を
-        元の文字へ戻すため。ビルドが採る値を一意に決められない書き方は、決められない旨で止める。
+        PMXエディタの導入先を local.props から読む。ビルドが採る値を一意に決められない書き方は、
+        決められない旨で止める。
     #>
     $propsPath = Join-Path (Split-Path -Parent $PSScriptRoot) "local.props"
     if (-not (Test-Path $propsPath)) {
@@ -20,7 +20,7 @@ function Get-EditorDirectory {
             "かはMSBuildの評価に依るので、ここでは決められない: $propsPath"
     }
 
-    # 条件や選択の構造の下にあると、ビルドが採る値はMSBuildの評価に依る。祖先まで遡って見る。
+    # 条件や選択の構造の下にあると、ビルドが採る値はMSBuildの評価に依る。
     $node = $nodes[0]
     for ($ancestor = $node; $ancestor -is [System.Xml.XmlElement]; $ancestor = $ancestor.ParentNode) {
         if ($ancestor.HasAttribute("Condition")) {
@@ -76,7 +76,6 @@ function Get-SessionEditorDirectory {
     else {
         Remove-UnusedSessionEditorDirectories
 
-        # 複製し終える前の状態を導入先として見せないよう、別の名前で作ってから名前を変える。
         $partial = "$directory.part"
         if (Test-Path -LiteralPath $partial) { Remove-Item -LiteralPath $partial -Recurse -Force }
         New-Item -ItemType Directory -Path $partial -Force | Out-Null

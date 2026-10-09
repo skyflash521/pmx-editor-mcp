@@ -59,10 +59,7 @@ async function stillAlive(pid) {
     return true;
 }
 
-/**
- * 別のプロセスを起こして観る分。**呼ばれるまで走らせない**——名前を挙げるだけの呼ばれ方で、
- * 木を潰す副作用まで走らせない。一度だけ走らせて使い回す。
- */
+/** 別のプロセスを起こして観る分。**呼ばれるまで走らせない**。一度だけ走らせて使い回す。 */
 let observed = null;
 function observe() {
     return observed ??= (async () => {
@@ -105,7 +102,7 @@ function observe() {
     })();
 }
 
-/** 題材の中だけで使う呼び名。区別が付けば足りるので、番号から作る。 */
+/** 題材の中だけで使う呼び名。 */
 const naming = (at) => String(at);
 
 /** その数だけ並んだ呼び名。 */
@@ -138,13 +135,10 @@ const withoutEditor = () => withoutEditorOf([
     { name: naming(2), limitSeconds: 11, withoutEditor: true }]);
 const groupsOf = (checks) => new Set(checks.map((check) => check.group)).size;
 
-/** 題材の中だけで使う道。綴りの形だけが要るので、呼び名から作る。 */
+/** 題材の中だけで使う道。 */
 const kept = (name) => name + '/' + name + '.mjs';
 
-/**
- * 突き合わせる事柄。**出た値は呼ばれるまで求めない**——名前を挙げるだけの呼ばれ方と、形を絞った
- * 呼ばれ方で、要らない観測まで走らせない。
- */
+/** 突き合わせる事柄。**出た値は呼ばれるまで求めない**。 */
 const items = [
     { named: '打ち切りの終了コード', wanted: CAPPED_CODE,
         got: async () => (await observe()).capped.code },

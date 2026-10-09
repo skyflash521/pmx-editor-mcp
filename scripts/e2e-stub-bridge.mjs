@@ -1,7 +1,7 @@
 // 自動E2E検査の実行器を確かめるための、MCPサーバーとして応答を作って返すだけの相手。
 // 実行器が投げたツールの呼び出しの順から、その検査が求める結末を引き、期待どおりの応答か、その
-// 結末の形だけを違えた応答を返す。実機のエディタもホストもブリッジも要らないので、常設の検査から
-// 走らせられる。包みからMCPの結果への写し方はブリッジの実装が定めるので、ここはそれに合わせる。
+// 結末の形だけを違えた応答を返す。実機のエディタもホストもブリッジも要らない。包みからMCPの
+// 結果への写し方はブリッジの実装が定める。
 
 import fs from "node:fs";
 import process from "node:process";
@@ -30,7 +30,7 @@ const SAME_VIEW = "うつしたすがた";
 /** 写したビューと合わない画像の代わり。 */
 const OTHER_VIEW = "ちがうすがた";
 
-/** 書き込んだ置き場を確かめる段を違えるときの名前。結末の名前ではないのでここで名指しする。 */
+/** 書き込んだ置き場を確かめる段を違えるときの名前。結末の名前ではない。 */
 const BROKEN_FILE = "file";
 
 /** 違える形のうち、呼び先まで届く段を確認の表示で止めるもの。 */
@@ -48,10 +48,10 @@ const BROKEN_DISABLED = "disabled";
 /** 違える形のうち、ブリッジ自身の誤りを返すもの。この誤りは接続先を名乗らない。 */
 const BROKEN_NOTICE = "notice";
 
-/** ブリッジ自身の誤りの綴り。名乗る接続先が無いので、本文はこの1行だけになる。 */
+/** ブリッジ自身の誤りの綴り。接続先を名乗らず、本文はこの1行だけになる。 */
 const BRIDGE_FAILURE = "BRIDGE_TIMEOUT: ホストの応答が時間内に返らない。";
 
-/** 包みへ足す警告。結末を変えないので、どの検査へ足しても判定は動かない。 */
+/** 包みへ足す警告。結末を変えない。 */
 const WARNING = "確かめのための警告。";
 
 /** 確認の表示が出て止まったことを知らせる断りの綴り。ホストの包みが定める。 */
@@ -87,12 +87,12 @@ function parseArguments(args) {
     return parsed.cases === null ? { error: "--cases が要ります。" } : { parsed };
 }
 
-/** 覚えさせるハンドル。借りる側が並びの中を指せるよう、並びで返す。 */
+/** 覚えさせるハンドル。 */
 function handed(round) {
     return [round * 10, round * 10 + 1];
 }
 
-/** 読み比べる相手が返す一覧。呼び出しの前後で違えるために、何回目かを載せる。 */
+/** 読み比べる相手が返す一覧。 */
 function listed(round) {
     return { items: [{ count: round }] };
 }
@@ -111,10 +111,7 @@ function along(value, road) {
     return held;
 }
 
-/**
- * 借りると宣言した値が、手渡したものとして届いているか。届いていなければその旨を返す。差し込む
- * 側を落としても応答が変わらなければ、借りは確かめられていないことになる。
- */
+/** 借りると宣言した値が、手渡したものとして届いているか。届いていなければその旨を返す。 */
 function borrowed(one, params, remembered) {
     for (const [into, from] of Object.entries(one.borrowed ?? {})) {
         const road = from.split("/");
@@ -127,10 +124,7 @@ function borrowed(one, params, remembered) {
     return null;
 }
 
-/**
- * その検査へ返す包み。違える形を渡すと、その結末を確かめる突き合わせだけが外れる包みになる
- * ——外れ方は結末ごとに違うので、結末ごとに書き分ける。
- */
+/** その検査へ返す包み。違える形を渡すと、その結末を確かめる突き合わせだけが外れる包みになる。 */
 function answer(one, broken, params, remembered, round) {
     const wrong = broken === one.expect;
     if (one.expect === "called" && broken === BROKEN_PROMPT) {
@@ -160,8 +154,6 @@ function answer(one, broken, params, remembered, round) {
     }
 
     if (one.expect === IMAGE_EXPECT) {
-        // どの行も、自分のビューの写しと合う画像で通る。写しにはビューの名が混ざるので、行と
-        // 写しの取り合わせが入れ替われば合わない。違えるときは合わない画像を返す。
         return { ok: true, value: wrong ? OTHER_VIEW : SAME_VIEW + " " + one.view };
     }
 
@@ -170,7 +162,6 @@ function answer(one, broken, params, remembered, round) {
         return { ok: false, error: { code: "TOOL_INVALID_HANDLE", message: missing } };
     }
 
-    // 成功と、呼び先まで届くことを見る結末は、どちらも成功した包みで通る。
     if (wrong) {
         return { ok: false, error: { code: "TOOL_OPERATION_FAILED", message: "断った。" } };
     }
@@ -288,14 +279,10 @@ function serve(cases, parsed) {
             return { error: { code: UNKNOWN_METHOD, message: "その番の検査は無い。" } };
         }
 
-        // ブリッジ自身の誤りは、名乗る接続先を持たないので本文が1行だけになる。実行器が名乗りを
-        // 1行目と決め打っていると、この形の誤りは中身ごと消える。
         if (called === parsed.at && parsed.broken === BROKEN_NOTICE) {
             return { isError: true, content: [{ type: "text", text: BRIDGE_FAILURE }] };
         }
 
-        // 読み比べる相手は、呼び出しの前と後で違うものを返さなければならない。投げられるたびに
-        // 数えて、その数を載せる。
         round += 1;
         const broken = called === parsed.at ? parsed.broken : "";
         const envelope = answer(one, broken, given, remembered, round);
@@ -304,7 +291,6 @@ function serve(cases, parsed) {
             remembered.set(one.produces, envelope.value);
         }
 
-        // 警告は1件目へ足して、警告の行を剥がす段が通しの実行で必ず走るようにする。
         return toolResult(envelope, one.expect === IMAGE_EXPECT, called === 0);
     };
 
@@ -326,8 +312,7 @@ function serve(cases, parsed) {
 
             const request = JSON.parse(line);
 
-            // 知らせには応答を返さない。返すと、識別子を持たない応答として読み捨てられるだけか、
-            // 別の要求の応答と取り違えられる。
+            // 知らせには応答を返さない。
             if (request.id === undefined) {
                 continue;
             }

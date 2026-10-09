@@ -1,7 +1,6 @@
 # 受入の実行器を確かめるための、エディタとホストを持たない操作役。
 # 実物と同じ引数を受け、実物と同じ形の戻り値を返すだけで、画面にも稼働状態にも触らない。
-# 起動したエディタのプロセスIDは、応答を作る相手と同じ数え方で採番する——どちらもこの並びを
-# 前提にするので、接続先の知らせを突き合わせられる。
+# 起動したエディタのプロセスIDは、応答を作る相手と同じ数え方で採番する。
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
@@ -26,8 +25,6 @@ $ErrorActionPreference = "Stop"
 
 . (Join-Path $PSScriptRoot 'stub-shared.ps1')
 
-# 頼まれた操作をそのまま書き留める。実行器が段をこなしたかどうかは、これでしか外から分からない
-# ——起動と写し以外の操作は、実行器の側に何も返さないからである。
 $asked = $Action
 if ($View) { $asked += ":" + $View }
 Add-Content -Path (Join-Path ([System.IO.Path]::GetTempPath()) $StubOperationLogName) `
@@ -76,6 +73,5 @@ switch ($Action) {
         "$StubViewWidth" + "x" + "$StubViewHeight"
     }
     default {
-        # 残りの操作は、実物と同じく何も書き出さずに戻る。
     }
 }

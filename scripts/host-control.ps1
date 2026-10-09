@@ -1,20 +1,17 @@
 # 実機動作確認で使うホストの操作役。
 # PMXエディタの起動と終了、プラグインメニューからの稼働状態の確認・停止・開始、
 # 待ち受けているホストのパイプの一覧と権限を、画面を人手で操作せずに行う。
-# メニューはWinFormsのToolStripでWin32のHMENUではないため、UI Automationで辿る。
-# メニューの文言と確認ボタンの表示名を手がかりにするので、Windowsの表示言語が日本語である
-# ことを前提にする。
+# メニューはWinFormsのToolStripで、Win32のHMENUではない。
+# Windowsの表示言語が日本語であることを前提にする。
 #
 # 状態を変える操作は、その結果が観測できるようになるまで待ってから戻る。待受の公開も停止手順も
-# エディタ側の別スレッドで進むので、待たずに次へ進むと状態が落ち着く前の一瞬を見てしまう。
+# エディタ側の別スレッドで進む。
 #
 # 停止・開始は、いま押そうとしている問いが要求した操作のものであることを確かめてから押す。
-# ホストは稼働中なら停止を、停止済みなら開始を問う同じ形の表示を出すので、確かめずに肯定を
-# 押すと逆の操作をしたまま正常終了しうる。
+# ホストは稼働中なら停止を、停止済みなら開始を問う同じ形の表示を出す。
 #
 # 待ちはどれも、時間の見積りではなく観測で抜ける。待受のパイプの出現と消失、プロセスの終了、
-# 状態表示の文言がその観測にあたる。時間で当て推量すると、通ったのがその見積りのおかげなのか
-# 別の理由なのかが後から分からない。どの待ちにも上限を持たせ、締切は繰り返しの先頭で判じ、
+# 状態表示の文言がその観測にあたる。どの待ちにも上限を持たせ、締切は繰り返しの先頭で判じ、
 # 待ち時間は残り時間で頭打ちにする。
 [CmdletBinding()]
 param(
@@ -55,13 +52,9 @@ param(
     # 写し取った画像の書き出し先。capture で使う。-View と同じ数を同じ並びで渡す。
     [string[]]$Path,
 
-    # 待ちの上限の秒数。0以下だと、状態を変えておきながら一度も観測しないまま失敗しうるので
-    # 受け付けない。上限は、終了待ちへミリ秒で渡せる範囲に収める。
+    # 待ちの上限の秒数。上限は、終了待ちへミリ秒で渡せる範囲に収める。
     #
-    # この上限は待ちごとに別々に効き、メニューを辿って項目を押すところまでを含む。木を辿る探索は
-    # 重く、しかもメニューバーの控えはこのプロセスの中だけなので、呼び出しのたびに辿り直す。
-    # 状態そのものの変化は探索のあとに付くわずかな間でしかなく、
-    # 待ちの長さはほぼ探索の長さである。
+    # この上限は待ちごとに別々に効き、メニューを辿って項目を押すところまでを含む。
     #
     # この上限に達した待ちは失敗とする。
     [ValidateRange(1, 2147483)]
@@ -418,15 +411,13 @@ function Import-HostControlTypes {
     $assembly = Join-Path $env:TEMP "pmx-editor-mcp-host-control-$named.dll"
 
     if (-not (Test-Path $assembly)) {
-        # 組み立ての途中の物をその名前へ載せない。同じ物を組み立てている別のプロセスが、書き終える
-        # 前の中身を読みうる。
         $building = "$assembly.$PID"
         Add-Type -TypeDefinition $Source -OutputAssembly $building
         try {
             Move-Item -LiteralPath $building -Destination $assembly
         }
         catch {
-            # 先に置いた側の物を読む。読み込まれている物は開かれたままなので、置き換えは通らない。
+            # 読み込まれている物は開かれたままで、置き換えは通らない。
             Remove-Item -LiteralPath $building -Force -ErrorAction Ignore
         }
     }
@@ -436,10 +427,8 @@ function Import-HostControlTypes {
 
 Import-HostControlTypes -Source $HostControlTypes
 
-# ホストが待受に使うパイプ名。接頭辞の後ろはエディタのプロセスIDで、ホストは十進で書くだけ
-# なので、先頭の0や数字以外は現れない。試験用の待受など紛らわしい名前を一覧へ混ぜないために、
-# ブリッジ側の絞り込みと同じ形で見る。ブリッジは大文字小文字を区別して照合するので、
-# ここでも区別する演算子を使う。
+# ホストが待受に使うパイプ名。接頭辞の後ろはエディタのプロセスIDで、ホストは十進で書くだけで、
+# 先頭の0や数字以外は現れない。ブリッジ側の絞り込みと同じ形で、大文字小文字を区別して照合する。
 $HostPipePattern = "^pmx-editor-mcp-([1-9][0-9]*)$"
 
 # 待ち受けているパイプが並ぶディレクトリ。
@@ -451,8 +440,7 @@ $PluginName = "PMX Editor MCP"
 # 編集メニューの中で1回分の取り消しを起こす項目の名前。実機の編集メニューが持つ綴りである。
 $UndoItemName = "元に戻す(U)"
 
-# 取り消した分をやり直す項目の名前。取り消しが1回起きていれば、この項目は使える——押した結果は
-# 編集の中身に出るので、それ自体はここからは読めない。
+# 取り消した分をやり直す項目の名前。取り消しが1回起きていれば、この項目は使える。
 $RedoItemName = "やり直し(R)"
 
 # 状態表示のウィンドウクラス。標準のメッセージボックスのもの。
@@ -467,8 +455,7 @@ $PollIntervalMs = 25
 # 開始を頼んで待受が現れないときに、頼み直すまでの間隔。
 $StartRetryMs = 300
 
-# 応えない相手へ同じ働きかけを送り直す間隔。見に行く間隔より粗くする——送り直しは相手の受け取り待ちを
-# 取り消すので、細かく繰り返すと応えられないまま要求だけが積み上がる。
+# 応えない相手へ同じ働きかけを送り直す間隔。送り直しは相手の受け取り待ちを取り消す。
 $NudgeIntervalMs = 500
 
 # 閉じるためのウィンドウメッセージ(WM_CLOSE)。
@@ -492,8 +479,7 @@ $ViewOpeners = @{
     sub       = @{ Host = "pmx"; Key = 0x77 }
 }
 
-# ウィンドウの中に現れる知らせは、応答待ちの表示を探す道では見つからず素性も読めない。閉じたものを
-# 数えるために、この名前で1件ずつ並べる。
+# ウィンドウの中に現れる知らせは、応答待ちの表示を探す道では見つからず素性も読めない。
 $ThrownNoticeName = "投げられた例外の知らせ"
 
 # 素性を読めなかった表示の言い方。
@@ -507,24 +493,19 @@ $ContinueWord = "続行"
 
 <#
     .SYNOPSIS
-    押しボタンが捌き終えるのを待つ上限。止まっているウィンドウで待ち続けないための値。
+    押しボタンが捌き終えるのを待つ上限。
 #>
 $ThrownNoticeLimitMs = 2000
 
-# 表示の文言は環境で変わるので、押しボタンは番号で選ぶ(IDCANCEL・IDNO・IDOK)。
+# 押しボタンの番号(IDCANCEL・IDNO・IDOK)。表示の文言は環境で変わる。
 $IdsThatAvoidTheAffirmative = @(2, 7, 1)
 $IdsThatLetTheEditorClose = @(7, 1)
 
 $EditMenuBars = @()
 $EditMenuLocated = $null
 
-# 編集メニューからプラグイン項目までの、子の番の並びを控える場所。呼び出しのたびに新しいプロセスに
-# なるので、プロセスの中だけの控えでは足りない。
-#
-# エディタごとには分けない。この並びはメニューの形が決めるもので、同じ導入物なら動いている
-# エディタが何であっても同じである。プロセスごとに分けると、エディタを起こすたびに探し直すことに
-# なり、探すのは辿るより重いので逆に遅くなる。
-# 控えが合わなくなっても、辿った先の名前が違うことで分かるので、そのとき探し直す。
+# 編集メニューからプラグイン項目までの、子の番の並びを控える場所。この並びはメニューの形が決め、
+# 同じ導入物なら動いているエディタが何であっても同じである。
 $MenuPathFileName = "pmx-editor-mcp-menu-path.txt"
 
 function Get-HostPipeNames {
@@ -618,8 +599,7 @@ function Get-EditorProcess {
     <#
         .SYNOPSIS
         対象がこのリポジトリの導入ディレクトリのPMXエディタであることを確かめてプロセスを返す。
-        プロセスIDは使い回されるうえ、同じ名前のエディタが別の導入ディレクトリからも動く。実行
-        ファイルのパスまで確かめずに終了させると、無関係なプロセスを巻き込む。
+        プロセスIDは使い回されるうえ、同じ名前のエディタが別の導入ディレクトリからも動く。
     #>
     param([int]$OwnerProcessId)
 
@@ -668,10 +648,8 @@ function Get-ProcessElements {
         .SYNOPSIS
         指定したプロセスのウィンドウの直下にある要素を、条件で絞って返す。
 
-        木の全体は辿らない。UI Automation の探索は辿った要素の一つずつにプロセスをまたぐ往復が
-        要るので、要素の数が少なくても全体を辿ると桁違いに遅い。
-        メニューバーはフォームの直下の子なので、全体を辿る必要が無い。全体を辿ると、ウィンドウの
-        システムメニューまで拾って絞り込みの手間も増える。
+        木の全体は辿らない。UI Automation の探索は、辿った要素の一つずつにプロセスをまたぐ往復が
+        要る。メニューバーはフォームの直下の子である。
     #>
     param([int]$OwnerProcessId, $Match)
 
@@ -688,8 +666,7 @@ function Get-ProcessElements {
 function Get-StatusDialogs {
     <#
         .SYNOPSIS
-        プラグインが出した状態表示を返す。表題まで見るのは、エディタが出す別の確認と
-        取り違えて肯定を押さないため。
+        プラグインが出した状態表示を返す。
     #>
     param([int]$OwnerProcessId)
 
@@ -746,8 +723,8 @@ function Get-MenuShadows {
 function Get-EditorDialogs {
     <#
         .SYNOPSIS
-        対象のエディタが出している状態表示のウィンドウのハンドルを返す。所有されたウィンドウなので
-        デスクトップ直下の列挙には現れず、Win32の列挙で探す。
+        対象のエディタが出している状態表示のウィンドウのハンドルを返す。所有されたウィンドウで、
+        デスクトップ直下の列挙には現れない。
     #>
     param([int]$OwnerProcessId)
 
@@ -757,9 +734,8 @@ function Get-EditorDialogs {
 function Clear-ThrownNotice {
     <#
         .SYNOPSIS
-        投げられた例外を知らせる表示を閉じる。この表示はウィンドウの中に現れるので、応答待ちの表示を
-        探す道では見つからない。閉じたものの数を返す。続けると選ぶのは、終わらせると編集中の
-        ものが失われるためである。
+        投げられた例外を知らせる表示を閉じる。この表示はウィンドウの中に現れ、応答待ちの表示を
+        探す道では見つからない。閉じたものの数を返す。終わらせる側を選ぶと、編集中のものが失われる。
     #>
     param([int]$OwnerProcessId)
 
@@ -778,8 +754,7 @@ function Close-MenuShadow {
     <#
         .SYNOPSIS
         メニューを開いた跡に残る影のウィンドウを閉じる。開いた側が片付けないと画面へ残る。
-        閉じるのは影の専用クラスを持つもののうち、メニューを開いてから現れたものだけに絞る
-        ——他のウィンドウも、こちらが出したのではない影も巻き込まないため。
+        閉じるのは影の専用クラスを持つもののうち、メニューを開いてから現れたものだけに絞る。
     #>
     param([int]$OwnerProcessId, $Existing)
 
@@ -815,7 +790,7 @@ function Close-OpenMenuSafely {
     <#
         .SYNOPSIS
         開いたメニューを畳む。畳めなかったことは警告として知らせるだけにして、元の失敗を
-        置き換えない。警告を終了させる設定で呼ばれても置き換えが起きないよう、継続に固定する。
+        置き換えない。
     #>
     param($Menu)
 
@@ -831,8 +806,7 @@ function Confirm-EditorDialog {
     <#
         .SYNOPSIS
         応答待ちの表示へ、与えた番号のうち先に押せたもので応答して閉じる。応答できたら真を返す。
-        応答できない形の表示は偽を返す——待ちの側が上限で見切り、何が残っていたかを言えるように
-        するためである。
+        応答できない形の表示は偽を返す。
     #>
     param([int]$Handle, [Parameter(Mandatory = $true)][int[]]$Ids)
 
@@ -846,9 +820,7 @@ function Confirm-EditorDialog {
 function Get-EditorDialogNote {
     <#
         .SYNOPSIS
-        応答待ちの表示の素性。応答できなかった表示を名指しで言うために使う。読めないウィンドウは
-        読めない旨を返す——素性は診断のためのもので、これが取れないことで復旧や終了待ちを
-        止めない。
+        応答待ちの表示の素性。読めないウィンドウは読めない旨を返し、失敗にはしない。
     #>
     param([int]$Handle)
 
@@ -857,16 +829,14 @@ function Get-EditorDialogNote {
         $dialog = [System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Handle)
         if ($null -eq $dialog) { return $UnreadableDialog }
 
-        # 止まっているUIスレッドのウィンドウは押しボタンとして見えないので、種別で絞らず名前を持つ
-        # ものをすべて並べる。
+        # 止まっているUIスレッドのウィンドウは、押しボタンとして見えない。
         $parts = @($dialog.FindAll(
             [System.Windows.Automation.TreeScope]::Descendants,
             [System.Windows.Automation.Condition]::TrueCondition) |
             Where-Object { $_.Current.Name -ne "" } |
             ForEach-Object { $_.Current.Name + "(" + $_.Current.AutomationId + ")" })
 
-        # 素性は1行で返す契約なので、本文に混じる改行はここで潰す。割れて届くと、1つの表示が
-        # 2つに見える。
+        # 素性は1行で返す。
         return (($dialog.Current.Name + ": " + ($parts -join " / ")) -replace "\s*[\r\n]+\s*", " ")
     }
     catch {
@@ -879,15 +849,14 @@ function Clear-EditorDialogs {
         .SYNOPSIS
         出ている応答待ちの表示へすべて応答して閉じる。応答した表示と応答できなかった表示の
         素性をそれぞれ返す。応答できない表示が残る限り、エディタは次の要求も終了要求も
-        受け付けない。応答した側も返すのは、応答しても出直す表示を待ちの側が言えるようにする
-        ためである。
+        受け付けない。
     #>
     param([int]$OwnerProcessId, [Parameter(Mandatory = $true)][int[]]$Ids)
 
     $answered = @()
     $left = @()
     foreach ($handle in Get-EditorDialogs -OwnerProcessId $OwnerProcessId) {
-        # 素性は応答する前に読む。応答したウィンドウは閉じるので、後から読むと名前も中身も残っていない。
+        # 応答したウィンドウは閉じ、後から読むと名前も中身も残っていない。
         $note = Get-EditorDialogNote -Handle $handle
 
         # UIオートメーションは、止まっているUIスレッドのウィンドウで応答しないことがある。
@@ -955,17 +924,15 @@ function Resolve-MenuPath {
     <#
         .SYNOPSIS
         控えた道筋をたどって、編集メニューとプラグイン項目を返す。たどれない・辿り着いた先の名前が
-        違うときは空を返す——控えが古ければ探し直せばよい。道筋は編集メニューからプラグイン項目まで
-        の子の番の並びで、編集メニューそのものは名前で探す。
+        違うときは空を返す。道筋は編集メニューからプラグイン項目までの子の番の並びで、編集メニュー
+        そのものは名前で探す。
     #>
     param([int[]]$Path, $Bars)
 
-    # 空の並びは渡す途中で展開されて $null になる。数える前に受け止める。
+    # 空の並びは、渡す途中で展開されて $null になる。
     $steps = @($Path)
     if ($steps.Count -eq 0) { return $null }
 
-    # 該当を数え上げてから返す。1つ見つけた時点で返すと、プラグイン項目を持つ編集メニューが
-    # 複数ある状態を見逃し、探し直す経路(Find-EditMenu)が止める取り違えをここだけが素通りさせる。
     $found = @()
     foreach ($bar in @($Bars)) {
         foreach ($menu in $bar.FindAll(
@@ -1021,8 +988,7 @@ function Get-MenuPathTo {
 function Save-MenuPath {
     <#
         .SYNOPSIS
-        同定した編集メニューとプラグイン項目から道筋を組み立てて控える。組み立てられなければ
-        控えない——次の呼び出しが探し直すだけで、動作は変わらない。
+        同定した編集メニューとプラグイン項目から道筋を組み立てて控える。組み立てられなければ控えない。
     #>
     param($Located)
 
@@ -1038,9 +1004,8 @@ function Find-EditMenu {
     <#
         .SYNOPSIS
         与えたメニューバーから、プラグインの項目が属する編集メニューを選ぶ。編集のメニューを持つ
-        メニューバーは1つとは限らないので、メニューの文言だけでは決められない。目当ての項目その
-        ものを配下に持つことを条件にして選ぶ。まだ組み上がっていなければ空を返す。該当が複数ある
-        ときは選ばずに失敗させる——取り違えると別のメニューを操作してしまう。
+        メニューバーは1つとは限らない。まだ組み上がっていなければ空を返す。該当が複数あるときは
+        選ばずに失敗させる。
     #>
     param([int]$OwnerProcessId, $Bars)
 
@@ -1054,8 +1019,6 @@ function Find-EditMenu {
                 [System.Windows.Automation.Condition]::TrueCondition)) {
             if ($item.Current.Name -notlike "編集*") { continue }
 
-            # 在るかどうかだけを見るので、1つ見つけた時点で打ち切る。全部を数え上げると、
-            # メニューの木を最後まで辿ることになる。
             $plugin = $item.FindFirst(
                 [System.Windows.Automation.TreeScope]::Descendants, $pluginCondition)
             if ($plugin) { $found += [pscustomobject]@{ Menu = $item; Item = $plugin } }
@@ -1074,7 +1037,7 @@ function Get-EditMenu {
     <#
         .SYNOPSIS
         編集メニューが現れるまで待って返す。待受の公開はプラグインの読み込みで済むが、ウィンドウと
-        メニューが揃うのはそれとは別に進むので、起動直後はまだ辿れないことがある。
+        メニューが揃うのはそれとは別に進み、起動直後はまだ辿れないことがある。
     #>
     param([int]$OwnerProcessId, $Deadline)
 
@@ -1100,15 +1063,12 @@ function Get-EditMenu {
     }
 
     while ($true) {
-        # 木を辿る探索は重い。メニューバーはエディタが動いている間そのままなので、この実行の
-        # あいだは一度見つけたものを使い回す。待っているのはその下に現れるプラグインの項目である。
+        # メニューバーは、エディタが動いている間そのままである。
         if ($script:EditMenuBars.Count -eq 0) {
             $script:EditMenuBars = @(
                 Get-ProcessElements -OwnerProcessId $OwnerProcessId -Match $barCondition)
         }
 
-        # 前の呼び出しが控えた道筋があれば、それをたどる。たどった先の名前が合わなければ控えが
-        # 古いので、探し直して控え直す。探すのに要る時間は、たどるだけの倍以上である。
         $located = Resolve-MenuPath -Path (Read-MenuPath) -Bars $script:EditMenuBars
         if (-not $located) {
             $located = Find-EditMenu -OwnerProcessId $OwnerProcessId -Bars $script:EditMenuBars
@@ -1131,8 +1091,7 @@ function Get-EditMenu {
 function Get-Deadline {
     <#
         .SYNOPSIS
-        待ちの期限を返す。呼び出し元から期限を渡されていればそれを引き継ぐ——待ちが入れ子に
-        なるとき、内側が独自に期限を取り直すと、外側の上限を何倍にも越えてしまう。
+        待ちの期限を返す。呼び出し元から期限を渡されていればそれを引き継ぐ。
     #>
     param($Deadline)
 
@@ -1154,32 +1113,27 @@ function Show-StatusDialog {
     $edit = $located.Menu
     $shadows = @(Get-MenuShadows -OwnerProcessId $OwnerProcessId)
 
-    # メニューを開く操作そのものも含めて、以降の失敗では影を片付ける。開く呼び出しが例外を
-    # 返しても、画面には既に開いた跡が残りうる。
+    # 開く呼び出しが例外を返しても、画面には既に開いた跡が残りうる。
     $pressError = $null
     $pressing = $false
     try {
         Invoke-Element -Element $edit
 
-        # 探し直さない。開く前に同定へ使った項目をそのまま押す——同じ木の同じ要素で、
-        # 探し直すとメニューの木をもう一度辿ることになる。
         $target = $located.Item
 
-        # ここから先の失敗は、押す操作が届いた後かもしれない。表示が出ている可能性を残したまま
-        # 抜けないよう、失敗を控えて表示の待ちへ進む。
+        # ここから先の失敗は、押す操作が届いた後かもしれない。
         $pressing = $true
         Invoke-Element -Element $target
     }
     catch {
-        # 開いたままのメニューを残さない。押せたときは押した側が畳むので、畳むのは失敗のときだけ。
+        # 押せたときは、押した側が畳む。
         Close-OpenMenuSafely -Menu $edit
         if (-not $pressing) { throw }
 
         $pressError = $_
     }
     finally {
-        # 後始末の失敗で元の失敗を上書きしない。影が残ることより、何が起きたかを伝えることを採る。
-        # 警告を終了させる設定で呼ばれても置き換えが起きないよう、この警告は継続に固定する。
+        # 後始末の失敗で、元の失敗を上書きしない。
         try {
             Close-MenuShadow -OwnerProcessId $OwnerProcessId -Existing $shadows
         }
@@ -1189,9 +1143,7 @@ function Show-StatusDialog {
     }
 
     if ($pressError) {
-        # 押す操作は失敗したが、届いていれば表示は出る。出ていれば閉じてから元の失敗を伝える。
-        # 片付けの側がさらに失敗しても、伝えるのは元の失敗である——後から起きたことで原因を
-        # 覆い隠さない。
+        # 押す操作は失敗したが、届いていれば表示は出る。
         try {
             $late = Wait-StatusDialog -OwnerProcessId $OwnerProcessId `
                 -Deadline (Get-Date).AddSeconds($TimeoutSeconds)
@@ -1204,8 +1156,7 @@ function Show-StatusDialog {
         throw $pressError
     }
 
-    # 押した後は、期限が尽きていても表示が出るまで待つ。ここで諦めると、閉じ手のないモーダル
-    # 表示が残る。越えるのはこの1回分だけで、待ちが積み上がることはない。
+    # 押した後は、期限が尽きていても表示が出るまで待つ。
     $dialog = Wait-StatusDialog -OwnerProcessId $OwnerProcessId `
         -Deadline (Get-Date).AddSeconds($TimeoutSeconds)
     if (-not $dialog) { throw "稼働状態の表示が $TimeoutSeconds 秒以内に出なかった。" }
@@ -1256,19 +1207,16 @@ function Invoke-UndoOnce {
 
         Invoke-Element -Element $target
 
-        # 押したあと、エディタが入力待ちへ戻るのを待つ。取り消しを続けて起こすと、やり直しは
-        # 2回目以降すでに使えているので、使えるようになる変わり目では起きたかどうかを見分け
-        # られない。メニューの項目の使用可否もウィンドウのタイトルも、取り消しのたびには変わらないので、
-        # ここで確かめられるのは「押せて、やり直せる編集が在る」ところまでである。取り消しが
-        # 実際に何を戻したかは編集の中身に出るので、そこは呼び出し側が読んで確かめる。
+        # やり直しは2回目以降すでに使えていて、メニューの項目の使用可否もウィンドウのタイトルも、
+        # 取り消しのたびには変わらない。ここで確かめられるのは「押せて、やり直せる編集が在る」
+        # ところまでで、取り消しが何を戻したかは、呼び出し側が編集の中身で確かめる。
         $process = Get-EditorProcess -OwnerProcessId $OwnerProcessId
         $remaining = [int]($deadline - (Get-Date)).TotalMilliseconds
         if ($remaining -le 0 -or -not $process.WaitForInputIdle($remaining)) {
             throw "エディタが入力待ちへ戻らなかった: プロセスID $OwnerProcessId"
         }
 
-        # 取り消しが1回起きていれば、やり直せる編集が在る。在らないなら、押した先で何も
-        # 起きていない。
+        # 取り消しが1回起きていれば、やり直せる編集が在る。
         while (-not $redo.Current.IsEnabled) {
             if ((Get-Date) -ge $deadline) {
                 throw "取り消しが起きなかった: プロセスID $OwnerProcessId"
@@ -1278,12 +1226,12 @@ function Invoke-UndoOnce {
         }
     }
     catch {
-        # 開いたままのメニューを残さない。押せたときは押した側が畳む。
+        # 押せたときは、押した側が畳む。
         Close-OpenMenuSafely -Menu $edit
         throw
     }
     finally {
-        # 後始末の失敗で元の失敗を上書きしない。
+        # 後始末の失敗で、元の失敗を上書きしない。
         try {
             Close-MenuShadow -OwnerProcessId $OwnerProcessId -Existing $shadows
         }
@@ -1301,7 +1249,7 @@ function Wait-StatusDialog {
     param([int]$OwnerProcessId, $Deadline)
 
     while ($true) {
-        # 関数の戻り値は1件だと単体へ畳まれるので、件数を数える前に配列へ入れ直す。
+        # 関数の戻り値は、1件だと単体へ畳まれる。
         $dialogs = @(Get-StatusDialogs -OwnerProcessId $OwnerProcessId)
         if ($dialogs.Count -ge 1) { return $dialogs[0] }
         if ((Get-Date) -ge $Deadline) { return $null }
@@ -1363,7 +1311,7 @@ function Test-ElementAvailable {
         $false
     }
     catch {
-        # 判じられないときは、まだ辿れる側に倒す。呼び出し側は失敗を握り潰さずに知らせる。
+        # 判じられないときは、まだ辿れる側に倒す。
         $true
     }
 }
@@ -1372,10 +1320,8 @@ function Close-StatusDialogSafely {
     <#
         .SYNOPSIS
         受け取った状態表示がまだ出ていれば閉じる。既に閉じていれば何もしない。閉じられなかった
-        ことは警告として知らせるだけにして、元の失敗を置き換えない——後から起きたことで原因を
-        覆い隠さない。
-        閉じる相手は受け取った要素そのものに限る。ウィンドウのハンドルは閉じた後に使い回される
-        ので、ハンドルの一致で選び直すと、後から出た別の表示を元の表示と取り違えうる。
+        ことは警告として知らせるだけにして、元の失敗を置き換えない。
+        閉じる相手は受け取った要素そのものに限る。ウィンドウのハンドルは、閉じた後に使い回される。
     #>
     param($Dialog)
 
@@ -1383,8 +1329,7 @@ function Close-StatusDialogSafely {
         Close-StatusDialog -Dialog $Dialog
     }
     catch {
-        # 既に閉じているかは、失敗の種類ではなく表示そのものが辿れるかで判じる。ボタンだけが
-        # 失効して押せなかった場合を、閉じた証拠と取り違えないため。
+        # 既に閉じているかは、失敗の種類ではなく表示そのものが辿れるかで判じる。
         if (-not (Test-ElementAvailable -Element $Dialog)) { return }
 
         Write-Warning "状態表示を閉じられなかった: $($_.Exception.Message)" -WarningAction Continue
@@ -1432,8 +1377,7 @@ function Find-ViewWindows {
 function Get-ViewWindow {
     <#
         .SYNOPSIS
-        そのビューを載せているウィンドウ。見つからなければ何を探したかを言って失敗する——ビューがまだ
-        開かれていないことと、探し方が合っていないことを見分けられるようにする。
+        そのビューを載せているウィンドウ。見つからなければ、何を探したかを言って失敗する。
     #>
     param([int]$OwnerProcessId, [string]$Name)
 
@@ -1450,8 +1394,7 @@ function Wait-ViewWindow {
     <#
         .SYNOPSIS
         そのビューのウィンドウが現れるまで待つ。現れなければ失敗する。探す前に、押した分をエディタが
-        捌き終えるのを待つ——ビューが自分を組み立てている間はウィンドウがまだ無く、先に探すと、間隔を
-        1つ空けてからでないと見つからない。
+        捌き終えるのを待つ。ビューが自分を組み立てている間は、ウィンドウがまだ無い。
     #>
     param([int]$OwnerProcessId, [string]$Name, $Deadline)
 
@@ -1485,12 +1428,11 @@ function Open-View {
     $opener = $ViewOpeners[$Name]
     if (-not $opener) { throw "そのビューを開くキーが無い: $Name" }
 
-    # キーを受け取るウィンドウが組み上がるのを待つ。待受が現れた時点では、エディタはまだウィンドウを出していない
-    # ことがある。
+    # 待受が現れた時点では、エディタはまだウィンドウを出していないことがある。
     Wait-ViewWindow -OwnerProcessId $OwnerProcessId -Name $opener.Host -Deadline $deadline
 
-    # キーは積んで送る。メニューのショートカットキーはウィンドウの手続きではなくメッセージの列を引き取る
-    # ところで捌かれるので、ウィンドウへ直に届けるとショートカットキーとして扱われない。
+    # メニューのショートカットキーは、ウィンドウの手続きではなくメッセージの列を引き取るところで
+    # 捌かれる。ウィンドウへ直に届けると、ショートカットキーとして扱われない。
     $window = Get-ViewWindow -OwnerProcessId $OwnerProcessId -Name $opener.Host
     foreach ($message in @($WindowMessageKeyDown, $WindowMessageKeyUp)) {
         if ([HostControlWindow]::PostMessage(
@@ -1505,8 +1447,7 @@ function Open-View {
 function Wait-ViewInFront {
     <#
         .SYNOPSIS
-        そのウィンドウが手前に出るまで待つ。出なければ失敗する——頼んだだけでは手前に出たことにならず、
-        出ていないウィンドウを人が見ることはできない。
+        そのウィンドウが手前に出るまで待つ。出なければ失敗する。頼んだだけでは、手前に出たことにならない。
     #>
     param([IntPtr]$Window, [string]$Name)
 
@@ -1561,8 +1502,7 @@ function Save-ViewImage {
 function Assert-ProcessId {
     <#
         .SYNOPSIS
-        対象のエディタが指定されていることを確かめる。プロセスIDに0以下は割り当てられないので、
-        既定値のままかどうかは値で判別できる。
+        対象のエディタが指定されていることを確かめる。プロセスIDに0以下は割り当てられない。
     #>
     if ($ProcessId -le 0) {
         throw "この操作には -ProcessId が要る: $Action"
@@ -1612,14 +1552,13 @@ switch ($Action) {
     }
     "close" {
         Assert-ProcessId
-        # 強制終了はプラグインの後始末を通らないので、通常の終了と同じ経路で閉じる。
-        # エディタは編集とビューのウィンドウを別々に持ち、閉じ残すとプロセスが終わらない。
+        # 強制終了はプラグインの後始末を通らない。エディタは編集とビューのウィンドウを別々に持ち、
+        # 閉じ残すとプロセスが終わらない。
         $process = Get-EditorProcess -OwnerProcessId $ProcessId
         $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
         $nudge = [datetime]::MinValue
         while ($true) {
             $process.Refresh()
-            # 数え直している間に終わっていることがある。終わっていれば要求はもう要らない。
             if ($process.HasExited) { break }
 
             $windows = $null
@@ -1628,13 +1567,12 @@ switch ($Action) {
             }
             catch {
                 $process.Refresh()
-                # 閉じている最中のウィンドウは読めなくなる。終わっていれば失敗ではない。
+                # 閉じている最中のウィンドウは、読めなくなる。
                 if ($process.HasExited) { break }
                 throw
             }
 
-            # 応答しないまま閉じる要求を送り直すと確認は取り消され、次の要求がまた確認を
-            # 出すので、確認だけが積み上がる。
+            # 応答しないまま閉じる要求を送り直すと、確認は取り消され、次の要求がまた確認を出す。
             $cleared = Clear-EditorDialogs -OwnerProcessId $ProcessId `
                 -Ids $IdsThatLetTheEditorClose
             $standing = @($cleared.Left)
@@ -1735,8 +1673,6 @@ switch ($Action) {
 
         $thrown = Clear-ThrownNotice -OwnerProcessId $ProcessId
 
-        # 閉じたものの素性を1行ずつ返す。数だけでは、どの表示が呼び出しを止めたのかを呼んだ側が
-        # 言えない。
         foreach ($note in @($cleared.Answered)) { Write-Output $note }
         for ($at = 0; $at -lt $thrown; $at++) { Write-Output $ThrownNoticeName }
     }

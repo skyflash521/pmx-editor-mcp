@@ -1,5 +1,4 @@
 # ブリッジが、共有ランタイムを解決できない環境で単独で動くことを確かめる。
-# 受け取った側の実行環境には .NET が入っていないので、開発機で動いたことは何の保証にもならない。
 # 解決できない環境をこの検査自身が作り、その環境が本当に成立していることを、フレームワーク依存で
 # 発行した実行ファイルがそこで起動に失敗することで確かめる。
 [CmdletBinding()]
@@ -11,7 +10,6 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# 外部コマンドの非0終了は終了エラーにしない。終了コードを見て自分で失敗させる。
 $PSNativeCommandUseErrorActionPreference = $false
 
 # PEのヘッダが名乗る機械の種別。x64のもの。
@@ -20,8 +18,6 @@ $AmdMachine = 0x8664
 # .NETのホストが、要る共有ランタイムを見つけられずに終わるときの終了コード。
 $FrameworkMissingCode = -2147450749
 
-# 置き場を渡されなければ自分で作る。作ったものは自分で片付ける——発行物は1回ぶんで百メガ単位に
-# なるので、走らせるたびに残すと一時領域が埋まる。
 $ours = -not $Root
 if ($ours) {
     $Root = Join-Path ([System.IO.Path]::GetTempPath()) ("pmx-editor-mcp-standalone-" + [guid]::NewGuid().ToString("N"))
@@ -59,10 +55,8 @@ function Invoke-WithoutSharedRuntime {
     try {
         $env:DOTNET_ROOT = $absent
 
-        # Node は要るので、その置き場だけを通り道に残す。
         $env:PATH = Split-Path -Parent (Get-Command node).Source
 
-        # 診断は標準エラー出力へ出るので、合否の手がかりと混ぜない。起こすのは1回だけとする。
         $diagnostics = Join-Path $Root ("diagnostics-" + [guid]::NewGuid().ToString("N") + ".txt")
         $said = & $FilePath @Arguments 2>$diagnostics
         $code = $LASTEXITCODE
@@ -96,8 +90,7 @@ try {
         throw ("発行した実行ファイルの機械の種別が x64 ではない: 0x" + $machine.ToString("X"))
     }
 
-    # 共有ランタイムを解決できない環境が成立していることを、フレームワーク依存版で確かめる。成立して
-    # いなければ、このあとの単独起動は何も確かめていないことになる。
+    # 共有ランタイムを解決できない環境が成立していることを、フレームワーク依存版で確かめる。
     $broken = Invoke-WithoutSharedRuntime `
         -FilePath (Join-Path $dependent "PmxEditorMcp.Bridge.exe") -Arguments @()
     if ($broken.Code -ne $FrameworkMissingCode) {
@@ -105,7 +98,6 @@ try {
             "$($broken.Said)$($broken.Noise)")
     }
 
-    # 発行先の残りにも、実行機に入っている共有ランタイムにも依らないことを見るため、単独で写す。
     Copy-Item -Path $exe -Destination $alone -Force
     $standalone = Join-Path $alone "PmxEditorMcp.Bridge.exe"
 

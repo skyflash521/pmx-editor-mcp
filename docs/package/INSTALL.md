@@ -102,7 +102,7 @@ PMXエディタは編集とビューのウィンドウを別々に持ち、閉�
 ```powershell
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
 
-# 同じセッションで二度目を走らせても落ちないよう、型は無いときだけ作る。
+# 型は無いときだけ作る。
 if (-not ("Win.Native" -as [type])) {
     Add-Type -Namespace Win -Name Native -UsingNamespace System.Text -MemberDefinition @'
 [DllImport("user32.dll")] public static extern bool PostMessage(
@@ -139,7 +139,7 @@ if ($null -eq $target) {
 }
 
 function Get-TargetEditor {
-    # 実行ファイルを読めないプロセスは、別の利用者のものなので対象から外す。
+    # 実行ファイルを読めないプロセスは、別の利用者のものである。
     param([string]$FinalPath)
 
     @(Get-Process -Name PmxEditor_x64 -ErrorAction Ignore | Where-Object {

@@ -1,7 +1,6 @@
 // 自動E2E検査の実行器。
 // 生成器が書き出した検査を、MCPサーバーとして起こしたブリッジへ1件ずつ投げ、結果を
-// 行キー・編集の流れ・接続の経路ごとに数えて出す。ホストの待受へ直に繋がないのは、クライアントが
-// 通る経路をそのまま通すためである——ブリッジが公開していないツールは、直に繋ぐと通ってしまう。
+// 行キー・編集の流れ・接続の経路ごとに数えて出す。
 // 検査の中身はこの実行器が決めず、生成器が書いたものだけを読む。
 
 import { spawnSync } from "node:child_process";
@@ -38,7 +37,6 @@ const DEBUG_PREFIX = "debug_";
 /**
  * 読み込む中身が要るツールへ渡す形状。頂点3つと面1つと材質1つだけを持つ、文字で書いた
  * DirectXの形である。材質を宣言しないと、読み取る側が材質の並びを持たないまま添字で引く。
- * 書き出す手立てがエディタに無いので、読める最小のものをここで組む。
  */
 const MESH = [
     "xof 0303txt 0032",
@@ -66,10 +64,7 @@ const MESH = [
     "",
 ].join("\r\n");
 
-/**
- * 読み込む中身が要るツールへ渡すモーション。表示とIKのキーを1つだけ持つ。綴りと並びはVMDの形が
- * 定めるもので、書き出す手立てがエディタのSDKに無いのでここで組む。
- */
+/** 読み込む中身が要るツールへ渡すモーション。表示とIKのキーを1つだけ持つ。綴りと並びはVMDの形が定める。 */
 function motion() {
     const head = Buffer.alloc(30);
     head.write("Vocaloid Motion Data 0002", 0, "latin1");
@@ -85,10 +80,7 @@ function motion() {
     return Buffer.concat([head, named, counts, key]);
 }
 
-/**
- * 読み込む中身が要るツールへ渡すポーズ。持つ骨を0件にしてあるので、開いているモデルの骨の名前に
- * 依らない。書き出す手立てがエディタのSDKに無いのでここで組む。
- */
+/** 読み込む中身が要るツールへ渡すポーズ。持つ骨を0件にしてあり、開いているモデルの骨の名前に依らない。 */
 const POSE = [
     "Vocaloid Pose Data file",
     "",
@@ -98,8 +90,8 @@ const POSE = [
 ].join("\r\n");
 
 /**
- * 検査が書く先の置き場。走るたびに作り直して終わりに消すので、前の実行が残したものが在ることに
- * ならない。正本はこの名前で書き先を綴り、値はここで決まる——走らせる機械ごとに位置が変わる。
+ * 検査が書く先の置き場。走るたびに作り直して終わりに消す。正本はこの名前で書き先を綴り、値はここで
+ * 決まる。
  */
 const TEMPORARY_PLACE = path.join(os.tmpdir(), "pmx-editor-mcp-e2e");
 
@@ -107,9 +99,7 @@ process.env.PMX_EDITOR_MCP_E2E_TEMP = TEMPORARY_PLACE;
 
 /**
  * 答えの返らない検査が何件出たら、塞がりが解けていないと見なして実行を打ち切るか。表示を
- * 片付けても返らなかった1件は、応答待ちとその待ち直しで実行の時間の上限をほぼ使い切る。
- * 2件目を待っても、その実行が上限に収まる見込みはもう無い——待つ時間が伸びるだけである。
- * 表示を片付けて進めた検査はここに数えないので、片付く塞がりで実行が終わることはない。
+ * 片付けて進めた検査はここに数えない。
  */
 const STALLED_LIMIT = 1;
 
@@ -118,10 +108,7 @@ function beside(name) {
     return path.join(path.dirname(url.fileURLToPath(import.meta.url)), name);
 }
 
-/**
- * 応答待ちの表示へ応答する操作役。画面を触るのはこの1本に寄せる。実機のエディタを相手にしない
- * 実行では代わりを差し替える——この実行器そのものを確かめる検査が、画面も実機も無しで走る。
- */
+/** 応答待ちの表示へ応答する操作役。実機のエディタを相手にしない実行では代わりを差し替える。 */
 let CONTROL_SCRIPT = beside("host-control.ps1");
 
 /** 呼び出しを始めていないことを表す断りの綴り。共通契約が定める。 */
@@ -180,21 +167,16 @@ function prepare(setup, setupArgs) {
 }
 
 /**
- * ブリッジが返したツールの結果から、ホストの包みを組み直す。結末の判定はどれも包みの形を見るので、
- * 戻すのはここ1か所にする。接続先の名乗りも包みの警告も、本文の中での位置ではなく行の書き出しで
- * 見分ける。
+ * ブリッジが返したツールの結果から、ホストの包みを組み直す。接続先の名乗りも包みの警告も、
+ * 本文の中での位置ではなく行の書き出しで見分ける。
  */
 function envelopeOf(said) {
-    // 名乗りは書き出しで見分ける。1行目と決め打つと、ブリッジ自身が返す誤り——ホストへ繋げない・
-    // 応答が返らないなど、名乗る接続先を持たない誤り——の本文を丸ごと捨てて、落ちた理由が残らない。
     let text = said.text;
     if (text.startsWith(TARGET_PREFIX) || text.startsWith(TARGET_CHANGED_PREFIX)) {
         const at = text.indexOf("\n");
         text = at < 0 ? "" : text.slice(at + 1);
     }
 
-    // 警告も書き出しで見分ける。末尾から剥がすと、値の行を持たない画像のツールで警告を値と
-    // 読み違える。
     const lines = text.split("\n");
     const warnings = lines.filter((line) => line.startsWith(WARNING_PREFIX))
         .map((line) => line.slice(WARNING_PREFIX.length));
@@ -212,8 +194,7 @@ function envelopeOf(said) {
         };
     }
 
-    // 画像を返すツールの値は本文でなく画像の塊で届く。文字の本文から読むと、文字列で返して
-    // しまっていても気づけない。
+    // 画像を返すツールの値は、本文でなく画像の塊で届く。
     if (said.images.length !== 0) {
         return { ok: true, value: said.images[0].data, warnings };
     }
@@ -280,8 +261,7 @@ function lacking(left, right) {
 
 /**
  * 走らせる前に、スキーマ正本・ブリッジが公開するツール・ホストが答える名前の3つが同じ集合である
- * ことを確かめる。合っていれば null。ずれていれば、そのずれは呼んでみるまで分からない——呼ばない
- * ツールのずれは、どの検査も落とさないまま残る。
+ * ことを確かめる。合っていれば null。
  */
 async function agreed(client, schemasPath) {
     let authored;
@@ -344,7 +324,7 @@ async function settled(client) {
 
 /**
  * 1件の検査の結末。合っていれば null、違っていればその理由を返す。
- * 包みの形は共通契約が定めるので、ここでは成功・失敗と理由の綴りだけを見る。
+ * 包みの形は共通契約が定める。ここでは成功・失敗と理由の綴りだけを見る。
  */
 function judge(one, response, remembered) {
     const envelope = response.result;
@@ -403,7 +383,7 @@ function judge(one, response, remembered) {
 
 /**
  * 指したビューの写しを1回の呼び出しでまとめて取り、ビューの名前から写しへの表を返す。取れな
- * かったときは、どのビューも同じ事情を持つ——操作役は1つでも撮れなければ落ちる。
+ * かったときは、どのビューも同じ事情を持つ。操作役は1つでも撮れなければ落ちる。
  */
 const OPENED_VIEWS = ["transform", "sub"];
 
@@ -523,7 +503,7 @@ function heldImage(one, response, capture, held) {
 
 /**
  * 控えた組をまとめて見比べ、合わなかった行へ理由を書き入れる。測れなかったときは、控えた行を
- * すべて落とす——測れていない行を合格のまま残すと、見比べていない実行が通ってしまう。
+ * すべて落とす。
  */
 function settleImages(held) {
     if (held.length === 0) { return; }
@@ -542,10 +522,7 @@ function settleImages(held) {
     }
 }
 
-/**
- * 呼ぶ前に読んだものと違うか。覚えていない名前を指す検査は落とす——比べる相手が無いまま通ると、
- * 呼び出しが何も動かさなかった回も合格になる。
- */
+/** 呼ぶ前に読んだものと違うか。覚えていない名前を指す検査は落とす。 */
 function changed(name, value, remembered) {
     if (!remembered.has(name)) {
         return "呼ぶ前に読んだものを覚えていません: " + name;
@@ -558,10 +535,7 @@ function changed(name, value, remembered) {
         : null;
 }
 
-/**
- * 2つの値が同じものか。並びと組は中身をたどって比べる——応答は綴りを解いて作り直した値なので、
- * 同じ中身でも別の実体になる。
- */
+/** 2つの値が同じものか。並びと組は中身をたどって比べる。 */
 function same(one, other) {
     if (Array.isArray(one) || Array.isArray(other)) {
         return Array.isArray(one) && Array.isArray(other)
@@ -584,8 +558,7 @@ function same(one, other) {
 
 /**
  * 読み返した項目が、書いた値のまま読めているか。並べて返す形は全件を、1つを返す形はそれ自身を
- * 見る。合っていれば null。1件も返らない並びは落とす——1件も見ないまま通ると、書き込みを
- * 確かめない検査になる。
+ * 見る。合っていれば null。1件も返らない並びは落とす。
  */
 function reads(expected, value) {
     const items = value !== null && typeof value === "object" && Array.isArray(value.items)
@@ -651,8 +624,7 @@ function report(results, key, title) {
 
 /**
  * PowerShellのスクリプトを起こし、書き出したものと、落ちたときの事情を返す。
- * PowerShellの出力の文字コードは端末の設定で変わるので、読めない並びは読めないまま置いて、
- * 数と綴りだけを確かに読めるようにする。
+ * PowerShellの出力の文字コードは端末の設定で変わる。読めない並びは読めないまま置く。
  */
 function invokeControl(args) {
     const done = spawnSync("pwsh", ["-NoProfile", ...args], { encoding: "utf8" });
@@ -671,8 +643,8 @@ function invokeControl(args) {
 }
 
 /**
- * 並びを渡す相手を、PowerShellの式として起こす。-File で起こすと引数はどれも文字列1つとして
- * 渡るので、読点で並べても1つの値になってしまう。値は引用符で括り、引用符そのものは重ねて逃がす。
+ * 並びを渡す相手を、PowerShellの式として起こす。-File で起こすと、引数はどれも文字列1つとして
+ * 渡る。値は引用符で括り、引用符そのものは重ねて逃がす。
  */
 function invokeListed(script, named) {
     const quoted = (one) => "'" + String(one).replace(/'/g, "''") + "'";
@@ -687,8 +659,7 @@ function invokeListed(script, named) {
 
 /**
  * エディタが出している応答待ちの表示へ応答して閉じ、閉じたものの素性を返す。応答できない表示が
- * 残ったときは操作役が理由を述べて落ちるので、その文言を返す——答えるものが無かったときと同じ
- * 空の並びにすると、最も素性が要る場面で何も言えなくなる。
+ * 残ったときは、操作役が理由を述べて落ちる。その文言を返す。
  */
 function answerDialogs(processId) {
     const done = invokeControl([
@@ -706,7 +677,7 @@ function answerDialogs(processId) {
     };
 }
 
-/** 表示へ何度まで続けて答えるか。1つ答えると次が出る作りがあるので、1度では足りない。 */
+/** 表示へ何度まで続けて答えるか。1つ答えると次が出る作りがある。 */
 const ANSWERING_ROUNDS = 8;
 
 /**
@@ -729,8 +700,6 @@ function clearPrompts(processId) {
         answered.push(...cleared.answered);
     }
 
-    // 上限まで答えても出続けるなら、まだ出ている。答えられたことにすると、残った表示に
-    // 続きの検査が巻き添えで落ちる。
     return {
         answered: null,
         unavailable: "上限まで答えても表示が出続けました: " + answered.join(" / "),
@@ -749,9 +718,7 @@ function notStarted(response) {
         && envelope.error.code === NOT_STARTED;
 }
 
-/**
- * 表示が出たことを知らせる断りか。次の検査へ進む前に表示へ答えるので、出たままにならない。
- */
+/** 表示が出たことを知らせる断りか。 */
 function prompted(response) {
     const envelope = response.result;
 
@@ -764,10 +731,7 @@ function prompted(response) {
         && envelope.error.code === PROMPT_SHOWN;
 }
 
-/**
- * 環境変数の名前を値へ広げる。広げられない名前があればその名前を投げる。検査が書き先に使う位置は
- * 走らせる機械ごとに変わるので、正本は名前で書き、ここで値にする。
- */
+/** 環境変数の名前を値へ広げる。広げられない名前があればその名前を投げる。 */
 function expand(text) {
     return text.replace(/%([^%]+)%/g, (whole, name) => {
         const value = process.env[name];
@@ -803,8 +767,7 @@ function expanded(value) {
 
 /**
  * その検査が書くファイルの位置。書かない検査では null。呼ぶ前に置き場を用意して、そこに在る古い
- * ものを消す——置き場が無いことで断られると書けたかどうかを確かめられず、前の実行が残したものを
- * 残すと、何も書かない呼び出しでも在ることになる。
+ * ものを消す。
  */
 function written(one, given) {
     if (one.writes === undefined) {
@@ -820,7 +783,7 @@ function written(one, given) {
 
 /**
  * 返った値を覚えられるか。成功して値を載せた応答だけが覚える相手で、表示が出たことを知らせる
- * 断りのように値を持たない応答は覚えない——覚えると、借りる側が値の無いものを渡してしまう。
+ * 断りのように値を持たない応答は覚えない。
  */
 function produced(response) {
     const envelope = response.result;
@@ -836,8 +799,8 @@ function produced(response) {
 /**
  * 借りる値を差し込んだ引数。差し込む先は引数の中の道で、斜線で区切った各段をたどり、たどり着いた
  * 位置へ覚えた値を置く。並びで受け取る引数は生成器が空きを1つ置き、道がその中を指す。借りる元も
- * 斜線で位置を指せる——応答を並びで返すツールは、出たハンドルもその並びの中へ入れるので、その中の
- * どれを借りるかを言う必要がある。借りる名前をまだ覚えていなければ null。
+ * 斜線で位置を指せる。応答を並びで返すツールは、出たハンドルもその並びの中へ入れる。借りる名前を
+ * まだ覚えていなければ null。
  */
 function borrowing(one, remembered) {
     if (one.borrowed === undefined) {
@@ -874,7 +837,7 @@ function borrowing(one, remembered) {
 
 /**
  * 検査を1件ずつブリッジへ投げ、結末を数えて終了コードを返す。ホストが契約から外れた応答を返した
- * ときだけは、数える前に打ち切る——どの検査の結末も信じられない。
+ * ときだけは、数える前に打ち切る。
  */
 async function run(client, cases, processId) {
     cases = [...cases.filter((one) => !needsViews(one)), ...cases.filter(needsViews)];
@@ -887,7 +850,6 @@ async function run(client, cases, processId) {
     let stalled = 0;
     let broke = null;
 
-    // 写しを撮るビューは、走らせる前に出揃っている。
     const shooting = [...new Set(
         cases.filter((one) => one.expect === "viewImage").map((one) => one.view))];
 
@@ -921,9 +883,7 @@ async function run(client, cases, processId) {
 
         const wrote = written(one, given);
 
-        // 応答が返らないのは、答えられない表示がUIスレッドを塞いでいるときである。表示を片付け
-        // れば、塞がっていた呼び出しが終わって応答が返るので、投げ直さずにもう1回ぶん待つ——
-        // 実行されたかどうかが分からない要求を投げ直すと、一度だけ頼んだ操作が二度実行されうる。
+        // 応答が返らないのは、答えられない表示がUIスレッドを塞いでいるときである。
         let asked = false;
         let cleared = null;
         const extend = () => {
@@ -970,8 +930,6 @@ async function run(client, cases, processId) {
             continue;
         }
 
-        // 答えが届いたので、続けて答えの返らなかった数は数え直す。判定まで進まない断りも、
-        // ホストが答えたことに変わりはない。
         stalled = 0;
         let response = said.response;
         if (notStarted(response)) {
@@ -990,7 +948,6 @@ async function run(client, cases, processId) {
             }
         }
 
-        // 片付かない表示を残したまま先へ進むと、後の検査が巻き添えで落ちる。
         if (prompted(response)) {
             const after = clearPrompts(processId);
             noted.push(...(after.answered ?? []));
@@ -1021,7 +978,6 @@ async function run(client, cases, processId) {
         const outcome = { case: one, reason, stopped: noted, seconds: elapsed() };
         results.push(outcome);
 
-        // 控えた組は、走り切ってから測った理由をこの結末へ書き入れる。
         if (held.length > holding) { held[held.length - 1].outcome = outcome; }
     }
 
@@ -1054,9 +1010,6 @@ function finish(results, cases, left) {
             "不合格: " + result.case.tool + " — " + result.case.purpose + " — " + result.reason);
     }
 
-    // 表示で止まった検査も、呼び先までは届いているので合格に数える。合格の中で何件が
-    // 表示で止まったのかを内訳として添える——合格から引くと、行キーごとの内訳が数える
-    // 合格と食い違う。
     const stopped = results.filter(
         (r) => r.reason === null && Array.isArray(r.stopped) && r.stopped.length !== 0);
     if (stopped.length !== 0) {

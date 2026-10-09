@@ -22,6 +22,5 @@ for ($pair = 0; $pair -lt $Reference.Count; $pair++) {
     $written = (Get-Content -Path $Reference[$pair] -Raw -Encoding UTF8).Trim()
     $given = (Get-Content -Path $Candidate[$pair] -Raw -Encoding UTF8).Trim()
 
-    # 同じ中身なら差は無い。違えば、合うと見なす上限を超える差を返す。
     if ($given -eq $written) { Write-Output '0' } else { Write-Output '1' }
 }

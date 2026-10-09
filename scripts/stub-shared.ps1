@@ -11,10 +11,10 @@ $StubViewHeight = 48
 # 何回目の起動かを持ち越す置き場の名前。前置が走るたびに捨てる。
 $StubLaunchStateName = "pmx-editor-mcp-acceptance-stub-launched.txt"
 
-# 段をどこまで進めたかを持ち越す置き場の名前。サーバーを起こし直す段をまたぐのに要る。
+# 段をどこまで進めたかを持ち越す置き場の名前。
 $StubProgressStateName = "pmx-editor-mcp-acceptance-stub-progress.json"
 
-# 頼まれた操作を書き留める置き場の名前。実行器が操作の段をこなしたかを、ここで外から確かめる。
+# 頼まれた操作を書き留める置き場の名前。
 $StubOperationLogName = "pmx-editor-mcp-acceptance-stub-operations.txt"
 
 # 起こしたことにするエディタを、参照クライアントの題材が持ち越す置き場の名前。
@@ -37,8 +37,7 @@ $LiveHostStubClosed = "closed"
 # 題材が違える形を伝える環境変数。操作役・待受・確認クライアントの代わりが同じ値を読む。
 $LiveHostStubBrokenName = "PMX_EDITOR_MCP_STUB_BROKEN"
 
-# 待受を残す違え方が、1つ目の停止でだけ効くようにする印の置き場の名前。停止のたびに待受を残すと、
-# 切断を待つ側が待ちきれるまで実行が止まり、1回ぶんがその待ちのぶんだけ伸びる。
+# 待受を残す違え方が、1つ目の停止でだけ効くようにする印の置き場の名前。
 $LiveHostStubIgnoredName = "pmx-editor-mcp-livehost-stub-ignored.txt"
 
 # 題材が、状態の変わるのを諦めるまでの秒数。実物の操作役の既定と同じ値を採る。

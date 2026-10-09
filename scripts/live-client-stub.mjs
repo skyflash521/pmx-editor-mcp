@@ -1,7 +1,7 @@
 // 参照クライアントの実機動作確認を確かめるための、呼び出しの記録を作って返すだけのクライアント。
 // 実物と同じ形の流れる記録を書き出し、実行器が読む項目——呼んだツール・乗った引数・返りの本文・
 // 誤りの印・画像の数——を、そのとおりに埋めるか、1か所だけ違えて埋める。
-// 実機のエディタもブリッジも参照クライアントも要らないので、常設の検査から走らせられる。
+// 実機のエディタもブリッジも参照クライアントも要らない。
 
 import process from "node:process";
 import { CASES, named } from "./live-client-cases.mjs";
@@ -37,7 +37,7 @@ const EXIT_MAX_TURNS = 1;
 
 const EXIT_INVALID_ARGUMENTS = 2;
 
-/** 引数を読み分ける。実物と同じ引数も渡されるので、知らないものは読み飛ばす。 */
+/** 引数を読み分ける。実物と同じ引数も渡される。知らないものは読み飛ばす。 */
 function parseArguments(args) {
     let broken = "";
     for (let at = 0; at < args.length; at++) {
@@ -91,7 +91,7 @@ function failed(broken) {
     return broken === "refused" || broken === "unreached" || broken === "isError";
 }
 
-/** その違え方を当てる呼び出しか。違えるのは1か所だけなので、当たるのは1件に限る。 */
+/** その違え方を当てる呼び出しか。当たるのは1件に限る。 */
 function applies(one, at, broken) {
     if (broken === "image.missing") {
         return one.image;
@@ -106,8 +106,6 @@ function applies(one, at, broken) {
 
 function transcribe(broken) {
     const lines = [];
-    // 呼び出しそのものを落とす形では、1件目を呼ばない。実行器はその1件を呼ばれていないものとして
-    // 見る。
     const listed = broken === "call" ? CASES.slice(1) : CASES;
     for (const [at, one] of listed.entries()) {
         const id = "call-" + (at + 1);

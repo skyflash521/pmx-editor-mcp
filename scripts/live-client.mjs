@@ -2,11 +2,9 @@
 // Claude Code をMCPクライアントとして非対話で起こし、引数を取るツールを実際に呼ばせて、
 // 綴ったスキーマのとおりに引数が渡ることを確かめる。
 //
-// 仕様への適合を見るだけでは足りない。MCPのツール定義は組の直下へ oneOf や allOf を置くことを
-// 許しており(2025-11-25 までのバージョンは inputSchema に type だけを要り、追加の綴りを禁じない。
-// 2026-07-28 のバージョンはそれを明文で許す)、仕様に照らす検査では合格する。しかし入れ子を解かない
-// クライアントでは引数が1つも渡らない。ここで確かめるのは、綴った形が仕様に合っているかでは
-// なく、クライアントが実際に呼べるかである。
+// MCPのツール定義は組の直下へ oneOf や allOf を置くことを許す(2025-11-25 までのバージョンは
+// inputSchema に type だけを求め、追加の綴りを禁じない。2026-07-28 のバージョンはそれを明文で
+// 許す)。入れ子を解かないクライアントでは引数が1つも渡らない。
 //
 // 確かめるのは引数が渡ることであって、モデルの出来ではない。呼ぶツールと引数を指示で名指しし、
 // 呼び出しに乗った値の型までを見る。
@@ -21,11 +19,7 @@ import { CASES, SERVER_NAME, named } from "./live-client-cases.mjs";
 
 const here = path.dirname(url.fileURLToPath(import.meta.url));
 
-/**
- * エディタとホストの操作役。稼働状態と画面を触るのはこの1本に寄せる。
- * 差し替えられるのは、この実行器そのものを実機のエディタ無しで確かめるためである——既定は
- * 実物で、開くのは実行時の引数に限る。
- */
+/** エディタとホストの操作役。既定は実物で、差し替えは実行時の引数に限る。 */
 let CONTROL_SCRIPT = path.join(here, "host-control.ps1");
 
 /** 導入の前置。ホストを配置し、MCPサーバーとして起こす相手を書き出す。 */
@@ -44,12 +38,7 @@ const BUDGET_NAME = "PMX_EDITOR_MCP_BUDGET_CHARS";
  */
 const UNATTENDED_NAME = "FLOW_UNATTENDED";
 
-/**
- * この検査で与える応答サイズ予算。受理される下限を採る——画像は予算で測ってはならないので、
- * 測っていないことを見るには、どんなに軽いビューの画像でも予算を超える値が要る。この開発環境の
- * 実測では、モデルを読み込んでいない起動直後のビューでも詰めた文字は15,174文字だったので、
- * 下限の1万で足りる。既定のままだと、超えないぶん測っていても通ってしまう。
- */
+/** この検査で与える応答サイズ予算。受理される下限を採る。画像は予算で測ってはならない。 */
 const BUDGET_CHARS = "10000";
 
 /** ホストまで届いたうえで呼び出しが通らなかったことを指す書き出し。ホスト側の実装が定める。 */
@@ -64,7 +53,7 @@ const BRIDGE_ERROR_PREFIX = "BRIDGE_";
  */
 const REACHED_PREFIXES = ["接続先: ", "接続先が変わった: "];
 
-/** 操作役と前置を待つ上限。中で待ちを重ねるので、1つあたりの上限を上回る値を採る。 */
+/** 操作役と前置を待つ上限。操作役は中で待ちを重ねる。1つあたりの上限を上回る値を採る。 */
 const CONTROL_TIMEOUT_MS = 180000;
 
 /** 参照クライアントを待つ上限。ツールを数件呼ぶ往復に、起動と後始末を足した値。 */
@@ -198,8 +187,6 @@ function readCalls(text) {
                 const told = Array.isArray(block.content) ? block.content : [block.content];
                 results.set(block.tool_use_id, {
                     failed: block.is_error === true,
-                    // 画像の塊には text が無い。文字へ均すと、画像で届いたのか文字列で届いたのかを
-                    // 見分けられなくなる。
                     said: told
                         .filter((c) => c === null || typeof c !== "object" || c.type === "text")
                         .map((c) => (c !== null && typeof c === "object" ? String(c.text) : String(c)))
@@ -264,8 +251,7 @@ const fell = new Set();
 
 const walked = new Set();
 try {
-    // 起こす相手はこの環境を継ぐ。エディタの中のホストも、参照クライアントが起こすブリッジも
-    // 同じ値を読むので、ここで置けば両方がそろう。
+    // エディタの中のホストも、参照クライアントが起こすブリッジも、この値を読む。
     process.env[BUDGET_NAME] = BUDGET_CHARS;
 
     const prepared = invokeScript(SETUP_SCRIPT, ["-Action", "prepare", ...SETUP_ARGS]).split(/\r?\n/).pop();

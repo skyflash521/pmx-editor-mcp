@@ -1,6 +1,5 @@
 # 受入の導入の前置のうち、実行器自身を確かめる経路。
 # 実機を導入せず、応答を作って返すだけのMCPサーバーを起こす相手として返す。
-# 前置が差し替え点として分かれていることは、この経路が成り立つことで確かめられる。
 [CmdletBinding()]
 param(
     # 行う前置。prepare は起こす相手を書き出す。
@@ -32,7 +31,6 @@ $ErrorActionPreference = "Stop"
 $server = Join-Path $PSScriptRoot "acceptance-stub-server.mjs"
 if (-not (Test-Path $server)) { throw "応答を作る相手が無い: $server" }
 
-# 持ち越しは1回の実行の中だけのものなので、始める前に捨てる。
 $temp = [System.IO.Path]::GetTempPath()
 foreach ($name in @($StubLaunchStateName, $StubProgressStateName, $StubOperationLogName)) {
     Remove-Item -Path (Join-Path $temp $name) -Force -ErrorAction Ignore

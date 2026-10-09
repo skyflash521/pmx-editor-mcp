@@ -1,5 +1,4 @@
 # ビューの写しと、ツールが返した画像を見比べて、明るさの平均の差を出す。
-# 大きさも縦横の比も違う2枚を比べるので、同じ辺数の格子へ縮めてから比べる。
 # 出力は組ごとに1行で、0から1までの小数を渡された並びの順に書く。0が同じ、1が正反対を指す。
 [CmdletBinding()]
 param(
@@ -59,8 +58,8 @@ if ($Reference.Count -ne $Candidate.Count) {
 }
 
 for ($pair = 0; $pair -lt $Reference.Count; $pair++) {
-    # 名前はパラメータと重ねない。PowerShellの変数名は大文字小文字を区別しないので、重ねると
-    # 並びを受けたパラメータが1つ目の値で上書きされ、以降の組が消える。
+    # PowerShellの変数名は大文字小文字を区別しない。パラメータと同じ名前の変数へ代入すると、
+    # 並びを受けたパラメータが上書きされる。
     $shotPath = $Reference[$pair]
     $givenPath = $Candidate[$pair]
     if (-not (Test-Path -LiteralPath $shotPath)) { throw "写しが無い: $shotPath" }

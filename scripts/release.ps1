@@ -7,7 +7,6 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# 外部コマンドが0以外で終わっても例外にしない。終了コードを見て自分で失敗させる。
 $PSNativeCommandUseErrorActionPreference = $false
 
 . (Join-Path $PSScriptRoot "version.ps1")

@@ -1,5 +1,5 @@
 // MCPサーバーへ stdio で繋ぐクライアント。ブリッジを起こして話す側は、受入の実行器も
-// 単独起動の確認もこれを使う——話し方は1つなので、書く場所も1つにする。
+// 単独起動の確認もこれを使う。
 
 import { spawn } from "node:child_process";
 
@@ -40,8 +40,6 @@ export class McpClient {
 
     /** サーバーを起こし、初期化まで済ませる。 */
     async start() {
-        // 診断は受け取り手の標準エラー出力へ素通しする。捨てると、落ちた原因を書いていても
-        // 読めなくなる。
         const child = spawn(this._server.command, this._server.arguments, {
             stdio: ["pipe", "pipe", "inherit"],
         });
@@ -51,8 +49,6 @@ export class McpClient {
         this._nextId = 1;
         this._ended = null;
 
-        // 落とした相手の後始末が、起こし直した相手へ及ばないようにする。落ちるのを待ち切れずに
-        // 起こし直すことがあるので、いま繋いでいる相手かどうかを見てから畳む。
         const finish = (reason) => {
             if (this._child === child) {
                 this._end(reason);
@@ -102,7 +98,6 @@ export class McpClient {
         return new Promise((resolve) => {
             child.once("exit", () => resolve());
             child.kill();
-            // 落ちない相手を待ち続けない。次の段はサーバーを起こし直すところから始まる。
             setTimeout(() => resolve(), 5000).unref();
         });
     }
@@ -152,8 +147,7 @@ export class McpClient {
             throw new Error("ツールの結果に本文がありません。");
         }
 
-        // 画像は本文と別の塊で届く。文字へ均してしまうと、画像として返ったのか文字列で返ったのかを
-        // このクライアントを使う検査が見分けられなくなる。
+        // 画像は、本文と別の塊で届く。
         const images = blocks
             .filter((block) => block.type === "image")
             .map((block) => ({

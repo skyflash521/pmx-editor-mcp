@@ -1,13 +1,11 @@
 # 配布パッケージを組み立てる。ホストの発行・ブリッジの発行・第三者ライセンス表示の組み立て・
-# zipの作成・内容物の検査を、この1本で通す。検査に落ちたら失敗させる——中身を確かめていない
-# ものを配布物として残さない。
+# zipの作成・内容物の検査を、この1本で通す。検査に落ちたら失敗させる。
 [CmdletBinding()]
 param()
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# 外部コマンドが0以外で終わっても例外にしない。終了コードを見て自分で失敗させる。
 $PSNativeCommandUseErrorActionPreference = $false
 
 . (Join-Path $PSScriptRoot "version.ps1")
@@ -26,8 +24,7 @@ function Publish-Host {
     <#
         .SYNOPSIS
         ホストを発行し、出来たDLLの在り処を返す。あわせて、この発行が解決した資産を出荷台帳へ
-        書き出す。配布物のDLLは参照するだけで、成果物へは写さない——再配布を禁じられている
-        ためである。
+        書き出す。配布物のDLLは再配布を禁じられており、参照するだけで成果物へは写さない。
     #>
     param([string]$Into, [string]$Ledger)
 
@@ -43,8 +40,6 @@ $version = Get-Version
 $staged = Join-Path $distribution "pmx-editor-mcp-$version"
 $archive = "$staged.zip"
 
-# 前の実行の成果を先に捨てる。落ちた回の後に古いものが同じ名前で残ると、確かめていない物を
-# 確かめた物として渡してしまう。
 if (Test-Path $staged) { Remove-Item -Path $staged -Recurse -Force }
 if (Test-Path $archive) { Remove-Item -Path $archive -Force }
 New-Item -ItemType Directory -Force -Path $staged | Out-Null
@@ -56,8 +51,7 @@ try {
     dotnet build $generatorProject -c Release | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "組み立て器の用意に失敗した。" }
 
-    # 出荷台帳は、出荷する実行ファイルを作ったその発行が書き出す。数えた物と出荷した物が同じ
-    # 解決結果であることを、別に解決を走らせない形で確かめる。
+    # 出荷台帳は、出荷する実行ファイルを作ったその発行が書き出す。
     $hostLedger = Join-Path $work "host.txt"
     $bridgeLedger = Join-Path $work "bridge.txt"
 

@@ -1,6 +1,6 @@
 # 実機動作確認を確かめるための、実機のエディタを持たない操作役。
 # 実物と同じ引数を受け、待受だけを持つエディタの代わりを起こして、その稼働状態を動かす。
-# 返す形も実物と同じにする——実行器はこの戻り値だけを見て合否を出す。
+# 返す形も実物と同じにする。
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
@@ -36,9 +36,7 @@ function Test-StubPipe {
 function Wait-StubPipeState {
     <#
         .SYNOPSIS
-        待受が求める状態になるまで待つ。実物の操作役も、状態が観測できるようになるまで待って戻る。
-        諦めるまでの秒数は実物の既定と同じ値を採る——どちらも正常な動作を刻む値ではなく、応答
-        しなくなった相手を諦めるための値である。
+        待受が求める状態になるまで待つ。諦めるまでの秒数は、実物の既定と同じ値を採る。
     #>
     param([int]$Editor, [bool]$Present)
 
@@ -81,13 +79,11 @@ switch ($Action) {
         Wait-StubPipeState -Editor $ProcessId -Present $true
     }
     "status" {
-        # 稼働状態は待受の有無から答える。
         $stopped = -not (Test-StubPipe -Editor $ProcessId)
         "状態: " + $(if ($stopped) { "停止済み" } else { "稼働中" })
     }
     "acl" {
-        # 実物は待受に掛かっている規則を読んで返す。ここは同じ形の組を作って返す——実行器が
-        # 見るのは、件数と3つの項目だけである。
+        # 実物は待受に掛かっている規則を読んで返す。ここは同じ形の組を作って返す。
         $ours = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
         $rule = [pscustomobject]@{
             IdentityReference = [pscustomobject]@{ Value = $ours }
@@ -106,6 +102,5 @@ switch ($Action) {
         }
     }
     default {
-        # 残りの操作は、実物と同じく何も書き出さずに戻る。
     }
 }

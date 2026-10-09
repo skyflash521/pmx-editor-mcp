@@ -3,15 +3,13 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net48</TargetFramework>
-    <!-- SlimDX の x64 混在モードアセンブリを解決するため、64ビットで実行する。 -->
+    <!-- SDK が参照する SlimDX は、x64 の混在モードアセンブリである。 -->
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>PmxEditorMcp.SignatureDump</AssemblyName>
     <RootNamespace>PmxEditorMcp.SignatureDump</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- 入力の形の照合は、汎用のJSON Schemaの実装に任せる。自前で書くと、綴った規則のうち
-         実装した範囲だけが効く検査になる。 -->
     <PackageReference Include="JsonSchema.Net" />
   </ItemGroup>
 
@@ -20,7 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 受入シナリオの定義の形は、この宣言1つから照合する。 -->
     <EmbeddedResource Include="AcceptanceScenarioSchema.json" />
   </ItemGroup>
 

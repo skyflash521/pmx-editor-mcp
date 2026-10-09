@@ -14,26 +14,20 @@ const JSONRPC_VERSION = "2.0";
 const HANDSHAKE_PROTOCOL = 1;
 
 /**
- * 引数を省略したときに期待する応答サイズ予算の文字数。実機動作確認の実行器は、予算の環境変数を
- * 外してからエディタを起こすので、ホストが読む既定値がそのまま返る。
- * 設定したまま起動していれば、この検査で分かる。
+ * 引数を省略したときに期待する応答サイズ予算の文字数。ホストが読む既定値で、実機動作確認の
+ * 実行器は予算の環境変数を外してからエディタを起こす。
  */
 const EXPECTED_BUDGET_CHARS = 100000;
 
-/**
- * 応答を受け切ったあとも接続を保ち続けるよう指示する語。第1引数の直後に置く。
- * 接続を張ったままエディタを終了する・待受を止める確認は、切断せずに待つ側が要る。
- */
+/** 応答を受け切ったあとも接続を保ち続けるよう指示する語。第1引数の直後に置く。 */
 const HOLD_WORD = "--hold";
 
 /** 引数を省略したときに送る要求の並び。 */
 const DEFAULT_REQUEST_WORDS = ["handshake", JSON.stringify({ protocol: HANDSHAKE_PROTOCOL }), "ping"];
 
 /**
- * 引数を省略したときに送る要求へ課す期待。応答が返っただけでは疎通の確認にならない——
- * ハンドシェイクが拒まれ、続く要求も拒まれる並びは、契約どおりのエラー応答の連なりとして
- * 通ってしまう。既定の要求は成功する前提なので、結果の中身まで確かめる。
- * 要求を明示したときは、拒まれること自体を確かめる使い方があるので課さない。
+ * 引数を省略したときに送る要求へ課す期待。既定の要求は成功する前提で、結果の中身まで確かめる。
+ * 要求を明示したときは課さない。
  */
 const DEFAULT_EXPECTATIONS = {
     handshake: expectHandshakeResult,
@@ -108,12 +102,12 @@ let nextRequestId = 1;
 let sentRequestId = null;
 
 /**
- * 本文を厳格なUTF-8でデコードする。壊れたバイト列は例外にする。
- * ホストはBOMを付けないので、BOMを黙って取り除かせず、付いていれば解析側で分かるようにする。
+ * 本文を厳格なUTF-8でデコードする。壊れたバイト列は例外にする。ホストはBOMを付けない。
+ * BOMは取り除かずに残す。
  */
 const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
 
-/** 応答の本文を記録に残せる長さへ切り詰める。上限の16MiBまでありうるのでそのままは載せない。 */
+/** 応答の本文を記録に残せる長さへ切り詰める。本文は上限の16MiBまでありうる。 */
 function describeLine(line) {
     if (line.length === 0) {
         return "(空)";
@@ -121,7 +115,7 @@ function describeLine(line) {
     return line.length > 200 ? line.slice(0, 200) + "…" : line;
 }
 
-/** バイト列の先頭を16進で表す。UTF-8として読めない応答も記録に残せるようにする。 */
+/** バイト列の先頭を16進で表す。 */
 function describeBytes(bytes) {
     const head = bytes.subarray(0, 32);
     return head.toString("hex") + (bytes.length > head.length ? "…" : "");
@@ -135,9 +129,7 @@ function buildPipeName(editorProcessId) {
 /**
  * コマンドライン引数の語の並びを要求の並びへ組み立てる。
  * 1件の要求はメソッド名単体か、メソッド名の直後に params のJSON表記を続けた2語で表す。
- * params の語は直前のメソッド名と一緒に消費されるので、メソッド名の位置には現れない。
- * そこにJSONに見える語が来るのはメソッド名の書き忘れか params の与えすぎで、
- * method として黙って送られると原因が分かりにくいので、ここで拒む。
+ * メソッド名の位置にJSONに見える語が来れば拒む。
  */
 function parseRequests(words) {
     const requests = [];
@@ -168,7 +160,7 @@ function parseRequests(words) {
     return requests;
 }
 
-/** メソッド名を表示に載せる形にする。空のメソッド名は行から消えてしまうので、そうと書く。 */
+/** メソッド名を表示に載せる形にする。空のメソッド名は、空であると書く。 */
 function describeMethod(method) {
     return method.length === 0 ? "(空のメソッド名)" : method;
 }
@@ -182,14 +174,14 @@ function parseParams(word) {
     }
 }
 
-/** オプションの打ち間違いかどうか。JSONの数値になる語は params がこの形を採るので除く。 */
+/** オプションの打ち間違いかどうか。JSONの数値になる語(params の形)は除く。 */
 function looksLikeOption(word) {
     return word.startsWith("-") && Number.isNaN(Number(word));
 }
 
 /** JSONの値の書き出しかどうか。メソッド名にこの形は現れない。 */
 function looksLikeJson(word) {
-    // JSON.parse は前後の空白を許すので、判定もそれに合わせて空白を除いてから見る。
+    // JSON.parse は前後の空白を許す。
     const body = word.trim();
     return /^["[{0-9-]/.test(body) || body === "true" || body === "false" || body === "null";
 }
@@ -197,7 +189,7 @@ function looksLikeJson(word) {
 /**
  * 要求を、送信するバイト列へ変換する。戻り値は Buffer。
  * 併せて識別子を1つ採番し、応答の突き合わせに使えるよう控える。
- * 引数の妥当性は組み立ての時点で確かめてあるので、ここでは失敗しない。
+ * 引数の妥当性は組み立ての時点で確かめてあり、ここでは失敗しない。
  */
 function encodeRequest(request) {
     const body = {
@@ -219,7 +211,6 @@ function encodeRequest(request) {
  * 取り出せたときは、表示する文字列を持つ text・残りのバイト列(Buffer)を持つ rest・
  * エラー応答ならそのコード、成功応答なら null を持つ errorCode・成功応答かどうかを持つ
  * hasResult・成功応答ならその result(エラー応答なら undefined)からなるオブジェクトを返す。
- * hasResult と result は、既定の要求に課す期待値検査が結果の中身を見るために使う。
  * 1件に満たないときは null を返す。
  * 1件ぶん揃っているが契約に反する場合は、応答の本文(長ければ切り詰めたもの)を添えた例外を投げる。
  */
@@ -246,7 +237,6 @@ function takeResponse(buffer) {
         throw new Error(noted(9, "応答をUTF-8として解釈できません: " + describeBytes(body) + " (" + error.message + ")"));
     }
 
-    // BOMは目に見えないので、構文不正としてでなく、BOMだと分かる形で拒む。
     if (line.charCodeAt(0) === 0xfeff) {
         throw new Error(noted(10, "応答の先頭にBOMが付いています: " + describeLine(line.slice(1))));
     }
@@ -275,7 +265,6 @@ function takeResponse(buffer) {
 
     // ホストが id を落とすのは、要求の識別子を判別できなかったときと、識別子まで載せると
     // エラー応答が上限のバイト数に収まらないときで、どちらもエラー応答に限られる。
-    // 直列に1件ずつ送るので、id を持つ応答はいま待っている要求のものでなければならない。
     const unidentified = response.id === null;
     if (!unidentified && response.id !== sentRequestId) {
         throw new Error(noted(16, "応答の識別子が要求の識別子 " + sentRequestId + " と一致しません: " + describeLine(line)));
@@ -311,26 +300,22 @@ function takeResponse(buffer) {
 
 /**
  * 接続を待つ無通信の上限。待受が無ければ即座に、使用中(パイプインスタンスは1つ)なら
- * 数秒で失敗が返るので、この上限はどちらの返事も来ない場合の安全網として置く。
+ * 数秒で失敗が返る。
  */
 const CONNECT_TIMEOUT_MS = 15000;
 
 /**
- * 応答を待つ無通信の上限。受信のたびに数え直すので、応答が届き続けるかぎり待つ。
- * ホストは1件の処理に120秒まで許し、超過したときだけエラー応答を返すので、それを待ちきれる
- * 値を採る。ただし超過した処理が終わるまでホストは次の要求を読み取らないので、その次の要求は
- * この上限を超えることがある。そのときは時間切れとして知らせる。
+ * 応答を待つ無通信の上限。受信のたびに数え直す。ホストは1件の処理に120秒まで許し、超過した
+ * ときだけエラー応答を返す。超過した処理が終わるまで、ホストは次の要求を読み取らない。
  * 応答を受け切ったあとや切断が要るエラーのあとに、ホストが接続を閉じるのを待つ上限も同じ値で兼ねる。
  */
 const RESPONSE_TIMEOUT_MS = 130000;
 
 /**
- * 終了コード。契約に反することが起きなかった終わり方を3つに分け、呼ぶ側がどの終わり方かを
- * 文面に依らず見分けられるようにする——0 は要求への応答がすべて返って自分から終えたとき、
- * 3 は切断が要るエラー応答のあとホストが契約どおり接続を切ったとき、4 は接続を保ったまま
- * ホスト側から切られたときである。エラー応答が含まれるかどうかは問わない(拒まれること自体を
- * 確かめる要求もあるため。どの要求がどう拒まれたかは表示で分かる)。切断が要るエラーを誘う要求は、
- * 後続の要求が応答を得られず失敗になるので並びの末尾に置く。
+ * 終了コード。契約に反することが起きなかった終わり方を3つに分ける。0 は要求への応答がすべて
+ * 返って自分から終えたとき、3 は切断が要るエラー応答のあとホストが契約どおり接続を切ったとき、
+ * 4 は接続を保ったままホスト側から切られたときである。エラー応答が含まれるかどうかは問わない。
+ * 切断が要るエラーを誘う要求は、並びの末尾に置く。後続の要求は応答を得られない。
  * 引数の誤り・接続や送受信の失敗・応答が揃う前の切断・受け取った応答が契約に反することは失敗とする。
  * 待って初めて分かること(待受が応じない、応答が返らない、切るはずの接続を切らない、
  * 閉じるはずの接続を閉じない)は時間切れとする。保持しているときも、この見分けは変わらない。
@@ -364,8 +349,6 @@ function run(pipeName, requests, hold) {
     let lastErrorCode = null;
     let awaitingClose = false;
 
-    // 応答の表示が欠けないよう、強制終了ではなく終了コードの設定で結果を確定させる。
-    // ソケットの後始末は確定と切り離し、時間切れがいつでも破棄できるようにする。
     function settle(code, message) {
         if (settled) {
             return;
@@ -383,8 +366,6 @@ function run(pipeName, requests, hold) {
         process.exitCode = code;
     }
 
-    // 応答が揃った状態での終わりを確定させる。保持しているときの切断は待っていた結末なので、
-    // 失敗の知らせではなく経過と同じ標準出力へ書く。確定は一度きりなので、書くのもここで抑える。
     function finish() {
         if (settled) {
             return;
@@ -398,8 +379,6 @@ function run(pipeName, requests, hold) {
         settle(EXIT_OK, null);
     }
 
-    // ホスト起点の切断を受けたときの確定。切断が要るエラーのあとで応答も揃っていれば、
-    // 待っていた切断そのものなので失敗にしない。
     function settleOnClose() {
         if (settled) {
             return;
@@ -419,7 +398,6 @@ function run(pipeName, requests, hold) {
         socket.destroy();
     }
 
-    // 書き込みがその場で失敗しても終了処理を飛ばさないよう、呼び出しをここで包む。
     function send(request) {
         try {
             socket.write(encodeRequest(request));
@@ -433,7 +411,6 @@ function run(pipeName, requests, hold) {
             return;
         }
         if (complete) {
-            // 応答は揃っているが、読み取り終わりで閉じるはずの接続が閉じていない。
             settle(EXIT_TIMEOUT, "応答を受け切ったあと、ホストが接続を閉じないまま上限の時間に達しました。");
         } else if (awaitingClose) {
             settle(
@@ -492,8 +469,7 @@ function run(pipeName, requests, hold) {
             buffer = taken.rest;
             index += 1;
 
-            // ホストはこのエラーのあと接続を切る。こちらから閉じずに待てば、切ったかどうかを
-            // 確かめられる。要求の並びのどこで起きても同じなので、残りの有無より先に見る。
+            // ホストはこのエラーのあと接続を切る。
             if (DISCONNECTING_ERROR_CODES.includes(lastErrorCode)) {
                 if (buffer.length > 0) {
                     abort("切断が要るエラー応答(" + lastErrorCode + ")のあとにデータが届きました。");
@@ -506,7 +482,6 @@ function run(pipeName, requests, hold) {
                 break;
             }
 
-            // 次の要求はまだ送っていないので、ここに残るデータは対応する要求を持たない。
             if (buffer.length > 0) {
                 abort("次の要求を送る前に予期しない応答が届きました。");
                 return;
@@ -535,7 +510,6 @@ function run(pipeName, requests, hold) {
         }
         complete = true;
         if (hold) {
-            // 待ち続けるので、無通信の上限は外す。
             socket.setTimeout(0);
             console.log("接続を保持しています。ホストが切るか、Ctrl+C を押すまで待ちます。");
             tellHolding();
@@ -554,7 +528,6 @@ function run(pipeName, requests, hold) {
                 abort(where + "失敗しました: " + error.message);
                 return;
             }
-            // 応答は揃っており、こちらから閉じる際の失敗か、待っていた切断にすぎない。
             finish();
             socket.destroy();
             return;
@@ -578,8 +551,7 @@ function run(pipeName, requests, hold) {
         settleOnClose();
     });
 
-    // ホストは切断が要るエラーでは応答を書いてから切る。直前の応答がそのエラーだったかを添えると、
-    // 契約どおりの切断か、それともエディタの終了・待受の停止による切断かを記録から見分けられる。
+    // ホストは切断が要るエラーでは応答を書いてから切る。
     function describeDisconnection() {
         const pending = requests.slice(index).map((request) => request.label);
         let cause;
@@ -593,7 +565,6 @@ function run(pipeName, requests, hold) {
         const partial =
             buffer.length > 0 ? " 区切りに達していない受信済みのデータが " + buffer.length + " バイトあります。" : "";
         return (
-            // ここへ来るのは応答が揃う前の切断に限られるので、未応答の要求は必ず1件以上ある。
             cause + partial + " 応答を受け取っていない要求: " + pending.join(", ")
         );
     }
@@ -623,7 +594,6 @@ function main() {
         words = words.slice(1);
     }
 
-    // 位置に依存する語はこれだけなので、置き場所を誤ったときに要求の誤りとして知らせない。
     if (words.includes(HOLD_WORD)) {
         reject(HOLD_WORD + " は第1引数の直後に1つだけ置けます。");
         return;

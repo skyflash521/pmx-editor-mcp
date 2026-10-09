@@ -1,7 +1,6 @@
 // 実機動作確認の確認クライアントを確かめるための、応答を作って返すだけの待受。
 // 確認クライアントが要求を省いたときに送る2件——ハンドシェイクと ping——へ、契約どおりの応答か、
-// その中の1か所だけを違えた応答を返す。実機のエディタもホストも要らないので、常設の検査から
-// 走らせられる。
+// その中の1か所だけを違えた応答を返す。実機のエディタもホストも要らない。
 
 import net from "node:net";
 import path from "node:path";
@@ -28,7 +27,7 @@ const HOST_VERSION = "0.0.0-stub";
 /** ping が返す値。確認クライアントがこの値を求める。 */
 const PONG = "pong";
 
-/** 作った断り。切断を伴わないコードを選ぶ——切断は別の結末として見られる。 */
+/** 作った断り。切断を伴わないコードである。 */
 const REFUSED = { code: -32000, message: "作った断りである。" };
 
 /**
@@ -62,10 +61,7 @@ function parseArguments(args) {
     return { parsed };
 }
 
-/**
- * ハンドシェイクの応答。違える形は、確認クライアントが見る項目ごとに1つずつ置く——項目を1つ
- * 見落とした確認クライアントは、その形を違えた実行で通ってしまう。
- */
+/** ハンドシェイクの応答。違える形は、確認クライアントが見る項目ごとに1つずつ置く。 */
 function handshake(broken) {
     if (broken === "handshake.error") {
         return { error: REFUSED };
@@ -96,8 +92,7 @@ function ping(broken) {
 
 /**
  * 返す1行。応答の中身より手前——行の符号化・JSONの形・jsonrpc・識別子・result と error の
- * 排他——を違える形は、組み立てた行そのものへ手を入れる。確認クライアントはこの層も見ており、
- * 見落とせば契約に合わない応答を通してしまう。
+ * 排他——を違える形は、組み立てた行そのものへ手を入れる。
  */
 function written(request, broken) {
     const said = {
@@ -133,7 +128,7 @@ function written(request, broken) {
     }
 
     if (broken === "wire.utf8") {
-        // UTF-8として解けないバイトの並び。文字列では作れないので塊で返す。
+        // UTF-8として解けないバイトの並び。
         return Buffer.from([0x7b, 0xff, 0x7d]);
     }
 
