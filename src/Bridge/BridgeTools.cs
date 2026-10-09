@@ -132,9 +132,6 @@ namespace PmxEditorMcp.Bridge
             return entries;
         }
 
-        /// <summary>
-        /// 語からツールを引くツールを作る。ホストへは渡らない——説明文はブリッジが持っている。
-        /// </summary>
         private static McpServerTool FindTool(
             IList<ToolMatch.Entry> entries,
             string description,
@@ -142,11 +139,7 @@ namespace PmxEditorMcp.Bridge
             bool declared)
         {
             return McpServerTool.Create(
-                (string[] texts, int? limit, int? offset) => ToolEnvelopeResult.From(
-                    ToolSearch.Answer(texts, limit, offset, entries, client.BudgetChars),
-                    string.Empty,
-                    client.BudgetChars,
-                    false),
+                new FindToolFunction(entries, description, client),
                 new McpServerToolCreateOptions
                 {
                     Name = FixedToolTable.FindToolName,

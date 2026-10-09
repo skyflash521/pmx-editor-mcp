@@ -24,7 +24,7 @@ namespace PmxEditorMcp.SignatureDump
 
         public const int FindToolMinimumLimit = 1;
 
-        public const int FindToolMaximumLimit = 500;
+        public const int FindToolMaximumLimit = int.MaxValue;
 
         /// <summary>接続先に選べるPMXエディタを並べるツールの名前。</summary>
         public const string ListEditorsName = "list_editors";
@@ -38,9 +38,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>指定した文字数のテキストを返す、検査からだけ使うツールの名前。</summary>
         public const string LargeTextName = "debug_large_text";
 
-        /// <summary>
-        /// そのツールの入力スキーマ。引数の名前と型と必須かどうかだけを書き、説明は持たない。
-        /// </summary>
+        /// <summary>引数の名前と型と必須かどうか、既定と取りうる範囲を書き、説明は持たない。</summary>
         public static string InputSchema(string name)
         {
             switch (name)
@@ -48,9 +46,10 @@ namespace PmxEditorMcp.SignatureDump
                 case FindToolName:
                     return "{\"type\":\"object\",\"properties\":{\"" + FindToolTextsParameter
                         + "\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},"
-                        + "\"limit\":{\"type\":[\"integer\",\"null\"]},"
-                        + "\"offset\":{\"type\":[\"integer\",\"null\"]}},\"required\":[\""
-                        + FindToolTextsParameter + "\",\"limit\",\"offset\"],"
+                        + "\"limit\":{\"type\":[\"integer\",\"null\"],\"default\":" + FindToolDefaultLimit
+                        + ",\"minimum\":" + FindToolMinimumLimit + ",\"maximum\":" + FindToolMaximumLimit + "},"
+                        + "\"offset\":{\"type\":[\"integer\",\"null\"],\"default\":0,\"minimum\":0}},"
+                        + "\"required\":[\"" + FindToolTextsParameter + "\"],"
                         + "\"additionalProperties\":false}";
                 case SelectEditorName:
                     return "{\"type\":\"object\",\"properties\":{\"" + SelectEditorProcessIdParameter
@@ -85,9 +84,6 @@ namespace PmxEditorMcp.SignatureDump
                             + " に並べた語のどれかを名前か説明文に含むツールの名前を、"
                             + "名前の昇順で並べる。" + FindToolTextsParameter
                             + " は空の配列も空の語も受け付けない。"
-                            + "limit は" + FindToolMinimumLimit + "以上" + FindToolMaximumLimit
-                            + "以下で既定は" + FindToolDefaultLimit
-                            + "、offset は0以上で既定は0である。"
                             + "大文字小文字と全角半角と仮名の種類は区別しない。エディタが起動して"
                             + "いなくても答える。やりたいことの言葉から、それを行うツールへ渡る"
                             + "ときに使う。当たりが多いときは total に総数を返し、"

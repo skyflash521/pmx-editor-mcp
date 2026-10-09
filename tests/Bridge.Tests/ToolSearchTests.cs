@@ -78,7 +78,6 @@ namespace PmxEditorMcp.Bridge.Tests
         [Theory]
         [InlineData(0)]
         [InlineData(-1)]
-        [InlineData(501)]
         public void ACountOutsideTheBoundsIsRefused(int limit)
         {
             Assert.Equal(

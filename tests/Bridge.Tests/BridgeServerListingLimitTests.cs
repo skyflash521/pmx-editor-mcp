@@ -305,6 +305,22 @@ namespace PmxEditorMcp.Bridge.Tests
                 : null;
         }
 
+        private static Listing ToolSearchListing()
+        {
+            string[] names = FixedToolTable.Descriptions(debugHooks: false).Keys
+                .Concat(GeneratedToolDefinitions.Create().Select(definition => definition.Name))
+                .ToArray();
+
+            return new Listing(
+                new[] { CountedTotal },
+                0,
+                "tools",
+                names.Min(name => name.Length) + 2)
+            {
+                Most = names.Length,
+            };
+        }
+
         private static int ShortestFormChars()
         {
             using JsonDocument structure = JsonDocument.Parse(File.ReadAllText(Catalog("observed", "ui-structure.json")));
@@ -640,6 +656,11 @@ namespace PmxEditorMcp.Bridge.Tests
                 if (HostAssembledListings.TryGetValue(tool, out assembled))
                 {
                     return assembled;
+                }
+
+                if (tool == FixedToolTable.FindToolName)
+                {
+                    return ToolSearchListing();
                 }
 
                 JsonElement schema;

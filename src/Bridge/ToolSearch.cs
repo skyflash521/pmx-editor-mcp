@@ -61,10 +61,9 @@ namespace PmxEditorMcp.Bridge
             }
 
             int taking = limit ?? DefaultLimit;
-            if (taking < MinimumLimit || taking > MaximumLimit)
+            if (taking < MinimumLimit)
             {
-                return Refusal("limit は " + MinimumLimit + " 以上 " + MaximumLimit
-                    + " 以下の整数でなければならない: " + Written(taking));
+                return Refusal("limit は " + MinimumLimit + " 以上の整数でなければならない: " + Written(taking));
             }
 
             int from = offset ?? 0;
