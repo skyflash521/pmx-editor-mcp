@@ -10,22 +10,8 @@ namespace PmxEditorMcp.Bridge
     /// <summary>ホストが返したツールの包みを、MCPクライアントへ返す結果へ写す。</summary>
     public static class ToolEnvelopeResult
     {
-        private const string OkName = "ok";
-
-        private const string ValueName = "value";
-
-        private const string ErrorName = "error";
-
-        private const string CodeName = "code";
-
-        private const string MessageName = "message";
-
-        private const string WarningsName = "warnings";
 
         private const string WarningPrefix = "警告: ";
-
-        /// <summary>予算を超えた本文の代わりに返す誤り。</summary>
-        private const string TooLargeCode = "TOOL_RESPONSE_TOO_LARGE";
 
         private const string NarrowingLabel = "絞り方: ";
 
@@ -59,12 +45,12 @@ namespace PmxEditorMcp.Bridge
                 throw new ArgumentNullException(nameof(targetNotice));
             }
 
-            if (budgetChars < BridgeBudget.MinimumChars)
+            if (budgetChars < ResponseBudget.MinimumChars)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(budgetChars),
                     budgetChars,
-                    BridgeBudget.MinimumChars + " 以上でなければならない。");
+                    ResponseBudget.MinimumChars + " 以上でなければならない。");
             }
 
             JsonObject envelope = result as JsonObject;
@@ -87,7 +73,7 @@ namespace PmxEditorMcp.Bridge
                 ok = false;
                 drawn = false;
                 image = null;
-                body = TooLargeCode + ": 応答が応答サイズ予算 " + budgetChars
+                body = ToolEnvelope.ResponseTooLarge + ": 応答が応答サイズ予算 " + budgetChars
                     + " 文字に収まらない(" + body.Length + " 文字)。"
                     + (string.IsNullOrEmpty(narrowing)
                         ? string.Empty
@@ -125,12 +111,12 @@ namespace PmxEditorMcp.Bridge
         /// </summary>
         private static string Image(JsonObject envelope)
         {
-            if (!envelope.ContainsKey(ValueName))
+            if (!envelope.ContainsKey(ToolEnvelope.ValueName))
             {
                 throw Broken("ツールの応答が値を持たない。");
             }
 
-            JsonValue value = envelope[ValueName] as JsonValue;
+            JsonValue value = envelope[ToolEnvelope.ValueName] as JsonValue;
             string packed;
             if (value == null || !value.TryGetValue(out packed) || packed.Length == 0)
             {
@@ -148,7 +134,7 @@ namespace PmxEditorMcp.Bridge
 
         private static bool Flag(JsonObject envelope)
         {
-            JsonNode node = envelope[OkName];
+            JsonNode node = envelope[ToolEnvelope.OkName];
             bool ok;
             if (node == null || !(node is JsonValue) || !((JsonValue)node).TryGetValue(out ok))
             {
@@ -161,12 +147,12 @@ namespace PmxEditorMcp.Bridge
         /// <summary>成功の本文。値はJSONの表記にする——ツールの値は構造を持つ。</summary>
         private static string Value(JsonObject envelope)
         {
-            if (!envelope.ContainsKey(ValueName))
+            if (!envelope.ContainsKey(ToolEnvelope.ValueName))
             {
                 throw Broken("ツールの応答が値を持たない。");
             }
 
-            JsonNode value = envelope[ValueName];
+            JsonNode value = envelope[ToolEnvelope.ValueName];
 
             return value == null ? "null" : Written(value);
         }
@@ -295,13 +281,13 @@ namespace PmxEditorMcp.Bridge
 
         private static string Failure(JsonObject envelope)
         {
-            JsonObject error = envelope[ErrorName] as JsonObject;
+            JsonObject error = envelope[ToolEnvelope.ErrorName] as JsonObject;
             if (error == null)
             {
                 throw Broken("ツールの応答が誤りの内容を持たない。");
             }
 
-            return Text(error, CodeName) + ": " + Text(error, MessageName);
+            return Text(error, ToolEnvelope.CodeName) + ": " + Text(error, ToolEnvelope.MessageName);
         }
 
         private static string Text(JsonObject error, string name)
@@ -319,12 +305,12 @@ namespace PmxEditorMcp.Bridge
 
         private static IEnumerable<string> Warnings(JsonObject envelope)
         {
-            if (!envelope.ContainsKey(WarningsName))
+            if (!envelope.ContainsKey(ToolEnvelope.WarningsName))
             {
                 yield break;
             }
 
-            JsonArray warnings = envelope[WarningsName] as JsonArray;
+            JsonArray warnings = envelope[ToolEnvelope.WarningsName] as JsonArray;
             if (warnings == null)
             {
                 throw Broken("ツールの応答の警告が並びでない。");

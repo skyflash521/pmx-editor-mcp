@@ -21,18 +21,6 @@ namespace PmxEditorMcp.Bridge
 
         private const string NextOffsetName = "nextOffset";
 
-        private const string OkName = "ok";
-
-        private const string ValueName = "value";
-
-        private const string ErrorName = "error";
-
-        private const string CodeName = "code";
-
-        private const string MessageName = "message";
-
-        private const string InvalidArgument = "TOOL_INVALID_ARGUMENT";
-
         /// <summary>包みの外側と、名前を隔てる引用符と読点の分。</summary>
         private const int WrapperChars = 64;
 
@@ -111,18 +99,18 @@ namespace PmxEditorMcp.Bridge
                 value[NextOffsetName] = JsonValue.Create(at);
             }
 
-            return new JsonObject { [OkName] = JsonValue.Create(true), [ValueName] = value };
+            return new JsonObject { [ToolEnvelope.OkName] = JsonValue.Create(true), [ToolEnvelope.ValueName] = value };
         }
 
         private static JsonObject Refusal(string message)
         {
             return new JsonObject
             {
-                [OkName] = JsonValue.Create(false),
-                [ErrorName] = new JsonObject
+                [ToolEnvelope.OkName] = JsonValue.Create(false),
+                [ToolEnvelope.ErrorName] = new JsonObject
                 {
-                    [CodeName] = JsonValue.Create(InvalidArgument),
-                    [MessageName] = JsonValue.Create(message),
+                    [ToolEnvelope.CodeName] = JsonValue.Create(ToolEnvelope.InvalidArgument),
+                    [ToolEnvelope.MessageName] = JsonValue.Create(message),
                 },
             };
         }

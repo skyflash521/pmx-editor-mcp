@@ -18,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\HostPlugin\ToolEnvelopeCodes.cs" Link="ToolEnvelopeCodes.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- 受入シナリオの定義の形は、この宣言1つから照合する。 -->
     <EmbeddedResource Include="AcceptanceScenarioSchema.json" />
   </ItemGroup>

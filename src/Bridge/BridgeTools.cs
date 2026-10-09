@@ -201,8 +201,8 @@ namespace PmxEditorMcp.Bridge
             return ToolEnvelopeResult.From(
                 new JsonObject
                 {
-                    ["ok"] = true,
-                    ["value"] = new JsonObject { ["editors"] = editors },
+                    [ToolEnvelope.OkName] = true,
+                    [ToolEnvelope.ValueName] = new JsonObject { ["editors"] = editors },
                 },
                 string.Empty,
                 client.BudgetChars,
@@ -239,8 +239,8 @@ namespace PmxEditorMcp.Bridge
                 return ToolEnvelopeResult.From(
                     new JsonObject
                     {
-                        ["ok"] = true,
-                        ["value"] = new JsonObject
+                        [ToolEnvelope.OkName] = true,
+                        [ToolEnvelope.ValueName] = new JsonObject
                         {
                             [FixedToolTable.SelectEditorProcessIdParameter] = processId,
                         },

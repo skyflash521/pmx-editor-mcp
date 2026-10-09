@@ -348,7 +348,7 @@ const DISCONNECTED_CODES = ["EPIPE", "ECONNRESET"];
  * ホストが応答を書いたあと接続を切るエラーコード。
  * これ以外のエラー応答では接続が続くので、そのあとの切断は別の理由による。
  */
-const DISCONNECTING_ERROR_CODES = [-32700, -32001, -32003, -32004];
+const DISCONNECTING_ERROR_CODES = [-32700, -32001, -32003, -32004, -32006];
 
 function toPipePath(name) {
     return "\\\\.\\pipe\\" + name;

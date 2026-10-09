@@ -146,7 +146,8 @@ namespace PmxEditorMcp.Tests
                 Path.Combine(PositionDeclarations.RepositoryDirectory(), "src", "HostPlugin"), "*.cs"))
             {
                 string file = Path.GetFileName(path);
-                if (file != "PositionInput.cs" && file != "ToolEnvelope.cs" && producing.IsMatch(File.ReadAllText(path)))
+                if (file != "PositionInput.cs" && file != "ToolEnvelopeCodes.cs"
+                    && producing.IsMatch(File.ReadAllText(path)))
                 {
                     wrong.Add(file);
                 }

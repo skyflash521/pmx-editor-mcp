@@ -193,13 +193,13 @@ namespace PmxEditorMcp.Bridge.Tests
 
         [Theory]
         [InlineData(null)]
-        [InlineData(BridgeBudget.MinimumChars)]
-        [InlineData(BridgeBudget.MaximumChars)]
+        [InlineData(ResponseBudget.MinimumChars)]
+        [InlineData(ResponseBudget.MaximumChars)]
         public async Task EveryListingTakesAtLeastTheSmallestItemsThatFitInOneResponseOfTheBudget(int? budgetChars)
         {
             IDictionary<string, int> published = await MaximaAsync(
                 budgetChars?.ToString(CultureInfo.InvariantCulture));
-            int valueChars = (budgetChars ?? BridgeBudget.DefaultChars) - WarningRoomChars();
+            int valueChars = (budgetChars ?? ResponseBudget.DefaultChars) - WarningRoomChars();
 
             List<string> wrong = new List<string>();
             Dictionary<string, string> underived = new Dictionary<string, string>(StringComparer.Ordinal);

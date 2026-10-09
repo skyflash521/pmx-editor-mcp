@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.IO;
 using System.IO.Pipes;
 using System.Text;
@@ -29,26 +28,6 @@ namespace PmxEditorMcp
         InvalidEncoding,
     }
 
-    /// <summary>本文が上限のバイト数を超えるため書き出せないことを表す。</summary>
-    public sealed class MessageTooLargeException : Exception
-    {
-        /// <summary>超過した本文のバイト数と上限を示して生成する。</summary>
-        public MessageTooLargeException(int messageBytes, int maxMessageBytes)
-            : base("本文が " + messageBytes.ToString(CultureInfo.InvariantCulture)
-                + " バイトで、上限の " + maxMessageBytes.ToString(CultureInfo.InvariantCulture)
-                + " バイトを超えている。")
-        {
-            MessageBytes = messageBytes;
-            MaxMessageBytes = maxMessageBytes;
-        }
-
-        /// <summary>書き出そうとした本文のバイト数。</summary>
-        public int MessageBytes { get; }
-
-        /// <summary>本文に許すバイト数の上限。</summary>
-        public int MaxMessageBytes { get; }
-    }
-
     /// <summary>
     /// メッセージを1行として読み書きする入出力。本文はBOMなしUTF-8で、出力の区切りはLF、
     /// 入力はLFとCRLFの両方を受理する。読み取りは生バイトを上限付きで行い、上限を超えた時点で
@@ -57,7 +36,7 @@ namespace PmxEditorMcp
     public sealed class MessageChannel
     {
         /// <summary>1メッセージの本文(区切りを含まない)に許すUTF-8バイト数の上限。</summary>
-        public const int DefaultMaxMessageBytes = 16 * 1024 * 1024;
+        public const int DefaultMaxMessageBytes = MessageLimit.DefaultMaxMessageBytes;
 
         private const byte LineFeed = (byte)'\n';
         private const byte CarriageReturn = (byte)'\r';
@@ -143,12 +122,7 @@ namespace PmxEditorMcp
         /// <summary>本文のUTF-8バイト数を数える。</summary>
         public static int MeasureBytes(string message)
         {
-            if (message == null)
-            {
-                throw new ArgumentNullException(nameof(message));
-            }
-
-            return Utf8WithoutBom.GetByteCount(message);
+            return MessageLimit.MeasureBytes(message);
         }
 
         /// <summary>メッセージを1件読み取る。</summary>
@@ -211,10 +185,7 @@ namespace PmxEditorMcp
         public void Write(string message)
         {
             int messageBytes = MeasureBytes(message);
-            if (messageBytes > MaxMessageBytes)
-            {
-                throw new MessageTooLargeException(messageBytes, MaxMessageBytes);
-            }
+            MessageLimit.Require(messageBytes, MaxMessageBytes);
 
             byte[] payload = new byte[messageBytes + 1];
             Utf8WithoutBom.GetBytes(message, 0, message.Length, payload, 0);

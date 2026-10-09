@@ -21,6 +21,11 @@
     <Compile Include="..\SignatureDump\FixedToolTable.cs" Link="FixedToolTable.cs" />
     <Compile Include="..\SignatureDump\TextMatch.cs" Link="TextMatch.cs" />
     <Compile Include="..\SignatureDump\ToolMatch.cs" Link="ToolMatch.cs" />
+    <Compile Include="..\HostPlugin\HostProtocol.cs" Link="HostProtocol.cs" />
+    <Compile Include="..\HostPlugin\JsonRpcErrorCodes.cs" Link="JsonRpcErrorCodes.cs" />
+    <Compile Include="..\HostPlugin\MessageLimit.cs" Link="MessageLimit.cs" />
+    <Compile Include="..\HostPlugin\ResponseBudget.cs" Link="ResponseBudget.cs" />
+    <Compile Include="..\HostPlugin\ToolEnvelopeCodes.cs" Link="ToolEnvelopeCodes.cs" />
   </ItemGroup>
 
   <ItemGroup>

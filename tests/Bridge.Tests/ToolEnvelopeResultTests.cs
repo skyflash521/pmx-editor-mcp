@@ -175,12 +175,12 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void ABodyOverTheBudgetCarriesTheWayToNarrowTheAnswer()
         {
-            string value = new string('a', BridgeBudget.MinimumChars + 1);
+            string value = new string('a', ResponseBudget.MinimumChars + 1);
 
             CallToolResult result = ToolEnvelopeResult.From(
                 JsonNode.Parse("{\"ok\":true,\"value\":\"" + value + "\"}"),
                 Notice,
-                BridgeBudget.MinimumChars,
+                ResponseBudget.MinimumChars,
                 false,
                 "fields で項目を絞る");
 
@@ -191,12 +191,12 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void ABodyOverTheBudgetBecomesTheTooLargeError()
         {
-            string value = new string('a', BridgeBudget.MinimumChars + 1);
+            string value = new string('a', ResponseBudget.MinimumChars + 1);
 
             CallToolResult result = ToolEnvelopeResult.From(
                 JsonNode.Parse("{\"ok\":true,\"value\":\"" + value + "\"}"),
                 Notice,
-                BridgeBudget.MinimumChars,
+                ResponseBudget.MinimumChars,
                 false);
 
             Assert.True(result.IsError);
@@ -207,12 +207,12 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void ABodyThatJustFitsIsKept()
         {
-            string value = new string('a', BridgeBudget.MinimumChars - 2);
+            string value = new string('a', ResponseBudget.MinimumChars - 2);
 
             CallToolResult result = ToolEnvelopeResult.From(
                 JsonNode.Parse("{\"ok\":true,\"value\":\"" + value + "\"}"),
                 Notice,
-                BridgeBudget.MinimumChars,
+                ResponseBudget.MinimumChars,
                 false);
 
             Assert.False(result.IsError ?? false);
@@ -222,12 +222,12 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void TheTargetNoticeIsNotCountedInTheBudget()
         {
-            string value = new string('a', BridgeBudget.MinimumChars - 2);
+            string value = new string('a', ResponseBudget.MinimumChars - 2);
 
             CallToolResult result = ToolEnvelopeResult.From(
                 JsonNode.Parse("{\"ok\":true,\"value\":\"" + value + "\"}"),
                 new string('n', 100),
-                BridgeBudget.MinimumChars,
+                ResponseBudget.MinimumChars,
                 false);
 
             Assert.False(result.IsError ?? false);
@@ -240,7 +240,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 () => ToolEnvelopeResult.From(
                     JsonNode.Parse("{\"ok\":true,\"value\":1}"),
                     Notice,
-                    BridgeBudget.MinimumChars - 1,
+                    ResponseBudget.MinimumChars - 1,
                     false));
         }
 
@@ -260,12 +260,12 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void AnImageIsNotCountedInTheBudget()
         {
-            string packed = new string('a', BridgeBudget.MinimumChars + 1);
+            string packed = new string('a', ResponseBudget.MinimumChars + 1);
 
             CallToolResult result = ToolEnvelopeResult.From(
                 JsonNode.Parse("{\"ok\":true,\"value\":\"" + packed + "\"}"),
                 Notice,
-                BridgeBudget.MinimumChars,
+                ResponseBudget.MinimumChars,
                 true);
 
             Assert.False(result.IsError ?? false);

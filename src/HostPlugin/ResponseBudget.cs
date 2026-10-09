@@ -5,7 +5,8 @@ using System.Text;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// 応答サイズ予算の設定。ホストは環境変数から文字数を読み、handshake 応答へ載せる。
+    /// 応答サイズ予算の設定。ホストは環境変数から文字数を読み、handshake 応答へ載せる。ブリッジは
+    /// 同じ環境変数から読み、ツール定義へ載せるとともに handshake 応答の値と照合する。
     /// 構文違反・範囲外のときは既定値へ落とさず、無効な設定として扱う。
     /// </summary>
     public sealed class ResponseBudget
@@ -38,7 +39,8 @@ namespace PmxEditorMcp
         public int Chars { get; }
 
         /// <summary>
-        /// 設定が無効な理由。<see cref="IsValid"/> が偽のときだけ意味を持ち、ログと状態表示に用いる。
+        /// 設定が無効な理由。<see cref="IsValid"/> が偽のときだけ意味を持つ。ホストはログと状態表示に、
+        /// ブリッジは標準エラー出力の1行に用いる。
         /// </summary>
         public string InvalidReason { get; }
 
@@ -86,8 +88,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 環境変数の値を理由へ載せられる形にする。理由はログの1行とメッセージボックスに出るため、
-        /// 制御文字は符号位置の表記へ置き換え、長い値は切り詰めて元の長さを添える。
+        /// 環境変数の値を理由へ載せられる形にする。理由は1行に収めるため、行を割りうる文字は
+        /// 符号位置の表記へ置き換え、長い値は切り詰めて元の長さを添える。
         /// </summary>
         private static string Describe(string rawValue)
         {
@@ -96,7 +98,7 @@ namespace PmxEditorMcp
             for (int index = 0; index < shownLength; index++)
             {
                 char character = rawValue[index];
-                if (char.IsControl(character))
+                if (NeedsEscape(character))
                 {
                     described.Append("<U+")
                         .Append(((int)character).ToString("X4", CultureInfo.InvariantCulture))
@@ -116,6 +118,17 @@ namespace PmxEditorMcp
             }
 
             return described.ToString();
+        }
+
+        /// <summary>
+        /// 符号位置の表記へ置き換える文字かどうか。行区切りと段落区切りは制御文字に分類されないので、
+        /// 制御文字の判定だけでは理由が1行に収まらない。
+        /// </summary>
+        private static bool NeedsEscape(char character)
+        {
+            return char.IsControl(character)
+                || character == (char)0x2028
+                || character == (char)0x2029;
         }
 
         /// <summary>符号・空白・先頭のゼロ・ASCII以外の数字を許さない10進表記かどうかを判定する。</summary>

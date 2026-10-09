@@ -1851,14 +1851,14 @@ namespace PmxEditorMcp
                         ? Written(call, one)
                         : Written(call.Result, one);
                 object value;
-                if (!envelope.TryGetValue("value", out value))
+                if (!envelope.TryGetValue(ToolEnvelope.ValueName, out value))
                 {
                     return envelope;
                 }
 
                 written.Add(value);
                 object noted;
-                if (envelope.TryGetValue("warnings", out noted))
+                if (envelope.TryGetValue(ToolEnvelope.WarningsName, out noted))
                 {
                     warnings.AddRange(((object[])noted).Cast<string>());
                 }

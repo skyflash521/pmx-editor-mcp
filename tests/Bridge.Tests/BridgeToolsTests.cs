@@ -234,7 +234,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task TheLargeTextToolRelaysTheRequestedNumberOfCharacters()
         {
             using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(request, "\"xxx\""))
                 .Start();
 
@@ -266,7 +266,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
-            Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(Named(tools, "ping")));
+            Assert.Equal(ResponseBudget.DefaultChars, DeclaredResultSize(Named(tools, "ping")));
         }
 
         [Fact]
@@ -310,7 +310,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(Expected(BridgeDebugHooks.IsEnabled(debugHooks)).Length, tools.Count);
             Assert.All(
                 tools,
-                tool => Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(tool)));
+                tool => Assert.Equal(ResponseBudget.DefaultChars, DeclaredResultSize(tool)));
         }
 
         [Fact]
@@ -322,14 +322,14 @@ namespace PmxEditorMcp.Bridge.Tests
 
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
-            Assert.Equal(BridgeBudget.DefaultChars, DeclaredResultSize(Named(tools, "ping")));
+            Assert.Equal(ResponseBudget.DefaultChars, DeclaredResultSize(Named(tools, "ping")));
         }
 
         [Fact]
         public async Task ToolCallRelaysToHostAndReturnsResponse()
         {
             using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(request, "\"pong\""))
                 .Start();
 
@@ -355,7 +355,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task TheStatusToolRelaysToTheHost()
         {
             using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(request, "{\"runningSdkVersion\":\"0.0.8.9\"}"))
                 .Start();
 
@@ -376,7 +376,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task AGeneratedToolReturnsTheValueOutOfTheEnvelope()
         {
             using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(request, "{\"ok\":true,\"value\":{\"total\":1}}"))
                 .Start();
 
@@ -394,7 +394,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task AGeneratedToolThatTheHostRefusesComesBackAsAnError()
         {
             using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(
                     request,
                     "{\"ok\":false,\"error\":{\"code\":\"TOOL_CONFIRM_REQUIRED\""
@@ -416,7 +416,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task AGeneratedToolThatDoesNotComeBackInAnEnvelopeIsAProtocolError()
         {
             using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(request, "\"包みではない\""))
                 .Start();
 
@@ -436,7 +436,7 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             // ホストの応答サイズ予算をブリッジと食い違わせる。待ちに入らず決まった失敗になる。
             using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BridgeBudget.MaximumChars))
+                .Reply(HandshakeResultOf(ResponseBudget.MaximumChars))
                 .Start();
 
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -456,7 +456,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task TestOnlyEnvironmentVariablePinsRelayTarget()
         {
             using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(request, "\"pong\""))
                 .Start();
 
@@ -482,7 +482,7 @@ namespace PmxEditorMcp.Bridge.Tests
             // ホストが同時に待ち受けていると候補が増えるので、その場合は候補として挙がるところ
             // までを見る。どちらの結果も、待ち受けているパイプを列挙していなければ出ない。
             using FakeHost host = new FakeHost(PipeTargetResolver.PipeNameForProcess(Environment.ProcessId))
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(request, "\"pong\""))
                 .Start();
 
@@ -497,7 +497,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task OnlyTestOnlyEnvironmentVariableNamesTheTarget()
         {
             using FakeHost host = new FakeHost(PipeTargetResolver.PipeNameForProcess(Environment.ProcessId))
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(request, "\"pong\""))
                 .Start();
 
@@ -516,7 +516,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task SuccessfulResultAnnouncesTargetOnFirstLine()
         {
             using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(request, "\"pong\""))
                 .Start();
 
@@ -535,7 +535,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task LaterSuccessfulResultsAlsoAnnounceTarget()
         {
             using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(request, "\"pong\""))
                 .Reply(request => Result(request, "\"pong\""))
                 .Start();
@@ -556,7 +556,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public async Task FailedResultReturnsOnlyCodeAndDescription()
         {
             using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BridgeBudget.MaximumChars))
+                .Reply(HandshakeResultOf(ResponseBudget.MaximumChars))
                 .Start();
 
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -581,7 +581,7 @@ namespace PmxEditorMcp.Bridge.Tests
             using FakeHost other = new FakeHost(PipeTargetResolver.PipeNameForProcess(2000000001))
                 .Start();
             FakeHost chosen = new FakeHost(PipeTargetResolver.PipeNameForProcess(2000000002))
-                .Reply(HandshakeResultOf(BridgeBudget.DefaultChars))
+                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
                 .Reply(request => Result(request, "\"pong\""))
                 .Start();
             bool ended = false;
@@ -740,7 +740,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 [IgnoredPipeEnvironmentVariableName] = null,
                 [PipeTargetResolver.TestPipeEnvironmentVariableName] = null,
                 [PipeTargetResolver.TestEditorDirectoryEnvironmentVariableName] = null,
-                [BridgeBudget.EnvironmentVariableName] = budgetChars,
+                [ResponseBudget.EnvironmentVariableName] = budgetChars,
                 [BridgeDebugHooks.EnvironmentVariableName] = debugHooks,
                 [BridgeDeclaration.EnvironmentVariableName] = declareMeta,
             };

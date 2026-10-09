@@ -160,9 +160,6 @@ namespace PmxEditorMcp
     /// </summary>
     public sealed class JsonRpcConnection
     {
-        /// <summary>ハンドシェイクで一致していなければならないプロトコル番号。</summary>
-        public const int Protocol = 1;
-
         private const string HandshakeMethodName = "handshake";
         private const string PingMethodName = "ping";
         private const string EndSessionMethodName = "end_session";
@@ -744,7 +741,7 @@ namespace PmxEditorMcp
             {
                 Respond(channel, errors, request.Id, JsonRpcErrorCodes.ProtocolMismatch,
                     "プロトコル番号が合わない。このホストは "
-                    + Protocol.ToString(CultureInfo.InvariantCulture) + " を用いる。");
+                    + HostProtocol.Number.ToString(CultureInfo.InvariantCulture) + " を用いる。");
                 return HandshakeOutcome.Refused;
             }
 
@@ -814,20 +811,20 @@ namespace PmxEditorMcp
         {
             if (value is int)
             {
-                return (int)value == Protocol;
+                return (int)value == HostProtocol.Number;
             }
 
             if (value is long)
             {
-                return (long)value == Protocol;
+                return (long)value == HostProtocol.Number;
             }
 
             if (value is decimal)
             {
-                return (decimal)value == Protocol;
+                return (decimal)value == HostProtocol.Number;
             }
 
-            return value is double && (double)value == Protocol;
+            return value is double && (double)value == HostProtocol.Number;
         }
 
         /// <summary>
@@ -862,7 +859,7 @@ namespace PmxEditorMcp
         {
             return new Dictionary<string, object>
             {
-                { "protocol", Protocol },
+                { "protocol", HostProtocol.Number },
                 { "hostVersion", _hostVersion },
                 { "budgetChars", _budgetChars },
                 { "toolMapDigest", _relays.ToolMapDigest },

@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -42,26 +41,6 @@ namespace PmxEditorMcp.Bridge
         public string Message { get; }
     }
 
-    /// <summary>本文が上限のバイト数を超えるため書き出せないことを表す。</summary>
-    public sealed class MessageTooLargeException : Exception
-    {
-        /// <summary>超過した本文のバイト数と上限を示して生成する。</summary>
-        public MessageTooLargeException(int messageBytes, int maxMessageBytes)
-            : base("本文が " + messageBytes.ToString(CultureInfo.InvariantCulture)
-                + " バイトで、上限の " + maxMessageBytes.ToString(CultureInfo.InvariantCulture)
-                + " バイトを超えている。")
-        {
-            MessageBytes = messageBytes;
-            MaxMessageBytes = maxMessageBytes;
-        }
-
-        /// <summary>書き出そうとした本文のバイト数。</summary>
-        public int MessageBytes { get; }
-
-        /// <summary>本文に許すバイト数の上限。</summary>
-        public int MaxMessageBytes { get; }
-    }
-
     /// <summary>
     /// ホストとのあいだでメッセージを1行として読み書きする入出力。本文はBOMなしUTF-8で、
     /// 出力の区切りはLF、入力はLFとCRLFの両方を受理する。読み取りは上限付きで行い、上限を
@@ -70,7 +49,7 @@ namespace PmxEditorMcp.Bridge
     public sealed class BridgeMessageChannel
     {
         /// <summary>1メッセージの本文(区切りを含まない)に許すUTF-8バイト数の上限。</summary>
-        public const int DefaultMaxMessageBytes = 16 * 1024 * 1024;
+        public const int DefaultMaxMessageBytes = MessageLimit.DefaultMaxMessageBytes;
 
         private const byte LineFeed = 10;
         private const byte CarriageReturn = 13;
@@ -114,12 +93,7 @@ namespace PmxEditorMcp.Bridge
         /// <summary>本文のUTF-8バイト数を数える。</summary>
         public static int MeasureBytes(string message)
         {
-            if (message == null)
-            {
-                throw new ArgumentNullException(nameof(message));
-            }
-
-            return Utf8WithoutBom.GetByteCount(message);
+            return MessageLimit.MeasureBytes(message);
         }
 
         /// <summary>
@@ -131,10 +105,7 @@ namespace PmxEditorMcp.Bridge
         public async Task WriteAsync(string message, CancellationToken cancellationToken)
         {
             int messageBytes = MeasureBytes(message);
-            if (messageBytes > MaxMessageBytes)
-            {
-                throw new MessageTooLargeException(messageBytes, MaxMessageBytes);
-            }
+            MessageLimit.Require(messageBytes, MaxMessageBytes);
 
             byte[] payload = new byte[messageBytes + 1];
             Utf8WithoutBom.GetBytes(message, 0, message.Length, payload, 0);

@@ -228,7 +228,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             E2eCase refused = Assert.Single(
                 cases,
                 c => c.Expectation == E2eExpectation.Refusal
-                    && c.Code == E2eCaseBuilder.InvalidArgument);
+                    && c.Code == ToolEnvelope.InvalidArgument);
             Assert.Null(((IDictionary<string, object>)refused.Arguments["value"])["parent"]);
             Assert.DoesNotContain(
                 cases,
@@ -487,7 +487,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Readback("model_list_things"),
                 Tool("model_wipe_things", new SchemaItem[0]),
                 Whole("model_list_things"),
-                refused: E2eCaseBuilder.InvalidArgument);
+                refused: ToolEnvelope.InvalidArgument);
 
             Assert.DoesNotContain(cases, c => c.Expectation == E2eExpectation.Changed);
             Assert.DoesNotContain(

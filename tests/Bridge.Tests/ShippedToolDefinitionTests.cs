@@ -344,11 +344,11 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void TheBridgeBudgetDefaultIsTheOneTheContractWrites()
+        public void TheResponseBudgetDefaultIsTheOneTheContractWrites()
         {
             JsonNode budgets = JsonNode.Parse(File.ReadAllText(Authored("common-contract.json")))["budgets"];
 
-            Assert.Equal(BridgeBudget.DefaultChars, budgets["responseDefaultChars"].GetValue<int>());
+            Assert.Equal(ResponseBudget.DefaultChars, budgets["responseDefaultChars"].GetValue<int>());
         }
 
         private static IList<KeyValuePair<string, string>> ShippedDescriptions(bool debugHooks)

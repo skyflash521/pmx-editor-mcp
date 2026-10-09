@@ -27,7 +27,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void HandshakeProtocolNumberMatchesContract()
         {
-            Assert.Equal(1, HostIpcClient.Protocol);
+            Assert.Equal(1, HostProtocol.Number);
         }
 
         [Fact]
@@ -46,7 +46,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             JsonObject handshake = JsonNode.Parse(host.Requests[0]).AsObject();
             Assert.Equal("handshake", (string)handshake["method"]);
-            Assert.Equal(HostIpcClient.Protocol, (int)handshake["params"]["protocol"]);
+            Assert.Equal(HostProtocol.Number, (int)handshake["params"]["protocol"]);
 
             JsonObject call = JsonNode.Parse(host.Requests[1]).AsObject();
             Assert.Equal("ping", (string)call["method"]);

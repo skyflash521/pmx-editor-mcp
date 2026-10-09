@@ -434,7 +434,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "断ること",
                     new Dictionary<string, object>(StringComparer.Ordinal),
                     E2eExpectation.Refusal,
-                    E2eCaseBuilder.InvalidHandle),
+                    ToolEnvelope.InvalidHandle),
             };
         }
 
@@ -457,7 +457,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     "出したハンドルを引けること",
                     new Dictionary<string, object>(StringComparer.Ordinal),
                     expectation,
-                    expectation == E2eExpectation.Success ? null : E2eCaseBuilder.InvalidArgument,
+                    expectation == E2eExpectation.Success ? null : ToolEnvelope.InvalidArgument,
                     null,
                     null,
                     null,

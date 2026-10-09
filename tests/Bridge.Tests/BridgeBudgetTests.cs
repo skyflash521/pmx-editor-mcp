@@ -7,7 +7,7 @@ using Xunit;
 
 namespace PmxEditorMcp.Bridge.Tests
 {
-    public class BridgeBudgetTests
+    public class ResponseBudgetTests
     {
         /// <summary>起動したブリッジのプロセスが終わるのを待つ上限。</summary>
         private static readonly TimeSpan ExitWait = TimeSpan.FromSeconds(30);
@@ -15,20 +15,20 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void UnsetBudgetIsValidWithDefaultCharacterCount()
         {
-            BridgeBudget budget = BridgeBudget.Read(null);
+            ResponseBudget budget = ResponseBudget.Read(null);
 
             Assert.True(budget.IsValid);
-            Assert.Equal(BridgeBudget.DefaultChars, budget.Chars);
+            Assert.Equal(ResponseBudget.DefaultChars, budget.Chars);
         }
 
         [Fact]
         public void BudgetEnvironmentVariableNameMatchesContract()
         {
-            Assert.Equal("PMX_EDITOR_MCP_BUDGET_CHARS", BridgeBudget.EnvironmentVariableName);
-            Assert.Equal(100000, BridgeBudget.DefaultChars);
-            Assert.Equal(10000, BridgeBudget.MinimumChars);
-            Assert.Equal(500000, BridgeBudget.MaximumChars);
-            Assert.Equal(2, BridgeBudget.InvalidExitCode);
+            Assert.Equal("PMX_EDITOR_MCP_BUDGET_CHARS", ResponseBudget.EnvironmentVariableName);
+            Assert.Equal(100000, ResponseBudget.DefaultChars);
+            Assert.Equal(10000, ResponseBudget.MinimumChars);
+            Assert.Equal(500000, ResponseBudget.MaximumChars);
+            Assert.Equal(2, Program.InvalidBudgetExitCode);
         }
 
         [Theory]
@@ -37,7 +37,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("500000", 500000)]
         public void DecimalValueInRangeIsValid(string rawValue, int expected)
         {
-            BridgeBudget budget = BridgeBudget.Read(rawValue);
+            ResponseBudget budget = ResponseBudget.Read(rawValue);
 
             Assert.True(budget.IsValid);
             Assert.Equal(expected, budget.Chars);
@@ -50,7 +50,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("99999999999999999999")]
         public void ValueOutOfRangeIsInvalidWithReason(string rawValue)
         {
-            BridgeBudget budget = BridgeBudget.Read(rawValue);
+            ResponseBudget budget = ResponseBudget.Read(rawValue);
 
             Assert.False(budget.IsValid);
             Assert.False(string.IsNullOrEmpty(budget.InvalidReason));
@@ -69,7 +69,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [InlineData("100000a")]
         public void MalformedValueIsInvalidWithReason(string rawValue)
         {
-            BridgeBudget budget = BridgeBudget.Read(rawValue);
+            ResponseBudget budget = ResponseBudget.Read(rawValue);
 
             Assert.False(budget.IsValid);
             Assert.False(string.IsNullOrEmpty(budget.InvalidReason));
@@ -81,7 +81,7 @@ namespace PmxEditorMcp.Bridge.Tests
             const char CarriageReturn = (char)13;
             const char LineFeed = (char)10;
 
-            BridgeBudget budget = BridgeBudget.Read("12" + CarriageReturn + LineFeed + "34");
+            ResponseBudget budget = ResponseBudget.Read("12" + CarriageReturn + LineFeed + "34");
 
             Assert.False(budget.IsValid);
             Assert.DoesNotContain(CarriageReturn.ToString(), budget.InvalidReason);
@@ -94,7 +94,7 @@ namespace PmxEditorMcp.Bridge.Tests
             const char LineSeparator = (char)0x2028;
             const char ParagraphSeparator = (char)0x2029;
 
-            BridgeBudget budget = BridgeBudget.Read("12" + LineSeparator + ParagraphSeparator + "34");
+            ResponseBudget budget = ResponseBudget.Read("12" + LineSeparator + ParagraphSeparator + "34");
 
             Assert.False(budget.IsValid);
             Assert.DoesNotContain(LineSeparator.ToString(), budget.InvalidReason);
@@ -107,7 +107,7 @@ namespace PmxEditorMcp.Bridge.Tests
             // 長さは受理範囲の境界値と一致させない(範囲の説明文と区別できなくなるため)。
             string rawValue = new string('9', 12345);
 
-            BridgeBudget budget = BridgeBudget.Read(rawValue);
+            ResponseBudget budget = ResponseBudget.Read(rawValue);
 
             Assert.False(budget.IsValid);
             Assert.DoesNotContain(rawValue, budget.InvalidReason);
@@ -117,7 +117,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void InvalidSettingDoesNotFallBackToDefault()
         {
-            BridgeBudget budget = BridgeBudget.Read("9999");
+            ResponseBudget budget = ResponseBudget.Read("9999");
 
             Assert.False(budget.IsValid);
             Assert.Equal(0, budget.Chars);
@@ -147,11 +147,11 @@ namespace PmxEditorMcp.Bridge.Tests
                 Assert.Fail("ブリッジが待機上限内に終了しなかった。");
             }
 
-            Assert.Equal(BridgeBudget.InvalidExitCode, bridge.ExitCode);
+            Assert.Equal(Program.InvalidBudgetExitCode, bridge.ExitCode);
 
             string reason = await diagnostics;
             Assert.Single(reason.TrimEnd('\r', '\n').Split('\n'));
-            Assert.Contains(BridgeBudget.EnvironmentVariableName, reason);
+            Assert.Contains(ResponseBudget.EnvironmentVariableName, reason);
 
             // 診断は標準エラー出力へ出し、stdioのプロトコルストリームを汚さない。
             Assert.Equal(string.Empty, await protocolStream);
@@ -190,7 +190,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 UseShellExecute = false,
             };
 
-            startInfo.Environment[BridgeBudget.EnvironmentVariableName] = budgetRawValue;
+            startInfo.Environment[ResponseBudget.EnvironmentVariableName] = budgetRawValue;
             startInfo.Environment[PipeTargetResolver.TestPipeEnvironmentVariableName] = "pmx-editor-mcp-0";
 
             return Process.Start(startInfo);

@@ -205,20 +205,11 @@ namespace PmxEditorMcp.Bridge
     /// </summary>
     public sealed class HostIpcClient : IDisposable
     {
-        /// <summary>handshake で一致していなければならないプロトコル番号。</summary>
-        public const int Protocol = 1;
-
         /// <summary>
         /// 接続・handshake・ホストの要求処理を待つ上限。ホストの処理タイムアウトへ往復の余裕を
         /// 足した値で、これより短いとホストが処理しきる要求まで打ち切ってしまう。
         /// </summary>
         public static readonly TimeSpan DefaultWaitLimit = TimeSpan.FromSeconds(125);
-
-        private const int HostParseError = -32700;
-        private const int HostProtocolMismatch = -32001;
-        private const int HostHandshakeRequired = -32003;
-        private const int HostInputTooLarge = -32004;
-        private const int HostSessionRefused = -32006;
 
         private readonly IHostConnector _connector;
         private readonly HostRequestQueue _queue = new HostRequestQueue();
@@ -516,7 +507,7 @@ namespace PmxEditorMcp.Bridge
             _connectedPipeName = connection.PipeName;
             _channel = new BridgeMessageChannel(connection.Stream);
 
-            JsonObject parameters = new JsonObject { ["protocol"] = Protocol };
+            JsonObject parameters = new JsonObject { ["protocol"] = HostProtocol.Number };
             string presented;
             if (connection.PipeName != null
                 && _sessionsByPipeName.TryGetValue(connection.PipeName, out presented))
@@ -640,11 +631,11 @@ namespace PmxEditorMcp.Bridge
         /// </summary>
         private static bool HostDisconnectsAfter(int hostErrorCode)
         {
-            return hostErrorCode == HostParseError
-                || hostErrorCode == HostProtocolMismatch
-                || hostErrorCode == HostHandshakeRequired
-                || hostErrorCode == HostInputTooLarge
-                || hostErrorCode == HostSessionRefused;
+            return hostErrorCode == JsonRpcErrorCodes.ParseError
+                || hostErrorCode == JsonRpcErrorCodes.ProtocolMismatch
+                || hostErrorCode == JsonRpcErrorCodes.HandshakeRequired
+                || hostErrorCode == JsonRpcErrorCodes.RequestTooLarge
+                || hostErrorCode == JsonRpcErrorCodes.SessionRefused;
         }
 
         /// <summary>
@@ -686,10 +677,10 @@ namespace PmxEditorMcp.Bridge
                 return false;
             }
 
-            if (protocol != Protocol)
+            if (protocol != HostProtocol.Number)
             {
                 invalidReason = "ホストのプロトコル番号 " + Describe(protocol) + " は、ブリッジの "
-                    + Describe(Protocol) + " と一致しない。";
+                    + Describe(HostProtocol.Number) + " と一致しない。";
                 return false;
             }
 

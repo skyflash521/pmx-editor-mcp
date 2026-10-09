@@ -14,18 +14,6 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>危険操作が確認を求めるときに使う共通引数の名前。</summary>
         public const string ConfirmName = "confirm";
 
-        /// <summary>危険操作の確認が無いことを断る綴り。</summary>
-        public const string ConfirmRequired = "TOOL_CONFIRM_REQUIRED";
-
-        /// <summary>台帳に無いハンドルを断る綴り。</summary>
-        public const string InvalidHandle = "TOOL_INVALID_HANDLE";
-
-        /// <summary>引数の値が不正であることを断る綴り。</summary>
-        public const string InvalidArgument = "TOOL_INVALID_ARGUMENT";
-
-        /// <summary>範囲の外の位置を断る綴り。</summary>
-        public const string IndexOutOfRange = "TOOL_INDEX_OUT_OF_RANGE";
-
         /// <summary>一覧が何件返すかを受け取る入力の名前。</summary>
         public const string LimitName = "limit";
 
@@ -1381,7 +1369,7 @@ namespace PmxEditorMcp.SignatureDump
                     ConfirmRefusal,
                     Arguments(false),
                     E2eExpectation.Refusal,
-                    ConfirmRequired);
+                    ToolEnvelope.ConfirmRequired);
             }
 
             foreach (SchemaItem handles in HandleInputs(schema))
@@ -1401,7 +1389,7 @@ namespace PmxEditorMcp.SignatureDump
                     ListedHandleRefusal,
                     arguments,
                     E2eExpectation.Refusal,
-                    InvalidHandle);
+                    ToolEnvelope.InvalidHandle);
             }
 
             foreach (SchemaItem one in handed)
@@ -1423,7 +1411,7 @@ namespace PmxEditorMcp.SignatureDump
                     LoneHandleRefusal,
                     arguments,
                     E2eExpectation.Refusal,
-                    InvalidHandle);
+                    ToolEnvelope.InvalidHandle);
             }
 
             foreach (SchemaItem limit in LimitInputs(schema))
@@ -1452,7 +1440,7 @@ namespace PmxEditorMcp.SignatureDump
                     CountRefusal,
                     counting,
                     E2eExpectation.Refusal,
-                    InvalidArgument,
+                    ToolEnvelope.InvalidArgument,
                     null,
                     null,
                     calls ? borrowing : null);
@@ -3182,7 +3170,7 @@ namespace PmxEditorMcp.SignatureDump
                         "どのリストにも無い位置を指す書き込みを断ること",
                         Pointing(arguments, member.Name, UnknownPosition),
                         E2eExpectation.Refusal,
-                        IndexOutOfRange);
+                        ToolEnvelope.IndexOutOfRange);
 
                     bool takesNull = member.Nullable == true;
                     yield return new E2eCase(
@@ -3195,7 +3183,7 @@ namespace PmxEditorMcp.SignatureDump
                             : "関連が無いことを受け取らない位置の項目へ、関連が無いことを書くのを断ること",
                         Pointing(arguments, member.Name, null),
                         takesNull ? E2eExpectation.Success : E2eExpectation.Refusal,
-                        takesNull ? null : InvalidArgument);
+                        takesNull ? null : ToolEnvelope.InvalidArgument);
                     // 先頭を指して書くには、指す先の並びと書かれる側の並びの両方に1つでも
                     // 要る。書かれる側が空だと、全件を指しても1件も触らずに済んでしまい、位置が
                     // 範囲内かどうかを確かめたことにならない。読み返すのにも書かれる側が要る。

@@ -259,7 +259,7 @@ namespace PmxEditorMcp.Tests
 
             IDictionary<string, object> result =
                 Assert.IsAssignableFrom<IDictionary<string, object>>(ResultOf(responses[0]));
-            Assert.Equal(JsonRpcConnection.Protocol, Convert.ToInt32(result["protocol"]));
+            Assert.Equal(HostProtocol.Number, Convert.ToInt32(result["protocol"]));
             Assert.Equal(HostVersion, result["hostVersion"]);
             Assert.Equal(BudgetChars, Convert.ToInt32(result["budgetChars"]));
         }
@@ -267,7 +267,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ProtocolNumberIsOne()
         {
-            Assert.Equal(1, JsonRpcConnection.Protocol);
+            Assert.Equal(1, HostProtocol.Number);
         }
 
         /// <summary>要求1件に許す時間は、ブリッジと揃えて持つ取り決めの値である。</summary>
@@ -350,7 +350,7 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, object> second =
                 Assert.IsAssignableFrom<IDictionary<string, object>>(ResultOf(responses[1]));
             Assert.Equal(7, Convert.ToInt32(IdOf(responses[1])));
-            Assert.Equal(JsonRpcConnection.Protocol, Convert.ToInt32(second["protocol"]));
+            Assert.Equal(HostProtocol.Number, Convert.ToInt32(second["protocol"]));
             Assert.Equal(HostVersion, second["hostVersion"]);
             Assert.Equal(BudgetChars, Convert.ToInt32(second["budgetChars"]));
 

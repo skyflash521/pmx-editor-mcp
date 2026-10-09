@@ -9,73 +9,8 @@ namespace PmxEditorMcp
     /// ツールの結果を包む形。ドメインの失敗はJSON-RPCの error ではなくこの包みで返す——error は
     /// 要求の解釈・ディスパッチ・応答生成といったホスト基盤の異常のために空けておく。
     /// </summary>
-    public static class ToolEnvelope
+    public static partial class ToolEnvelope
     {
-        /// <summary>範囲外の位置を指した。</summary>
-        public const string IndexOutOfRange = "TOOL_INDEX_OUT_OF_RANGE";
-
-        /// <summary>引数の値が不正。</summary>
-        public const string InvalidArgument = "TOOL_INVALID_ARGUMENT";
-
-        /// <summary>ハンドルが不正。</summary>
-        public const string InvalidHandle = "TOOL_INVALID_HANDLE";
-
-        /// <summary>危険操作の確認が無い。</summary>
-        public const string ConfirmRequired = "TOOL_CONFIRM_REQUIRED";
-
-        /// <summary>現在の状態・提供範囲で適用できない。</summary>
-        public const string NotApplicable = "TOOL_NOT_APPLICABLE";
-
-        /// <summary>
-        /// UIスレッドが空かず、呼び出しを始めていない。何も起きていないので、同じ要求を
-        /// 投げ直してよい。
-        /// </summary>
-        public const string NotStarted = "TOOL_NOT_STARTED";
-
-        /// <summary>
-        /// 人の応答を待つ表示が出ていて進められないことを断る綴り。始めたかどうかは表示へ答えた
-        /// あとにしか決まらないので、始めていないことがはっきりしている断りとは分ける。
-        /// </summary>
-        public const string PromptShown = "TOOL_PROMPT_SHOWN";
-
-        /// <summary>実行に失敗した。</summary>
-        public const string OperationFailed = "TOOL_OPERATION_FAILED";
-
-        /// <summary>応答が応答サイズ予算に収まらない。</summary>
-        public const string ResponseTooLarge = "TOOL_RESPONSE_TOO_LARGE";
-
-        /// <summary>要求が要求サイズ予算に収まらない。</summary>
-        public const string RequestTooLarge = "TOOL_REQUEST_TOO_LARGE";
-
-        private const string OkName = "ok";
-
-        /// <summary>値を載せる項目の名前。</summary>
-        public const string ValueName = "value";
-
-        /// <summary>誤りを載せる項目の名前。</summary>
-        public const string ErrorName = "error";
-
-        private const string CodeName = "code";
-
-        /// <summary>誤りの説明を載せる項目の名前。</summary>
-        public const string MessageName = "message";
-
-        /// <summary>警告を載せる項目の名前。</summary>
-        public const string WarningsName = "warnings";
-
-        private static readonly ReadOnlyCollection<string> Codes = new ReadOnlyCollection<string>(
-            new[]
-            {
-                IndexOutOfRange, InvalidArgument, InvalidHandle, ConfirmRequired, NotApplicable,
-                NotStarted, PromptShown, OperationFailed, ResponseTooLarge, RequestTooLarge,
-            });
-
-        /// <summary>ツールが返しうるエラーコード。閉じた集合とする。</summary>
-        public static IList<string> ErrorCodes
-        {
-            get { return Codes; }
-        }
-
         /// <summary>その包みが成功かどうか。</summary>
         public static bool Succeeded(IDictionary<string, object> envelope)
         {
