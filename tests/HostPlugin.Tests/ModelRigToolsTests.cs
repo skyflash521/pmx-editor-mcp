@@ -407,6 +407,45 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
+        [InlineData("左腕捩左", "右腕捩左", "右腕捩右")]
+        [InlineData("右腕捩右", "左腕捩右", "左腕捩左")]
+        [InlineData("腕左捩右", "腕左捩左", "腕右捩右")]
+        public void TheBoneToMirrorIsFoundBySwappingOnlyTheSideAtTheStartOrElseAtTheEndOfTheName(
+            string picked, string partner, string other)
+        {
+            IList<IPXBone> bones = Bones(picked, partner, other);
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(9f, 9f, 9f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(2f, 1f, 0f);
+            ((FakeBone)NowAll(bones)[2]).Position = new V3(5f, 6f, 7f);
+
+            Bone(
+                Operation(ModelEditBones.MirrorPosition),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(ModelEditBones.AxisName, ModelEditVertices.AxisX));
+
+            Near(-2.0, NowAll(bones)[0].Position.X);
+            Near(1.0, NowAll(bones)[0].Position.Y);
+            Near(0.0, NowAll(bones)[0].Position.Z);
+        }
+
+        [Fact]
+        public void ABoneWhoseSideIsOnlyInTheMiddleOfTheNameHasNoBoneToMirror()
+        {
+            IList<IPXBone> bones = Bones("腕左捩", "腕右捩");
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(9f, 9f, 9f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(2f, 1f, 0f);
+
+            Bone(
+                Operation(ModelEditBones.MirrorPosition),
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given(ModelEditBones.AxisName, ModelEditVertices.AxisX));
+
+            Near(9.0, NowAll(bones)[0].Position.X);
+            Near(9.0, NowAll(bones)[0].Position.Y);
+            Near(9.0, NowAll(bones)[0].Position.Z);
+        }
+
+        [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public void TheFixedAxisIsPointedAtTheTip(bool suppressed)

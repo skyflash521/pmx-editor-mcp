@@ -138,7 +138,6 @@ namespace PmxEditorMcp.Tests
         [InlineData("右腕", "左腕")]
         [InlineData("腕左", "腕右")]
         [InlineData("_左腕_", "_右腕_")]
-        [InlineData("手左先", "手右先")]
         public void ThePartnerIsTheBoneWhoseNameHasTheSideSwappedTheWayMirrorPositionSwapsIt(
             string picked, string partner)
         {
@@ -156,12 +155,12 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void EverySideMarkInTheNameIsSwappedSoTheNameWithAllOfThemSwappedIsThePartner()
+        public void OnlyTheSideMarkAtTheStartIsSwappedWhenTheNameHasOneAtBothEnds()
         {
             int handle = Scene();
             AddBone("左腕左", LeftBase, LeftNow);
-            AddBone("右腕左", new V3(-2.5f, 3f, 5f), new V3(-2.5f, 3f, 5f));
-            AddBone("右腕右", new V3(-2f, 3f, 5f), new V3(-1.875f, 2.75f, 5.5f));
+            AddBone("右腕右", new V3(-2.5f, 3f, 5f), new V3(-2.5f, 3f, 5f));
+            AddBone("右腕左", new V3(-2f, 3f, 5f), new V3(-1.875f, 2.75f, 5.5f));
 
             ComposedEditFixture.Value(Run(Full(handle, "x", 0)));
 
@@ -173,6 +172,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("腕_L", "腕_R")]
         [InlineData("腕", "腕")]
         [InlineData("左腕", "首")]
+        [InlineData("手左先", "手右先")]
         public void ABoneWhoseSideSwappedNameIsNoBoneStaysAndNothingElseMoves(string picked, string other)
         {
             int handle = Scene();

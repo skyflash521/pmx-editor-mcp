@@ -384,6 +384,44 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
+        [InlineData("左腕捩左", "右腕捩左", "右腕捩右")]
+        [InlineData("右腕捩右", "左腕捩右", "左腕捩左")]
+        [InlineData("腕左捩右", "腕左捩左", "腕右捩右")]
+        public void TakingTheWeightFromTheMirrorSwapsOnlyTheSideAtTheStartOrElseAtTheEndOfTheBoneName(
+            string weighed, string partner, string other)
+        {
+            IList<IPXBone> bones = Bones(weighed, partner, other);
+            FakeVertex left = Vertex(1f, 0f, 0f);
+            Weigh(left, NowAll(bones)[0], 1f);
+            FakeVertex right = Vertex(-1f, 0f, 0f);
+
+            Weights(
+                Operation(ModelEditWeights.FromMirror),
+                ComposedEditFixture.Given("indices", new object[] { 1 }),
+                ComposedEditFixture.Given(ModelEditWeights.AxisName, ModelEditVertices.AxisX));
+
+            Near(1.0, Share(right, NowAll(bones)[1]));
+            Near(0.0, Share(right, NowAll(bones)[2]));
+        }
+
+        [Fact]
+        public void TakingTheWeightFromTheMirrorKeepsABoneWhoseSideIsOnlyInTheMiddleOfTheName()
+        {
+            IList<IPXBone> bones = Bones("腕左捩", "腕右捩");
+            FakeVertex left = Vertex(1f, 0f, 0f);
+            Weigh(left, NowAll(bones)[0], 1f);
+            FakeVertex right = Vertex(-1f, 0f, 0f);
+
+            Weights(
+                Operation(ModelEditWeights.FromMirror),
+                ComposedEditFixture.Given("indices", new object[] { 1 }),
+                ComposedEditFixture.Given(ModelEditWeights.AxisName, ModelEditVertices.AxisX));
+
+            Near(1.0, Share(right, NowAll(bones)[0]));
+            Near(0.0, Share(right, NowAll(bones)[1]));
+        }
+
+        [Theory]
         [InlineData(ModelEditVertices.AxisX)]
         [InlineData(ModelEditVertices.AxisY)]
         [InlineData(ModelEditVertices.AxisZ)]

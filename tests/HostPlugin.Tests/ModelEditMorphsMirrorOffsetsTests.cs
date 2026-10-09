@@ -274,7 +274,6 @@ namespace PmxEditorMcp.Tests
         [InlineData("右腕", "左腕")]
         [InlineData("腕左", "腕右")]
         [InlineData("_左腕_", "_右腕_")]
-        [InlineData("手左先", "手右先")]
         public void ThePartnerBoneIsTheOneWhoseNameHasTheSideSwappedTheWayMirrorPositionSwapsIt(
             string picked, string partner)
         {
@@ -290,6 +289,7 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData("腕_L", "腕_R")]
         [InlineData("左腕", "首")]
+        [InlineData("手左先", "手右先")]
         public void ABoneWhoseSideSwappedNameIsNoBoneGetsNothingAdded(string picked, string other)
         {
             int handle = Bones("x", picked, other);
