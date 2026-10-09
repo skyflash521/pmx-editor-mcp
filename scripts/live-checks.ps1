@@ -52,7 +52,7 @@ $checks['受入シナリオ'] = New-Check `
     -Bundle $liveBundle `
     -Run @('node', 'scripts/acceptance.mjs',
         '--cases', 'catalog/authored/acceptance-scenarios.json',
-        '--setup', 'scripts/acceptance-setup-dev.ps1')
+        '--setup', 'scripts/setup-dev.ps1', '--setup-arg', '-DeployHost')
 
 # 検査が起こすブリッジは、ほかのセッションのエディタが待ち受けていても、この導入先から動く
 # エディタだけを接続先の候補にする。

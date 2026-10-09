@@ -1200,7 +1200,7 @@ fs.writeFileSync(path.join(TEMPORARY_PLACE, "読み込み元.x"), MESH, "utf8");
 fs.writeFileSync(path.join(TEMPORARY_PLACE, "読み込み元.vmd"), motion());
 fs.writeFileSync(path.join(TEMPORARY_PLACE, "読み込み元.vpd"), POSE, "utf8");
 
-const prepared = prepare(named["--setup"] ?? beside("e2e-setup-dev.ps1"), setupArgs);
+const prepared = prepare(named["--setup"] ?? beside("setup-dev.ps1"), setupArgs);
 if (prepared.server === null) {
     console.error(prepared.unavailable);
     fs.rmSync(TEMPORARY_PLACE, { recursive: true, force: true });

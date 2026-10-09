@@ -29,7 +29,8 @@ const here = path.dirname(url.fileURLToPath(import.meta.url));
 let CONTROL_SCRIPT = path.join(here, "host-control.ps1");
 
 /** 導入の前置。ホストを配置し、MCPサーバーとして起こす相手を書き出す。 */
-let SETUP_SCRIPT = path.join(here, "acceptance-setup-dev.ps1");
+let SETUP_SCRIPT = path.join(here, "setup-dev.ps1");
+let SETUP_ARGS = ["-DeployHost"];
 
 /** 呼ばせる相手。参照クライアントの入口の綴りで、実行時の引数で差し替えられる。 */
 let CLIENT_COMMAND = "claude";
@@ -248,6 +249,7 @@ if (read.parsed["--control"] !== null) {
 
 if (read.parsed["--setup"] !== null) {
     SETUP_SCRIPT = read.parsed["--setup"];
+    SETUP_ARGS = [];
 }
 
 if (read.parsed["--client"] !== null) {
@@ -266,7 +268,7 @@ try {
     // 同じ値を読むので、ここで置けば両方がそろう。
     process.env[BUDGET_NAME] = BUDGET_CHARS;
 
-    const prepared = invokeScript(SETUP_SCRIPT, ["-Action", "prepare"]).split(/\r?\n/).pop();
+    const prepared = invokeScript(SETUP_SCRIPT, ["-Action", "prepare", ...SETUP_ARGS]).split(/\r?\n/).pop();
     const server = JSON.parse(prepared);
 
     editor = invokeScript(CONTROL_SCRIPT, ["-Action", "launch"]).trim();
