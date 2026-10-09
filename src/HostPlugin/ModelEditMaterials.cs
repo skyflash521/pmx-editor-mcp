@@ -546,15 +546,32 @@ namespace PmxEditorMcp
 
         private static ComposedEditResult Clamped(IList<IPXMaterial> picked)
         {
+            int changed = 0;
             foreach (IPXMaterial material in picked)
             {
-                material.Diffuse = Held(material.Diffuse);
-                material.EdgeColor = Held(material.EdgeColor);
-                material.Specular = Held(material.Specular);
-                material.Ambient = Held(material.Ambient);
+                V4 diffuse = Held(material.Diffuse);
+                V4 edge = Held(material.EdgeColor);
+                V3 specular = Held(material.Specular);
+                V3 ambient = Held(material.Ambient);
+                if (Same(diffuse, material.Diffuse) && Same(edge, material.EdgeColor)
+                    && Vectors.Same(specular, material.Specular) && Vectors.Same(ambient, material.Ambient))
+                {
+                    continue;
+                }
+
+                material.Diffuse = diffuse;
+                material.EdgeColor = edge;
+                material.Specular = specular;
+                material.Ambient = ambient;
+                changed++;
             }
 
-            return Answer(picked.Count, 0, new int[0]);
+            return Answer(changed, 0, new int[0]);
+        }
+
+        private static bool Same(V4 left, V4 right)
+        {
+            return left.X == right.X && left.Y == right.Y && left.Z == right.Z && left.W == right.W;
         }
 
         private static V4 Held(V4 given)

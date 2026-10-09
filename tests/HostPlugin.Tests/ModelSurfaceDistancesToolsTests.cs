@@ -332,6 +332,19 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ProjectingAVertexThatAlreadyLiesOnTheSurfaceCountsNothing()
+        {
+            Floor(new V3(0f, 1f, 0f));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Project(
+                ComposedEditFixture.Given("indices", new object[] { 0 }),
+                ComposedEditFixture.Given("surfaceMaterialIndices", new object[] { 0 })));
+
+            Assert.Equal(0, value["changed"]);
+            AssertAt(-1f, 0f, -1f, _fixture.Model.Vertex[0]);
+        }
+
+        [Fact]
         public void TheOffsetIsMeasuredAlongTheFrontOfTheSurfaceFromBothSides()
         {
             Floor(new V3(0f, 1f, 0f));

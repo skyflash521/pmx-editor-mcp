@@ -124,6 +124,35 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void MirroringAnSdefVertexOnTheAxisCountsItWhenOnlyItsCentreIsPlacedAgain()
+        {
+            FakeBone first = new FakeBone("上");
+            first.Position = new V3(0f, 0f, 0f);
+            FakeBone second = new FakeBone("下");
+            second.Position = new V3(0f, 4f, 0f);
+            _fixture.Model.Bone.Add(first);
+            _fixture.Model.Bone.Add(second);
+            FakeVertex vertex = new FakeVertex(0f, 2f, 3f);
+            vertex.Normal = new V3(0f, 1f, 0f);
+            vertex.SDEF = true;
+            vertex.Bone1 = first;
+            vertex.Bone2 = second;
+            vertex.Weight1 = 0.5f;
+            vertex.Weight2 = 0.5f;
+            vertex.SDEF_C = new V3(0f, 9f, 0f);
+            _fixture.Model.Vertex.Add(vertex);
+
+            IDictionary<string, object> value = Run(
+                ModelEditVertices.ToolName,
+                Operation(ModelEditVertices.MirrorModel),
+                ComposedEditFixture.Given(All, true),
+                ComposedEditFixture.Given(ModelEditVertices.AxisName, ModelEditVertices.AxisX));
+
+            Assert.Equal(1, value[Changed]);
+            Assert.Equal(2f, _fixture.Model.Vertex[0].SDEF_C.Y);
+        }
+
+        [Fact]
         public void SeparatingAFaceThatSharesNoVertexCountsNothing()
         {
             FakeVertex[] vertices =

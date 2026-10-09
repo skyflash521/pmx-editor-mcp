@@ -876,10 +876,12 @@ namespace PmxEditorMcp
                 return false;
             }
 
+            bool was = bone.IsFixAxis;
+            V3 held = bone.FixAxis;
             bone.IsFixAxis = true;
             bone.FixAxis = along;
 
-            return true;
+            return !was || held == null || !Vectors.Same(held, bone.FixAxis);
         }
 
         private static bool Framed(IPXPmx model, IPXBone bone)
@@ -894,11 +896,20 @@ namespace PmxEditorMcp
                 ? new V3(0f, 1f, 0f)
                 : Vectors.Toward(bone.Position, bone.Parent.Position);
             V3 across = Vectors.Perpendicular(along, up);
+            bool was = bone.IsLocalFrame;
+            V3 wasX;
+            V3 wasY;
+            V3 wasZ;
+            bone.GetLocalAxis(out wasX, out wasY, out wasZ);
             bone.IsLocalFrame = true;
             bone.SetLocalAxis(
                 along, Vectors.HasLength(across) ? across : Vectors.Perpendicular(along, Aside(along)));
+            V3 nowX;
+            V3 nowY;
+            V3 nowZ;
+            bone.GetLocalAxis(out nowX, out nowY, out nowZ);
 
-            return true;
+            return !was || !Vectors.Same(wasX, nowX) || !Vectors.Same(wasZ, nowZ);
         }
 
         private static bool Unframed(IPXBone bone)
@@ -915,9 +926,20 @@ namespace PmxEditorMcp
 
         private static bool Sorted(IPXBone bone)
         {
+            object[] was = KindFlags(bone);
             bone.SetPMDBoneKind(Kind(bone));
 
-            return true;
+            return !was.SequenceEqual(KindFlags(bone));
+        }
+
+        /// <summary>PMDのボーン種別を入れたときに書き換わる値。</summary>
+        private static object[] KindFlags(IPXBone bone)
+        {
+            return new object[]
+            {
+                bone.IsRotation, bone.Visible, bone.Controllable, bone.IsTranslation, bone.IsIK,
+                bone.IsAppendRotation, bone.IsFixAxis, bone.Level, bone.AppendParent, bone.AppendRatio,
+            };
         }
 
         private static BoneKind Kind(IPXBone bone)

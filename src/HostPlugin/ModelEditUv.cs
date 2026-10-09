@@ -108,16 +108,22 @@ namespace PmxEditorMcp
             V2 taken = source.HasValue ? model.Vertex[source.Value].UV : null;
             V3 across = direction == null ? null : Across(direction);
             V3 down = direction == null ? null : Vectors.Perpendicular(direction, across);
+            int changed = 0;
             foreach (int at in chosen)
             {
                 IPXVertex vertex = model.Vertex[at];
-                vertex.UV = Written(operation, vertex, taken, across, down);
+                V2 written = Written(operation, vertex, taken, across, down);
+                if (written.X != vertex.UV.X || written.Y != vertex.UV.Y)
+                {
+                    vertex.UV = written;
+                    changed++;
+                }
             }
 
             return ComposedEditResult.CompleteRewriting(
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
-                    { ChangedName, chosen.Count },
+                    { ChangedName, changed },
                 },
                 new[] { ElementKinds.Vertex });
         }

@@ -430,13 +430,20 @@ namespace PmxEditorMcp
                     vertex, new V3((float)moved.X, (float)moved.Y, (float)moved.Z)));
             }
 
+            int changed = 0;
             foreach (KeyValuePair<IPXVertex, V3> move in moves)
             {
+                V3 position = move.Key.Position;
+                V3 center = move.Key.SDEF_C;
                 move.Key.Position = move.Value;
                 VertexWeights.ProjectSdefCenter(move.Key);
+                if (!Vectors.Same(position, move.Key.Position) || !Vectors.Same(center, move.Key.SDEF_C))
+                {
+                    changed++;
+                }
             }
 
-            return Answer(moves.Count, 0, 0, None(model), new[] { ElementKinds.Vertex });
+            return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex });
         }
 
         private static ComposedEditResult PushedOut(
@@ -1047,6 +1054,7 @@ namespace PmxEditorMcp
             }
 
             float middle = picked.Select(v => Component(v.Position, axis)).Sum() / picked.Count;
+            int changed = 0;
             foreach (IPXVertex vertex in picked)
             {
                 V3 placed = Written(vertex.Position, axis, middle);
@@ -1054,10 +1062,11 @@ namespace PmxEditorMcp
                 {
                     vertex.Position = placed;
                     VertexWeights.ProjectSdefCenter(vertex);
+                    changed++;
                 }
             }
 
-            return Answer(picked.Count, 0, 0, None(model), new[] { ElementKinds.Vertex });
+            return Answer(changed, 0, 0, None(model), new[] { ElementKinds.Vertex });
         }
 
         private static ComposedEditResult Copied(
@@ -1077,9 +1086,18 @@ namespace PmxEditorMcp
         private static ComposedEditResult Mirrored(
             IPXPmx model, IList<IPXVertex> picked, string axis)
         {
+            int changed = 0;
             foreach (IPXVertex vertex in picked)
             {
+                V3 position = vertex.Position;
+                V3 normal = vertex.Normal;
+                V3 center = vertex.SDEF_C;
                 Flip(vertex, axis);
+                if (!Vectors.Same(position, vertex.Position) || !Vectors.Same(normal, vertex.Normal)
+                    || !Vectors.Same(center, vertex.SDEF_C))
+                {
+                    changed++;
+                }
             }
 
             HashSet<IPXVertex> flipped =
@@ -1101,7 +1119,7 @@ namespace PmxEditorMcp
                 }
             }
 
-            return Answer(picked.Count, 0, 0, None(model));
+            return Answer(changed, 0, 0, None(model));
         }
 
         private static void Flip(IPXVertex vertex, string axis)

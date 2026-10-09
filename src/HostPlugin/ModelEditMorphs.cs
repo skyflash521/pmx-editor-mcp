@@ -450,7 +450,7 @@ namespace PmxEditorMcp
             int along)
         {
             Dictionary<object, IPXMorphOffset> toward = Towards(morph);
-            List<Action> writes = new List<Action>();
+            List<Func<bool>> writes = new List<Func<bool>>();
             foreach (KeyValuePair<object, object> pair in partners)
             {
                 IPXMorphOffset held;
@@ -480,8 +480,14 @@ namespace PmxEditorMcp
                             morph.Offsets.Add(target);
                             toward.Add(partner, target);
                         }
+                        else if (Vectors.Same(target.Offset, value))
+                        {
+                            return false;
+                        }
 
                         target.Offset = value;
+
+                        return true;
                     });
 
                     continue;
@@ -505,19 +511,31 @@ namespace PmxEditorMcp
                             morph.Offsets.Add(target);
                             toward.Add(partner, target);
                         }
+                        else if (Vectors.Same(target.Translation, translation) && Same(target.Rotation, rotation))
+                        {
+                            return false;
+                        }
 
                         target.Translation = translation;
                         target.Rotation = rotation;
+
+                        return true;
                     });
                 }
             }
 
-            foreach (Action write in writes)
+            bool changed = false;
+            foreach (Func<bool> write in writes)
             {
-                write();
+                changed |= write();
             }
 
-            return writes.Count > 0;
+            return changed;
+        }
+
+        private static bool Same(Q left, Q right)
+        {
+            return left.X == right.X && left.Y == right.Y && left.Z == right.Z && left.W == right.W;
         }
 
         private static Q Reflected(Q given, int along)

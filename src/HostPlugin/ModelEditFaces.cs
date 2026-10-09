@@ -475,14 +475,21 @@ namespace PmxEditorMcp
                 }
             }
 
+            int changed = 0;
             foreach (IPXFace face in chosen)
             {
+                if (!Corners(face).Any(apart.ContainsKey))
+                {
+                    continue;
+                }
+
                 face.Vertex1 = Instead(apart, face.Vertex1);
                 face.Vertex2 = Instead(apart, face.Vertex2);
                 face.Vertex3 = Instead(apart, face.Vertex3);
+                changed++;
             }
 
-            return Answer(chosen.Count, apart.Count, 0);
+            return Answer(changed, apart.Count, 0);
         }
 
         private static IPXVertex Instead(
