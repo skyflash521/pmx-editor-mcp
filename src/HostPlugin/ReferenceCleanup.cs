@@ -20,15 +20,12 @@ namespace PmxEditorMcp
 
     public static class ReferenceCleanup
     {
-        /// <summary>始末の仕方を受け取る入力の名前。</summary>
         public const string RelatedName = "related";
 
-        /// <summary>何も触らない。</summary>
         public const string Keep = "keep";
 
         public const string Repair = "repair";
 
-        /// <summary>直すことに加えて、消した要素だけが使っていた要素も消す。</summary>
         public const string Cascade = "cascade";
 
         // SDEFは2つのボーンの間を補間するPMXの変形方式である。
@@ -455,7 +452,6 @@ namespace PmxEditorMcp
             return fallback;
         }
 
-        /// <summary>そのオフセットが、いま並びに居る相手を指しているか。</summary>
         public static bool PointsAtLive(
             IPXMorphOffset offset,
             ISet<object> vertices,
@@ -496,7 +492,7 @@ namespace PmxEditorMcp
 
             IPXMaterialMorphOffset painted = offset as IPXMaterialMorphOffset;
 
-            // 材質を指さない材質モーフのオフセットは全材質を指すので、空のままでよい。
+            // 材質を指さない材質モーフのオフセットは全材質を指す。
             return painted == null || painted.Material == null
                 || materials.Contains(painted.Material);
         }
@@ -622,7 +618,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>その参照が、いま並びに居る相手を指しているか。</summary>
         public static bool Alive(object item, ISet<object> live)
         {
             if (live == null)

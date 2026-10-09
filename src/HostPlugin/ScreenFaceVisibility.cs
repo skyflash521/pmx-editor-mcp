@@ -6,7 +6,6 @@ using PEPlugin.View;
 
 namespace PmxEditorMcp
 {
-    /// <summary>選んだ面が画面に出るかを見て、出ないときの知らせを組む。</summary>
     public static class ScreenFaceVisibility
     {
         private const string NotDrawn =

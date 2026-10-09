@@ -36,10 +36,8 @@ namespace PmxEditorMcp
             _mend = mend;
         }
 
-        /// <summary>指す側の種類の名前。</summary>
         public string ReferrerKind { get; }
 
-        /// <summary>指される側の種類の名前。</summary>
         public string TargetKind { get; }
 
         /// <summary>重みを持つ辺か。持たない辺では重みが常に1になる。</summary>
@@ -111,7 +109,6 @@ namespace PmxEditorMcp
         }
     }
 
-    /// <summary>指す側の種類ごとに、指していた要素の位置を持つ組。</summary>
     public sealed class ReferrerSets
     {
         private readonly IDictionary<string, IList<int>> _found;
@@ -149,13 +146,11 @@ namespace PmxEditorMcp
     {
         private static readonly IList<ReferenceEdge> Table = Build();
 
-        /// <summary>辺のすべて。</summary>
         public static IList<ReferenceEdge> All
         {
             get { return Table; }
         }
 
-        /// <summary>指される側になれる種類の名前。</summary>
         public static IList<string> TargetKinds
         {
             get

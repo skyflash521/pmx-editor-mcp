@@ -4,10 +4,7 @@ using System.Globalization;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 要求の引数から、決まった形の値を取り出す。形が合わなければ不正な引数として断る。検査から
-    /// だけ使う入口が同じ形を何度も受け取るので、判定をここ1つに置く。
-    /// </summary>
+    /// <summary>要求の引数から、決まった形の値を取り出す。形が合わなければ不正な引数として断る。</summary>
     public static class RequestParameter
     {
         /// <summary>空でない文字列を取り出す。空白だけのものも空として断る。</summary>

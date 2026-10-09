@@ -32,8 +32,8 @@ namespace PmxEditorMcp
         private int _connections;
 
         /// <summary>
-        /// 稼働世代はホストだけが作る。<paramref name="modals"/> はUIスレッドが進まないときに
-        /// その原因を見るもの、<paramref name="modalCheckInterval"/> はそれを見直す間隔である。
+        /// <paramref name="modals"/> はUIスレッドが進まないときにその原因を見るもの、
+        /// <paramref name="modalCheckInterval"/> はそれを見直す間隔である。
         /// </summary>
         internal HostGeneration(
             IUiDispatcher uiDispatcher,
@@ -61,7 +61,6 @@ namespace PmxEditorMcp
             _modalCheckInterval = modalCheckInterval;
         }
 
-        /// <summary>この稼働世代で受付を止めたかどうか。</summary>
         public bool IsStopRequested => _stopRequested;
 
         /// <summary>
@@ -73,13 +72,8 @@ namespace PmxEditorMcp
             get { return _pipes; }
         }
 
-        /// <summary>この稼働世代の待受を担うスレッド。</summary>
         internal Thread ServerThread { get; set; }
 
-        /// <summary>
-        /// この稼働世代の仕事がまだ残っているか。待受のスレッドだけでなく、接続を処理している
-        /// スレッドも見る——待受が終わっても要求の処理が残っていれば、まだ止まり切っていない。
-        /// </summary>
         internal bool HasLiveThreads
         {
             get
@@ -104,7 +98,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>接続を処理するスレッドを覚える。</summary>
         internal void AddWorker(Thread worker)
         {
             lock (_workers)
@@ -113,7 +106,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>接続を処理するスレッドを忘れる。</summary>
         internal void RemoveWorker(Thread worker)
         {
             lock (_workers)
@@ -128,13 +120,11 @@ namespace PmxEditorMcp
             get { return Volatile.Read(ref _connections) > 0; }
         }
 
-        /// <summary>接続が1本増えた。</summary>
         internal void NoteConnected()
         {
             Interlocked.Increment(ref _connections);
         }
 
-        /// <summary>接続が1本減った。</summary>
         internal void NoteDisconnected()
         {
             Interlocked.Decrement(ref _connections);
@@ -159,8 +149,6 @@ namespace PmxEditorMcp
             bool executed = false;
             IAsyncResult pending;
 
-            // 空きの確認と委譲の登録は分けられない。分けると、同時に入った2本がどちらも空きを
-            // 見てから始めてしまい、置いたままの委譲へ積まない決まりが破れる。
             lock (_pending)
             {
                 if (_running != null)
@@ -176,8 +164,6 @@ namespace PmxEditorMcp
 
                 pending = _uiDispatcher.Begin(() =>
                 {
-                    // 委譲が実際に走るのはUIスレッドが空くときで、その間に停止手順が終わって
-                    // いることがある。
                     if (_stopRequested)
                     {
                         return;
@@ -198,9 +184,6 @@ namespace PmxEditorMcp
                 }
             }
 
-            // 後始末も登録の解除と同じ排他区間で行う。分けると、解除の前に入った次の呼び出しが
-            // 同じ委譲を後始末し、二度行うことになる。終わった委譲の後始末は待たないので、
-            // 排他区間の中で行っても他を待たせない。
             lock (_pending)
             {
                 if (ReferenceEquals(_running, pending))
@@ -213,11 +196,7 @@ namespace PmxEditorMcp
             return executed ? UiInvocation.Done : UiInvocation.Declined;
         }
 
-        /// <summary>
-        /// 置いたまま戻った委譲の後始末。終わったことを確かめてから呼ぶ。落ちて終わっていたことは
-        /// ここで分かるが、頼んだ呼び出しへはもう返せない——実行されたかどうかは確かめられないと
-        /// 既に答えている——ので、次の委譲へ持ち越さずに捨てる。
-        /// </summary>
+        /// <summary>置いたまま戻った委譲の後始末。終わったことを確かめてから呼ぶ。</summary>
         private void Discard(IAsyncResult pending)
         {
             try
@@ -229,10 +208,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>
-        /// 人の応答を待つ表示で進められないときの事情。答えるのは人なので、何が出ているかを
-        /// そのまま伝える。実行されたかどうかは、答えたあとにしか決まらない。
-        /// </summary>
         private static string Shown(string shown)
         {
             return "エディタが人の応答を待つ表示を出していて進められない。表示へ答えると進む。"
@@ -241,11 +216,6 @@ namespace PmxEditorMcp
                 + " で確かめる。表示: " + shown;
         }
 
-        /// <summary>
-        /// 前の委譲がUIスレッドでまだ終わっていないときの事情。出ている表示が見つかればそれを
-        /// 伝え、見つからなければ待たされていることだけを伝える——出ていないものを出ていると
-        /// 言わない。どちらの場合もこの呼び出しは始めていない。
-        /// </summary>
         private string Standing()
         {
             string shown = _modals.TryDescribe();
@@ -257,7 +227,6 @@ namespace PmxEditorMcp
             return "前の呼び出しがUIスレッドでまだ終わっていない。この呼び出しは始めていない。";
         }
 
-        /// <summary>この稼働世代の受付を止める。</summary>
         internal void RequestStop()
         {
             _stopRequested = true;

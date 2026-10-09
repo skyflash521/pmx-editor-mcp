@@ -51,7 +51,6 @@ namespace PmxEditorMcp
             _root = Build(order, 0, order.Length);
         }
 
-        /// <summary>ボーンの根元の点を比べる表。</summary>
         public static NearestBones ByPosition(IList<IPXBone> bones)
         {
             if (bones == null)
@@ -65,7 +64,6 @@ namespace PmxEditorMcp
                 null);
         }
 
-        /// <summary>ボーンの根元から表示先までの線分を比べる表。</summary>
         public static NearestBones BySegment(IList<IPXBone> bones, Func<IPXBone, V3> tip)
         {
             if (bones == null)

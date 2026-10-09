@@ -3,13 +3,8 @@ using System.Collections.Generic;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 呼び出しが果たせなかったことの返し方。UIスレッドへ委譲できなかったときと、SDKの呼び出しが
-    /// 落ちたときの2つを持つ。
-    /// </summary>
     public static class ToolFailure
     {
-        /// <summary>UIスレッドへ委譲できなかったことを返す。</summary>
         public static IDictionary<string, object> Unavailable(UiInvocation invocation = null)
         {
             if (invocation == null || invocation.Unavailable == null)

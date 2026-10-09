@@ -7,70 +7,51 @@ using System.Linq;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// ツールの要求を、結び付きの表が指す行へ振り分ける。呼ぶ先も受け手も引数の型もビルド時に
-    /// 決まっているので、ここには名前で型やメンバーを引く経路が無い。
-    /// SDKへ届く呼び出しはどれもUIスレッドへ委譲した中で行い、複製編集型はその中で反映まで閉じる。
+    /// ツールの要求を、結び付きの表が指す行へ振り分ける。SDKへ届く呼び出しはどれもUIスレッドへ
+    /// 委譲した中で行い、複製編集型はその中で反映まで閉じる。
     /// </summary>
     public sealed class ToolDispatch
     {
-        /// <summary>危険操作の確認を受け取る共通引数の名前。</summary>
         public const string ConfirmName = "confirm";
 
-        /// <summary>Undoの記録を止めることを頼む共通引数の名前。</summary>
         public const string SuppressName = UndoBarrier.SuppressName;
 
-        /// <summary>返す項目を選ぶ共通引数の名前。</summary>
         public const string FieldsName = "fields";
 
-        /// <summary>一覧が切り出す位置を受け取る共通引数の名前。</summary>
         public const string OffsetName = "offset";
 
-        /// <summary>一覧が切り出す件数を受け取る共通引数の名前。</summary>
         public const string LimitName = "limit";
 
-        /// <summary>一覧を名前の一部で絞り込む共通引数の名前。</summary>
         public const string NameContainsName = "nameContains";
 
         private const string NameFieldName = "name";
 
-        /// <summary>更新が受け取る値の組の名前。</summary>
         public const string ValueName = "value";
 
-        /// <summary>範囲の組が持つ始まりの名前。</summary>
         public const string StartName = TargetInput.StartName;
 
-        /// <summary>範囲の組が持つ件数の名前。</summary>
         public const string CountName = TargetInput.CountName;
 
-        /// <summary>一覧の応答が持つ総数の名前。</summary>
         public const string TotalName = "total";
 
-        /// <summary>一覧の応答が持つ切り出した並びの名前。</summary>
         public const string ItemsName = "items";
 
-        /// <summary>一覧の応答が持つ続きの位置の名前。</summary>
         public const string NextOffsetName = "nextOffset";
 
         public const string RunsName = "runs";
 
         public const string ItemRunsName = "itemRuns";
 
-        /// <summary>読み返した選択の数を返す項目の名前。</summary>
         public const string SelectedName = "selected";
 
-        /// <summary>更新が受け取る、対象ごとの値の組の並びの名前。</summary>
         public const string ValuesName = "values";
 
-        /// <summary>要素のメソッドが受け取る、全件へ配る引数の組の名前。</summary>
         public const string ArgsName = "args";
 
-        /// <summary>要素のメソッドが受け取る、対象ごとの引数の組の並びの名前。</summary>
         public const string ArgsListName = "argsList";
 
-        /// <summary>加えるツールが受け取る、親ごとの組の並びの名前。</summary>
         public const string AssignmentsName = "assignments";
 
-        /// <summary>表示設定の受け手を取るツールが受け取る、どのビューの設定かの名前。</summary>
         public const string ViewName = "view";
 
         /// <summary>ビューごとに実体の分かれる表示設定の受け手の型。</summary>
@@ -114,10 +95,8 @@ namespace PmxEditorMcp
         /// <summary>親を指すハンドルの名前。親をハンドルで指した呼び出しがこれを持つ。</summary>
         public const string ParentHandleName = "parentHandle";
 
-        /// <summary>一覧の各項目が持つ、親の中の位置の名前。</summary>
         public const string IndexInParentName = "indexInParent";
 
-        /// <summary>要素の実行時の型を表す項目の名前。</summary>
         public const string ItemTypeName = "itemType";
 
         /// <summary>ハンドル1件が応答で使う文字数。IDの十進表記の最大の桁数と区切りの1文字。</summary>
@@ -149,12 +128,6 @@ namespace PmxEditorMcp
 
         private readonly IDictionary<string, Func<object, object, object, IDictionary<string, object>>> _measures;
 
-        /// <summary>
-        /// ハンドルで持つ実体へ書かれた、位置で指す項目の値。位置はPMXの中のリストで数えるので、
-        /// 書いた時点では解けない——ハンドルで持つ実体はまだどのPMXにも属していない。値のまま
-        /// 預かり、その実体を並びへ加える呼び出しが、自分が相手にするPMXの中で解いて書き込む。
-        /// 実体が捨てられれば預かりも消えるように、実体を弱く指す表に持つ。
-        /// </summary>
         private readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, DeferredWrites> _deferred =
             new System.Runtime.CompilerServices.ConditionalWeakTable<object, DeferredWrites>();
 
@@ -200,7 +173,6 @@ namespace PmxEditorMcp
             _modifiers = modifiers;
         }
 
-        /// <summary>結び付きの表が持つツールをすべて登録する。</summary>
         public static void AddTo(
             McpMethodTable methods,
             SdkRelayTable relay,
@@ -463,8 +435,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 呼ぶ前に確かめることを満たしているか。UIスレッドの中で呼ぶこと——確かめるのと本体を
-        /// 呼ぶのが分かれていると、その間に人が選択やキーを変えられる。満たしていなければ偽で、
+        /// 呼ぶ前に確かめることを満たしているか。UIスレッドの中で呼ぶこと。満たしていなければ偽で、
         /// <paramref name="refused"/> に断りを持たせる。
         /// </summary>
         private bool TryMet(
@@ -556,10 +527,7 @@ namespace PmxEditorMcp
             return counted;
         }
 
-        /// <summary>
-        /// いま選ばれているものの数。1つでも読めなければ null——読めなかったことと0件は別で、
-        /// 前者を後者として扱うと、選び直しても直らない断り方になる。
-        /// </summary>
+        /// <summary>いま選ばれているものの数。1つでも読めなければ null。</summary>
         private int? Picked(McpMethodContext context, ResolvedPrecondition precondition)
         {
             int picked = 0;
@@ -604,7 +572,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// そのツールが呼ぶ前に確かめること。持たなければ null。材料の名前はここで呼び出しへ解く。
-        /// 解けない名前が在れば、確かめられないまま素通りさせずに組み立てで落とす。
+        /// 解けない名前が在れば組み立てで落とす。
         /// </summary>
         private static ResolvedPrecondition Required(
             IDictionary<string, ToolPrecondition> preconditions,
@@ -645,10 +613,6 @@ namespace PmxEditorMcp
             return new ResolvedPrecondition(precondition.Kind, reading, precondition.Counting, precondition.Guarded);
         }
 
-        /// <summary>
-        /// 種別が要る材料を持っているか。種別ごとに読む先が違うので、数だけでなくどちらを持つかまで
-        /// 見る——取り違えたまま通すと、別の意味の数を足し合わせて確かめたことにしてしまう。
-        /// </summary>
         private static void RequireMaterials(
             ToolPrecondition precondition, IList<ToolCall> reading, string tool)
         {
@@ -687,7 +651,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 項目を集めるツールと要素を出し入れするツールは、呼ぶ前に確かめることを扱えない。持つ形が
-        /// 現れたら、扱えないまま素通りさせずに組み立てで落とす。
+        /// 現れたら組み立てで落とす。
         /// </summary>
         private static void RequireNoPrecondition(
             IDictionary<string, ToolPrecondition> preconditions, string tool)
@@ -699,7 +663,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>名前を呼び出しへ解いた後の、呼ぶ前に確かめること。</summary>
         private sealed class ResolvedPrecondition
         {
             public ResolvedPrecondition(
@@ -711,13 +674,10 @@ namespace PmxEditorMcp
                 Guarded = guarded;
             }
 
-            /// <summary>確かめることの種別。</summary>
             public PreconditionKind Kind { get; }
 
-            /// <summary>確かめる材料を得る読み取りの呼び出し。</summary>
             public IList<ToolCall> Reading { get; }
 
-            /// <summary>確かめる材料を得る、呼ぶ先と同じ受け手の上の行キー。</summary>
             public IList<string> Counting { get; }
 
             public IList<string> Guarded { get; }
@@ -747,10 +707,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 済んだ呼び出しのあとに、変えた中身をエディタの画面へ映す。断られた呼び出しは何も変えて
-        /// いないので映さない。複製編集の反映は自分で映すので、この包みが映すのは画面そのものを
-        /// 変える呼び出しだけだが、映せなかったことの知らせはどちらの経路のぶんもここで応答へ
-        /// 移す——応答だけが新しく、画面が古いままだと、次に何を見ているのかが分からなくなる。
+        /// 済んだ呼び出しのあとに、変えた中身をエディタの画面へ映す。断られた呼び出しは映さない。
+        /// 映せなかったことの知らせは、どちらの経路のぶんもここで応答へ移す。
         /// </summary>
         private McpMethod Shown(ScreenRefreshKind refresh, McpMethod inner)
         {
@@ -790,10 +748,6 @@ namespace PmxEditorMcp
                 && value is bool && (bool)value;
         }
 
-        /// <summary>
-        /// SDKのメンバーへ中継する。同じ名前のオーバーロードは1つのツールへ集まるので、まず
-        /// 渡された引数の名前でどれを呼ぶかを決める。
-        /// </summary>
         private object Invoke(
             McpMethodContext context, IList<ToolCall> calls, ResolvedPrecondition precondition)
         {
@@ -811,8 +765,7 @@ namespace PmxEditorMcp
         /// <summary>
         /// 渡された引数に合う呼び分け。1つしか持たないツールはそれを採る。2つ以上を持つツールは、
         /// 受け取る引数がすべて渡されていて、渡された値をその引数として受け取れるもののうち、
-        /// 引数の多いものを採る——引数を足した呼び分けは、その一部だけを取る呼び分けを兼ねる。
-        /// 引数を受け取る呼び分けは、組を1つも渡さない要求には合わない。
+        /// 引数の多いものを採る。引数を受け取る呼び分けは、組を1つも渡さない要求には合わない。
         /// </summary>
         private static bool TryOverload(
             McpMethodContext context,
@@ -851,10 +804,6 @@ namespace PmxEditorMcp
             return false;
         }
 
-        /// <summary>
-        /// 分岐を選ぶ項目で選んだ呼び分け。引数の名前が同じで型だけが違う呼び分けは名前でも値でも
-        /// 見分けられないので、呼ぶ側がこの項目で選ぶ。
-        /// </summary>
         private static bool TrySelected(
             McpMethodContext context,
             IList<ToolCall> calls,
@@ -884,9 +833,6 @@ namespace PmxEditorMcp
             return false;
         }
 
-        /// <summary>
-        /// 引数を探す組。対象の組へ及ぶ呼び出しは組を別に渡すので、渡された組ぜんぶを見る。
-        /// </summary>
         private static IList<IDictionary<string, object>> Sets(
             McpMethodContext context, ToolCall call)
         {
@@ -913,7 +859,6 @@ namespace PmxEditorMcp
                 : items.Select(i => i as IDictionary<string, object>).ToList();
         }
 
-        /// <summary>渡された組のどれでも、その呼び分けが受け取る引数がすべて揃うか。</summary>
         private static bool Fits(
             IList<IDictionary<string, object>> sets, IList<ToolArgument> arguments)
         {
@@ -921,7 +866,6 @@ namespace PmxEditorMcp
                 || (sets.Count != 0 && sets.All(s => arguments.All(a => Receivable(s, a))));
         }
 
-        /// <summary>その引数として受け取れる値が組に入っているか。</summary>
         private static bool Receivable(IDictionary<string, object> set, ToolArgument argument)
         {
             object given;
@@ -953,7 +897,6 @@ namespace PmxEditorMcp
             return ValueInput.TryFromJson(argument.Type, given, out taken, out code, out message);
         }
 
-        /// <summary>ハンドルの並びを取る引数として受け取れる形か。</summary>
         private static bool Handles(object given)
         {
             object[] items = given as object[];
@@ -1292,10 +1235,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>
-        /// 応答へ収められるハンドルの数。ハンドルはIDの整数1つとして写るので、1件ぶんを、intの
-        /// 十進表記の最大の桁数と区切りの1文字を合わせた長さとする。
-        /// </summary>
         private static int Most(McpMethodContext context)
         {
             int most = ResponseSize.ValueChars(context.BudgetChars) / HandleChars;
@@ -1332,8 +1271,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 頼まれた数だけ繰り返した生成物をまとめて台帳へ預け、そのハンドルの並びを返す。途中で
-        /// 断るときは、その呼び出しで預けたぶんを台帳から戻す——応答を返さない呼び出しのハンドルは
-        /// 誰も受け取らないので、解放を頼む相手が居ない。
+        /// 断るときは、その呼び出しで預けたぶんを台帳から戻す。
         /// </summary>
         private object Issued(
             McpMethodContext context, ToolCall call, IList<object> results, object receiver)
@@ -1363,8 +1301,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 生成物を台帳へ預け、そのハンドルを返す。生成物はエディタの状態の外で生きるので、
-        /// 解放するか、リストへ加えて消費するまで台帳が保つ。
+        /// 生成物を台帳へ預け、そのハンドルを返す。台帳は、解放するかリストへ加えて消費するまで
+        /// 生成物を保つ。
         /// </summary>
         private object Issued(
             McpMethodContext context,
@@ -1443,7 +1381,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>生成物1件を台帳へ預け、そのハンドルを返す。</summary>
         private int One(
             McpMethodContext context,
             ToolCall call,
@@ -1515,8 +1452,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// その生成に関与したハンドル。ハンドルで受け取った引数と、ハンドルで指した受け手がこれに
-        /// 当たり、生成物はそれらより先に解放される——生成物は関与した実体を持ち続けるので、先に
-        /// 手放されると使えなくなる。
+        /// 当たり、生成物はそれらより先に解放される。
         /// </summary>
         private static IEnumerable<int> Involved(
             McpMethodContext context, ToolCall call, IDictionary<string, object> given, int? held)
@@ -1540,10 +1476,7 @@ namespace PmxEditorMcp
             return involved;
         }
 
-        /// <summary>
-        /// その位置の対象を指したハンドル。ハンドル以外で指した対象では null——位置で指した対象は
-        /// リストが持つので、生成物より先に手放されることがない。
-        /// </summary>
+        /// <summary>その位置の対象を指したハンドル。ハンドル以外で指した対象では null。</summary>
         private static int? Held(Pointed pointed, int at)
         {
             if (pointed == null || !pointed.ByHandle || pointed.Elements == null)
@@ -2124,7 +2057,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 位置で預かった値が指す実体。指さない項目と null はそのまま渡す。相手がハンドルで持つ
-        /// 実体のときは、数える先のリストがまだ無いので解かず、預かりとして渡す。
+        /// 実体のときは解かず、預かりとして渡す。
         /// </summary>
         private bool TryPointed(
             ToolField field,
@@ -2245,8 +2178,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// ハンドルで持つ実体への、位置で指す項目の書き込みを預かる。預かる先は、解く呼び出しまで
-        /// 生き残る実体である——子を親へ加えたあとは親が預かる。
+        /// ハンドルで持つ実体への、位置で指す項目の書き込みを預かる。子を親へ加えたあとは親が預かる。
         /// </summary>
         private void Defer(object keeper, DeferredWrite pending)
         {
@@ -2463,10 +2395,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>
-        /// 生成物へ位置で渡した引数を、生成物の預かりにする。呼び出しが解いた実体は相手にした複製の
-        /// 中に居るので、生成物を並びへ加える呼び出しが、加える先のPMXの中で解き直して書き込む。
-        /// </summary>
         private void DeferIssued(ToolCall call, object issued, object[] positions)
         {
             if (issued == null)
@@ -2486,10 +2414,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>
-        /// ハンドルで持つ親へ子を加えるときに、子の預かりを親へ移す。まだどのPMXにも属していない
-        /// 親の下では位置を解けないので、解くのは親が並びへ加わるときになる。
-        /// </summary>
         private void Carry(object item, object owner)
         {
             DeferredWrites held;
@@ -2516,10 +2440,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 並びへ加える実体に預かりがあれば、加える先のPMXの中で位置を解いて書き込む。預かりは
-        /// ここでは外さない——同じ呼び出しの後の段で断られると複製ごと捨てられ、書き込んだ相手は
-        /// 残らないので、外してしまうと投げ直しても解き直せなくなる。外すのは反映まで済んでからで、
-        /// <see cref="Settle"/> が行う。
+        /// 並びへ加える実体に預かりがあれば、加える先のPMXの中で位置を解いて書き込む。預かりを
+        /// 外すのは <see cref="Settle"/> が行う。
         /// </summary>
         private bool TryApplyDeferred(
             object item, PmxTarget target, ReachedLists reached, out Refusal refused)
@@ -2856,7 +2778,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>引数の組1つを、シグネチャの並びの値へ直す。</summary>
         private static bool TryPass(
             McpMethodContext context,
             ToolCall call,
@@ -2956,7 +2877,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>その型の項目をまとめて読む。</summary>
         private object Read(McpMethodContext context, ToolFields tool)
         {
             string code;
@@ -3239,7 +3159,6 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>合成の項目1件の値。</summary>
         private static object Composed(string name, Spot spot, string itemType)
         {
             if (string.Equals(name, ItemTypeName, StringComparison.Ordinal))
@@ -3267,16 +3186,11 @@ namespace PmxEditorMcp
                 : spot.IndexInParent;
         }
 
-        /// <summary>その型の項目を書く。</summary>
         private object Write(McpMethodContext context, ToolFields tool)
         {
             return tool.Listing ? WriteValue(context, tool) : WriteOne(context, tool);
         }
 
-        /// <summary>
-        /// コネクタの項目を1つ書く。1度に書けるのを1つに限るのは、直に書き込む先を戻す手立てが
-        /// SDKの側に無く、2つ以上を続けて書くと途中まで書けた状態が残りうるためである。
-        /// </summary>
         private object WriteOne(McpMethodContext context, ToolFields tool)
         {
             string code;
@@ -3430,10 +3344,6 @@ namespace PmxEditorMcp
             return value is float || value is double || value is decimal;
         }
 
-        /// <summary>
-        /// 項目を、値の組で受け取って書く。複製編集型は複製へ書いてまとめて反映するので、
-        /// 途中まで書けた状態がエディタへ残らない。
-        /// </summary>
         private object WriteValue(McpMethodContext context, ToolFields tool)
         {
             string code;
@@ -3695,7 +3605,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>所有するリストの末尾へ、ハンドルが指す要素を加える。</summary>
         private object Add(McpMethodContext context, ToolElements tool)
         {
             return tool.Access.Parents.Count == 0 && tool.Access.Owner == null
@@ -3703,7 +3612,6 @@ namespace PmxEditorMcp
                 : AddToParents(context, tool);
         }
 
-        /// <summary>PMXが直に持つリストの末尾へ加える。</summary>
         private object AddToRoot(McpMethodContext context, ToolElements tool)
         {
             string code;
@@ -3787,7 +3695,6 @@ namespace PmxEditorMcp
             return ToolEnvelope.Success(SetResponse.Added(indices));
         }
 
-        /// <summary>親ごとの組で、親が持つリストの末尾へ加える。</summary>
         private object AddToParents(McpMethodContext context, ToolElements tool)
         {
             string code;
@@ -3852,8 +3759,6 @@ namespace PmxEditorMcp
                         reached.Added(tool.Access.RowKey, false, item);
                         indices.Add(list.Count(owner) - 1);
 
-                        // 預かりを移すのは加わってからとする。加わらないまま移すと、預かりは親の
-                        // もとに在るのに子はそこに居ないので、その子を別の親へ加え直しても解けない。
                         if (byHandle)
                         {
                             Carry(item, owner);
@@ -3887,7 +3792,6 @@ namespace PmxEditorMcp
             return ToolEnvelope.Success(SetResponse.Added(indices.ToArray()));
         }
 
-        /// <summary>その要素のツールが行うこと。</summary>
         private static Func<McpMethodContext, object> Acting(
             ToolDispatch dispatch, ToolElements tool)
         {
@@ -3903,10 +3807,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 所有するリストに在る、指した位置の要素を台帳へ預けてハンドルを返す。並びを変えないので
-        /// 反映もしない。預けたハンドルは親のハンドルに連なるので、親を手放せば一緒に失効する。
-        /// 親をハンドルで指していない呼び出しは断る——位置で辿った相手は複製で、その中の要素を
-        /// 預けると、書き換えても元のモデルへ届かない。
+        /// 所有するリストに在る、指した位置の要素を台帳へ預けてハンドルを返す。並びを変えず、反映も
+        /// しない。預けたハンドルは親のハンドルに連なる。親をハンドルで指していない呼び出しは断る。
         /// </summary>
         private object Hold(McpMethodContext context, ToolElements tool)
         {
@@ -3989,7 +3891,6 @@ namespace PmxEditorMcp
             return ToolEnvelope.Success(SetResponse.PerTarget(handed, handed.Count));
         }
 
-        /// <summary>所有するリストから、指した位置の要素を取り除く。</summary>
         private object Remove(McpMethodContext context, ToolElements tool)
         {
             string code;
@@ -4058,7 +3959,6 @@ namespace PmxEditorMcp
                 : ToolEnvelope.Success(SetResponse.Removed(removed));
         }
 
-        /// <summary>加え終えたハンドルを解く。</summary>
         private static void Release(McpMethodContext context, IEnumerable<long> handles)
         {
             HandleReleaseResult released;
@@ -4095,7 +3995,6 @@ namespace PmxEditorMcp
                 warnings.Concat(page.Warnings).ToList());
         }
 
-        /// <summary>切り出した一覧を、総数と続きの位置を添えた応答の値にする。</summary>
         private static IDictionary<string, object> ListedValue(
             IList<IDictionary<string, object>> taken, int total, int pointed, int offset)
         {
@@ -4409,11 +4308,6 @@ namespace PmxEditorMcp
                 pointed.ParentByHandle);
         }
 
-        /// <summary>
-        /// 一覧の各項目が常に持つ合成の項目。どの項目が付くかは対象の指し方で決まり、要求がその
-        /// 対象をもう一度指すのに足りるものを載せる——ハンドルで指した対象はそのハンドル、親を
-        /// 辿る道は親と親の中の位置、親を辿らない道はその列の中の位置である。
-        /// </summary>
         private static IList<string> Composed(ToolAccess access, Pointed pointed)
         {
             List<string> composed = new List<string>();
@@ -4447,7 +4341,6 @@ namespace PmxEditorMcp
             return composed;
         }
 
-        /// <summary>要素と親の指し方を読み取る。</summary>
         private static bool TryPointed(
             McpMethodContext context,
             ToolAccess access,
@@ -4538,10 +4431,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>
-        /// ハンドルから受け手を得る呼び出しの指し方。ハンドル以外の指し方は、指す先のリストが
-        /// 無いので取らない。
-        /// </summary>
         private static bool TryHandled(
             McpMethodContext context, out Pointed pointed, out string code, out string message)
         {
@@ -4869,8 +4758,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 型で分かれないツールの対象が、そのツールの宣言型であることを求める。分かれるツールは
-        /// 要素ごとに型が違ってよいので、ここでは何も求めない。
+        /// 型で分かれないツールの対象が、そのツールの宣言型であることを求める。分かれるツールでは
+        /// 何も求めない。
         /// </summary>
         private static bool TryOfDeclaredType(
             IList<Spot> column, ToolAccess access, bool divided, out Refusal refused)
@@ -4894,7 +4783,6 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            // 型を指さない呼び出し——要素のメソッドと、型で分かれないツール——は宣言型を求める。
             if (itemType == null)
             {
                 return TryOfType(
@@ -4913,8 +4801,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 解いた対象の実行時の型が求める型と合うことを求める。合わない位置は適用できないとして
-        /// 断り、その位置と実行時の型を説明に含める——抽象の型を並べるリストでは、位置で解いた
-        /// 対象に別の具象の型が混じりうる。
+        /// 断り、その位置と実行時の型を説明に含める。
         /// </summary>
         private static bool TryOfType(
             IList<Spot> column,
@@ -4961,10 +4848,6 @@ namespace PmxEditorMcp
             return new ToolHop(access.RowKey, access.Listed);
         }
 
-        /// <summary>
-        /// ハンドルで指した対象の列。まだリストへ加えていない生成物を指す。台帳は発行したときの型で
-        /// 覚えているので、そのツールが受け付ける型のどれかで引く。
-        /// </summary>
         private static bool TryHeld(
             Func<long, object> resolve,
             Pointed pointed,
@@ -4998,10 +4881,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>
-        /// ハンドルで指した親の列。要求に現れた順に並べ、同じ並びのハンドルも返す。親がまだ
-        /// どのPMXにも属していないので、所有の経路は辿らない。
-        /// </summary>
+        /// <summary>ハンドルで指した親の列。要求に現れた順に並べ、同じ並びのハンドルも返す。</summary>
         private bool TryHeldOwners(
             McpMethodContext context,
             ToolAccess access,
@@ -5041,8 +4921,6 @@ namespace PmxEditorMcp
         /// 預かっている実体を、そのツールが受け付けるか。実行時の型で分かれるツールでは、読む側は
         /// どの具象の型でもよく(<paramref name="anyItem"/>)、書く側は選んだ型に限る
         /// (<paramref name="itemType"/>)。分かれないツールと要素のメソッドは、その宣言型に限る。
-        /// 判じるのは生成時に作った判定で、台帳が覚えている型の名前は見ない——名前で照らすと、
-        /// その型を実装する実体を、基底の型しか知らない道へ渡せない。
         /// </summary>
         private static Func<object, bool> Accepted(
             ToolAccess access, string itemType, bool anyItem)
@@ -5132,7 +5010,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>その一歩の先を <paramref name="next"/> へ並べる。</summary>
         private bool TryStep(ToolHop hop, object owner, IList<object> next, out Refusal refused)
         {
             refused = null;
@@ -5246,7 +5123,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>値の組1つを、書き込む項目と値へ直す。</summary>
         private static bool TryChange(
             ToolFieldSet set, object given, out Change change, out string code, out string message)
         {
@@ -5368,7 +5244,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>親ごとの組1件。</summary>
         private bool TryAssignment(
             McpMethodContext context,
             ToolElements tool,
@@ -5569,8 +5444,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// そのハンドルが指す、受け手にできる実体。指していなければ null。実体の側で判ずるので、
-        /// 派生した型のハンドルは、その基底の型を相手にする呼び出しでも通る。
+        /// そのハンドルが指す、受け手にできる実体。指していなければ null。派生した型のハンドルは、
+        /// その基底の型を相手にする呼び出しでも通る。
         /// </summary>
         private static object Held(McpMethodContext context, Func<object, bool> accepts, long id)
         {
@@ -5584,8 +5459,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 相手にするPMX。PMXから得ない受け手では何も決めない。対象をハンドルで指した呼び出しは
-        /// PMXを相手にしないので、複製も作らない。
+        /// 相手にするPMX。PMXから得ない受け手と、対象をハンドルで指した呼び出しでは、複製を作らず
+        /// 何も決めない。
         /// </summary>
         private bool TryTake(
             McpMethodContext context,
@@ -5637,20 +5512,11 @@ namespace PmxEditorMcp
             return false;
         }
 
-        /// <summary>
-        /// まとめて反映する呼び出しを持つのは、複製して編集する分類だけである。現在のPMXの複製を
-        /// 相手にしていない呼び出しは、直に変える側なので反映を持たない。
-        /// </summary>
         private static bool Reflects(ToolReceiver receiver, PmxTarget target)
         {
             return receiver.Edit == EditKind.DuplicateEdit && target != null && target.Current;
         }
 
-        /// <summary>
-        /// SDKのメンバーを呼ぶ段の位置。複製を相手にする呼び出しはまとめて反映するまで確定せず、
-        /// 読み取りは何も変えない。ハンドルが指すものへ直に働く呼び出しは、そのメンバーが返った
-        /// ところで確定する。
-        /// </summary>
         private static EditStage Changing(ToolReceiver receiver, PmxTarget target)
         {
             if (receiver.Edit == EditKind.Read)
@@ -5737,7 +5603,6 @@ namespace PmxEditorMcp
             return false;
         }
 
-        /// <summary>ホストが入れる引数の値。取る型で、どこから得るかが決まる。</summary>
         private object Injected(ToolArgument argument, PmxTarget target)
         {
             if (argument.Connector)
@@ -6128,8 +5993,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 返す値が値として写せない型なら、その中の項目を読んで組へ直す。写せる型ではそのまま返す。
-        /// SDKを呼ぶので、呼び出しと同じUIスレッドの中で行う。読めない項目と写せない項目は、
-        /// ほかの中継と同じ断り方で返す。
+        /// UIスレッドの中で行う。
         /// </summary>
         private bool TryProjected(
             ToolCall call, object value, out object projected, out Refusal refused)
@@ -6255,10 +6119,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>
-        /// 値をそのまま返す呼び出しの応答。値そのものが画像である呼び出しはここを通り、その画像は
-        /// ブリッジがMCPの画像として返すので、長辺の上限も値の中へ詰めるときとは別のものを使う。
-        /// </summary>
         private static IDictionary<string, object> Written(Type declared, object value)
         {
             object json;
@@ -6322,7 +6182,6 @@ namespace PmxEditorMcp
             public string Label { get; }
         }
 
-        /// <summary>対象1件の居場所。</summary>
         private sealed class Spot
         {
             public Spot(
@@ -6361,7 +6220,6 @@ namespace PmxEditorMcp
             /// <summary>その対象を指すハンドル。対象を位置で指した呼び出しでは null。</summary>
             public long? Handle { get; }
 
-            /// <summary>対象そのもの。</summary>
             public object Item { get; }
         }
 
@@ -6386,10 +6244,8 @@ namespace PmxEditorMcp
             /// <summary>親の指し方。親を辿らない道では null。</summary>
             public TargetRequest Parents { get; }
 
-            /// <summary>要素をハンドルで指しているか。</summary>
             public bool ByHandle { get; }
 
-            /// <summary>親をハンドルで指しているか。</summary>
             public bool ParentByHandle { get; }
 
             /// <summary>対象そのものをハンドルで指しているか。どのPMXを見るかを切り替えられない。</summary>
@@ -6402,7 +6258,6 @@ namespace PmxEditorMcp
             public static Pointed None { get; } = new Pointed(null, null, false);
         }
 
-        /// <summary>対象1件へ書き込む項目と値。</summary>
         private sealed class Change
         {
             public Change(IList<ToolField> fields, IList<object> values)
@@ -6411,14 +6266,12 @@ namespace PmxEditorMcp
                 Values = values;
             }
 
-            /// <summary>書き込む項目。</summary>
             public IList<ToolField> Fields { get; }
 
             /// <summary>項目と同じ並びの、書き込む値。</summary>
             public IList<object> Values { get; }
         }
 
-        /// <summary>親1件へ加える組。</summary>
         private sealed class Assignment
         {
             public Assignment(int parent, object owner, IList<long> handles, IList<object> items)
@@ -6435,7 +6288,6 @@ namespace PmxEditorMcp
             /// <summary>ハンドルが指す親。親を位置で指した組では null。</summary>
             public object Owner { get; }
 
-            /// <summary>加えるものを指すハンドル。</summary>
             public IList<long> Handles { get; }
 
             /// <summary>ハンドルと同じ並びの、加えるものの実体。</summary>
@@ -6479,7 +6331,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 位置を数えるリストを、1回の呼び出しの中で道ごとに一度だけ辿って覚えておく表。並びへ
-        /// 加えたら <see cref="Added"/> で知らせる。知らせないと、覚えた列が並びとずれる。
+        /// 加えたら <see cref="Added"/> で知らせる。
         /// </summary>
         private sealed class ReachedLists
         {

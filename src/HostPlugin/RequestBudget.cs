@@ -2,10 +2,6 @@ using System.Globalization;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 要求が大きすぎないかを見る。判定をここに集めるのは、大きさの数え方がツールごとに分かれると、
-    /// 同じ要求が受理される側と断られる側に分かれるからである。
-    /// </summary>
     public static class RequestBudget
     {
         /// <summary>要求の大きさの上限。設定では変えない。</summary>

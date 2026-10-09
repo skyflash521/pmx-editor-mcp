@@ -2,10 +2,8 @@ using System;
 
 namespace PmxEditorMcp
 {
-    /// <summary>取り返しの付かない呼び出しの種別。</summary>
     public enum DangerKind
     {
-        /// <summary>取り消せるので確認は要らない。</summary>
         None,
 
         /// <summary>エディタそのものを終わらせる。</summary>
@@ -18,13 +16,8 @@ namespace PmxEditorMcp
         Reset,
     }
 
-    /// <summary>
-    /// 取り返しの付かない呼び出しを、確認が無いまま実行させない。要否の判定をここに集めるのは、
-    /// ツールごとに判断すると、同じ種別でも確認を求める側と求めない側に分かれるからである。
-    /// </summary>
     public static class ConfirmGate
     {
-        /// <summary>確認が要るか。</summary>
         public static bool NeedsConfirm(DangerKind kind)
         {
             switch (kind)

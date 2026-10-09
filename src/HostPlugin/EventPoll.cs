@@ -5,16 +5,13 @@ using System.Globalization;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// 溜まったイベントを古い順に取り出すツール。1つのSDKメンバーへ写らないので、能力対応表の行を
-    /// 持たずここが受け持つ。値の枠に収まる件数だけを1回で返し、1件だけでも収まらないイベントは
-    /// 捨てて数える——捨てなければ、そのイベントより先へ列が進まなくなる。
+    /// 溜まったイベントを古い順に取り出すツール。値の枠に収まる件数だけを1回で返し、1件だけでも
+    /// 収まらないイベントは捨てて数える。
     /// </summary>
     public static class EventPoll
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "view_poll_events";
 
-        /// <summary>取り出す件数の上限を受け取る入力の名前。</summary>
         public const string LimitName = "limit";
 
         private const string EventsName = "events";
@@ -36,8 +33,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 取り出した並びを包む分の文字数。並びを空にして、数の項目を採りうるいちばん長い値で
-        /// 書いたものを採る——この枠を差し引いてから並びの件数を決めないと、収めたはずの応答が
-        /// 値の枠を超えて、取り出したイベントが呼び出す側へ届かないまま消える。
+        /// 書いたものを採る。
         /// </summary>
         private static readonly int Wrapper = ResponseSize.Serializer.Serialize(
             new Dictionary<string, object>(StringComparer.Ordinal)
@@ -47,7 +43,6 @@ namespace PmxEditorMcp
                 { RemainingName, int.MaxValue },
             }).Length;
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods)
         {
             if (methods == null)

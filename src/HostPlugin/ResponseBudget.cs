@@ -11,19 +11,14 @@ namespace PmxEditorMcp
     /// </summary>
     public sealed class ResponseBudget
     {
-        /// <summary>応答サイズ予算の文字数を与える環境変数の名前。</summary>
         public const string EnvironmentVariableName = "PMX_EDITOR_MCP_BUDGET_CHARS";
 
-        /// <summary>環境変数が未設定のときに用いる文字数。</summary>
         public const int DefaultChars = 100000;
 
-        /// <summary>受理する文字数の下限。</summary>
         public const int MinimumChars = 10000;
 
-        /// <summary>受理する文字数の上限。</summary>
         public const int MaximumChars = 500000;
 
-        /// <summary>無効な理由へ載せる、環境変数の値の最大文字数。</summary>
         private const int ReasonValueLengthLimit = 64;
 
         private ResponseBudget(int chars, string invalidReason)
@@ -32,7 +27,6 @@ namespace PmxEditorMcp
             InvalidReason = invalidReason;
         }
 
-        /// <summary>設定が有効かどうか。</summary>
         public bool IsValid => InvalidReason == null;
 
         /// <summary>応答サイズ予算の文字数。設定が無効なときは 0 とし、既定値へは落とさない。</summary>
@@ -44,7 +38,6 @@ namespace PmxEditorMcp
         /// </summary>
         public string InvalidReason { get; }
 
-        /// <summary>環境変数の現在値から設定を読む。</summary>
         public static ResponseBudget ReadFromEnvironment()
         {
             return Read(Environment.GetEnvironmentVariable(EnvironmentVariableName));
@@ -88,8 +81,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 環境変数の値を理由へ載せられる形にする。理由は1行に収めるため、行を割りうる文字は
-        /// 符号位置の表記へ置き換え、長い値は切り詰めて元の長さを添える。
+        /// 環境変数の値を理由へ載せられる形にする。行を割りうる文字は符号位置の表記へ置き換え、
+        /// 長い値は切り詰めて元の長さを添える。
         /// </summary>
         private static string Describe(string rawValue)
         {
@@ -120,10 +113,7 @@ namespace PmxEditorMcp
             return described.ToString();
         }
 
-        /// <summary>
-        /// 符号位置の表記へ置き換える文字かどうか。行区切りと段落区切りは制御文字に分類されないので、
-        /// 制御文字の判定だけでは理由が1行に収まらない。
-        /// </summary>
+        /// <summary>符号位置の表記へ置き換える文字かどうか。行区切りと段落区切りは制御文字に分類されない。</summary>
         private static bool NeedsEscape(char character)
         {
             return char.IsControl(character)

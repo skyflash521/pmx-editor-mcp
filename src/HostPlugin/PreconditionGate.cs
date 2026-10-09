@@ -3,11 +3,6 @@ using System.Collections.Generic;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 呼ぶ前に確かめることを満たしているかを判じる。満たさないまま呼ぶと、エディタが人の応答を
-    /// 待つ表示を出したり、押されているキーで結果が変わったりして、呼び出し側が頼んだとおりの
-    /// ことが起きない。
-    /// </summary>
     public static class PreconditionGate
     {
         /// <summary>
@@ -15,8 +10,7 @@ namespace PmxEditorMcp
         /// 持たせる。<paramref name="counted"/> は種別ごとに読んだもの——いま選ばれているものの数、
         /// 取り消せる編集の数、絞込の一覧に並んでいる項目の数、取り消せる操作かやり直せる操作の残りの数、
         /// TransformView の一覧で選ばれているボーンの位置(選ばれていなければ -1)——で、読めなかったときは
-        /// null とする。読めなかったことと0件は別で、前者を後者として扱うと、直し方の分からない断り方になる。
-        /// <paramref name="modified"/> は修飾キーが押されているかどうか。
+        /// null とする。<paramref name="modified"/> は修飾キーが押されているかどうか。
         /// </summary>
         public static bool TryAccept(
             PreconditionKind kind,
@@ -245,11 +239,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>
-        /// 閉じてよいか。閉じても表示が出ないとこちらから言えるのは、取り消せる編集が残っていない
-        /// ときだけなので、残っている間は閉じない。出すかどうかを決めているのはエディタが持つ
-        /// 保存済みの印との差で、その印は読めず、プラグインからの保存でも変わらない。
-        /// </summary>
         private static bool TryClosable(int? undoable, out string message)
         {
             message = null;

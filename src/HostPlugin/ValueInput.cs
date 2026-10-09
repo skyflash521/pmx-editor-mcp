@@ -26,7 +26,6 @@ namespace PmxEditorMcp
 
         private const int ColorWithAlpha = 4;
 
-        /// <summary>書体の組が持てる項目の名前。</summary>
         private static readonly string[] FontNames = { FamilyName, SizeName, StyleName };
 
         /// <summary>
@@ -224,7 +223,6 @@ namespace PmxEditorMcp
                 read.SetValue(each, i);
             }
 
-            // 並びは配列のまま渡す。要素の型ごとの組み立てを名前で引かずに済ませるためで、
             // 一列に並ぶ配列は同じ要素の IList を満たす。長さは変えられない。
             value = read;
 
@@ -638,7 +636,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>JSONの値が数値かどうか。文字列や真偽値を変換で数値へ化けさせないために先に見る。</summary>
         public static bool IsNumber(object json)
         {
             switch (Convert.GetTypeCode(json))

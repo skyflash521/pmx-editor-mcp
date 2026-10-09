@@ -94,7 +94,6 @@ namespace PmxEditorMcp
             get { return ItemsByWindowAndPath.Keys; }
         }
 
-        /// <summary>このツールで押す項目なら真。</summary>
         internal static bool Presses(string window, IList<string> path)
         {
             return ItemsByWindowAndPath.ContainsKey(window + "|" + string.Join("/", path));

@@ -6,10 +6,7 @@ using System.Globalization;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 値をJSONへ写す。ここで写せない型は役割を持つ型なので、写さず偽を返し、断る内容も
-    /// 持たせない。
-    /// </summary>
+    /// <summary>値をJSONへ写す。写せない型は写さず偽を返し、断る内容も持たせない。</summary>
     public static class ValueShape
     {
         private const string ListTypeName = "System.Collections.Generic.IList`1";
@@ -116,10 +113,6 @@ namespace PmxEditorMcp
             return TryFixed(target, value, maxLongSide, warnings, out json, out code, out message);
         }
 
-        /// <summary>
-        /// 値として写せる型かどうか。要素の表現が決まらない並びも写せないので、要素まで見て決める。
-        /// 参照渡しと値が無いことを許す形は、包まれた側で決まる。
-        /// </summary>
         public static bool IsValue(Type declared)
         {
             if (declared == null)
@@ -362,7 +355,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>成分は宣言型から引く。インターフェースで受け取った値も同じ並びで写すため。</summary>
         private static bool TryComponents(
             string typeName,
             object value,

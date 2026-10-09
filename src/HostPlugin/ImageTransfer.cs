@@ -29,7 +29,6 @@ namespace PmxEditorMcp
             Warnings = new ReadOnlyCollection<string>(warnings);
         }
 
-        /// <summary>PNGを詰めた文字列。</summary>
         public string Base64 { get; }
 
         /// <summary>縮小したときに添える警告。縮小していなければ空。</summary>
@@ -42,35 +41,20 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ImageTransfer
     {
-        /// <summary>
-        /// 送り出す画像の長辺の上限の既定。値の中の項目として画像を詰めるときに使う。詰めた文字は
-        /// ツールの応答サイズ予算に数えられるので、上限を上げるとその予算を圧迫する。
-        /// </summary>
         public const int DefaultMaxLongSide = 512;
 
         /// <summary>
-        /// ツールの値そのものが画像であるときの長辺の上限。この画像はブリッジがMCPの画像として
-        /// 返し、応答サイズ予算には数えられないので、<see cref="DefaultMaxLongSide"/> とは別に置く。
-        ///
-        /// 詰めた文字の数では上限を決められない——文字数は描かれている中身で決まり、同じ寸法でも
-        /// 数倍に振れる。MCPクライアントが載せるモデルが画像を数えるのは寸法なので、寸法で置く。
-        ///
-        /// 1092 は、縦横比とビューの大きさに関わらずモデルが再縮小しない最大の長辺である。モデルは
-        /// 画像を 28x28 画素の区画で数え、区画の数が 1568 までなら縮小しない。最悪となる正方形で
-        /// ⌈1092/28⌉^2 = 1521 で収まり、1093 にすると 1600 で超える。区画の大きさと 1568 の出典は
-        /// Claude の Vision の文書(platform.claude.com の build-with-claude/vision、2026-09-15 時点の
-        /// Resolution and token cost の節)で、標準の資源区分の値を採っている——より多く受け取れる
-        /// 区分しか無い環境でも、少ない方に合わせておけば縮小されない。
+        /// ツールの値そのものが画像であるときの長辺の上限。1092 は、MCPクライアントが載せるモデルが
+        /// 縦横比とビューの大きさに関わらず再縮小しない最大の長辺で、モデルは画像を 28x28 画素の
+        /// 区画で数え、区画の数が 1568 までなら縮小しない(Claude の Vision の文書、platform.claude.com の
+        /// build-with-claude/vision、2026-09-15 時点の Resolution and token cost の節)。
         /// </summary>
         public const int SoleValueMaxLongSide = 1092;
 
-        /// <summary>長辺の上限として受理する最小。</summary>
         public const int MinimumMaxLongSide = 256;
 
-        /// <summary>長辺の上限として受理する最大。</summary>
         public const int MaximumMaxLongSide = 2048;
 
-        /// <summary>受け取る画像の辺の上限。</summary>
         public const int MaximumInputSide = 4096;
 
         /// <summary>
@@ -187,7 +171,6 @@ namespace PmxEditorMcp
                     side * (double)maxLongSide / longSide, MidpointRounding.AwayFromZero));
         }
 
-        /// <summary>指定の大きさの32bitのARGBへ描き直す。</summary>
         private static Bitmap Resize(Image image, Size size)
         {
             Bitmap copy = new Bitmap(size.Width, size.Height, PixelFormat.Format32bppArgb);
@@ -210,9 +193,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 画像として読めなかったことを表す例外かどうかを判定する。壊れた画像で確かめられたのは
-        /// <see cref="ArgumentException"/> だけだが、GDI+ の失敗はどの型で来るかが一つに定まらないので、
-        /// 残る2つもここで受ける。
+        /// 画像として読めなかったことを表す例外かどうかを判定する。GDI+ の失敗はどの型で来るかが
+        /// 一つに定まらない。
         /// </summary>
         private static bool IsDecodeFailure(Exception exception)
         {

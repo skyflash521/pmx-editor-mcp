@@ -54,7 +54,6 @@ namespace PmxEditorMcp
             return _items(owner);
         }
 
-        /// <summary>その相手の並びを、渡した順の並びで置き換える。</summary>
         public void Replace(object owner, IList<object> items)
         {
             if (owner == null)
@@ -71,8 +70,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// この種類の要素を1つ作る。ほかの要素を指して初めて意味を持つ種類は、指す先の無い要素が
-        /// モデルへ書き戻すときに落ちるので作れず、null を返す。
+        /// この種類の要素を1つ作る。ほかの要素を指して初めて意味を持つ種類では null を返す。指す先の
+        /// 無い要素は、モデルへ書き戻すときに落ちる。
         /// </summary>
         public object Create(object builder, object owner)
         {
@@ -84,7 +83,6 @@ namespace PmxEditorMcp
             return _create == null ? null : _create(builder);
         }
 
-        /// <summary>その要素の複製。</summary>
         public object CloneOf(object item)
         {
             if (item == null)
@@ -102,46 +100,32 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ElementKinds
     {
-        /// <summary>種類を受け取る入力の名前。</summary>
         public const string KindName = "kind";
 
-        /// <summary>PMXが直に並べる頂点。</summary>
         public const string Vertex = "vertex";
 
-        /// <summary>材質が並べる面。</summary>
         public const string Face = "face";
 
-        /// <summary>PMXが直に並べる材質。</summary>
         public const string Material = "material";
 
-        /// <summary>PMXが直に並べるボーン。</summary>
         public const string Bone = "bone";
 
-        /// <summary>ボーンのIKが並べるリンク。</summary>
         public const string IkLink = "ikLink";
 
-        /// <summary>PMXが直に並べるモーフ。</summary>
         public const string Morph = "morph";
 
-        /// <summary>モーフが並べるオフセット。</summary>
         public const string MorphOffset = "morphOffset";
 
-        /// <summary>PMXが直に並べる表示枠。</summary>
         public const string Node = "node";
 
-        /// <summary>表示枠が並べる要素。</summary>
         public const string NodeItem = "nodeItem";
 
-        /// <summary>PMXが直に並べる剛体。</summary>
         public const string Body = "body";
 
-        /// <summary>PMXが直に並べるJoint。</summary>
         public const string Joint = "joint";
 
-        /// <summary>PMXが直に並べるSoftBody。</summary>
         public const string SoftBody = "softBody";
 
-        /// <summary>SoftBodyが並べるアンカー。</summary>
         public const string SoftBodyAnchor = "softBodyAnchor";
 
         private static readonly IList<ElementKind> Table = Build();
@@ -330,7 +314,6 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ElementScope
     {
-        /// <summary>ここが読む項目の名前。</summary>
         public static IList<string> Names
         {
             get

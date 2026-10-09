@@ -1,5 +1,4 @@
-// 同じオブジェクトかどうかだけで見る比べ方。PMXの要素は値で等しくなりうるので、並びの中の1つを
-// 指す表はこれで引く。
+// 同じオブジェクトかどうかだけで見る比べ方。PMXの要素は値で等しくなりうる。
 
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

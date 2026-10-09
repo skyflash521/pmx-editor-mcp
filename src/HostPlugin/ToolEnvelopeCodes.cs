@@ -21,16 +21,10 @@ namespace PmxEditorMcp
         /// <summary>現在の状態・提供範囲で適用できない。</summary>
         public const string NotApplicable = "TOOL_NOT_APPLICABLE";
 
-        /// <summary>
-        /// UIスレッドが空かず、呼び出しを始めていない。何も起きていないので、同じ要求を
-        /// 投げ直してよい。
-        /// </summary>
+        /// <summary>UIスレッドが空かず、呼び出しを始めていない。同じ要求を投げ直してよい。</summary>
         public const string NotStarted = "TOOL_NOT_STARTED";
 
-        /// <summary>
-        /// 人の応答を待つ表示が出ていて進められないことを断る綴り。始めたかどうかは表示へ答えた
-        /// あとにしか決まらないので、始めていないことがはっきりしている断りとは分ける。
-        /// </summary>
+        /// <summary>人の応答を待つ表示が出ていて進められないことを断る綴り。</summary>
         public const string PromptShown = "TOOL_PROMPT_SHOWN";
 
         /// <summary>実行に失敗した。</summary>

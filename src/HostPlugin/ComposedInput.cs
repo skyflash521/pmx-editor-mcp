@@ -10,10 +10,8 @@ namespace PmxEditorMcp
 {
     public static class ComposedInput
     {
-        /// <summary>上限を置かないときに渡す値。</summary>
         public const float NoCeiling = float.MaxValue;
 
-        /// <summary>下限を置かないときに渡す値。</summary>
         public const float NoFloor = float.MinValue;
 
         /// <summary>

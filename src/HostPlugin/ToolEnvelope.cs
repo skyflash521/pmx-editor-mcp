@@ -5,13 +5,9 @@ using System.Linq;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// ツールの結果を包む形。ドメインの失敗はJSON-RPCの error ではなくこの包みで返す——error は
-    /// 要求の解釈・ディスパッチ・応答生成といったホスト基盤の異常のために空けておく。
-    /// </summary>
+    /// <summary>ツールの結果を包む形。ドメインの失敗はJSON-RPCの error ではなくこの包みで返す。</summary>
     public static partial class ToolEnvelope
     {
-        /// <summary>その包みが成功かどうか。</summary>
         public static bool Succeeded(IDictionary<string, object> envelope)
         {
             if (envelope == null)
@@ -79,9 +75,7 @@ namespace PmxEditorMcp
             return envelope;
         }
 
-        /// <summary>
-        /// 警告は在るときだけ載せる。空の配列を載せると、警告が無いことと区別できない形が2つになる。
-        /// </summary>
+        /// <summary>警告は在るときだけ載せる。</summary>
         private static void AddWarnings(
             IDictionary<string, object> envelope, IEnumerable<string> warnings)
         {

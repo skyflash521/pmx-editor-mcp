@@ -3,10 +3,6 @@ using System.Windows.Forms;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 不可視フォームの Invoke でUIスレッドへ委譲する。PEPlugin API はスレッドセーフを
-    /// 仮定できないため、ワーカースレッドからの呼び出しはすべてここを通す。
-    /// </summary>
     internal sealed class FormUiDispatcher : IUiDispatcher
     {
         private readonly Control _uiAnchor;
@@ -22,7 +18,6 @@ namespace PmxEditorMcp
             _uiAnchor = uiAnchor;
         }
 
-        /// <summary>UIスレッドでの実行を始める。</summary>
         public IAsyncResult Begin(Action action)
         {
             if (action == null)
@@ -33,7 +28,6 @@ namespace PmxEditorMcp
             return _uiAnchor.BeginInvoke(action);
         }
 
-        /// <summary>始めた実行が終わるのを、与えた長さまで待つ。</summary>
         public bool Wait(IAsyncResult pending, TimeSpan limit)
         {
             if (pending == null)
@@ -44,7 +38,6 @@ namespace PmxEditorMcp
             return pending.AsyncWaitHandle.WaitOne(limit);
         }
 
-        /// <summary>始めた実行の後始末をする。</summary>
         public void End(IAsyncResult pending)
         {
             if (pending == null)

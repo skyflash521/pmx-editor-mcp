@@ -1,6 +1,5 @@
 namespace PmxEditorMcp
 {
-    /// <summary>ホストが応答に載せ、ブリッジが読み分けるエラーコード。</summary>
     public static class JsonRpcErrorCodes
     {
         /// <summary>本文がJSONとして解釈できない。</summary>

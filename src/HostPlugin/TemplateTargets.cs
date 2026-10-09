@@ -15,7 +15,6 @@ namespace PmxEditorMcp
             Path = path;
         }
 
-        /// <summary>対象の種別。</summary>
         public string Kind { get; }
 
         /// <summary>対象の名前。種別の中で対象が1つだけのときは持たない。</summary>
@@ -32,17 +31,16 @@ namespace PmxEditorMcp
     }
 
     /// <summary>
-    /// テンプレートを適用する対象の並びを解く。位置でもハンドルでも指せない対象なので、対象を一つに
-    /// 定める組で受け取る。空にできず、同じ対象を二度以上指せず、要求に現れた順で解く。
+    /// テンプレートを適用する対象の並びを解く。対象を一つに定める組で受け取る。空にできず、同じ対象を
+    /// 二度以上指せず、要求に現れた順で解く。
     /// </summary>
     public static class TemplateTargets
     {
-        /// <summary>対象の並びの項目の名前。</summary>
         public const string Name = "targets";
 
         /// <summary>
         /// <paramref name="targets"/> を解く。<paramref name="isKnown"/> は、その組が指す対象が
-        /// 在るかを答えるものである。1件でも解けなければ何も適用しないので、ここで全件を見る。
+        /// 在るかを答えるものである。1件でも解けなければ何も適用しない。
         /// </summary>
         public static bool TryResolve(
             IList<TemplateTarget> targets,

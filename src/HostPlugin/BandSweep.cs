@@ -85,10 +85,6 @@ namespace PmxEditorMcp
             return layers;
         }
 
-        /// <summary>
-        /// 層ごとの移動量を中心線へ足し、中心線の接線の変化を層から層へ積み重ねた回転で断面を回して
-        /// 置き直した位置を、動かす層の頂点について返す。
-        /// </summary>
         public static IDictionary<int, Vec> Place(
             IList<int[]> layers,
             double[] reach,

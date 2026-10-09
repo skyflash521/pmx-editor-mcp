@@ -11,13 +11,11 @@ namespace PmxEditorMcp
     /// </summary>
     public static class HostSwitch
     {
-        /// <summary>入口を開くかどうかを与える環境変数の名前。</summary>
         public const string EnvironmentVariableName = "PMX_EDITOR_MCP_HOST_SWITCH";
 
         /// <summary>入口を開く値。これ以外はすべて閉じたままとする。</summary>
         public const string EnabledValue = "1";
 
-        /// <summary>頼むメッセージを登録する名前。</summary>
         public const string MessageName = "PmxEditorMcp.HostSwitch";
 
         /// <summary>頼みを受けるウィンドウのタイトル。探す側がこの綴りで見つける。</summary>
@@ -26,7 +24,6 @@ namespace PmxEditorMcp
         /// <summary>頼むメッセージの番号。WParam が0なら停止、1なら開始を頼む。</summary>
         public static readonly uint Message = RegisterWindowMessage(MessageName);
 
-        /// <summary>環境変数の現在値から、入口を開くかどうかを読む。</summary>
         public static bool ReadFromEnvironment()
         {
             return IsEnabled(Environment.GetEnvironmentVariable(EnvironmentVariableName));

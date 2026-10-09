@@ -3,10 +3,7 @@ using System.Collections.Generic;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 所有するリストを読み書きする中継。リストの型は行キーごとにビルド時に決まっているので、
-    /// ここには名前で型やメンバーを引く経路が無い。複数のスレッドから同時に呼んでよい。
-    /// </summary>
+    /// <summary>所有するリストを読み書きする中継。複数のスレッドから同時に呼んでよい。</summary>
     public sealed class SdkList
     {
         private readonly Func<object, int> _count;
@@ -53,25 +50,21 @@ namespace PmxEditorMcp
             _removeAt = removeAt;
         }
 
-        /// <summary>並んでいる件数。</summary>
         public int Count(object owner)
         {
             return _count(owner);
         }
 
-        /// <summary>その位置の要素。</summary>
         public object At(object owner, int index)
         {
             return _at(owner, index);
         }
 
-        /// <summary>末尾へ加える。</summary>
         public void Add(object owner, object item)
         {
             _add(owner, item);
         }
 
-        /// <summary>その位置の要素を取り除く。</summary>
         public void RemoveAt(object owner, int index)
         {
             _removeAt(owner, index);

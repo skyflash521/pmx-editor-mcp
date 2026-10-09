@@ -3,10 +3,6 @@ using System.Collections.Generic;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 検査がイベントを積むための入口。キューの契約——連番・取りこぼし・残り・発生元——は、
-    /// キューへイベントが入らないと確かめられないので、実イベントと同じ積み方を通す。
-    /// </summary>
     public static class DebugEventInjection
     {
         /// <summary>この入口のメソッド名。MCPのツールとしては公開しない。</summary>
@@ -18,10 +14,6 @@ namespace PmxEditorMcp
 
         private const string PayloadParameterName = "payload";
 
-        /// <summary>
-        /// 入口が開いているときだけ表へ足す。閉じているときは足さないので、要求は未知のメソッド
-        /// として返る。
-        /// </summary>
         public static void AddTo(McpMethodTable methods, bool enabled)
         {
             if (methods == null)

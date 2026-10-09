@@ -5,19 +5,12 @@ using System.Linq;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 台帳が発行したハンドルを解放するツール。1つのSDKメンバーへ写らないので、能力対応表の行を
-    /// 持たず、ここが受け持つ。指したハンドルとその依存子をまとめて失効させる。
-    /// </summary>
     public static class HandleRelease
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "session_release_handle";
 
-        /// <summary>解放するハンドルを受け取る入力の名前。</summary>
         public const string HandlesName = "handles";
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods)
         {
             if (methods == null)

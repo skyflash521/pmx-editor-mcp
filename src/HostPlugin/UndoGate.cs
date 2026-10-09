@@ -2,13 +2,10 @@ using System;
 
 namespace PmxEditorMcp
 {
-    /// <summary>Undoの抑止を頼まれた呼び出しと、戻せていない記録が残る呼び出しの扱いを決める。</summary>
     public static class UndoGate
     {
-        /// <summary>止めたUndoの記録を戻せていないことを知らせる文。</summary>
         public const string LeftoverWarning = "Undoの記録を止めたまま戻せていない。";
 
-        /// <summary>止めたままだったUndoの記録を戻せたことを知らせる文。</summary>
         public const string RecoveredWarning = "止めたままだったUndoの記録を戻した。";
 
         /// <summary>

@@ -5,25 +5,15 @@ using System.Linq;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 能力対応表の1行が指すSDKのメンバーを直接呼ぶ中継。ビルド時に生成したものだけを持つので、
-    /// 呼び出し先を名前で引く経路は無い。
-    /// </summary>
     /// <param name="target">呼ぶ相手。静的なメンバーでは null。</param>
     /// <param name="arguments">引数。並びは行キーの引数の列と同じ。</param>
     public delegate object SdkCall(object target, object[] arguments);
 
-    /// <summary>
-    /// 宣言型の受け手を、接続の根から辿って得る。辿る道はビルド時に決めて生成するので、配布物が
-    /// 名前で辿る経路は無い。
-    /// </summary>
     /// <param name="connection">接続の根を保つ常駐。道の起点と、自動注入のコネクタをここから採る。</param>
     public delegate object SdkReceiver(ResidentConnection connection);
 
-    /// <summary>中継を断った理由。</summary>
     public enum SdkRelayRefusal
     {
-        /// <summary>断っていない。</summary>
         None,
 
         /// <summary>能力対応表に無い行キー。</summary>
@@ -37,8 +27,7 @@ namespace PmxEditorMcp
     }
 
     /// <summary>
-    /// 行キーから中継を引く表。生成に使ったSDKのバージョンを持ち、解決できない行はその行だけを断る
-    /// ——バージョンが違うだけで待受ごと止めると、エンドユーザーには何も渡らない。
+    /// 行キーから中継を引く表。生成に使ったSDKのバージョンを持ち、解決できない行はその行だけを断る。
     /// 複数のスレッドから同時に呼んでよい。
     /// </summary>
     public sealed class SdkRelayTable
@@ -53,10 +42,6 @@ namespace PmxEditorMcp
 
         private readonly object _gate = new object();
 
-        /// <summary>
-        /// 生成に使ったSDKのバージョン・中継を作った能力対応表の指紋・解決できた行の中継・生成の時点で
-        /// 解決できなかった行を与えて生成する。
-        /// </summary>
         public SdkRelayTable(
             string generatedSdkVersion,
             string toolMapDigest,
@@ -89,7 +74,6 @@ namespace PmxEditorMcp
             _unresolved = new HashSet<string>(unresolved, StringComparer.Ordinal);
         }
 
-        /// <summary>生成に使ったSDKのバージョン。</summary>
         public string GeneratedSdkVersion { get; }
 
         /// <summary>中継を作った能力対応表の指紋。ブリッジの定義と同じ表から作られたことを示す。</summary>
@@ -138,7 +122,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>中継できる行の数。</summary>
         public int Count
         {
             get { return _calls.Count; }
@@ -146,9 +129,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 行キーの指すメンバーを呼ぶ。断ったときは偽で、<paramref name="refusal"/> がその理由。
-        /// 読み込まれたSDKが生成時と違うバージョンで、生成時に在ったメンバーが失われている場合は、その行の
-        /// 呼び出しが型かメンバーの解決の失敗として落ちるので、それを捕らえてその行だけを断り、
-        /// 以後その行を無効にする。
+        /// 呼び出しが型かメンバーの解決の失敗で落ちた行は、以後無効にする。
         /// </summary>
         public bool TryInvoke(
             string rowKey,
@@ -207,9 +188,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 読み込まれたSDKの型かメンバーへ届かないことを表す失敗かどうか。無くなった場合だけでなく
-        /// 公開をやめた場合も届かないので、どちらも同じ扱いにする。処理そのものの失敗は含めない
-        /// ——含めると、SDKが返した誤りをバージョンの違いとして無効化してしまう。
+        /// 読み込まれたSDKの型かメンバーへ届かないことを表す失敗かどうか。処理そのものの失敗は含めない。
         /// </summary>
         internal static bool IsResolutionFailure(Exception exception)
         {

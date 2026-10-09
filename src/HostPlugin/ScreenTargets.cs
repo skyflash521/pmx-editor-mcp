@@ -28,10 +28,8 @@ namespace PmxEditorMcp
             Picking = picking;
         }
 
-        /// <summary>その選択を書き換えるツールの名前。</summary>
         public string Picking { get; }
 
-        /// <summary>画面がいま選んでいる位置。</summary>
         public IList<int> Taken()
         {
             return _taken() ?? new int[0];
@@ -63,7 +61,6 @@ namespace PmxEditorMcp
             _form = form;
         }
 
-        /// <summary>その型の要素を画面が選べるか。</summary>
         public static bool Selectable(Type element)
         {
             return element != null && Kind(element) != null;
@@ -86,7 +83,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>その種類の要素を画面が選べるか。</summary>
         public static bool Selects(string kind)
         {
             return kind != null && Kinds.Contains(kind, StringComparer.Ordinal);
@@ -104,7 +100,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// その道が並べる要素を、画面がモデル全体で数えた位置から指せるか。材質ごとの面の並びが
-        /// 当たる——材質の並びの順に面を繋いだ位置が、画面の数える面の位置になる。
+        /// 当たる。
         /// </summary>
         public static bool SelectsAcross(ToolAccess access)
         {

@@ -6,8 +6,8 @@ using PEPlugin.SDX;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// 成分を並べる型の読み書き。成分は型ごとに直接書くので、名前で引く経路を持たない。読みと
-    /// 組み立ては同じ並びを使い、その並びは <see cref="TryNames"/> が渡す。
+    /// 成分を並べる型の読み書き。読みと組み立ては同じ並びを使い、その並びは <see cref="TryNames"/> が
+    /// 渡す。
     /// </summary>
     internal static class ValueComponents
     {
@@ -53,10 +53,7 @@ namespace PmxEditorMcp
             return Names.TryGetValue(typeName, out names);
         }
 
-        /// <summary>
-        /// 成分を並べる順に読み出す。型は宣言型の綴りで渡す——インターフェースで受け取った値も
-        /// その宣言の並びで写すためである。
-        /// </summary>
+        /// <summary>成分を並べる順に読み出す。型は宣言型の綴りで渡す。</summary>
         internal static object[] Read(string typeName, object value)
         {
             switch (typeName)

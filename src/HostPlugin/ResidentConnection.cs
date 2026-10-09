@@ -7,7 +7,7 @@ namespace PmxEditorMcp
     /// <summary>
     /// 接続初期化。起動時に受け取った接続の根を常駐期間中保持し、Cプラグイン連携の実行引数を
     /// 求められたときに得て、終了時に手放す。保持している実行引数が失効したら、次に求められた
-    /// ところで取り直す——常駐が長くなるほど、得たときのままで在り続ける保証は薄くなる。
+    /// ところで取り直す。
     /// </summary>
     public sealed class ResidentConnection : IDisposable
     {
@@ -28,10 +28,7 @@ namespace PmxEditorMcp
         /// <summary>常駐保持する接続の根。各コネクタ・ビルダはここから辿って得る。</summary>
         public IPERunArgs RunArgs { get; }
 
-        /// <summary>
-        /// 接続の根を保持する。Cプラグイン連携の実行引数はここでは得ない——得られなくても根は
-        /// 保ち、そこから辿るほかの機能を動かし続けるためである。
-        /// </summary>
+        /// <summary>接続の根を保持する。Cプラグイン連携の実行引数はここでは得ない。</summary>
         public static ResidentConnection Hold(IPERunArgs runArgs, HostLog log)
         {
             if (runArgs == null)
@@ -54,10 +51,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// Cプラグイン連携の実行引数を渡す。保持していなければ接続の根から辿って得る。求めるときに
-        /// 渡すホストプラグイン自身の位置は、接続の根が持つものを使う。得られなければ
-        /// <see cref="InvalidOperationException"/> で、記録は残さない——取得の記録は、得たものを
-        /// 手放すまでの対で読むためである。
+        /// Cプラグイン連携の実行引数を渡す。保持していなければ接続の根から辿って得る。得られなければ
+        /// <see cref="InvalidOperationException"/> で、記録は残さない。
         /// </summary>
         public IPXCPluginRunArgs UseRunArgs()
         {
@@ -104,7 +99,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 保持している実行引数を失効として手放す。次に求められたところで取り直す。保持して
-        /// いなければ何もせず、記録も残さない——失効の記録は、取り直しと対で読むためである。
+        /// いなければ何もせず、記録も残さない。
         /// </summary>
         public void Expire()
         {

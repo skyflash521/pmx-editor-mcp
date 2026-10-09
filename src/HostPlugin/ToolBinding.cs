@@ -5,7 +5,6 @@ using System.Linq;
 
 namespace PmxEditorMcp
 {
-    /// <summary>受け手をどう得るか。</summary>
     public enum ToolReceiverKind
     {
         /// <summary>接続の根から辿って得る。道はビルド時に決めてある。</summary>
@@ -21,7 +20,6 @@ namespace PmxEditorMcp
         Handle,
     }
 
-    /// <summary>受け手がPMXのどこに居るか。</summary>
     public enum ToolAccessKind
     {
         /// <summary>受け手そのもの。PMX全体か、接続の道から得たもの。</summary>
@@ -65,11 +63,9 @@ namespace PmxEditorMcp
         /// <summary>その型そのもの。台帳はこの名前でハンドルを覚えている。</summary>
         public Type Element { get; }
 
-        /// <summary>その実体がこの型か。</summary>
         public Func<object, bool> IsItem { get; }
     }
 
-    /// <summary>要素へ至る途中の一歩。</summary>
     public sealed class ToolHop
     {
         public ToolHop(string rowKey, bool listed)
@@ -83,7 +79,6 @@ namespace PmxEditorMcp
             Listed = listed;
         }
 
-        /// <summary>その一歩を進む行のキー。</summary>
         public string RowKey { get; }
 
         /// <summary>リストの段か。偽なら、そのプロパティを1つ辿る段。</summary>
@@ -154,17 +149,13 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// そのリストが並べうる具象の型。要素の型が抽象で実体が複数の型に分かれるリストだけが持ち、
-        /// ほかは空——分かれないリストでは、実行時の型を載せても要素の型の言い直しにしかならない。
+        /// ほかは空。
         /// </summary>
         public IList<ToolItem> Items { get; }
 
-        /// <summary>
-        /// そのリストを直に持つ型。親をハンドルで指せる道だけが持ち、ほかは null——親が所有する
-        /// リストの要素でなければ、その親を指すハンドルは発行されない。
-        /// </summary>
+        /// <summary>そのリストを直に持つ型。親をハンドルで指せる道だけが持ち、ほかは null。</summary>
         public Type Owner { get; }
 
-        /// <summary>受け手そのものを相手にする道。</summary>
         public static ToolAccess Whole()
         {
             return new ToolAccess(ToolAccessKind.Whole, null, null, false, null, null);
@@ -213,10 +204,8 @@ namespace PmxEditorMcp
             RefusesNull = refusesNull;
         }
 
-        /// <summary>要求の引数の名前。</summary>
         public string Name { get; }
 
-        /// <summary>その引数の宣言型。</summary>
         public Type Type { get; }
 
         /// <summary>ホストが自分で入れる引数か。呼び出す側はこの引数を渡さない。</summary>
@@ -240,8 +229,6 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 預かっている実体を、その引数へ渡せるか。ハンドルで受け取る引数だけが持ち、ほかは null。
-        /// 生成時に作る判定で、台帳が覚えている型の名前は見ない——名前で照らすと、その型を実装する
-        /// 実体を基底の型の引数へ渡せない。
         /// </summary>
         public Func<object, bool> Holds { get; }
 
@@ -259,7 +246,6 @@ namespace PmxEditorMcp
         public bool RefusesNull { get; }
     }
 
-    /// <summary>項目を集めるツールが持つ項目1件。</summary>
     public sealed class ToolField
     {
         public ToolField(
@@ -295,13 +281,10 @@ namespace PmxEditorMcp
             RefusesNull = refusesNull;
         }
 
-        /// <summary>応答と要求に現れる項目の名前。</summary>
         public string Name { get; }
 
-        /// <summary>その項目を読み書きする行キー。</summary>
         public string RowKey { get; }
 
-        /// <summary>その項目の宣言型。</summary>
         public Type Type { get; }
 
         /// <summary>
@@ -322,7 +305,6 @@ namespace PmxEditorMcp
         public bool RefusesNull { get; }
     }
 
-    /// <summary>受け手の得方と、呼び出しがエディタの状態へどう作用するか。</summary>
     public sealed class ToolReceiver
     {
         public ToolReceiver(
@@ -364,7 +346,6 @@ namespace PmxEditorMcp
         public Func<object, bool> Accepts { get; }
     }
 
-    /// <summary>SDKのメンバーへ中継するツール1件。</summary>
     public sealed class ToolCall
     {
         public ToolCall(
@@ -445,22 +426,16 @@ namespace PmxEditorMcp
         /// <summary>呼び分けを選ぶ項目の名前。名前だけでは見分けられないツールが持つ。</summary>
         public string SelectorName { get; }
 
-        /// <summary>この呼び分けを選ぶ値。</summary>
         public string SelectorValue { get; }
 
-        /// <summary>呼ぶ行のキー。</summary>
         public string RowKey { get; }
 
-        /// <summary>受け手の得方。</summary>
         public ToolReceiver Receiver { get; }
 
-        /// <summary>相手にするPMXから受け手へ至る道。</summary>
         public ToolAccess Access { get; }
 
-        /// <summary>取り返しの付かなさの種別。</summary>
         public DangerKind Danger { get; }
 
-        /// <summary>受け取る引数。</summary>
         public IList<ToolArgument> Arguments { get; }
 
         /// <summary>出力に現れる引数。呼び出した後の値を応答へ載せる。</summary>
@@ -483,7 +458,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 応答がハンドルの並びか。同じ名前の呼び分けのどれかが並びを預けるなら、どの呼び分けでも
-        /// 並びで返す——選んだ呼び分けで応答の形が変わらないようにする。
+        /// 並びで返す。
         /// </summary>
         public bool RespondsMany { get; }
 
@@ -523,7 +498,6 @@ namespace PmxEditorMcp
         /// <summary>その項目を持つ要素の実行時の型。型で分かれないツールでは null。</summary>
         public string ItemType { get; }
 
-        /// <summary>集める項目。</summary>
         public IList<ToolField> Fields { get; }
     }
 
@@ -578,33 +552,26 @@ namespace PmxEditorMcp
         /// <summary>総数と切り出した並びを返す形か。偽なら項目の組をそのまま返す。</summary>
         public bool Listing { get; }
 
-        /// <summary>受け手の得方。</summary>
         public ToolReceiver Receiver { get; }
 
-        /// <summary>相手にするPMXから受け手へ至る道。</summary>
         public ToolAccess Access { get; }
 
-        /// <summary>実行時の型ごとに集める項目。</summary>
         public IList<ToolFieldSet> Sets { get; }
 
         /// <summary>どの実行時の型かに依らず、このツールが扱う項目の全体。名前は重ならない。</summary>
         public IList<ToolField> Fields { get; }
     }
 
-    /// <summary>所有するリストの要素を相手にするツールが行うこと。</summary>
     public enum ToolElementKind
     {
-        /// <summary>リストの末尾へ加える。</summary>
         Add,
 
-        /// <summary>リストから取り除く。</summary>
         Remove,
 
         /// <summary>リストに在る要素を台帳へ預けて、そのハンドルを返す。</summary>
         Hold,
     }
 
-    /// <summary>所有するリストの要素を相手にするツール1件。</summary>
     public sealed class ToolElements
     {
         public ToolElements(ToolElementKind kind, ToolReceiver receiver, ToolAccess access)
@@ -629,13 +596,10 @@ namespace PmxEditorMcp
             Access = access;
         }
 
-        /// <summary>そのツールが要素に対して行うこと。</summary>
         public ToolElementKind Kind { get; }
 
-        /// <summary>そのリストを持つ受け手の得方。</summary>
         public ToolReceiver Receiver { get; }
 
-        /// <summary>相手にするPMXから要素へ至る道。</summary>
         public ToolAccess Access { get; }
     }
 }

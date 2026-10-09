@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace PmxEditorMcp
 {
-    /// <summary>要素のどの項目を返すかを決める。</summary>
     public static class FieldSelection
     {
         /// <summary>
@@ -98,8 +97,7 @@ namespace PmxEditorMcp
         /// <summary>
         /// 要素の組から、選んだ項目だけを選んだ並びで取り出す。<paramref name="selected"/> は
         /// <see cref="TryResolve"/> が返す並び、すなわち常に返す項目と選ばれた項目の連なりとする。
-        /// 組がそのどれかを持たなければ <see cref="ArgumentException"/> で止める——組の側の
-        /// 取りこぼしは、呼び出し側の組み立ての誤りである。
+        /// 組がそのどれかを持たなければ <see cref="ArgumentException"/> で止める。
         /// </summary>
         public static IDictionary<string, object> Take(
             IDictionary<string, object> item, IList<string> selected)

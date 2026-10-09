@@ -14,13 +14,8 @@ namespace PmxEditorMcp
     /// </summary>
     public delegate Action EventAttach(object listener, EventSink sink);
 
-    /// <summary>イベント固有の値を、応答へ載せる組へ直す。</summary>
     public delegate IDictionary<string, object> PayloadReader(object args);
 
-    /// <summary>
-    /// リスナの型ごとの受け手の掛け方と、イベント種別ごとの値の読み方。どちらも開発時に組み立てた
-    /// 結び付きで、配布物は実行時リフレクションを使わない。
-    /// </summary>
     public sealed class EventBindingTable
     {
         public EventBindingTable(
@@ -41,10 +36,8 @@ namespace PmxEditorMcp
             Payloads = payloads;
         }
 
-        /// <summary>リスナの型の名前から、受け手の掛け方へ。</summary>
         public IDictionary<string, EventAttach> Attachments { get; }
 
-        /// <summary>イベント種別の識別子から、値の読み方へ。</summary>
         public IDictionary<string, PayloadReader> Payloads { get; }
     }
 }

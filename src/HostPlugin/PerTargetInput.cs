@@ -5,10 +5,8 @@ using System.Linq;
 
 namespace PmxEditorMcp
 {
-    /// <summary>対象の集合へ配る入力の取り方。</summary>
     public enum PerTargetForm
     {
-        /// <summary>どちらも受け取らない。</summary>
         None = 0,
 
         /// <summary>全要素へ同じ組を配る。</summary>
@@ -18,7 +16,6 @@ namespace PmxEditorMcp
         PerTarget = 2,
     }
 
-    /// <summary>解いた入力。</summary>
     public sealed class ResolvedPerTargetInput
     {
         internal ResolvedPerTargetInput(PerTargetForm form, object shared, IList<object> perTarget)
@@ -28,7 +25,6 @@ namespace PmxEditorMcp
             PerTarget = perTarget;
         }
 
-        /// <summary>どちらの取り方で解いたか。</summary>
         public PerTargetForm Form { get; }
 
         /// <summary>全要素へ配る組。ほかの取り方では null。</summary>
@@ -37,7 +33,6 @@ namespace PmxEditorMcp
         /// <summary>要素ごとの組の並び。ほかの取り方では null。</summary>
         public IList<object> PerTarget { get; }
 
-        /// <summary><paramref name="index"/> 番目の対象へ配る組。</summary>
         public object For(int index)
         {
             if (Form == PerTargetForm.None)
@@ -67,15 +62,12 @@ namespace PmxEditorMcp
 
     /// <summary>
     /// 対象の集合へ配る入力を解く。全要素へ同じ組を配る取り方と、対象と同じ長さの並びで配る
-    /// 取り方は相互排他で、両方持つことも、どちらも持たないことも引数が不正とする。解決をここに
-    /// 集めるのは、更新の値でもメソッドの引数でも同じ断り方にするためである。
+    /// 取り方は相互排他で、両方持つことも、どちらも持たないことも引数が不正とする。
     /// </summary>
     public static class PerTargetInput
     {
-        /// <summary>更新の値を配る項目の名前。</summary>
         public static PerTargetNames Values { get; } = new PerTargetNames("value", "values");
 
-        /// <summary>メソッドの引数を配る項目の名前。</summary>
         public static PerTargetNames Args { get; } = new PerTargetNames("args", "argsList");
 
         /// <summary>
@@ -177,7 +169,6 @@ namespace PmxEditorMcp
         }
     }
 
-    /// <summary>配る入力の2つの項目の名前。</summary>
     public sealed class PerTargetNames
     {
         public PerTargetNames(string shared, string perTarget)
@@ -196,10 +187,8 @@ namespace PmxEditorMcp
             PerTarget = perTarget;
         }
 
-        /// <summary>全要素へ同じ組を配る項目の名前。</summary>
         public string Shared { get; }
 
-        /// <summary>要素ごとの組の並びを配る項目の名前。</summary>
         public string PerTarget { get; }
     }
 }

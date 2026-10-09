@@ -8,7 +8,7 @@ namespace PmxEditorMcp
     {
         /// <summary>
         /// 名前を並べて組み合わせられる列挙かどうか。SDKの列挙はビルド時に集めた一覧が持ち、
-        /// 書体の装飾はこの配布物が直に扱う型なのでここで持つ。
+        /// 書体の装飾はここで持つ。
         /// </summary>
         internal static bool IsCombinable(Type target)
         {

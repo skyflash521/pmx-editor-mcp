@@ -4,7 +4,6 @@ using System.Linq;
 
 namespace PmxEditorMcp
 {
-    /// <summary>組み立てたツールの中身が返す結末。値を返すか、断る内容を返すかのどちらか。</summary>
     public sealed class ComposedEditResult
     {
         private ComposedEditResult(
@@ -23,16 +22,12 @@ namespace PmxEditorMcp
             Rewritten = rewritten;
         }
 
-        /// <summary>済んだか。偽なら断っている。</summary>
         public bool IsDone { get; }
 
-        /// <summary>済んだときに返す中身。</summary>
         public object Value { get; }
 
-        /// <summary>断ったときの誤りの符号。</summary>
         public string Code { get; }
 
-        /// <summary>断ったときの説明。</summary>
         public string Message { get; }
 
         /// <summary>済んだときに包みへ添える警告。添えないときは null。</summary>
@@ -44,7 +39,6 @@ namespace PmxEditorMcp
         /// </summary>
         public IList<string> Rewritten { get; }
 
-        /// <summary>済んだ結末を作る。</summary>
         public static ComposedEditResult Complete(object value)
         {
             return Complete(value, null);
@@ -70,7 +64,6 @@ namespace PmxEditorMcp
             return new ComposedEditResult(true, value, null, null, null, kinds);
         }
 
-        /// <summary>断る結末を作る。</summary>
         public static ComposedEditResult Refuse(string code, string message)
         {
             if (code == null)
@@ -100,9 +93,6 @@ namespace PmxEditorMcp
 
         private readonly ScreenRefresh _refresh;
 
-        /// <summary>
-        /// 複製編集の流れと、Undoの前置きの包み、画面へ映す段を与えて生成する。
-        /// </summary>
         public ComposedEdit(PmxSession session, UndoBarrier barrier, ScreenRefresh refresh)
         {
             if (session == null)
@@ -155,8 +145,8 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// <paramref name="body"/> を、相手にするPMXを読むだけの呼び出しにする。現在のPMXは
-        /// 複製を渡して反映せず(続く読み取りへ残した複製を渡すことがある)、ハンドルが指すPMXは台帳の実体をそのまま渡すので、
-        /// <paramref name="body"/> はどちらを渡されても変えてはならない。確定は行わないので、
+        /// 複製を渡して反映せず(続く読み取りへ残した複製を渡すことがある)、ハンドルが指すPMXは
+        /// 台帳の実体をそのまま渡す。<paramref name="body"/> はどちらを渡されても変えてはならない。
         /// Undoへは何も積まない。
         /// </summary>
         public McpMethod Read(

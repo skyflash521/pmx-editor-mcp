@@ -10,13 +10,11 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ReferenceInput
     {
-        /// <summary>参照先の位置を並べる項目の名前。</summary>
         public const string Name = "refIndices";
 
         /// <summary>
         /// <paramref name="refIndices"/> を解く。<paramref name="referencedCount"/> は参照先の
-        /// リストの件数である。同じ位置を二度並べることは許す——参照は対象ではなく値なので、同じ
-        /// 要素を二度指す指定にはならない。
+        /// リストの件数である。同じ位置を二度並べることは許す。
         /// </summary>
         public static bool TryResolve(
             IList<int> refIndices,
@@ -53,7 +51,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>空の並びを断る。空だと加えるものが決まらない。</summary>
         private static bool CheckEmpty(
             IList<int> positions, string name, out string code, out string message)
         {
@@ -70,7 +67,6 @@ namespace PmxEditorMcp
             return false;
         }
 
-        /// <summary>位置が参照先のリストの中にあることを見る。</summary>
         internal static bool CheckWithin(
             IList<int> positions,
             int referencedCount,

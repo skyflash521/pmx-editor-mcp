@@ -5,10 +5,8 @@ using System.Linq;
 
 namespace PmxEditorMcp
 {
-    /// <summary>呼ぶ前に確かめることの種別。</summary>
     public enum PreconditionKind
     {
-        /// <summary>確かめることは無い。</summary>
         None,
 
         /// <summary>
@@ -20,7 +18,7 @@ namespace PmxEditorMcp
         /// <summary>
         /// 取り消せる編集が残っていると、エディタが人の応答を待つ表示を出すことがある。出すかどうかは
         /// エディタが持つ保存済みの印との差で決まり、その印は読めない。プラグインからの保存もその印を
-        /// 更新しないので、こちらから出ないと言えるのは、取り消せる編集が残っていないときだけである。
+        /// 更新しない。
         /// </summary>
         SavedEdits,
 
@@ -53,9 +51,8 @@ namespace PmxEditorMcp
     }
 
     /// <summary>
-    /// 呼ぶ前に確かめること。確かめる材料は、名前で挙げた読み取りのツールから得る。名前で持つのは、
-    /// 同じ呼び出しをここでもう一度組み立てないためで、名前から呼び出しへ解くのは登録のときとする
-    /// ——解いたものを使えば、確かめるのと本体を呼ぶのは同じUIスレッドの一区切りに収まる。
+    /// 呼ぶ前に確かめること。確かめる材料は、名前で挙げた読み取りのツールから得る。名前から呼び出しへ
+    /// 解くのは登録のときとする。
     /// </summary>
     public sealed class ToolPrecondition
     {
@@ -93,15 +90,12 @@ namespace PmxEditorMcp
             Guarded = new ReadOnlyCollection<string>(guarded.ToList());
         }
 
-        /// <summary>確かめることの種別。</summary>
         public PreconditionKind Kind { get; }
 
         /// <summary>確かめる材料を得る読み取りのツールの名前。別の受け手から読むものが入る。</summary>
         public IList<string> Reading { get; }
 
-        /// <summary>
-        /// 確かめる材料を得る行キー。呼ぶ先と同じ受け手の上で読むものが入るので、受け手を解き直さない。
-        /// </summary>
+        /// <summary>確かめる材料を得る行キー。呼ぶ先と同じ受け手の上で読むものが入る。</summary>
         public IList<string> Counting { get; }
 
         /// <summary>確かめる呼び分けの行キー。空ならそのツールのどの呼び分けでも確かめる。</summary>

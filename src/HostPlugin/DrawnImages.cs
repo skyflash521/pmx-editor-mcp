@@ -1,14 +1,10 @@
-// 画面を撮る行が返す画像は、その呼び出しが作ったものなので、応答へ詰めたら手放す。
+// 画面を撮る行が返す画像は、応答へ詰めたら手放す。
 
 using System;
 using System.Collections.Generic;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 呼び出しが描いて作る画像を返す行。ほかの行が返す画像は、返した相手が持ち続けるものなので
-    /// ここには入らない。
-    /// </summary>
     public static class DrawnImages
     {
         private static readonly HashSet<string> Rows = new HashSet<string>(StringComparer.Ordinal)

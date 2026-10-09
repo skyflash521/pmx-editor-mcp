@@ -6,25 +6,19 @@ using System.Threading.Tasks;
 
 namespace PmxEditorMcp
 {
-    /// <summary>メッセージを1件読み取った結果。</summary>
     public enum MessageReadOutcome
     {
-        /// <summary>1件読み取れた。</summary>
         Message,
 
-        /// <summary>相手が切断した。</summary>
         EndOfStream,
 
         /// <summary>
         /// 本文が上限を超えた。読み取りは打ち切られており、超過した本文の残りは読み進めていない。
-        /// このまま次を読むと残りの途中から別のメッセージとして解釈するため、受けた側は切断する。
+        /// 受けた側は切断する。
         /// </summary>
         TooLarge,
 
-        /// <summary>
-        /// 本文がUTF-8として解釈できないバイト列を含む。区切りまでは読み進めているが、
-        /// 送り手の符号化が壊れている以上そのあとの本文も信用できないため、受けた側は切断する。
-        /// </summary>
+        /// <summary>本文がUTF-8として解釈できないバイト列を含む。区切りまでは読み進めている。受けた側は切断する。</summary>
         InvalidEncoding,
     }
 
@@ -35,7 +29,6 @@ namespace PmxEditorMcp
     /// </summary>
     public sealed class MessageChannel
     {
-        /// <summary>1メッセージの本文(区切りを含まない)に許すUTF-8バイト数の上限。</summary>
         public const int DefaultMaxMessageBytes = MessageLimit.DefaultMaxMessageBytes;
 
         private const byte LineFeed = (byte)'\n';
@@ -52,13 +45,11 @@ namespace PmxEditorMcp
         private int _readLength;
         private Task<int> _pendingRead;
 
-        /// <summary>上限を既定にして生成する。</summary>
         public MessageChannel(Stream stream)
             : this(stream, DefaultMaxMessageBytes)
         {
         }
 
-        /// <summary>上限を指定して生成する。</summary>
         public MessageChannel(Stream stream, int maxMessageBytes)
         {
             if (stream == null)
@@ -75,7 +66,6 @@ namespace PmxEditorMcp
             MaxMessageBytes = maxMessageBytes;
         }
 
-        /// <summary>1メッセージの本文に許すUTF-8バイト数の上限。</summary>
         public int MaxMessageBytes { get; }
 
         /// <summary>
@@ -119,13 +109,11 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>本文のUTF-8バイト数を数える。</summary>
         public static int MeasureBytes(string message)
         {
             return MessageLimit.MeasureBytes(message);
         }
 
-        /// <summary>メッセージを1件読み取る。</summary>
         public MessageReadOutcome Read(out string message)
         {
             message = null;
@@ -147,8 +135,6 @@ namespace PmxEditorMcp
                     int newlineIndex = IndexOfLineFeed();
                     int available = (newlineIndex >= 0 ? newlineIndex : _readLength) - _readOffset;
 
-                    // 上限を超えた時点で打ち切り、全文を保持しない。区切りがCRLFのときはCRの1バイトを
-                    // 本文から外すため、その1バイトぶんだけ余分に受け入れてから最終判定する。
                     if (body.Length + available > (long)MaxMessageBytes + 1)
                     {
                         return MessageReadOutcome.TooLarge;
@@ -160,8 +146,6 @@ namespace PmxEditorMcp
                     if (newlineIndex < 0 && body.Length > MaxMessageBytes
                         && body.GetBuffer()[body.Length - 1] != CarriageReturn)
                     {
-                        // 余分な1バイトを保留してよいのは、それがCRLFのCRで、続くLFで本文から
-                        // 外れる見込みがあるときだけ。そうでなければこの時点で上限を超えている。
                         return MessageReadOutcome.TooLarge;
                     }
 
@@ -169,7 +153,6 @@ namespace PmxEditorMcp
                     {
                         _readOffset++;
 
-                        // 上限いっぱいの本文を複製しないよう、内部の配列を長さ付きでそのまま渡す。
                         return Decode(body.GetBuffer(), (int)body.Length, out message);
                     }
                 }
@@ -177,10 +160,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// メッセージを1件書き出し、区切りのLFを付す。上限を超える応答は、呼び出し側が
-        /// <see cref="MeasureBytes"/> と <see cref="MaxMessageBytes"/> で書き出す前に判定し、
-        /// 別の応答へ差し替える。本文が上限を超えたまま渡されたときは、判定漏れを知らせるため
-        /// 何も書き出さずに <see cref="MessageTooLargeException"/> を投げる。
+        /// メッセージを1件書き出し、区切りのLFを付す。本文が上限を超えたまま渡されたときは、何も
+        /// 書き出さずに <see cref="MessageTooLargeException"/> を投げる。
         /// </summary>
         public void Write(string message)
         {

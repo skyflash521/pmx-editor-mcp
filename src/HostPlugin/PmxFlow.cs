@@ -4,13 +4,10 @@ using System.Collections.ObjectModel;
 
 namespace PmxEditorMcp
 {
-    /// <summary>複製編集の流れが渡す値の置き場。どの行がどれを取るかはビルド時に決まっている。</summary>
     public enum FlowSlot
     {
-        /// <summary>Cプラグイン連携の常駐コネクタ。</summary>
         Connector,
 
-        /// <summary>現在のPMXの複製。</summary>
         Pmx,
 
         /// <summary>反映のときにUndoの記録を止めるかどうか。</summary>
@@ -63,10 +60,8 @@ namespace PmxEditorMcp
             PartialCommit = partialCommit;
         }
 
-        /// <summary>現在のPMXの複製を得る行。</summary>
         public string StateRead { get; }
 
-        /// <summary>複製した中身をまとめて反映する行。</summary>
         public string Commit { get; }
 
         /// <summary>この2つの行の受け手を引く鍵。静的なメンバーの流れでは null。</summary>

@@ -29,20 +29,13 @@ namespace PmxEditorMcp
             Write = write;
         }
 
-        /// <summary>要求の組に現れる項目の名前。</summary>
         public string Name { get; }
 
-        /// <summary>その項目の宣言型。</summary>
         public Type Type { get; }
 
-        /// <summary>作った実体へその項目を書き込む。</summary>
         public Action<object, object> Write { get; }
     }
 
-    /// <summary>
-    /// 呼び出す側から組で受け取り、SDKへ渡す実体へ組み立てる型。作り方と項目の書き込み方は開発時に
-    /// 組み立てるので、配布物は実行時リフレクションを使わない。
-    /// </summary>
     public sealed class ToolValueShape
     {
         public ToolValueShape(Func<object> create, IList<ToolValueMember> members)
@@ -64,7 +57,6 @@ namespace PmxEditorMcp
         /// <summary>何も書き込んでいない実体を作る。</summary>
         public Func<object> Create { get; }
 
-        /// <summary>受け取る項目。</summary>
         public IList<ToolValueMember> Members { get; }
     }
 }

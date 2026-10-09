@@ -4,7 +4,6 @@ using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp
 {
-    /// <summary>解析できた要求。</summary>
     public sealed class JsonRpcRequest
     {
         private readonly object _parameters;
@@ -21,15 +20,12 @@ namespace PmxEditorMcp
         /// <summary>要求の識別子。数値または文字列。</summary>
         public object Id { get; }
 
-        /// <summary>呼ぶ処理の名前。</summary>
         public string Method { get; }
 
         /// <summary>
         /// 引数をオブジェクトとして取り出す。省略されていたときは空を渡して真を返し、
         /// オブジェクト以外が与えられていたときは <paramref name="parameters"/> を null にして
-        /// 偽を返す。引数の検査は解析でなくディスパッチの段で行うため(それより前に
-        /// ハンドシェイクとメソッドの検索がある)、解析はここまでを担う。省略と明示的な null は
-        /// 別に扱う(前者は引数なし、後者はオブジェクト以外)ので、生の値は公開しない。
+        /// 偽を返す。
         /// </summary>
         public bool TryGetParams(out IDictionary<string, object> parameters)
         {
@@ -51,7 +47,6 @@ namespace PmxEditorMcp
         }
     }
 
-    /// <summary>要求を1件解析した結果。</summary>
     public sealed class JsonRpcParseResult
     {
         private JsonRpcParseResult(JsonRpcRequest request, object id, int errorCode, string errorMessage)
@@ -62,7 +57,6 @@ namespace PmxEditorMcp
             ErrorMessage = errorMessage;
         }
 
-        /// <summary>解析できたかどうか。</summary>
         public bool IsValid => Request != null;
 
         /// <summary>解析できた要求。<see cref="IsValid"/> が真のときだけ意味を持つ。</summary>
@@ -93,36 +87,23 @@ namespace PmxEditorMcp
     /// </summary>
     public static class JsonRpcCodec
     {
-        /// <summary>
-        /// 解析でシリアライザに許す本文の文字数。メッセージのバイト数の上限が16MiBで、その本文が
-        /// すべて1バイト文字でも 16,777,216 文字にしかならないため、その2倍を採る。
-        /// </summary>
         public const int ParseMaxJsonLength = 32 * 1024 * 1024;
 
         /// <summary>
         /// シリアライザに許す入れ子の深さ。解析と組み立ての両方に効く。深さは値の再帰の段数で数え、
         /// オブジェクト・配列だけでなくその中の文字列や数値も1段として数える(トップレベルの値が
-        /// 1段目)。フレームワークの暗黙の既定に依らず、契約としてここで固定する。
+        /// 1段目)。
         /// </summary>
         public const int JsonRecursionLimit = 100;
 
         /// <summary>
-        /// 解析の前に数える構造トークン(オブジェクトと配列の開き括弧、要素とメンバーの区切りの
-        /// コンマ。文字列の中にあるものは数えない)の上限。本文のバイト数の上限だけでは、要素の
-        /// 数に歯止めが無い——上限いっぱいの本文へ小さなメンバーを並べれば数百万のオブジェクトを
-        /// 作らせられ、エディタと同じプロセスのメモリを圧迫できる。値は解析で作るオブジェクトの
-        /// 量から決める。1トークンあたりの取り分が最も大きいのはメンバーを1つだけ持つ辞書の鎖で、
-        /// この形で上限いっぱいまで詰めて実測すると、解析後に保持されるのが約56MB、解析中に確保する
-        /// 総量が約95MBだった。上限が無いと、同じ形で本文のバイト数の上限いっぱいまで詰めたときに
-        /// 保持が約725MB・確保総量が約1,325MBになる。ツール契約が定める要素数の上限は、この上限の
+        /// 解析の前に数える構造トークンの上限。ツール契約が定める要素数の上限は、この上限の
         /// 内側で定める。
         /// </summary>
         public const int ParseStructureTokenLimit = 200000;
 
-        /// <summary>要求と応答の jsonrpc に固定で置く値。</summary>
         private const string ProtocolVersion = "2.0";
 
-        /// <summary>要求を1件解析する。</summary>
         public static JsonRpcParseResult ParseRequest(string line)
         {
             if (line == null)
@@ -130,16 +111,13 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(line));
             }
 
-            // 解析より前に構造の量を見る。解析してから数えると、数えるために作ったオブジェクトで
-            // すでにメモリを使ってしまう。
             if (ExceedsStructureTokenLimit(line))
             {
                 return JsonRpcParseResult.Rejected(
                     null, JsonRpcErrorCodes.RequestTooLarge, "要求の構造の量が上限を超えている。");
             }
 
-            // 空(空白のみのものを含む)の本文は、シリアライザからは null リテラルと同じ結果に
-            // 見えるため、解析へ渡す前に構文不正として分ける。
+            // 空白だけの本文は、シリアライザでは null リテラルと同じ結果になる。
             if (line.Trim().Length == 0)
             {
                 return JsonRpcParseResult.Rejected(
@@ -164,7 +142,6 @@ namespace PmxEditorMcp
                     null, JsonRpcErrorCodes.InvalidRequest, "要求はJSONオブジェクトでなければならない。");
             }
 
-            // 識別子を先に判定する。応答に要求の識別子を載せられるかがこれで決まる。
             object id;
             if (!request.TryGetValue("id", out id) || !IsAllowedId(id))
             {
@@ -200,9 +177,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 成功の応答を組み立てる。文字数の上限は課さない——応答の大きさは組み立てた本文の
-        /// バイト数で判定するため、シリアライザの上限で先に失敗させると、上限超過と
-        /// シリアライズできない値の区別が付かなくなる。後者は例外として呼び出し側へ伝える。
+        /// 成功の応答を組み立てる。シリアライズできない値は例外として呼び出し側へ伝える。
         /// </summary>
         public static string SerializeResult(object id, object result)
         {
@@ -216,7 +191,6 @@ namespace PmxEditorMcp
             return CreateSerializer(int.MaxValue).Serialize(response);
         }
 
-        /// <summary>エラーの応答を組み立てる。</summary>
         public static string SerializeError(object id, int code, string message)
         {
             Dictionary<string, object> error = new Dictionary<string, object>
@@ -235,20 +209,14 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 識別子として受理する型かどうかを判定する。数値の側の並びは、シリアライザがJSONの数値を
-        /// 実体化するときに使う型(Int32 から Int64・Decimal・Double へ落ちる順)をすべて挙げた
-        /// もので、1つでも欠けると妥当な識別子を構造不正として弾いてしまう。
+        /// 識別子として受理する型かどうかを判定する。数値の側は、シリアライザがJSONの数値を
+        /// 実体化するときに使う型をすべて挙げたもの。
         /// </summary>
         private static bool IsAllowedId(object id)
         {
             return id is string || id is int || id is long || id is decimal || id is double;
         }
 
-        /// <summary>
-        /// 本文をJSONとして解釈できなかったことを表す例外かどうかを判定する。要求の本文は接続の
-        /// 相手が自由に作れるため、シリアライザが投げる例外の型を1つに賭けず、解釈の失敗として
-        /// ありうる型をまとめて構文不正へ寄せる(メモリ不足などの続行できない失敗は通す)。
-        /// </summary>
         private static bool IsDeserializeFailure(Exception exception)
         {
             return exception is ArgumentException
@@ -257,10 +225,6 @@ namespace PmxEditorMcp
                 || exception is InvalidOperationException;
         }
 
-        /// <summary>
-        /// 構造トークンの数が上限を超えるかを、解析せずに1回の走査で判定する。文字列の中の記号は
-        /// 数えない——値として置かれた括弧やコンマはオブジェクトを作らないため。
-        /// </summary>
         private static bool ExceedsStructureTokenLimit(string line)
         {
             int tokens = 0;

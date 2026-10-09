@@ -3,9 +3,8 @@ using System;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// イベント固有の値の1項目を、応答へ載せられる形へ直す。溜め場へ入れるところで直すので、
-    /// 取り出しはSDKの値を持たない——受け手はエディタのUIスレッドで走り、取り出しは別のスレッドから
-    /// 来る。
+    /// イベント固有の値の1項目を、応答へ載せられる形へ直す。溜め場へ入れるところで直し、
+    /// 取り出しはSDKの値を持たない。
     /// </summary>
     public static class EventPayload
     {

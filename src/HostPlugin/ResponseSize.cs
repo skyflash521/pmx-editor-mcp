@@ -15,13 +15,11 @@ namespace PmxEditorMcp
         /// <summary>警告に充てる枠。切り詰めた旨の注記もこの中に収める。</summary>
         public const int WarningChars = 2000;
 
-        /// <summary>切り詰めたときに末尾へ置く注記。</summary>
         public const string TruncatedNotice = "(以降の警告は切り詰めた)";
 
         /// <summary>警告1件が本文で使う、警告そのもの以外の文字数(行の区切りと接頭辞)。</summary>
         public const int LineOverheadChars = 5;
 
-        /// <summary>ツールの値に充てる枠。予算から警告の枠を引いたもの。</summary>
         public static int ValueChars(int budgetChars)
         {
             if (budgetChars < ResponseBudget.MinimumChars)
@@ -38,7 +36,6 @@ namespace PmxEditorMcp
         public static JavaScriptSerializer Serializer { get; } =
             new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
 
-        /// <summary>値をJSONに綴った長さが、ツールの値に充てる枠に収まるときは真。</summary>
         public static bool Fits(object value, int budgetChars)
         {
             return Serializer.Serialize(value).Length <= ValueChars(budgetChars);
@@ -77,9 +74,7 @@ namespace PmxEditorMcp
             return new ReadOnlyCollection<string>(fitted);
         }
 
-        /// <summary>
-        /// 警告が本文で使う文字数。1件ごとに行の区切りと接頭辞を伴うので、それも数える。
-        /// </summary>
+        /// <summary>警告が本文で使う文字数。行の区切りと接頭辞も数える。</summary>
         public static int Length(IEnumerable<string> warnings)
         {
             if (warnings == null)

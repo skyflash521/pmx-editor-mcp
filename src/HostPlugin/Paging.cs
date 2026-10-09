@@ -28,7 +28,6 @@ namespace PmxEditorMcp
             Warnings = new ReadOnlyCollection<string>(warnings);
         }
 
-        /// <summary>返すもの。</summary>
         public IList<T> Items { get; }
 
         /// <summary>切り出す前の総数。</summary>
@@ -41,10 +40,6 @@ namespace PmxEditorMcp
         public IList<string> Warnings { get; }
     }
 
-    /// <summary>
-    /// 一覧を位置と件数で切り出す。求められた件数のまま返すと枠に収まらないことがあるので、
-    /// 収まる件数まで減らし、続きの位置を添えて返す。
-    /// </summary>
     public static class Paging
     {
         /// <summary>

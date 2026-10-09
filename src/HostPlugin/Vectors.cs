@@ -44,7 +44,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 3つの点が張る面に垂直で、長さを1にそろえた向き。3つが一直線に並ぶときは長さを持たない
-        /// 向きを返す。点の隔たりも倍精度で求めるので、単精度で持てるどの3点でも向きが得られる。
+        /// 向きを返す。
         /// </summary>
         public static V3 PerpendicularTo(V3 first, V3 second, V3 third)
         {
@@ -85,7 +85,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// いくつかの向きの和を、長さを1にそろえて返す。和が長さを持たないときは長さを持たない向きを
-        /// 返す。足し合わせも倍精度で行うので、単精度で持てるどの向きを何本足しても潰れない。
+        /// 返す。
         /// </summary>
         public static V3 NormalizedSum(IEnumerable<V3> given)
         {
@@ -107,9 +107,6 @@ namespace PmxEditorMcp
             return Shortened(x, y, z, new V3(0f, 0f, 0f));
         }
 
-        /// <summary>
-        /// 2つの点の中ほど。足し合わせを倍精度で行うので、単精度で持てるどの2点でも潰れない。
-        /// </summary>
         public static V3 Between(V3 first, V3 second)
         {
             return new V3(
@@ -118,10 +115,7 @@ namespace PmxEditorMcp
                 (float)(((double)first.Z + second.Z) / 2d));
         }
 
-        /// <summary>
-        /// いくつかの点の重心。足し合わせを倍精度で行うので、単精度で持てるどの点を何個足しても
-        /// 潰れない。1つも無ければ原点を返す。
-        /// </summary>
+        /// <summary>いくつかの点の重心。1つも無ければ原点を返す。</summary>
         public static V3 Middle(IEnumerable<V3> given)
         {
             if (given == null)
@@ -146,10 +140,6 @@ namespace PmxEditorMcp
                 : new V3((float)(x / count), (float)(y / count), (float)(z / count));
         }
 
-        /// <summary>
-        /// ある点から別の点への隔たりを、倍率を掛けて返す。引き算も掛け算も倍精度で行うので、
-        /// 単精度で持てるどの2点でも、結果が単精度に収まるかぎり潰れない。
-        /// </summary>
         public static V3 Apart(V3 to, V3 from, float by)
         {
             return new V3(
@@ -159,8 +149,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// ある点から別の点への向きを、長さを1にそろえて返す。引き算も正規化も倍精度で行うので、
-        /// 単精度で持てるどの2点でも潰れない。2点が同じ点なら長さを持たない向きを返す。
+        /// ある点から別の点への向きを、長さを1にそろえて返す。2点が同じ点なら長さを持たない向きを返す。
         /// </summary>
         public static V3 Toward(V3 to, V3 from)
         {
@@ -171,13 +160,11 @@ namespace PmxEditorMcp
                 new V3(0f, 0f, 0f));
         }
 
-        /// <summary>同じ成分を持つ、別の向き。</summary>
         public static V3 Copied(V3 given)
         {
             return new V3(given.X, given.Y, given.Z);
         }
 
-        /// <summary>同じ3つの成分を持つ向きか。</summary>
         public static bool Same(V3 left, V3 right)
         {
             return left.X == right.X && left.Y == right.Y && left.Z == right.Z;
@@ -195,7 +182,6 @@ namespace PmxEditorMcp
                 && !float.IsNaN(given.Z) && !float.IsInfinity(given.Z);
         }
 
-        /// <summary>2つの点の隔たり。点の差も倍精度で求める。</summary>
         public static float Distance(V3 left, V3 right)
         {
             return (float)Spread(

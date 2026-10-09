@@ -22,10 +22,8 @@ namespace PmxEditorMcp
             Position = position;
         }
 
-        /// <summary>書き込む先の項目。</summary>
         public ToolField Field { get; }
 
-        /// <summary>書かれた位置。</summary>
         public int Position { get; }
     }
 
@@ -33,8 +31,7 @@ namespace PmxEditorMcp
     /// ハンドルで持つ実体へ書かれた、位置で指す項目の値を預かったもの。位置はPMXの中のリストで
     /// 数えるので、まだどのPMXにも属していない実体へ書くときは解けない。値のまま預かり、その実体が
     /// PMXの中の並びへ加わる呼び出しが、自分が相手にするPMXの中で解いて書き込む。
-    /// 加える先の親もハンドルで持つ実体なら、預かりはその親へ移る——先に加わるのは親のほうなので、
-    /// 親が加わる時点でまとめて解ける。書き込む相手を自分で持つのはこのためである。
+    /// 加える先の親もハンドルで持つ実体なら、預かりはその親へ移る。
     /// </summary>
     public sealed class DeferredWrite
     {
@@ -75,10 +72,7 @@ namespace PmxEditorMcp
         private readonly Dictionary<object, Dictionary<string, int>> _at =
             new Dictionary<object, Dictionary<string, int>>(ReferenceComparer<object>.Instance);
 
-        /// <summary>
-        /// 預かる。同じ相手の同じ項目を二度書いたら、前の位置のまま後の値だけを残す——直に書く
-        /// ときと同じ結末にする。
-        /// </summary>
+        /// <summary>預かる。同じ相手の同じ項目を二度書いたら、前の位置のまま後の値だけを残す。</summary>
         public void Put(DeferredWrite pending)
         {
             if (pending == null)

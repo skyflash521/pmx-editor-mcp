@@ -1,5 +1,4 @@
-// エディタのビューは、描き直しを頼まれたときだけ描く。SDKのコネクタは中身を変えるだけで描き直さない
-// ので、変えた側が頼まないと画面は前のまま残る。一覧も同じで、作り直しを頼むまで古い値を並べる。
+// SDKのコネクタは中身を変えるだけで、ビューも一覧も描き直さない。
 
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,6 @@ using PEPlugin.View;
 
 namespace PmxEditorMcp
 {
-    /// <summary>変えた中身を画面へ映すのに要ること。</summary>
     public enum ScreenRefreshKind
     {
         /// <summary>画面に映るものは変わっていない。</summary>
@@ -23,13 +21,8 @@ namespace PmxEditorMcp
         Rebuilt,
     }
 
-    /// <summary>
-    /// 変えた中身をエディタの画面へ映す段。エディタがCプラグイン連携の呼び出しに対して自分で
-    /// 行っているのと同じ手順を、ホストの呼び出しにも行う。
-    /// </summary>
     public sealed class ScreenRefresh
     {
-        /// <summary>画面へ映せなかったときに添える知らせ。</summary>
         public const string NotShownWarning =
             "エディタの画面を映し直せなかった。呼び出しは済んでいるが、画面とリストは呼び出しの"
                 + "前の中身を映したままになっている。";
@@ -105,10 +98,6 @@ namespace PmxEditorMcp
                 { "PEPlugin.Pmx.IPXPmx.Joint()", new[] { ElementKinds.Joint } },
             };
 
-        /// <summary>
-        /// 頂点のウェイトと変形方式だけを書き換えたことを表す区分の名前。頂点の区分と同じく頂点の
-        /// バッファを作り直し、ウェイトの表示も作り直す。
-        /// </summary>
         public const string WeightKind = "weight";
 
         private readonly Func<object> _view;
@@ -165,11 +154,6 @@ namespace PmxEditorMcp
             return all;
         }
 
-        /// <summary>
-        /// その呼び出しの後に、呼び出しを包む側が行う映し直し。読み取りは何も要らない——同じ行で
-        /// 読みと書きを兼ねるプロパティは、読む側の呼び出しがこの分類で分かれる。複製編集は反映の
-        /// 側が自分で映すので、ここでは何も要らない。
-        /// </summary>
         public static ScreenRefreshKind Needed(EditKind edit, IEnumerable<string> rowKeys)
         {
             if (rowKeys == null)
@@ -238,8 +222,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// そのリストの要素の中身だけを書き換えたときの、書き換えうる種類。頂点の要素はウェイトも
-        /// 持つので、ウェイトの区分も含める。区分だけの作り直しと反映を持たないリストでは null。
+        /// そのリストの要素の中身だけを書き換えたときの、書き換えうる種類。区分だけの作り直しと
+        /// 反映を持たないリストでは null。
         /// </summary>
         public static IList<string> RewrittenIn(string listRow)
         {

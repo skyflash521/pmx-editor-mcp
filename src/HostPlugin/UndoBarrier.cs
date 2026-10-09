@@ -11,12 +11,10 @@ namespace PmxEditorMcp
     /// </summary>
     public sealed class UndoBarrier
     {
-        /// <summary>抑止を頼む共通引数の名前。</summary>
         public const string SuppressName = "suppressUndo";
 
         private readonly UndoRecovery _recovery;
 
-        /// <summary>止めたままの記録を戻しにいく窓口を与えて生成する。</summary>
         public UndoBarrier(UndoRecovery recovery)
         {
             if (recovery == null)

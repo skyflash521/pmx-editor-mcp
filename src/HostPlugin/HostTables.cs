@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// ホストの起動で作る大きな表。互いに独立しているので、作り始めをそろえて並べて走らせ、
-    /// 使う側が取るときに出来上がりを待つ。
+    /// ホストの起動で作る大きな表。作り始めをそろえて並べて走らせ、使う側が取るときに出来上がりを
+    /// 待つ。
     /// </summary>
     internal sealed class HostTables
     {
@@ -41,7 +41,6 @@ namespace PmxEditorMcp
             _payloads = Task.Run(() => GeneratedTools.Payloads());
         }
 
-        /// <summary>表を作り始める。</summary>
         internal static HostTables Start()
         {
             return new HostTables();

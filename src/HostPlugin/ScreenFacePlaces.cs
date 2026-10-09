@@ -11,7 +11,6 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ScreenFacePlaces
     {
-        /// <summary>画面から面の位置を受け取る行。</summary>
         public static IList<string> Reading
         {
             get
@@ -24,7 +23,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>画面へ面の位置を渡す行。</summary>
         public static IList<string> Writing
         {
             get

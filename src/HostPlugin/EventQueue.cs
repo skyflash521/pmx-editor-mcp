@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 
 namespace PmxEditorMcp
 {
-    /// <summary>キューへ溜めたイベント1件。</summary>
     public sealed class QueuedEvent
     {
         public QueuedEvent(long seq, string type, int sourceHandle, object payload)
@@ -16,26 +15,21 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// ホストが1から増やす連番。発行元はホストにひとつなので、このキューの中では飛びうる
-        /// ——ほかのキューへ発行したぶんがそこに入る。取りこぼしは
+        /// ホストが1から増やす連番。このキューの中では飛びうる。取りこぼしは
         /// <see cref="EventDrainResult.Dropped"/> で知る。
         /// </summary>
         public long Seq { get; }
 
-        /// <summary>イベント種別の識別子。</summary>
         public string Type { get; }
 
         /// <summary>そのイベントを購読しているリスナのハンドルID。</summary>
         public int SourceHandle { get; }
 
-        /// <summary>イベント固有の値。</summary>
         public object Payload { get; }
     }
 
-    /// <summary>取り出しの判定が、そのイベントをどう扱うかを返す。</summary>
     public enum EventFit
     {
-        /// <summary>取り出す。</summary>
         Take,
 
         /// <summary>収まらないので捨てる。捨てた件数へ数える。</summary>
@@ -45,7 +39,6 @@ namespace PmxEditorMcp
         Stop,
     }
 
-    /// <summary>キューから取り出した結果。</summary>
     public sealed class EventDrainResult
     {
         public EventDrainResult(IList<QueuedEvent> events, int dropped, int remaining)
@@ -75,10 +68,8 @@ namespace PmxEditorMcp
         /// <summary>溜めておける件数。超えたぶんは古い順に捨てる。</summary>
         public const int Capacity = 1000;
 
-        /// <summary>1回の取り出しの既定の件数。</summary>
         public const int DefaultLimit = 100;
 
-        /// <summary>1回の取り出しに指定できる最大の件数。</summary>
         public const int MaxLimit = 1000;
 
         private readonly Queue<QueuedEvent> _events = new Queue<QueuedEvent>();
@@ -103,7 +94,6 @@ namespace PmxEditorMcp
             _issuer = issuer;
         }
 
-        /// <summary>閉じていれば真。</summary>
         public bool IsClosed
         {
             get
@@ -117,7 +107,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 溜めるのをやめ、残っているイベントを捨てる。セッションが終わるときに呼ぶ。以後は
-        /// 溜めることも取り出すこともできない——取り出せると、誰のものでもない列を読めてしまう。
+        /// 溜めることも取り出すこともできない。
         /// </summary>
         public void Close()
         {
@@ -129,7 +119,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>いま溜まっている件数。</summary>
         public int Count
         {
             get
@@ -184,10 +173,7 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>
-        /// 古い順に <paramref name="limit"/> 件まで取り出す。捨てた件数は返したところで0へ戻す
-        /// ——次の取り出しが知らせるのは、その取り出しまでに捨てたぶんである。
-        /// </summary>
+        /// <summary>古い順に <paramref name="limit"/> 件まで取り出す。捨てた件数は返したところで0へ戻す。</summary>
         public EventDrainResult Drain(int limit)
         {
             return Drain(limit, queued => EventFit.Take);

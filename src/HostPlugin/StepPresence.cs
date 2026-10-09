@@ -9,7 +9,6 @@ namespace PmxEditorMcp
     {
         private const string BoneIkKey = "PEPlugin.Pmx.IPXBone.IK()";
 
-        /// <summary>その親が、その段の先の実体を持つか。</summary>
         public static bool Holds(string rowKey, object owner)
         {
             if (rowKey == BoneIkKey)

@@ -3,9 +3,9 @@ using System;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// UIスレッドへの委譲そのもの。PEPlugin API はスレッドセーフを仮定できないため、
-    /// ワーカースレッドからの呼び出しはすべてこれを通してUIスレッドで実行する。実行してよいかの
-    /// 判定は含まないので、稼働世代の可否を伴う委譲は <see cref="IUiInvoker"/> を用いる。
+    /// UIスレッドへの委譲そのもの。ワーカースレッドからの PEPlugin API の呼び出しはすべてこれを
+    /// 通してUIスレッドで実行する。実行してよいかの判定は含まない。稼働世代の可否を伴う委譲は
+    /// <see cref="IUiInvoker"/> を用いる。
     /// </summary>
     public interface IUiDispatcher
     {

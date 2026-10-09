@@ -3,8 +3,8 @@ using System;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// 止めたままのUndoの記録を戻しにいく窓口。止まっているのはエディタの側なので、接続をまたいで
-    /// 1つだけ持ち、戻せたことを次の応答で1度だけ知らせる。
+    /// 止めたままのUndoの記録を戻しにいく窓口。接続をまたいで1つだけ持ち、戻せたことを次の応答で
+    /// 1度だけ知らせる。
     /// </summary>
     public sealed class UndoRecovery
     {
@@ -31,15 +31,14 @@ namespace PmxEditorMcp
             _target = target;
         }
 
-        /// <summary>戻せていないものが残っているか。</summary>
         public bool HasLeftover
         {
             get { return _undo.HasLeftover; }
         }
 
         /// <summary>
-        /// 残っているものを戻しにいく。残っていない状態にできたときだけ真。SDKを呼ぶので、
-        /// UIスレッドへの委譲を通す。委譲そのものが走らなければ偽を返す。
+        /// 残っているものを戻しにいく。残っていない状態にできたときだけ真。UIスレッドへの委譲を通し、
+        /// 委譲そのものが走らなければ偽を返す。
         /// </summary>
         public bool TryRecover(IUiInvoker ui)
         {

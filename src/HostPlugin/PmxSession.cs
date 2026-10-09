@@ -4,7 +4,6 @@ using PEPlugin.Pmx;
 
 namespace PmxEditorMcp
 {
-    /// <summary>どのPMXを相手にするかを決めた結果。</summary>
     public sealed class PmxTarget
     {
         public PmxTarget(object pmx, bool current, bool editing = false)
@@ -16,7 +15,6 @@ namespace PmxEditorMcp
                 : ReferenceCleanup.Held(new object[0]);
         }
 
-        /// <summary>相手にするPMXの実体。</summary>
         public object Pmx { get; }
 
         /// <summary>現在のPMXの複製か。偽ならハンドルが指すPMXのオブジェクト。</summary>
@@ -37,7 +35,6 @@ namespace PmxEditorMcp
     /// </summary>
     public sealed class PmxSession
     {
-        /// <summary>どのPMXを見るかを切り替える共通引数の名前。</summary>
         public const string HandleName = "pmxHandle";
 
         /// <summary>1つの区分だけを反映する行へ渡す、区分の全体を表す位置。</summary>
@@ -69,7 +66,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 中継・受け手の道・常駐と、複製編集の流れ・PMXの実体の型・Undoの抑止の枠を与えて
-        /// 生成する。抑止の枠は接続をまたぐ1つの状態なので、流れが2つでも同じものを渡す。
+        /// 生成する。抑止の枠は接続をまたぐ1つの状態で、流れが2つでも同じものを渡す。
         /// </summary>
         public PmxSession(
             SdkRelayTable relay,
@@ -120,8 +117,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// この流れでUndoの記録を止め戻しする相手。反映する行が止めるかどうかを引数で取る流れは
-        /// 相手を持たないので null。
+        /// この流れでUndoの記録を止め戻しする相手。反映する行が止めるかどうかを引数で取る流れでは
+        /// null。
         /// </summary>
         public IUndoLock UndoLock
         {
@@ -212,9 +209,8 @@ namespace PmxEditorMcp
         /// <summary>
         /// 変えた複製をまとめて反映し、反映した中身をエディタの画面へ映す。現在のPMXを相手に
         /// していない呼び出しでは何もしない。<paramref name="suppressUndo"/> を頼まれたら、この
-        /// 反映をエディタのUndoへ積ませない。映せなかったときは
-        /// <paramref name="context"/> へその印を置く——映せないことは反映の失敗ではないので、
-        /// 断りへ変えない。反映できなければ偽で、断る内容を渡す。<paramref name="listRow"/> は
+        /// 反映をエディタのUndoへ積ませない。映せなかったときは <paramref name="context"/> へ
+        /// その印を置く。反映できなければ偽で、断る内容を渡す。<paramref name="listRow"/> は
         /// 反映で変えたリストの行で、分からなければ null。<paramref name="rewritten"/> は要素の
         /// 数を変えずに中身だけを書き換えた種類で、渡せばそれを映し直しの手がかりにする。
         /// 反映で panel が 0 のまま表情枠に登録されたモーフが新しくできたら、その警告を
@@ -342,7 +338,6 @@ namespace PmxEditorMcp
                 out refusal);
         }
 
-        /// <summary>流れが取る引数。置き場の並びのまま値を入れる。</summary>
         private object[] Passed(IList<FlowSlot> slots, object pmx, bool suppressUndo = false)
         {
             object[] passed = new object[slots.Count];
@@ -367,7 +362,6 @@ namespace PmxEditorMcp
             return passed;
         }
 
-        /// <summary>SDKの行を呼んでUndoの記録を止め、また戻す相手。</summary>
         private sealed class UndoRows : IUndoLock
         {
             private readonly PmxSession _session;

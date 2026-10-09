@@ -12,19 +12,14 @@ namespace PmxEditorMcp
     /// <summary>メソッドへ渡された引数が契約に合わないことを表す。応答では不正な引数として扱う。</summary>
     public sealed class InvalidParamsException : Exception
     {
-        /// <summary>要求元へ返す説明を添えて生成する。</summary>
         public InvalidParamsException(string message)
             : base(message)
         {
         }
     }
 
-    /// <summary>メソッドを呼ぶときに渡す一式。</summary>
     public sealed class McpMethodContext
     {
-        /// <summary>
-        /// 引数・UIスレッドへの委譲・応答サイズ予算・セッションが保つ台帳とキューを与えて生成する。
-        /// </summary>
         public McpMethodContext(
             IDictionary<string, object> parameters,
             IUiInvoker ui,
@@ -67,21 +62,17 @@ namespace PmxEditorMcp
         /// <summary>UIスレッドへの委譲。PEPlugin API の呼び出しはすべてこれを通す。</summary>
         public IUiInvoker Ui { get; }
 
-        /// <summary>ホストが読んだ応答サイズ予算の文字数。結果の量を抑える判定に用いる。</summary>
         public int BudgetChars { get; }
 
-        /// <summary>このセッションが保つ長寿命オブジェクトの台帳。</summary>
         public HandleLedger Handles { get; }
 
-        /// <summary>このセッションが溜めている購読中のイベント。</summary>
         public EventQueue Events { get; }
 
-        /// <summary>画面がいま選んでいるものを読む相手。</summary>
         public ScreenTargets Screen { get; }
 
         /// <summary>
         /// この呼び出しが変えた中身を、エディタの画面へ映せなかったか。映す段が置き、呼び出しを
-        /// 包む側が知らせへ移す——映す段はUIスレッドの中に居て、応答を組み立てる場所とは別である。
+        /// 包む側が知らせへ移す。
         /// </summary>
         public bool NotShown { get; set; }
 
@@ -94,14 +85,13 @@ namespace PmxEditorMcp
     /// <summary>ホストが公開する処理。戻り値がそのまま応答の result になる。</summary>
     public delegate object McpMethod(McpMethodContext context);
 
-    /// <summary>メソッド名から処理を引く表。</summary>
     public sealed class McpMethodTable
     {
         private readonly Dictionary<string, McpMethod> _methods = new Dictionary<string, McpMethod>(StringComparer.Ordinal);
 
         /// <summary>
         /// 処理を登録する。同じ名前を二度登録することと、接続自身が受け持つ基盤メソッドの名前を
-        /// 登録することは、いずれも黙って無視されるのを避けるため拒む。
+        /// 登録することは拒む。
         /// </summary>
         public void Add(string name, McpMethod method)
         {
@@ -140,7 +130,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>名前に対応する処理を引く。</summary>
         public bool TryGet(string name, out McpMethod method)
         {
             if (name == null)
@@ -165,14 +154,12 @@ namespace PmxEditorMcp
         private const string EndSessionMethodName = "end_session";
         private const string SdkStatusMethodName = "sdk_status";
 
-        /// <summary>接続自身が受け持つ基盤メソッドの名前。</summary>
         public static readonly ReadOnlyCollection<string> BaseMethodNames =
             Array.AsReadOnly(new[]
             {
                 HandshakeMethodName, PingMethodName, EndSessionMethodName, SdkStatusMethodName,
             });
 
-        /// <summary>要求1件の処理に許す時間の既定。</summary>
         public static readonly TimeSpan DefaultRequestTimeout = TimeSpan.FromSeconds(120);
 
         /// <summary>要求の処理を直列化する錠を待つ間に、相手の切断を見に行く間隔の既定。</summary>
@@ -202,13 +189,11 @@ namespace PmxEditorMcp
         private readonly TimeSpan _gatePollInterval;
 
         /// <summary>
-        /// 要求の処理を直列化する錠。複数の接続を同時に受けるので、SDKを呼んでいる区間が重ならない
-        /// ことと、要求1件が発行したハンドルがその要求のものに定まることを、ここで保証する
-        /// ——SDKのスレッドセーフティは仮定しない。
+        /// 要求の処理を直列化する錠。SDKを呼んでいる区間が重ならないことと、要求1件が発行した
+        /// ハンドルがその要求のものに定まることを、ここで保証する。
         /// </summary>
         private readonly object _requestGate = new object();
 
-        /// <summary>ログ・メソッド表・ハンドシェイク応答に載せる値を与えて生成する。</summary>
         public JsonRpcConnection(HostLog log, McpMethodTable methods, string hostVersion, int budgetChars)
             : this(log, methods, hostVersion, budgetChars, DefaultRequestTimeout, MessageChannel.DefaultMaxMessageBytes)
         {
@@ -244,10 +229,6 @@ namespace PmxEditorMcp
         {
         }
 
-        /// <summary>
-        /// 要求処理の時間の上限とメッセージの上限も指定して生成する。どちらもテストから
-        /// 差し替えるための引数で、通常は既定を用いる。
-        /// </summary>
         public JsonRpcConnection(
             HostLog log,
             McpMethodTable methods,
@@ -266,10 +247,6 @@ namespace PmxEditorMcp
         {
         }
 
-        /// <summary>
-        /// 接続元のプロセスの開き方も指定して生成する。テストから差し替えるための引数で、
-        /// 通常は名前付きパイプから開くものを用いる。
-        /// </summary>
         public JsonRpcConnection(
             HostLog log,
             McpMethodTable methods,
@@ -365,13 +342,11 @@ namespace PmxEditorMcp
                 currentUi ?? (() => DeclinedUiInvoker.Instance));
         }
 
-        /// <summary>ホストが持つセッションの集まり。</summary>
         public SessionStore Sessions
         {
             get { return _sessions; }
         }
 
-        /// <summary>行キーからSDKへの中継。</summary>
         public SdkRelayTable Relays
         {
             get { return _relays; }
@@ -394,16 +369,11 @@ namespace PmxEditorMcp
 
             MessageChannel channel = new MessageChannel(stream, _maxMessageBytes);
 
-            // エラー応答の数はコードごとに数え、記録は最初の1回と、接続が切れたときの合計に限る。
-            // 同じ記録の反復でローテーションが有用な履歴を押し流すのを避けるため。数え上げは接続ごとに
-            // 独立させたいので、稼働世代やインスタンスでなくこの呼び出しのローカルに持つ。
             ErrorResponseCounter errors = new ErrorResponseCounter();
 
             ClientProcess client;
             bool opened = _openClient(stream, out client);
 
-            // 所有権が移ったかどうかは、この呼び出しがどう終わるかと切り離して覚える。戻り値で
-            // 表すと、例外で抜けた回に、セッションが所有しているハンドルを閉じてしまう。
             ClientHandover handover = new ClientHandover();
 
             try
@@ -414,8 +384,6 @@ namespace PmxEditorMcp
             {
                 try
                 {
-                    // セッションが所有者として保つのは自分が受け取ったハンドルだけなので、
-                    // 繋ぎ直しで戻った接続が開いたぶんはここで閉じる。
                     if (opened && !handover.Taken)
                     {
                         client.Dispose();
@@ -436,8 +404,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 止めたままのUndoの記録を戻しにいく。窓口を持たない接続では何もしない。応答を書いた
-        /// 後に呼ぶので、戻せたことを知らせるのはこの次の応答になる。
+        /// 止めたままのUndoの記録を戻しにいく。窓口を持たない接続では何もしない。戻せたことの
+        /// 知らせは次の応答に載る。
         /// </summary>
         private void Recover(IUiInvoker ui)
         {
@@ -447,13 +415,11 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>接続元のプロセスの所有権がセッションへ移ったかどうか。</summary>
         private sealed class ClientHandover
         {
             public bool Taken { get; set; }
         }
 
-        /// <summary>要求を処理する。</summary>
         private void HandleRequests(
             MessageChannel channel,
             ErrorResponseCounter errors,
@@ -506,8 +472,6 @@ namespace PmxEditorMcp
                     return;
                 }
 
-                // handshake の受け直しも断るので、どの分岐よりも先に見る。ここで通ったあと錠を
-                // 待つ間に終わることもあるので、直列区間の中でもう一度見る。
                 if (scope != null && scope.Session.IsEnded)
                 {
                     Respond(channel, errors, request.Id, JsonRpcErrorCodes.SessionRefused,
@@ -562,10 +526,6 @@ namespace PmxEditorMcp
                     continue;
                 }
 
-                // 要求1件の処理をまるごと直列化する。境界の記録・実行・結果の確定か後始末までを
-                // 分けずに囲むのは、別の接続が同じ台帳へ発行したハンドルを、こちらの後始末が
-                // 巻き込まないようにするため。処理に許す時間は要求を受け取ったときから数え、
-                // 錠を待つ間も数える。
                 GateEntry entry = EnterGate(channel, received);
                 if (entry == GateEntry.PeerGone)
                 {
@@ -583,8 +543,6 @@ namespace PmxEditorMcp
 
                 try
                 {
-                    // 錠を待つ間に別の接続が終わらせたかもしれない。終わったセッションの台帳と
-                    // キューへ触らせないために、ここでもう一度見る。
                     if (scope.Session.IsEnded)
                     {
                         Respond(channel, errors, request.Id, JsonRpcErrorCodes.SessionRefused,
@@ -626,8 +584,6 @@ namespace PmxEditorMcp
                     }
                     catch
                     {
-                        // 書き出せずに抜ける経路でも、呼び出し側へ届かないIDを台帳に残さない。
-                        // 台帳は切断を越えて生きるので、残すと誰も解放できないまま居座る。
                         DiscardHandles(scope, issuedBefore);
                         throw;
                     }
@@ -639,7 +595,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>要求の処理を直列化する錠を待った結末。</summary>
         private enum GateEntry
         {
             Entered,
@@ -696,7 +651,6 @@ namespace PmxEditorMcp
         /// <summary>ハンドシェイクの検査の結末。引数の不備と、断る結末とで切断の要否が分かれる。</summary>
         private enum HandshakeOutcome
         {
-            /// <summary>受理した。</summary>
             Accepted,
 
             /// <summary>引数が契約に合わない。応答は返したが接続は保つ。</summary>
@@ -759,8 +713,7 @@ namespace PmxEditorMcp
                 return HandshakeOutcome.Accepted;
             }
 
-            // 開けたかどうかだけでは終わったかを判じられない。終わったプロセスでも、そのプロセス
-            // オブジェクトへのハンドルが残っている間は開けて、開いた直後から合図済みになる。
+            // 終わったプロセスでも、そのプロセスオブジェクトへのハンドルが残っている間は開ける。
             if (client == null || client.HasExited)
             {
                 Respond(channel, errors, request.Id, JsonRpcErrorCodes.SessionRefused,
@@ -798,10 +751,6 @@ namespace PmxEditorMcp
             return id != null;
         }
 
-        /// <summary>
-        /// プロトコル番号が一致するかを判定する。型ごとにそのまま比べるのは、桁あふれする値
-        /// (シリアライザが decimal・double へ実体化した大きな数)で変換が例外になるのを避けるため。
-        /// </summary>
         private static bool MatchesProtocol(object value)
         {
             if (value is int)
@@ -822,11 +771,6 @@ namespace PmxEditorMcp
             return value is double && (double)value == HostProtocol.Number;
         }
 
-        /// <summary>
-        /// 応答を組み立てられなかったことを表す例外かどうかを判定する。シリアライザが投げる例外の
-        /// 型を1つに賭けず、組み立ての失敗としてありうる型をまとめて内部エラーへ寄せる
-        /// (メモリ不足などの続行できない失敗は通す)。
-        /// </summary>
         private static bool IsSerializeFailure(Exception exception)
         {
             return exception is ArgumentException
@@ -834,9 +778,7 @@ namespace PmxEditorMcp
                 || exception is NotSupportedException;
         }
 
-        /// <summary>
-        /// 答える名前に基盤メソッドは入らない——それは表に載らず、この接続自身が受け持つ。
-        /// </summary>
+        /// <summary>答える名前に基盤メソッドは入らない。</summary>
         private IDictionary<string, object> BuildSdkStatusResult()
         {
             return new Dictionary<string, object>
@@ -901,9 +843,6 @@ namespace PmxEditorMcp
                     }
                     finally
                     {
-                        // 開始済みのUI処理は中断できないため、完了するまで次の要求を読み取らない。
-                        // 完了後の結果は破棄し、二重に応答しない。応答を書けなかったときも、
-                        // 処理を走らせたまま抜けると次の稼働世代の要求と並行してしまうので待つ。
                         try
                         {
                             running.Wait();
@@ -989,14 +928,11 @@ namespace PmxEditorMcp
             string line = JsonRpcCodec.SerializeError(id, code, message);
             if (MessageChannel.MeasureBytes(line) > channel.MaxMessageBytes)
             {
-                // 識別子まで載せると入らないときは、識別子を落としてでもエラーコードを返す。
                 line = JsonRpcCodec.SerializeError(null, code, message);
             }
 
             if (MessageChannel.MeasureBytes(line) > channel.MaxMessageBytes)
             {
-                // 説明も入らないときは、エラーコードだけを返す。ここで投げると、接続を保つはずの
-                // エラーがすべて切断に化ける。
                 line = JsonRpcCodec.SerializeError(null, code, string.Empty);
             }
 
@@ -1005,8 +941,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 接続1本が結び付いた相手。要求ごとの文脈はここから作る。ハンドルもイベントもセッションの
-        /// 持ち物なので、切断を越えて生き、繋ぎ直した接続が同じものを見る。
+        /// 接続1本が結び付いた相手。要求ごとの文脈はここから作る。ハンドルとイベントはセッションの
+        /// 持ち物で、切断を越えて生きる。
         /// </summary>
         private sealed class ConnectionScope
         {
@@ -1031,10 +967,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>
-        /// 1つの接続で返したエラー応答をコードごとに数える。記録するのはコードだけにする。
-        /// 説明は不正な引数の値を指すことがあり、要求の内容を記録しない規則に触れる。
-        /// </summary>
         private sealed class ErrorResponseCounter
         {
             private readonly Dictionary<int, int> _counts = new Dictionary<int, int>();

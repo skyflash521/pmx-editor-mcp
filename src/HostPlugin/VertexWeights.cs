@@ -10,7 +10,6 @@ namespace PmxEditorMcp
 {
     public static class VertexWeights
     {
-        /// <summary>1つの頂点が指せるボーンの数。</summary>
         public const int Slots = 4;
 
         /// <summary>ボーンの入っている枠を、枠の並びの順で読む。</summary>
@@ -72,9 +71,8 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 同じボーンへの重みを足し合わせ、重みが正の枠だけを重い順に4つまで残して、その合計が1に
-        /// なるようそろえる。足し合わせも合計も倍精度で行うので、単精度で持てるどの重みを何本並べても
-        /// 潰れない。正の枠が1つも残らなければ先頭のボーンへ重み1を振り、ボーンの入った枠が1つも
-        /// 無ければ空を返す。
+        /// なるようそろえる。正の枠が1つも残らなければ先頭のボーンへ重み1を振り、ボーンの入った枠が
+        /// 1つも無ければ空を返す。
         /// </summary>
         public static IList<KeyValuePair<IPXBone, float>> Settled(
             IEnumerable<KeyValuePair<IPXBone, float>> shares)

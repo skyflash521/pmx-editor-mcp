@@ -4,7 +4,6 @@ namespace PmxEditorMcp
 {
     public static class ComposedModelTools
     {
-        /// <summary>組み立てのモデル編集ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit, Func<object> builder)
         {
             if (methods == null)

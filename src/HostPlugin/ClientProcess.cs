@@ -8,10 +8,6 @@ using Microsoft.Win32.SafeHandles;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 接続元のプロセス。終わったかどうかは、開いて保持している待機ハンドルの合図だけで判じる。
-    /// プロセスIDで後から引き直すと、IDが再利用されたときに別のプロセスの寿命へ繋がる。
-    /// </summary>
     public sealed class ClientProcess : IDisposable
     {
         private readonly WaitHandle _exited;
@@ -27,16 +23,13 @@ namespace PmxEditorMcp
             _exited = exited;
         }
 
-        /// <summary>接続元のプロセスID。</summary>
         public int Id { get; }
 
-        /// <summary>そのプロセスが終わったときに合図されるハンドル。</summary>
         public WaitHandle Exited
         {
             get { return _exited; }
         }
 
-        /// <summary>そのプロセスが終わっていれば真。</summary>
         public bool HasExited
         {
             get { return _exited.WaitOne(0); }
@@ -48,13 +41,9 @@ namespace PmxEditorMcp
         }
     }
 
-    /// <summary>
-    /// 接続から接続元のプロセスを開く。開けなければ偽で、<paramref name="process"/> は null。
-    /// テストから差し替えるための形で、通常は <see cref="PipeClientProcess.TryOpen"/> を用いる。
-    /// </summary>
+    /// <summary>接続から接続元のプロセスを開く。開けなければ偽で、<paramref name="process"/> は null。</summary>
     public delegate bool ClientProcessOpener(Stream stream, out ClientProcess process);
 
-    /// <summary>名前付きパイプの接続元のプロセスを開く。</summary>
     public static class PipeClientProcess
     {
         /// <summary>終了を待てるだけの権限。中身を覗く権限は要らない。</summary>

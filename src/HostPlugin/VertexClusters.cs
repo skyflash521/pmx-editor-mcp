@@ -67,10 +67,6 @@ namespace PmxEditorMcp
             return groups;
         }
 
-        /// <summary>
-        /// しきい値より少し広い升目へ振り分け、隣り合う升目の中だけを比べる。隔たりを単精度へ
-        /// 丸めてしきい値に収まる組は、隣り合う升目までに入る。
-        /// </summary>
         private static IList<IList<IPXVertex>> Gridded(IList<IPXVertex> picked, float threshold)
         {
             double size = threshold > 0f ? threshold * 1.001d : 1d;

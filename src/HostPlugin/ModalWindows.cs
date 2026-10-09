@@ -4,7 +4,6 @@ using System.Linq;
 
 namespace PmxEditorMcp
 {
-    /// <summary>ウィンドウの様子。人の応答を待つ表示かどうかの判定と、そのタイトルと本文の文づくりに要るものだけを持つ。</summary>
     public sealed class WindowNote
     {
         /// <summary>
@@ -18,16 +17,13 @@ namespace PmxEditorMcp
             HoldsOwner = holdsOwner;
         }
 
-        /// <summary>ウィンドウのタイトル。</summary>
         public string Caption { get; }
 
         /// <summary>ウィンドウが見せている本文。持たないウィンドウでは空。</summary>
         public string Body { get; }
 
-        /// <summary>画面に出ているかどうか。</summary>
         public bool Visible { get; }
 
-        /// <summary>持ち主のウィンドウを使用不可にしているかどうか。</summary>
         public bool HoldsOwner { get; }
     }
 

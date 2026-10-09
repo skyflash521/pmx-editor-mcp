@@ -2,20 +2,16 @@ using System;
 
 namespace PmxEditorMcp
 {
-    /// <summary>Undoの記録を止めたり戻したりする相手。</summary>
     public interface IUndoLock
     {
-        /// <summary>Undoの記録を止める。</summary>
         void Lock();
 
-        /// <summary>Undoの記録を戻す。</summary>
         void Unlock();
     }
 
     /// <summary>
-    /// Undoの記録を止めて編集を走らせる枠。止めたら必ず戻すが、戻せないことがありうるので、
-    /// 戻せなかったことを覚えて後から回収する。覚えているのは接続をまたぐ1つの状態で、
-    /// 複数のスレッドから同時に呼んでよい。
+    /// Undoの記録を止めて編集を走らせる枠。戻せなかったことを覚えて後から回収する。覚えているのは
+    /// 接続をまたぐ1つの状態で、複数のスレッドから同時に呼んでよい。
     /// </summary>
     public sealed class UndoSuppression
     {

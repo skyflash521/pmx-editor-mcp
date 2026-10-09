@@ -60,7 +60,6 @@ namespace PmxEditorMcp
             _issuer = issuer;
         }
 
-        /// <summary>いま有効なハンドルの数。</summary>
         public int Count
         {
             get
@@ -175,8 +174,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// そのハンドルが指す実体。型を問わずに取り出すので、受け取る側がその実体を扱えるかを
-        /// 判ずる。解放済み・知らないハンドルでは偽。
+        /// そのハンドルが指す実体を、型を問わずに取り出す。解放済み・知らないハンドルでは偽。
         /// </summary>
         public bool TryGet(int id, out object target)
         {
@@ -221,7 +219,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>そのハンドルが有効か。</summary>
         public bool IsValid(int id)
         {
             lock (_gate)
@@ -266,7 +263,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 指定したIDより後に発行したハンドルを解放し、失効させる。解放の順はまとめて解放するときと
-        /// 同じく子から依存元へ。結果を破棄する呼び出しの後始末に使うもので、台帳は閉じない。
+        /// 同じく子から依存元へ。台帳は閉じない。
         /// </summary>
         public HandleReleaseResult ReleaseIssuedAfter(int id, IUiInvoker ui)
         {
@@ -423,7 +420,6 @@ namespace PmxEditorMcp
             return new HandleReleaseResult(invalidated, failed);
         }
 
-        /// <summary>台帳から外した1件。</summary>
         private sealed class Taken
         {
             public Taken(int id, Entry entry)

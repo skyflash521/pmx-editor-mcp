@@ -16,10 +16,6 @@ namespace PmxEditorMcp
     {
         private const int PipeBufferSizeBytes = 65536;
 
-        /// <summary>
-        /// 進まないものを待ち直す間隔。待受の準備に失敗したときと、UIスレッドが進まないときの
-        /// 両方で使う——どちらも、こちらから進められないものが解けるのを待つ間隔である。
-        /// </summary>
         private const int RetryDelayMs = 500;
 
         private readonly object _gate = new object();
@@ -33,9 +29,6 @@ namespace PmxEditorMcp
         private HostGeneration _current;
         private HostGeneration _stopped;
 
-        /// <summary>
-        /// 人の応答を待つ表示を見るものは、与えなければこのプロセスのウィンドウを数え上げるものを使う。
-        /// </summary>
         public McpHost(
             string pipeName,
             HostLog log,
@@ -78,13 +71,10 @@ namespace PmxEditorMcp
                 ?? new DesktopModalWindowProbe(TimeSpan.FromMilliseconds(RetryDelayMs));
         }
 
-        /// <summary>待受に使うパイプ名。</summary>
         public string PipeName => _pipeName;
 
-        /// <summary>ログの書き込み先。</summary>
         public string LogFilePath => _log.FilePath;
 
-        /// <summary>応答サイズ予算の設定。</summary>
         public ResponseBudget Budget => _budget;
 
         /// <summary>現在の稼働状態の区分。呼ばれるたびに判定する。</summary>
@@ -111,7 +101,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>クライアントと接続中かどうか。</summary>
         public bool IsClientConnected
         {
             get
@@ -123,7 +112,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>エディタのプロセスIDから待受に使うパイプ名を組み立てる。</summary>
         public static string BuildPipeName(int editorProcessId)
         {
             return "pmx-editor-mcp-" + editorProcessId.ToString(CultureInfo.InvariantCulture);
@@ -144,12 +132,10 @@ namespace PmxEditorMcp
                         return false;
 
                     case HostStatus.Stopping:
-                        // 旧世代と新世代の要求が並行すると、要求の直列処理とUIディスパッチの直列性が崩れる。
                         reason = "停止処理がまだ終わっていない。しばらく待ってからやり直す。";
                         return false;
 
                     case HostStatus.NotStartedInvalidBudget:
-                        // 環境変数を読み直しても同じ結果になるため、開始は受け付けない。
                         reason = _budget.InvalidReason;
                         _log.Write("待受を開始しない: " + reason);
                         return false;
@@ -182,7 +168,6 @@ namespace PmxEditorMcp
                 generation.Pipes.Clear();
                 foreach (NamedPipeServerStream pipe in pipes)
                 {
-                    // PipeOptions.Asynchronous で生成しているため、待受と読み取りのブロックがここで解ける。
                     try
                     {
                         pipe.Dispose();
@@ -249,7 +234,6 @@ namespace PmxEditorMcp
                         break;
                     }
 
-                    // 停止手順とこのロックを共有するため、生成したインスタンスが閉じられずに待受へ残ることはない。
                     pipe = TryCreatePipe(_pipeName, out prepareFailure);
                     if (pipe != null)
                     {
@@ -259,7 +243,6 @@ namespace PmxEditorMcp
 
                 if (pipe == null)
                 {
-                    // 失敗が続く間ずっと同じ記録を積むと、ローテーションで有用な履歴が押し流される。
                     if (consecutivePrepareFailures == 0)
                     {
                         _log.WriteException("待受の準備に失敗した。解けるまで繰り返し試みる。", prepareFailure);
@@ -267,7 +250,6 @@ namespace PmxEditorMcp
 
                     consecutivePrepareFailures++;
 
-                    // 直ちに再試行すると失敗が続く間ずっと回り続けるため、間を置いてから次の反復へ戻る。
                     Thread.Sleep(RetryDelayMs);
                     continue;
                 }
@@ -293,16 +275,12 @@ namespace PmxEditorMcp
                 generation.NoteConnected();
                 _log.Write("接続を受けた: " + _pipeName);
 
-                // この接続の処理は別のスレッドへ渡し、待受はすぐ次のインスタンスへ戻る。待たせると、
-                // 2本目の接続が1本目の終わりまで開けない。
                 NamedPipeServerStream accepted = pipe;
                 Thread worker = null;
                 worker = new Thread(() => Serve(generation, accepted, worker));
                 worker.IsBackground = true;
                 worker.Name = "pmx-editor-mcp-connection";
 
-                // 覚えてから走らせる。走らせてから覚えると、覚える前に終わったスレッドを
-                // 消し忘れて、止まり切ったあとも停止処理中に見える。
                 generation.AddWorker(worker);
                 worker.Start();
             }
@@ -334,8 +312,6 @@ namespace PmxEditorMcp
         {
             if (generation.IsStopRequested)
             {
-                // 停止手順がパイプを閉じたことによる解除で、異常ではない。
-                // 待受中の解除と接続中の解除のどちらもここへ来る。
                 _log.Write("停止により中断した: " + _pipeName);
                 return;
             }
@@ -356,7 +332,6 @@ namespace PmxEditorMcp
             }
             catch (Exception)
             {
-                // 閉じ済みのインスタンスを閉じても害はない。
             }
         }
 

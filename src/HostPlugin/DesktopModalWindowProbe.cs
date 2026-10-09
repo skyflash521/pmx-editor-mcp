@@ -7,8 +7,8 @@ using System.Text;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// このプロセスが出しているウィンドウを数え上げて、人の応答を待つ表示を探す。ウィンドウの文字列を得るのは
-    /// そのウィンドウのスレッドへの要求なので、待つ長さに上限を置く。
+    /// このプロセスが出しているウィンドウを数え上げて、人の応答を待つ表示を探す。ウィンドウの文字列を
+    /// 得るのは、そのウィンドウのスレッドへの要求である。
     /// </summary>
     public sealed class DesktopModalWindowProbe : IModalWindowProbe
     {
@@ -18,7 +18,6 @@ namespace PmxEditorMcp
 
         private delegate bool WindowVisitor(IntPtr window, IntPtr state);
 
-        /// <summary>ウィンドウの文字列を得るのに待つ長さの上限を与えて生成する。</summary>
         public DesktopModalWindowProbe(TimeSpan textLimit)
         {
             if (textLimit <= TimeSpan.Zero)
@@ -66,8 +65,6 @@ namespace PmxEditorMcp
                         IntPtr.Zero);
                     foreach (IntPtr window in windows)
                     {
-                        // 文字列の取得は同じプロセスのウィンドウへ要求を送るので、送る先を、持ち主を
-                        // 使用不可にしている可視のウィンドウだけに絞る。
                         IntPtr owner = GetWindow(window, GetWindowOwner);
                         bool holdsOwner = owner != IntPtr.Zero && !IsWindowEnabled(owner);
                         bool visible = IsWindowVisible(window);
@@ -195,7 +192,6 @@ namespace PmxEditorMcp
         [DllImport("user32.dll")]
         private static extern bool IsWindowEnabled(IntPtr window);
 
-        /// <summary>文字列を得る要求。</summary>
         private const uint GetTextMessage = 0x000D;
 
         /// <summary>応答しないウィンドウでは待たずに戻る。</summary>

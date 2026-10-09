@@ -5,11 +5,9 @@ using System.Linq;
 
 namespace PmxEditorMcp
 {
-    /// <summary>要素の集合の指し方。</summary>
     [Flags]
     public enum TargetForm
     {
-        /// <summary>どれも指していない。</summary>
         None = 0,
 
         /// <summary>位置の整数の配列。</summary>
@@ -30,9 +28,7 @@ namespace PmxEditorMcp
         Numbered = 32,
     }
 
-    /// <summary>
-    /// 1つの集合を指す項目の名前。指す対象ごとに名前を分けるので、解く集合に合わせてこれを渡す。
-    /// </summary>
+    /// <summary>1つの集合を指す項目の名前。解く集合に合わせてこれを渡す。</summary>
     public sealed class TargetNames
     {
         public TargetNames(
@@ -71,11 +67,9 @@ namespace PmxEditorMcp
             Numbered = numbered;
         }
 
-        /// <summary>対象そのものの集合を指す名前。</summary>
         public static TargetNames Element { get; } =
             new TargetNames("indices", "range", "all", "handles", "selected", "modelIndices");
 
-        /// <summary>親の集合を指す名前。</summary>
         public static TargetNames Parent { get; } =
             new TargetNames("parentIndices", "parentRange", "parentAll", "parentHandles");
 
@@ -135,7 +129,6 @@ namespace PmxEditorMcp
         public IList<int> Numbered { get; }
     }
 
-    /// <summary>解決した集合。</summary>
     public sealed class ResolvedTargets
     {
         public ResolvedTargets(TargetForm form, IList<int> indices, IList<long> handles)
@@ -145,7 +138,6 @@ namespace PmxEditorMcp
             Handles = handles;
         }
 
-        /// <summary>どの指し方で解決したか。</summary>
         public TargetForm Form { get; }
 
         /// <summary>位置で解決した対象。ハンドルで解決したときは null。</summary>
@@ -154,7 +146,6 @@ namespace PmxEditorMcp
         /// <summary>ハンドルで解決した対象。位置で解決したときは null。</summary>
         public IList<long> Handles { get; }
 
-        /// <summary>対象の件数。</summary>
         public int Count
         {
             get { return Indices != null ? Indices.Count : Handles.Count; }
@@ -163,7 +154,7 @@ namespace PmxEditorMcp
 
     /// <summary>
     /// 要素の集合の指定を、順序の付いた対象へ解く。解けなかったときは、返すエラーコードと説明を
-    /// 添えて断る。解決をここに集めるのは、どのツールでも同じ順序と同じ断り方にするためである。
+    /// 添えて断る。
     /// </summary>
     public static class TargetSelection
     {
@@ -264,7 +255,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>その指定が何かを指しているか。</summary>
         public static bool Points(TargetRequest request)
         {
             if (request == null)

@@ -63,41 +63,32 @@ namespace PmxEditorMcp
         private ResidentConnection _resident;
         private ModelUpdateWatch _modelUpdates;
 
-        /// <summary>起動時実行とメニュー登録を有効にして生成する。</summary>
         public PmxEditorMcpPlugin()
             : base()
         {
             m_option = new PEPluginOption(true, true, MenuText);
         }
 
-        /// <summary>プラグイン名。</summary>
         public override string Name
         {
             get { return "PmxEditorMcp"; }
         }
 
-        /// <summary>バージョン。ホストDLLのアセンブリバージョンを用いる。</summary>
         public override string Version
         {
             get { return HostVersion; }
         }
 
-        /// <summary>説明。</summary>
         public override string Description
         {
             get { return "MCPクライアントからPMXエディタを操作するための常駐ホスト。"; }
         }
 
-        /// <summary>
-        /// 読み込まれているSDKのアセンブリバージョン文字列。型そのものの所属を見るだけで、
-        /// メンバーを名前で引かない。
-        /// </summary>
         internal static string SdkVersion
         {
             get { return typeof(IPEPlugin).Assembly.GetName().Version.ToString(); }
         }
 
-        /// <summary>ホストDLLのアセンブリバージョン文字列。</summary>
         internal static string HostVersion
         {
             get { return typeof(PmxEditorMcpPlugin).Assembly.GetName().Version.ToString(); }
@@ -114,8 +105,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 実行の中身を受け取って呼ぶ入口。例外はどちらの中身から出ても外へ出さず、
-        /// <paramref name="log"/> が返す記録へ書く。記録を引くのは捕らえた後である——記録は
-        /// 実行の途中で作られるので、呼ぶ前に引くと、その回に作られたものへ書けない。
+        /// <paramref name="log"/> が返す記録へ書く。記録を引くのは捕らえた後である。
         /// </summary>
         internal static void Run(
             IPERunArgs args, Action<IPERunArgs> bootup, Action status, Func<HostLog> log)
@@ -141,10 +131,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>
-        /// ホストの停止手順を実行し、不可視フォームを破棄してから基底の後始末へ進む。
-        /// IPCサーバースレッドは背景スレッドなので、残っていてもプロセス終了で回収される。
-        /// </summary>
         public override void Dispose()
         {
             try
@@ -205,13 +191,12 @@ namespace PmxEditorMcp
                 HostTables tables = HostTables.Start();
                 _uiAnchor = new HostSwitchForm(HostSwitch.ReadFromEnvironment(), StopByMessage, StartByMessage);
 
-                // 表示しないフォームはハンドルを持たず Invoke できないため、ここで確保する。
+                // 表示しないフォームはハンドルを持たず、Invoke できない。
                 _ = _uiAnchor.Handle;
 
                 ResponseBudget budget = ResponseBudget.ReadFromEnvironment();
                 HoldResidentConnection(args);
 
-                // 基盤メソッドは接続が受け持つので、ここへはツールだけを載せる。
                 McpMethodTable methods = new McpMethodTable();
                 UndoSuppression undo = new UndoSuppression(_log);
                 SdkRelayTable relay = tables.Relay;
@@ -364,7 +349,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 接続の根を常駐保持し、Cプラグイン連携のコネクタを先に得て、モデルの更新を数え始める。要求を受ける前に
-        /// 済ませる。コネクタを得られなくても、数え始められなくても根は保ち、待受も続けるので、失敗は記録にとどめる。
+        /// 済ませる。コネクタを得られなくても、数え始められなくても根は保ち、待受も続ける。
         /// </summary>
         private void HoldResidentConnection(IPERunArgs args)
         {
@@ -501,7 +486,6 @@ namespace PmxEditorMcp
                         break;
 
                     default:
-                        // 開始できない状態では問いを出さず、なぜ開始できないかを状態表示の本文に含める。
                         ShowStatusMessage(host);
                         break;
                 }

@@ -9,14 +9,12 @@ namespace PmxEditorMcp
     [Flags]
     public enum ScreenNeeds
     {
-        /// <summary>どれも要らない。</summary>
         None = 0,
 
         View = 1,
 
         Form = 2,
 
-        /// <summary>現在のPMXの複製。</summary>
         Pmx = 4,
 
         Parts = 8,
@@ -46,16 +44,14 @@ namespace PmxEditorMcp
 
         public object Parts { get; }
 
-        /// <summary>いま相手にするPMX。</summary>
         public object Pmx { get; }
 
         public object Setting { get; }
     }
 
     /// <summary>
-    /// 画面とリストへ触る組み立てのツールを、UIスレッドの上で呼ぶ枠。画面の選択と表示は取り消しの
-    /// 対象にならないので、まとめての反映も取り消しの抑止もここは通さない。画面が指している相手は
-    /// 現在のモデルだけなので、どのPMXを相手にするかの指定も受け取らない。
+    /// 画面とリストへ触る組み立てのツールを、UIスレッドの上で呼ぶ枠。まとめての反映も取り消しの
+    /// 抑止も通さず、どのPMXを相手にするかの指定も受け取らない。
     /// </summary>
     public sealed class ComposedScreen
     {
