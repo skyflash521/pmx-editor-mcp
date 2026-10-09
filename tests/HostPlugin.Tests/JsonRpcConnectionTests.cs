@@ -163,6 +163,23 @@ namespace PmxEditorMcp.Tests
                 StubClientProcess.Opener(LivingClientId));
         }
 
+        private JsonRpcConnection CreateConnection(
+            McpMethodTable methods, TimeSpan requestTimeout, int maxMessageBytes, Func<TimeSpan> clock)
+        {
+            return new JsonRpcConnection(
+                _log,
+                methods,
+                HostVersion,
+                BudgetChars,
+                requestTimeout,
+                maxMessageBytes,
+                StubClientProcess.Opener(LivingClientId),
+                new SdkRelayTable(
+                    string.Empty, string.Empty, new Dictionary<string, SdkCall>(), new string[0]),
+                string.Empty,
+                clock: clock);
+        }
+
         /// <summary>書かれたログ。1行も書かれていなければファイルごと無いので空とする。</summary>
         private string WrittenLog()
         {
@@ -868,7 +885,7 @@ namespace PmxEditorMcp.Tests
                 });
 
                 JsonRpcConnection connection = CreateConnection(
-                    methods, TimeSpan.FromMilliseconds(200), MessageChannel.DefaultMaxMessageBytes);
+                    methods, TimeSpan.FromMilliseconds(200), MessageChannel.DefaultMaxMessageBytes, () => TimeSpan.Zero);
 
                 Thread worker = new Thread(() => connection.Handle(stream, new InlineInvoker()));
                 worker.IsBackground = true;
@@ -910,7 +927,7 @@ namespace PmxEditorMcp.Tests
                 });
 
                 JsonRpcConnection connection = CreateConnection(
-                    methods, TimeSpan.FromMilliseconds(200), MessageChannel.DefaultMaxMessageBytes);
+                    methods, TimeSpan.FromMilliseconds(200), MessageChannel.DefaultMaxMessageBytes, () => TimeSpan.Zero);
 
                 Thread worker = new Thread(() => connection.Handle(stream, new InlineInvoker()));
                 worker.IsBackground = true;
@@ -995,7 +1012,7 @@ namespace PmxEditorMcp.Tests
                 stream.FailWritesAfter(1);
 
                 JsonRpcConnection connection = CreateConnection(
-                    methods, TimeSpan.FromMilliseconds(200), MessageChannel.DefaultMaxMessageBytes);
+                    methods, TimeSpan.FromMilliseconds(200), MessageChannel.DefaultMaxMessageBytes, () => TimeSpan.Zero);
 
                 Thread worker = new Thread(() =>
                 {

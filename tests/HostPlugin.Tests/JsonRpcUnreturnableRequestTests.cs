@@ -58,13 +58,17 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ARequestThatWaitedPastTheTimeLimitIsAnsweredAndNeverRun()
         {
+            SteppingClock clock = new SteppingClock(TimeSpan.FromMilliseconds(100));
             using (ManualResetEventSlim started = new ManualResetEventSlim())
             using (ManualResetEventSlim release = new ManualResetEventSlim())
             using (ExchangeStream holder = new ExchangeStream(Lines(Handshake(), Request(2, "hold"))))
             using (ExchangeStream waiter = new ExchangeStream(Lines(Handshake(), Request(2, "edit"))))
             {
                 JsonRpcConnection connection = Connection(
-                    Methods(started, release), TimeSpan.FromMilliseconds(300));
+                    Methods(started, release),
+                    TimeSpan.FromMilliseconds(300),
+                    clock.Read,
+                    JsonRpcConnection.DefaultGatePollInterval);
 
                 Thread holding = Serve(connection, holder);
                 Thread waiting = null;
@@ -72,6 +76,7 @@ namespace PmxEditorMcp.Tests
                 try
                 {
                     Assert.True(started.Wait(WaitLimit), "錠を持つ処理が始まらない。");
+                    clock.Start();
                     waiting = Serve(connection, waiter);
 
                     answeredWhileHeld = waiter.WaitForMessages(2, TimeSpan.FromSeconds(2));
