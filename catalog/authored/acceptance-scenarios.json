@@ -640,7 +640,7 @@
     },
     {
       "id": 3,
-      "title": "編集と取り消し",
+      "title": "編集と元に戻す",
       "steps": [
         {
           "kind": "tool",
@@ -5652,7 +5652,7 @@
               0
             ],
             "value": {
-              "name": "骨A"
+              "name": "ボーンA"
             }
           },
           "expect": {
@@ -5673,7 +5673,7 @@
               1
             ],
             "value": {
-              "name": "骨B"
+              "name": "ボーンB"
             }
           },
           "expect": {
@@ -5694,7 +5694,7 @@
               2
             ],
             "value": {
-              "name": "骨C"
+              "name": "ボーンC"
             }
           },
           "expect": {
@@ -5749,15 +5749,15 @@
               },
               {
                 "path": "items.0.name",
-                "equals": "骨C"
+                "equals": "ボーンC"
               },
               {
                 "path": "items.1.name",
-                "equals": "骨A"
+                "equals": "ボーンA"
               },
               {
                 "path": "items.2.name",
-                "equals": "骨B"
+                "equals": "ボーンB"
               }
             ]
           }
@@ -5799,11 +5799,11 @@
               },
               {
                 "path": "items.0.name",
-                "equals": "骨A"
+                "equals": "ボーンA"
               },
               {
                 "path": "items.1.name",
-                "equals": "骨B"
+                "equals": "ボーンB"
               }
             ]
           }
@@ -5840,15 +5840,15 @@
               },
               {
                 "path": "items.0.name",
-                "equals": "骨C"
+                "equals": "ボーンC"
               },
               {
                 "path": "items.1.name",
-                "equals": "骨A"
+                "equals": "ボーンA"
               },
               {
                 "path": "items.2.name",
-                "equals": "骨B"
+                "equals": "ボーンB"
               }
             ]
           }
@@ -5885,15 +5885,15 @@
               },
               {
                 "path": "items.0.name",
-                "equals": "骨A"
+                "equals": "ボーンA"
               },
               {
                 "path": "items.1.name",
-                "equals": "骨B"
+                "equals": "ボーンB"
               },
               {
                 "path": "items.2.name",
-                "equals": "骨C"
+                "equals": "ボーンC"
               }
             ]
           }
@@ -7964,7 +7964,7 @@
     },
     {
       "id": 13,
-      "title": "1回で済む骨と物理と枠とモーフの編集",
+      "title": "1回で済むボーンと物理と枠とモーフの編集",
       "steps": [
         {
           "kind": "tool",
@@ -9847,7 +9847,7 @@
               }
             ],
             "args": {
-              "name": "骨",
+              "name": "ボーン",
               "pos": [
                 0,
                 0,
@@ -9874,7 +9874,7 @@
               }
             ],
             "args": {
-              "name": "外す骨",
+              "name": "外すボーン",
               "pos": [
                 0,
                 0,
@@ -11967,7 +11967,7 @@
               }
             ],
             "args": {
-              "name": "よその骨",
+              "name": "よそのボーン",
               "pos": [
                 0,
                 0,
@@ -12099,9 +12099,9 @@
               {
                 "path": "0.items",
                 "equals": [
-                  "骨",
-                  "外す骨",
-                  "よその骨"
+                  "ボーン",
+                  "外すボーン",
+                  "よそのボーン"
                 ]
               }
             ]
@@ -12435,7 +12435,7 @@
               {
                 "path": "0.items",
                 "equals": [
-                  "骨"
+                  "ボーン"
                 ]
               }
             ]

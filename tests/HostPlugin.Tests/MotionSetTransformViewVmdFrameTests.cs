@@ -322,7 +322,7 @@ namespace PmxEditorMcp.Tests
         {
             PoseVmd vmd = new PoseVmd();
             vmd.BoneNames[0] = "センター";
-            vmd.BoneNames[1] = "モデルに無い骨";
+            vmd.BoneNames[1] = "モデルに無いボーン";
             vmd.MorphNames[0] = "笑い";
             vmd.MorphNames[1] = "モデルに無い表情";
             vmd.Bone.Add(new PoseBoneKey { BoneIndex = 0, FrameIndex = 0 });
@@ -453,7 +453,7 @@ namespace PmxEditorMcp.Tests
         public void TheSdkSourceGivesNothingForAMotionWhoseNamesAreNotWanted()
         {
             PoseVmd vmd = new PoseVmd();
-            vmd.BoneNames[0] = "別の骨";
+            vmd.BoneNames[0] = "別のボーン";
             vmd.Bone.Add(new PoseBoneKey { BoneIndex = 0, FrameIndex = 0 });
 
             PoseRead read = new SdkVmdPoseSource().Read(

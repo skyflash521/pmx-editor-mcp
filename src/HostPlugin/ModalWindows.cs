@@ -29,7 +29,7 @@ namespace PmxEditorMcp
 
     /// <summary>
     /// 人の応答を待つ表示をウィンドウの一覧から見分ける。当たりとするのは、持ち主のウィンドウを使用不可にしている
-    /// 可視のウィンドウで、ウィンドウの種類は問わない。
+    /// 表示されているウィンドウで、ウィンドウの種類は問わない。
     /// </summary>
     public static class ModalWindows
     {

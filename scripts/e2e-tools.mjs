@@ -80,7 +80,7 @@ function motion() {
     return Buffer.concat([head, named, counts, key]);
 }
 
-/** 読み込む中身が要るツールへ渡すポーズ。持つ骨を0件にしてあり、開いているモデルの骨の名前に依らない。 */
+/** 読み込む中身が要るツールへ渡すポーズ。持つボーンを0件にしてあり、開いているモデルのボーンの名前に依らない。 */
 const POSE = [
     "Vocaloid Pose Data file",
     "",

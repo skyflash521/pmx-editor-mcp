@@ -273,8 +273,8 @@ namespace PmxEditorMcp
         }
 
         /// <returns>
-        /// 座標と、座標に従う SDEF の中心を除いて同じ頂点なら真。ボーンは並びの中の位置で見る。重みを持つ枠のボーンと重みの組は
-        /// 枠の並びを問わずに比べる。そのうえで、ボーン・重み・変形方式・SDEFの参照点を、エディタが
+        /// 座標と、座標に従う SDEF の中心を除いて同じ頂点なら真。ボーンは並びの中の位置で見る。ウェイトを持つ枠のボーンとウェイトの組は
+        /// 枠の並びを問わずに比べる。そのうえで、ボーン・ウェイト・変形方式・SDEFの参照点を、エディタが
         /// 反映のたびにかける正規化を両方へかけてから比べる。
         /// </returns>
         private static bool Alike(
@@ -300,7 +300,7 @@ namespace PmxEditorMcp
                 && Same(based.UVA4, vertex.UVA4);
         }
 
-        /// <returns>重みを持つ枠の、ボーンの位置と重みの組を並べたもの。ボーンを指さない枠の位置は -1。</returns>
+        /// <returns>ウェイトを持つ枠の、ボーンの位置とウェイトの組を並べたもの。ボーンを指さない枠の位置は -1。</returns>
         private static IList<KeyValuePair<int, float>> Weighted(
             IPXVertex vertex, IDictionary<IPXBone, int> bones)
         {
@@ -333,7 +333,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 頂点のボーン・重み・変形方式・SDEFの参照点に、エディタが反映のたびにかける正規化
+        /// 頂点のボーン・ウェイト・変形方式・SDEFの参照点に、エディタが反映のたびにかける正規化
         /// (PmxVertex.NormalizeWeight)をかけたもの。ボーンは並びの中の位置で持ち、指さない枠は -1。
         /// </summary>
         private sealed class Weights
@@ -363,7 +363,7 @@ namespace PmxEditorMcp
                 Qdef,
             }
 
-            /// <returns>重みを持つ枠が並びに居ないボーンを指していれば null。</returns>
+            /// <returns>ウェイトを持つ枠が並びに居ないボーンを指していれば null。</returns>
             public static Weights Normalized(IPXVertex vertex, IDictionary<IPXBone, int> bones)
             {
                 IPXBone[] held = { vertex.Bone1, vertex.Bone2, vertex.Bone3, vertex.Bone4 };
@@ -423,7 +423,7 @@ namespace PmxEditorMcp
                 }
                 else
                 {
-                    Order();
+                    OrderByMagnitude();
                 }
 
                 _deform = Settled();
@@ -468,8 +468,7 @@ namespace PmxEditorMcp
                 _deform = Settled();
             }
 
-            /// <summary>重みの絶対値の大きい順。同じ重みの枠は元の並びを保つ。</summary>
-            private void Order()
+            private void OrderByMagnitude()
             {
                 for (int slot = 1; slot < Slots; slot++)
                 {

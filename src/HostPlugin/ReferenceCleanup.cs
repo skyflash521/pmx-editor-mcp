@@ -344,7 +344,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 並びに居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。同じボーンが重なったら
-        /// 重みを足してまとめる。直した頂点の数を返す。
+        /// ウェイトを足してまとめる。直した頂点の数を返す。
         /// </summary>
         public static int RepairWeights(object pmx, IEnumerable<IPXVertex> vertices)
         {
@@ -365,7 +365,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// <paramref name="bones"/> に居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。
-        /// 同じボーンが重なったら重みを足してまとめる。直した頂点の数を返す。
+        /// 同じボーンが重なったらウェイトを足してまとめる。直した頂点の数を返す。
         /// </summary>
         public static int RepairWeights(
             object pmx, ISet<object> bones, IEnumerable<IPXVertex> vertices)

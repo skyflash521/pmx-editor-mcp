@@ -33,7 +33,7 @@ namespace PmxEditorMcp
                 { "SetSelectedFaceIndices", One("indices", "面の数", Source.Face) },
                 { "SetSelectedBoneIndices", One("indices", "ボーンの数", Source.Bone) },
                 { "SetSelectedBodyIndices", One("indices", "剛体の数", Source.Body) },
-                { "SetSelectedJointIndices", One("indices", "ジョイントの数", Source.Joint) },
+                { "SetSelectedJointIndices", One("indices", "Jointの数", Source.Joint) },
                 { "SetVertexMemory", One("indices", "頂点の数", Source.Vertex) },
                 { "UpdateModel_Material", One("index", "材質の数", Source.Material) },
             };

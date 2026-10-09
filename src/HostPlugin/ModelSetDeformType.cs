@@ -200,7 +200,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>SDEFの3つの点を、2つのボーンの位置とその重みから決め直す。</summary>
         private static void Centre(IPXVertex vertex)
         {
             vertex.SDEF_C = Vectors.Add(

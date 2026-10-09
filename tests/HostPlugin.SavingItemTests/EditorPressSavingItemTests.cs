@@ -774,7 +774,7 @@ namespace PmxEditorMcp.Tests
             return fixture.Call(EditorPressSavingItem.ToolName, ComposedScreenFixture.Arguments(given.ToArray()));
         }
 
-        /// <summary>保存のダイアログを持ち主なしで出し、選ばれた名前を返す。取り消されたら null。</summary>
+        /// <summary>保存のダイアログを持ち主なしで出し、選ばれた名前を返す。キャンセルされたら null。</summary>
         private static string Chosen()
         {
             using (SaveFileDialog dialog = new SaveFileDialog { Filter = "すべて(*.*)|*.*", InitialDirectory = DialogStartFolder.Path })

@@ -1277,7 +1277,7 @@ namespace PmxEditorMcp.Tests
         public void TakingTheWeightFromTheNearestBoneForManyVerticesFinishesInTime()
         {
             IList<IPXBone> bones = Bones(
-                Enumerable.Range(0, ManyBones).Select(at => "骨" + at).ToArray());
+                Enumerable.Range(0, ManyBones).Select(at => "ボーン" + at).ToArray());
             for (int at = 0; at < ManyBones; at++)
             {
                 ((FakeBone)NowAll(bones)[at]).Position = new V3(at, 0f, 0f);
@@ -1325,7 +1325,6 @@ namespace PmxEditorMcp.Tests
             return made;
         }
 
-        /// <summary>3つのボーンへ重みを振った頂点。</summary>
         private FakeVertex Spread(IList<IPXBone> bones, float first, float second, float third)
         {
             FakeVertex vertex = Vertex(0f, 0f, 0f);
@@ -1346,7 +1345,7 @@ namespace PmxEditorMcp.Tests
         }
 
         /// <summary>
-        /// その頂点がそのボーンへ振っている重み。振っていなければ0。頂点もボーンも、いまのモデルで
+        /// その頂点がそのボーンへ振っているウェイト。振っていなければ0。頂点もボーンも、いまのモデルで
         /// 同じ位置に並んでいるものを読む。
         /// </summary>
         private float Share(IPXVertex given, IPXBone weighed)

@@ -906,7 +906,7 @@ namespace PmxEditorMcp.Tests
             vertex.Weight1 = 1f;
         }
 
-        /// <summary>その頂点がそのボーンへ振っている重みの合計。振っていなければ0。</summary>
+        /// <summary>その頂点がそのボーンへ振っているウェイトの合計。振っていなければ0。</summary>
         private float Share(IPXVertex given, IPXBone weighed)
         {
             IPXVertex now = Now(given);

@@ -437,10 +437,10 @@ $PipeDirectory = "\\.\pipe\"
 # プラグインのメニュー文言。状態表示の表題にも同じ文言が出る。
 $PluginName = "PMX Editor MCP"
 
-# 編集メニューの中で1回分の取り消しを起こす項目の名前。実機の編集メニューが持つ綴りである。
+# 編集メニューの中で1回分の元に戻す操作を起こす項目の名前。実機の編集メニューが持つ綴りである。
 $UndoItemName = "元に戻す(U)"
 
-# 取り消した分をやり直す項目の名前。取り消しが1回起きていれば、この項目は使える。
+# 元に戻した分をやり直す項目の名前。元に戻す操作が1回起きていれば、この項目は使える。
 $RedoItemName = "やり直し(R)"
 
 # 状態表示のウィンドウクラス。標準のメッセージボックスのもの。
@@ -470,9 +470,9 @@ $ViewTitles = @{ pmx = "PmxView"; transform = "TransformView"; sub = "SubView" }
 
 # ビューの名前から、そのビューの表示と非表示を切り替えるキーへ。Host はそのキーを受け取るウィンドウの
 # ビューの名前で、Key はそのキーの仮想キーコードである。ここに無いビューは開く操作を持たない
-# ——PMXビューはエディタが自分で出す。
+# ——PmxViewはエディタが自分で出す。
 #
-# キーはPMXビューの表示メニューが項目ごとに持つショートカットキーで、変形ビューは F9、
+# キーはPmxViewの表示メニューが項目ごとに持つショートカットキーで、変形ビューは F9、
 # サブビューは F8 である。
 $ViewOpeners = @{
     transform = @{ Host = "pmx"; Key = 0x78 }
@@ -1186,7 +1186,7 @@ function Get-MenuItem {
 function Invoke-UndoOnce {
     <#
         .SYNOPSIS
-        編集メニューから1回分の取り消しを起こす。プラグインの項目を押すのと同じ経路を通るが、
+        編集メニューから1回分の元に戻す操作を起こす。プラグインの項目を押すのと同じ経路を通るが、
         押した先に表示は出ないので、待つのは項目が辿れるようになるところまでである。
     #>
     param([int]$OwnerProcessId, $Deadline)
@@ -1200,7 +1200,7 @@ function Invoke-UndoOnce {
 
         $target = Get-MenuItem -Menu $edit -Name $UndoItemName -Deadline $deadline
         if (-not $target.Current.IsEnabled) {
-            throw "取り消せる編集が無い: プロセスID $OwnerProcessId"
+            throw "元に戻せる編集が無い: プロセスID $OwnerProcessId"
         }
 
         $redo = Get-MenuItem -Menu $edit -Name $RedoItemName -Deadline $deadline
@@ -1208,18 +1208,18 @@ function Invoke-UndoOnce {
         Invoke-Element -Element $target
 
         # やり直しは2回目以降すでに使えていて、メニューの項目の使用可否もウィンドウのタイトルも、
-        # 取り消しのたびには変わらない。ここで確かめられるのは「押せて、やり直せる編集が在る」
-        # ところまでで、取り消しが何を戻したかは、呼び出し側が編集の中身で確かめる。
+        # 元に戻すたびには変わらない。ここで確かめられるのは「押せて、やり直せる編集が在る」
+        # ところまでで、元に戻す操作が何を戻したかは、呼び出し側が編集の中身で確かめる。
         $process = Get-EditorProcess -OwnerProcessId $OwnerProcessId
         $remaining = [int]($deadline - (Get-Date)).TotalMilliseconds
         if ($remaining -le 0 -or -not $process.WaitForInputIdle($remaining)) {
             throw "エディタが入力待ちへ戻らなかった: プロセスID $OwnerProcessId"
         }
 
-        # 取り消しが1回起きていれば、やり直せる編集が在る。
+        # 元に戻す操作が1回起きていれば、やり直せる編集が在る。
         while (-not $redo.Current.IsEnabled) {
             if ((Get-Date) -ge $deadline) {
-                throw "取り消しが起きなかった: プロセスID $OwnerProcessId"
+                throw "元に戻す操作が起きなかった: プロセスID $OwnerProcessId"
             }
 
             Wait-Interval -Deadline $deadline
@@ -1572,7 +1572,7 @@ switch ($Action) {
                 throw
             }
 
-            # 応答しないまま閉じる要求を送り直すと、確認は取り消され、次の要求がまた確認を出す。
+            # 応答しないまま閉じる要求を送り直すと、確認はキャンセルされ、次の要求がまた確認を出す。
             $cleared = Clear-EditorDialogs -OwnerProcessId $ProcessId `
                 -Ids $IdsThatLetTheEditorClose
             $standing = @($cleared.Left)

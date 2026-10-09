@@ -127,7 +127,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(3.5f, NowAll(_vertices)[5].Position.Y);
         }
 
-        /// <summary>頂点のボーンと重みの組を、比べられる文字列にする。</summary>
         private static string Weights(IPXVertex vertex)
         {
             return string.Join(

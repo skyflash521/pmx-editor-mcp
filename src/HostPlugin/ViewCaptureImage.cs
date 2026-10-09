@@ -10,7 +10,6 @@ using PEPlugin.View;
 
 namespace PmxEditorMcp
 {
-    /// <summary>指した視点からPMXビューの画像を撮るツール。</summary>
     public static class ViewCaptureImage
     {
         public const string ToolName = "view_capture_image";
@@ -132,7 +131,7 @@ namespace PmxEditorMcp
             if (shot == null)
             {
                 return ComposedEditResult.Refuse(
-                    ToolEnvelope.OperationFailed, "エディタがPMXビューの画像を撮れなかった。");
+                    ToolEnvelope.OperationFailed, "エディタがPmxViewの画像を撮れなかった。");
             }
 
             object json;

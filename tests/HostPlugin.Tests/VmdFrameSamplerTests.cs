@@ -14,9 +14,9 @@ namespace PmxEditorMcp.Tests
         public void AFrameBetweenTwoKeysOnTheLinearCurveIsMixedInProportion()
         {
             BonePoseValue pose = VmdFrameSampler.Bone(
-                "骨", new[] { Key(0, 0f, 0f, 0f), Key(30, 30f, -60f, 90f) }, 10);
+                "ボーン", new[] { Key(0, 0f, 0f, 0f), Key(30, 30f, -60f, 90f) }, 10);
 
-            Assert.Equal("骨", pose.Name);
+            Assert.Equal("ボーン", pose.Name);
             Assert.Equal(10f, pose.Translation[0], 4);
             Assert.Equal(-20f, pose.Translation[1], 4);
             Assert.Equal(30f, pose.Translation[2], 4);
@@ -26,7 +26,7 @@ namespace PmxEditorMcp.Tests
         public void AFrameOnAKeyTakesTheValueOfThatKey()
         {
             BonePoseValue pose = VmdFrameSampler.Bone(
-                "骨", new[] { Key(0, 0f, 0f, 0f), Key(30, 30f, 0f, 0f), Key(60, 90f, 0f, 0f) }, 30);
+                "ボーン", new[] { Key(0, 0f, 0f, 0f), Key(30, 30f, 0f, 0f), Key(60, 90f, 0f, 0f) }, 30);
 
             Assert.Equal(30f, pose.Translation[0]);
         }
@@ -34,7 +34,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void AFrameBeforeTheFirstKeyIsMixedFromTheInitialStateAtFrameZero()
         {
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { Key(10, 5f, 6f, 7f), Key(20, 50f, 0f, 0f) }, 4);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { Key(10, 5f, 6f, 7f), Key(20, 50f, 0f, 0f) }, 4);
 
             Assert.Equal(2f, pose.Translation[0], 4);
             Assert.Equal(2.4f, pose.Translation[1], 4);
@@ -44,7 +44,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void FrameZeroWithoutAKeyIsTheInitialState()
         {
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { Key(10, 5f, 6f, 7f) }, 0);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { Key(10, 5f, 6f, 7f) }, 0);
 
             Assert.Equal(new[] { 0f, 0f, 0f }, pose.Translation);
             Assert.Equal(new[] { 0f, 0f, 0f, 1f }, pose.Rotation);
@@ -64,7 +64,7 @@ namespace PmxEditorMcp.Tests
                 IplCurve.Linear,
                 eased);
 
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { first }, 2);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { first }, 2);
 
             double angle = (Math.PI / 2) * EasedAtOneFifth;
             Assert.Equal(Math.Sin(angle / 2), pose.Rotation[1], 3);
@@ -74,7 +74,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void AFrameAfterTheLastKeyTakesTheValueOfTheLastKey()
         {
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { Key(0, 0f, 0f, 0f), Key(20, 50f, 0f, 0f) }, 3713);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { Key(0, 0f, 0f, 0f), Key(20, 50f, 0f, 0f) }, 3713);
 
             Assert.Equal(50f, pose.Translation[0]);
         }
@@ -83,7 +83,7 @@ namespace PmxEditorMcp.Tests
         public void KeysListedInFrameOrderAreMixedInProportion()
         {
             BonePoseValue pose = VmdFrameSampler.Bone(
-                "骨", new[] { Key(0, 0f, 0f, 0f), Key(60, 90f, 0f, 0f), Key(30, 30f, 0f, 0f) }, 45);
+                "ボーン", new[] { Key(0, 0f, 0f, 0f), Key(60, 90f, 0f, 0f), Key(30, 30f, 0f, 0f) }, 45);
 
             Assert.Equal(60f, pose.Translation[0], 4);
         }
@@ -92,9 +92,9 @@ namespace PmxEditorMcp.Tests
         public void AKeyAtFrameZeroListedAfterAnotherKeyLeavesTheFirstListedKeyHeldOverTheSpanBeforeIt()
         {
             BonePoseValue pose = VmdFrameSampler.Bone(
-                "骨", new[] { Key(60, 90f, 0f, 0f), Key(0, 0f, 0f, 0f), Key(30, 30f, 0f, 0f) }, 45);
+                "ボーン", new[] { Key(60, 90f, 0f, 0f), Key(0, 0f, 0f, 0f), Key(30, 30f, 0f, 0f) }, 45);
             BonePoseValue later = VmdFrameSampler.Bone(
-                "骨", new[] { Key(60, 90f, 0f, 0f), Key(0, 0f, 0f, 0f), Key(30, 30f, 0f, 0f) }, 15);
+                "ボーン", new[] { Key(60, 90f, 0f, 0f), Key(0, 0f, 0f, 0f), Key(30, 30f, 0f, 0f) }, 15);
 
             Assert.Equal(90f, pose.Translation[0], 4);
             Assert.Equal(15f, later.Translation[0], 4);
@@ -112,8 +112,8 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void OfKeysOnTheSameFrameTheLaterOneInTheListIsUsed()
         {
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { Key(5, 1f, 0f, 0f), Key(5, 2f, 0f, 0f) }, 5);
-            BonePoseValue after = VmdFrameSampler.Bone("骨", new[] { Key(5, 1f, 0f, 0f), Key(5, 2f, 0f, 0f) }, 9);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { Key(5, 1f, 0f, 0f), Key(5, 2f, 0f, 0f) }, 5);
+            BonePoseValue after = VmdFrameSampler.Bone("ボーン", new[] { Key(5, 1f, 0f, 0f), Key(5, 2f, 0f, 0f) }, 9);
 
             Assert.Equal(2f, pose.Translation[0]);
             Assert.Equal(2f, after.Translation[0]);
@@ -122,7 +122,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void NoKeysGiveNoPose()
         {
-            Assert.Null(VmdFrameSampler.Bone("骨", new BoneKeySample[0], 0));
+            Assert.Null(VmdFrameSampler.Bone("ボーン", new BoneKeySample[0], 0));
             Assert.Null(VmdFrameSampler.Morph("表情", new MorphKeySample[0], 0));
         }
 
@@ -135,7 +135,7 @@ namespace PmxEditorMcp.Tests
             BoneKeySample last = new BoneKeySample(
                 10, new[] { 10f, 10f, 10f }, Identity, eased, eased, eased, IplCurve.Linear);
 
-            BonePoseValue early = VmdFrameSampler.Bone("骨", new[] { first, last }, 2);
+            BonePoseValue early = VmdFrameSampler.Bone("ボーン", new[] { first, last }, 2);
 
             double wanted = 10 * EasedAtOneFifth;
             Assert.InRange(early.Translation[0], wanted - 1e-3, wanted + 1e-3);
@@ -151,7 +151,7 @@ namespace PmxEditorMcp.Tests
             BoneKeySample last = new BoneKeySample(
                 10, new[] { 10f, 10f, 10f }, Identity, IplCurve.Linear, IplCurve.Linear, IplCurve.Linear, IplCurve.Linear);
 
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { first, last }, 2);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { first, last }, 2);
 
             Assert.Equal(2f, pose.Translation[0], 4);
         }
@@ -171,7 +171,7 @@ namespace PmxEditorMcp.Tests
                 IplCurve.Linear,
                 IplCurve.Linear);
 
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { first, last }, 2);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { first, last }, 2);
 
             Assert.Equal(2f, pose.Translation[0], 4);
             Assert.NotEqual(2f, pose.Translation[1], 1);
@@ -207,7 +207,7 @@ namespace PmxEditorMcp.Tests
             BoneKeySample first = Rotated(0, Identity);
             BoneKeySample last = Rotated(10, new[] { 0f, half, 0f, half });
 
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { first, last }, 5);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { first, last }, 5);
 
             double quarter = Math.PI / 8;
             Assert.Equal(0d, pose.Rotation[0], 5);
@@ -223,7 +223,7 @@ namespace PmxEditorMcp.Tests
             BoneKeySample first = Rotated(0, Identity);
             BoneKeySample last = Rotated(10, new[] { 0f, -half, 0f, -half });
 
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { first, last }, 5);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { first, last }, 5);
 
             double quarter = Math.PI / 8;
             Assert.Equal(Math.Sin(quarter), pose.Rotation[1], 5);
@@ -245,7 +245,7 @@ namespace PmxEditorMcp.Tests
                 IplCurve.Linear,
                 eased);
 
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { first, last }, 2);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { first, last }, 2);
 
             double angle = (Math.PI / 2) * EasedAtOneFifth;
             Assert.Equal(Math.Sin(angle / 2), pose.Rotation[1], 3);
@@ -258,7 +258,7 @@ namespace PmxEditorMcp.Tests
             BoneKeySample first = Rotated(0, Identity);
             BoneKeySample last = Rotated(10, new[] { 0f, 0.5f, 0f, 0.5f });
 
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { first, last }, 5);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { first, last }, 5);
 
             Assert.Equal(0f, pose.Rotation[0], 5);
             Assert.Equal(0.2886751f, pose.Rotation[1], 5);
@@ -272,7 +272,7 @@ namespace PmxEditorMcp.Tests
             BoneKeySample first = Rotated(0, new[] { 0f, 0f, 0f, 2f });
             BoneKeySample last = Rotated(10, new[] { 0f, 0f, 0f, 4f });
 
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { first, last }, 5);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { first, last }, 5);
 
             Assert.Equal(new[] { 0f, 0f, 0f, 3f }, pose.Rotation);
         }
@@ -290,7 +290,7 @@ namespace PmxEditorMcp.Tests
                 IplCurve.Linear,
                 IplCurve.Linear);
 
-            BonePoseValue pose = VmdFrameSampler.Bone("骨", new[] { first, last }, 5);
+            BonePoseValue pose = VmdFrameSampler.Bone("ボーン", new[] { first, last }, 5);
 
             Assert.Equal(4.999892f, pose.Translation[0], 6);
         }
@@ -339,7 +339,7 @@ namespace PmxEditorMcp.Tests
         {
             List<BoneKeySample> keys = new List<BoneKeySample> { Key(30, 30f, 0f, 0f), Key(0, 0f, 0f, 0f) };
 
-            VmdFrameSampler.Bone("骨", keys, 30);
+            VmdFrameSampler.Bone("ボーン", keys, 30);
 
             Assert.Equal(new[] { 30, 0 }, new[] { keys[0].Frame, keys[1].Frame });
             Assert.Equal(30f, keys[0].Translation[0]);

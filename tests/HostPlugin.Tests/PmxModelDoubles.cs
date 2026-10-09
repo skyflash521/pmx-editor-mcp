@@ -1372,9 +1372,9 @@ namespace PmxEditorMcp.Tests
         }
 
         /// <summary>
-        /// 頂点のウェイトを、エディタが反映のときにかける正規化と同じ形へ直す。重みの無いボーンの
-        /// 重みを0にし、SDEFはボーンの位置の小さい方を先に(R0とR1も入れ替えて)、ほかは重みの
-        /// 大きい順に並べ、BDEF1・BDEF2・SDEFは和を1にそろえ、変形方式を重みの数から決め直す。
+        /// 頂点のウェイトを、エディタが反映のときにかける正規化と同じ形へ直す。ウェイトの無いボーンの
+        /// ウェイトを0にし、SDEFはボーンの位置の小さい方を先に(R0とR1も入れ替えて)、ほかはウェイトの
+        /// 大きい順に並べ、BDEF1・BDEF2・SDEFは和を1にそろえ、変形方式をウェイトの数から決め直す。
         /// </summary>
         public static void NormalizeWeight(IPXVertex vertex, IList<IPXBone> bones)
         {

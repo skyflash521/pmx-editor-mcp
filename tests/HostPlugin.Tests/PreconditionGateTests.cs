@@ -62,7 +62,7 @@ namespace PmxEditorMcp.Tests
 
             Assert.False(
                 PreconditionGate.TryAccept(PreconditionKind.SavedEdits, 2, false, out message));
-            Assert.Contains("取り消せる編集が残っている", message);
+            Assert.Contains("元に戻せる編集が残っている", message);
             Assert.Contains("ことがあり", message);
         }
 

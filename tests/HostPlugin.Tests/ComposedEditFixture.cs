@@ -94,7 +94,6 @@ namespace PmxEditorMcp.Tests
         /// </summary>
         public FakePmx Model { get; } = new FakePmx();
 
-        /// <summary>3Dビューの題材。反映のあとに映し直したかをここで数える。</summary>
         public FakePmxView View { get; } = new FakePmxView();
 
         /// <summary>リストを持つ画面の題材。</summary>

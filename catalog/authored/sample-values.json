@@ -580,7 +580,7 @@
         "height": 1,
         "depth": 1
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。辺の長さは正の値でなければ面を持たない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。辺の長さは正の値でなければ面を持たない。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddCylinder(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
@@ -598,7 +598,7 @@
         "slices": 8,
         "stacks": 2
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。分割数は3以上でなければ面を張れない。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddPlane(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,System.Int32,System.Boolean,PEPlugin.Pmx.IPXBone)",
@@ -617,7 +617,7 @@
         "dir": 1,
         "uv": true
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は1以上でなければ面を張れない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。分割数は1以上でなければ面を張れない。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddSphere(System.Int32,PEPlugin.SDX.V3,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
@@ -633,7 +633,7 @@
         "slices": 8,
         "stacks": 8
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。分割数は3以上でなければ面を張れない。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddText(System.Int32,PEPlugin.SDX.V3,System.Drawing.Font,System.String,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
@@ -654,7 +654,7 @@
         "d": 1,
         "ex": 0
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。字が無いと面を1つも作らない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。字が無いと面を1つも作らない。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddTorus(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
@@ -671,7 +671,7 @@
         "sides": 8,
         "rings": 8
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。分割数は3以上でなければ面を張れない。"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetCameraView(PEPlugin.Pmd.IPEVector3,PEPlugin.Pmd.IPEVector3,PEPlugin.Pmd.IPEVector3)",
@@ -763,21 +763,21 @@
     {
       "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedBoneIndices()",
       "arguments": {},
-      "basis": "PMXビューの絞込のウィンドウを一度も表示していない状態で呼び、断る側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
+      "basis": "PmxViewの絞込のウィンドウを一度も表示していない状態で呼び、断る側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedExpressionIndices()",
       "arguments": {},
-      "basis": "PMXビューの絞込のウィンドウを一度も表示していない状態で呼び、断る側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
+      "basis": "PmxViewの絞込のウィンドウを一度も表示していない状態で呼び、断る側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedMaterialIndices()",
       "arguments": {},
-      "basis": "PMXビューの絞込のウィンドウを一度も表示していない状態で呼び、断る側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
+      "basis": "PmxViewの絞込のウィンドウを一度も表示していない状態で呼び、断る側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
@@ -788,7 +788,7 @@
           0
         ]
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PMXビューの絞込のウィンドウを一度も表示していない状態で呼ぶので、断る側で確かめる。",
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PmxViewの絞込のウィンドウを一度も表示していない状態で呼ぶので、断る側で確かめる。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
@@ -799,7 +799,7 @@
           0
         ]
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PMXビューの絞込のウィンドウを一度も表示していない状態で呼ぶので、断る側で確かめる。",
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PmxViewの絞込のウィンドウを一度も表示していない状態で呼ぶので、断る側で確かめる。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
@@ -810,7 +810,7 @@
           0
         ]
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PMXビューの絞込のウィンドウを一度も表示していない状態で呼ぶので、断る側で確かめる。",
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PmxViewの絞込のウィンドウを一度も表示していない状態で呼ぶので、断る側で確かめる。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
@@ -840,14 +840,14 @@
       "arguments": {
         "path": "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.vpd"
       },
-      "basis": "実行器が書いたポーズを読み込む。持つ骨を0件にしてあるので、開いているモデルの骨の名前に依らない。"
+      "basis": "実行器が書いたポーズを読み込む。持つボーンを0件にしてあるので、開いているモデルのボーンの名前に依らない。"
     },
     {
       "signatureKey": "PEPlugin.View.IPETransformViewConnector.SetVpdFromText(System.String)",
       "arguments": {
         "s": "Vocaloid Pose Data file\r\n\r\ne2e.osm;\r\n0;\r\n"
       },
-      "basis": "ポーズの本文をそのまま渡す。持つ骨を0件にしてあるので、開いているモデルの骨の名前に依らない。"
+      "basis": "ポーズの本文をそのまま渡す。持つボーンを0件にしてあるので、開いているモデルのボーンの名前に依らない。"
     },
     {
       "signatureKey": "PEPlugin.View.IPEVertexEditConnector.SetVertexMemory(System.Int32,System.Int32[])",
@@ -1103,7 +1103,7 @@
         "height": 1,
         "depth": 1
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。辺の長さは正の値でなければ面を持たない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。辺の長さは正の値でなければ面を持たない。"
     },
     {
       "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddCylinder(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
@@ -1121,7 +1121,7 @@
         "slices": 8,
         "stacks": 2
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。分割数は3以上でなければ面を張れない。"
     },
     {
       "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddPlane(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,System.Int32,System.Boolean,PEPlugin.Pmx.IPXBone)",
@@ -1140,7 +1140,7 @@
         "dir": 1,
         "uv": true
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は1以上でなければ面を張れない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。分割数は1以上でなければ面を張れない。"
     },
     {
       "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddSphere(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
@@ -1156,7 +1156,7 @@
         "slices": 8,
         "stacks": 8
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。分割数は3以上でなければ面を張れない。"
     },
     {
       "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddText(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Drawing.Font,System.String,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
@@ -1177,7 +1177,7 @@
         "d": 1,
         "ex": 0
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。字が無いと面を1つも作らない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。字が無いと面を1つも作らない。"
     },
     {
       "signatureKey": "PXCPlugin.IPXCPrimitiveBuilder.AddTorus(PEPlugin.Pmx.IPXPmx,System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Int32,System.Int32,PEPlugin.Pmx.IPXBone)",
@@ -1194,7 +1194,7 @@
         "sides": 8,
         "rings": 8
       },
-      "basis": "段取りが入れた先頭の材質と骨へ足す。分割数は3以上でなければ面を張れない。"
+      "basis": "段取りが入れた先頭の材質とボーンへ足す。分割数は3以上でなければ面を張れない。"
     },
     {
       "signatureKey": "PXCPlugin.IPXSystemControl.GetShareBuffer(System.String,System.Boolean)",

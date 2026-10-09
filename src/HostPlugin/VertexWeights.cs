@@ -1,5 +1,3 @@
-// 頂点が持つボーンと重みの4つの枠を、まとめて読み書きする。
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,8 +68,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 同じボーンへの重みを足し合わせ、重みが正の枠だけを重い順に4つまで残して、その合計が1に
-        /// なるようそろえる。正の枠が1つも残らなければ先頭のボーンへ重み1を振り、ボーンの入った枠が
+        /// 同じボーンへのウェイトを足し合わせ、ウェイトが正の枠だけを重い順に4つまで残して、その合計が1に
+        /// なるようそろえる。正の枠が1つも残らなければ先頭のボーンへウェイト1を振り、ボーンの入った枠が
         /// 1つも無ければ空を返す。
         /// </summary>
         public static IList<KeyValuePair<IPXBone, float>> Settled(
@@ -103,7 +101,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 重みが0でない枠が、そろえ直した並びと同じボーンと重みを同じ順に持つか。重みが0の枠はボーンを
+        /// ウェイトが0でない枠が、そろえ直した並びと同じボーンとウェイトを同じ順に持つか。ウェイトが0の枠はボーンを
         /// 問わず空とみなし、SDEFの頂点は枠の順を問わない。
         /// </summary>
         public static bool IsSound(IPXVertex vertex)
@@ -125,7 +123,7 @@ namespace PmxEditorMcp
                 at => ReferenceEquals(weighted[at].Key, settled[at].Key) && weighted[at].Value == settled[at].Value);
         }
 
-        /// <summary>その頂点の4つの枠が、渡された並びと同じボーンと重みを同じ順に持つか。</summary>
+        /// <summary>その頂点の4つの枠が、渡された並びと同じボーンとウェイトを同じ順に持つか。</summary>
         public static bool Same(IPXVertex vertex, IList<KeyValuePair<IPXBone, float>> shares)
         {
             if (shares == null)
@@ -250,7 +248,7 @@ namespace PmxEditorMcp
             return order;
         }
 
-        /// <summary>ボーンごとの重みの合計。正でない重みは足さない。</summary>
+        /// <summary>ボーンごとのウェイトの合計。正でないウェイトは足さない。</summary>
         private static IDictionary<IPXBone, double> Totalled(
             IEnumerable<KeyValuePair<IPXBone, float>> shares)
         {

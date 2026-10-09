@@ -45,7 +45,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void MovingManyAtOnceAnswersTheRunTheyLandedIn()
         {
-            Bones(Enumerable.Range(0, 30000).Select(at => "骨" + at).ToArray());
+            Bones(Enumerable.Range(0, 30000).Select(at => "ボーン" + at).ToArray());
 
             IDictionary<string, object> value = ComposedEditFixture.Value(Reorder(
                 ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
@@ -53,14 +53,14 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given(
                     ModelReorderElements.MoveName, ModelReorderElements.Bottom)));
 
-            Assert.Equal("骨29999", _fixture.Model.Bone[0].Name);
+            Assert.Equal("ボーン29999", _fixture.Model.Bone[0].Name);
             Assert.Equal(new[] { "1+29999" }, Moved(value));
         }
 
         [Fact]
         public void MovingSoManyScatteredOnesThatTheAnswerCannotFitChangesNothing()
         {
-            Bones(Enumerable.Range(0, 1000).Select(at => "骨" + at).ToArray());
+            Bones(Enumerable.Range(0, 1000).Select(at => "ボーン" + at).ToArray());
             object[] odd = Enumerable.Range(0, 500).Select(at => (object)(at * 2 + 1)).ToArray();
 
             IDictionary<string, object> envelope = _fixture.Call(
@@ -73,7 +73,7 @@ namespace PmxEditorMcp.Tests
                 10000);
 
             Assert.Equal(ToolEnvelope.ResponseTooLarge, ComposedEditFixture.Code(envelope));
-            Assert.Equal("骨0", _fixture.Model.Bone[0].Name);
+            Assert.Equal("ボーン0", _fixture.Model.Bone[0].Name);
             Assert.Equal(0, _fixture.Commits);
         }
 

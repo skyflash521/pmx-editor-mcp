@@ -8,7 +8,7 @@ namespace PmxEditorMcp
 {
     /// <summary>
     /// 指す側の要素1つが、指される側の要素1つを指していることの知らせ。<paramref name="weight"/> は
-    /// 重みを持つ辺での重みで、持たない辺では常に1である。
+    /// ウェイトを持つ辺でのウェイトで、持たない辺では常に1である。
     /// </summary>
     public delegate void ReferenceVisit(object referrer, object target, float weight);
 
@@ -40,7 +40,7 @@ namespace PmxEditorMcp
 
         public string TargetKind { get; }
 
-        /// <summary>重みを持つ辺か。持たない辺では重みが常に1になる。</summary>
+        /// <summary>ウェイトを持つ辺か。持たない辺ではウェイトが常に1になる。</summary>
         public bool IsWeighted { get; }
 
         /// <summary>指す先を付け替えられる辺か。ほかの要素を介して届く辺は付け替えられない。</summary>
@@ -204,7 +204,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 指された位置の要素のどれか1つでも指している要素を、指す側の種類ごとにまとめる。
-        /// <paramref name="minWeight"/> は重みを持つ辺のしきい値で、これより大きい重みだけを指す参照と
+        /// <paramref name="minWeight"/> はウェイトを持つ辺のしきい値で、これより大きいウェイトだけを指す参照と
         /// して数える。
         /// </summary>
         public static ReferrerSets Union(

@@ -982,7 +982,7 @@ namespace PmxEditorMcp.Tests
         /// <summary>
         /// 読み込んだままのモデルは、軽い方のボーンを先に持つBDEF2頂点を持ちうる。エディタは反映の
         /// たびに頂点のウェイトを重い順へ並べ直すので、複製を取ってから頂点を動かすと、いまの頂点は
-        /// 同じボーンと重みを別の並びで持つ。
+        /// 同じボーンとウェイトを別の並びで持つ。
         /// </summary>
         [Fact]
         public void ACopyTakenBeforeTheWeightsWereSortedIsStillTakenAfterAMove()
@@ -1081,10 +1081,6 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(_fixture.Model.Morph);
         }
 
-        /// <summary>
-        /// SDEFの参照点は、重みが0の枠と組になっていても、SDEFでない頂点が持っていても、座標以外の
-        /// 中身として比べる。
-        /// </summary>
         [Theory]
         [InlineData(true, 0)]
         [InlineData(true, 1)]
@@ -1119,9 +1115,6 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(_fixture.Model.Morph);
         }
 
-        /// <summary>
-        /// 重みが0の枠のボーンは、エディタが反映で書き換えないかぎり中身として比べる。
-        /// </summary>
         [Fact]
         public void ACopyWhoseBoneWithoutWeightDiffersIsRefused()
         {
@@ -1157,7 +1150,7 @@ namespace PmxEditorMcp.Tests
         }
 
         /// <summary>
-        /// エディタは反映のたびに、使う枠のうちボーンを指さない枠をボーン0・重み0へ書き換える。
+        /// エディタは反映のたびに、使う枠のうちボーンを指さない枠をボーン0・ウェイト0へ書き換える。
         /// 複製を取ってから頂点を動かすと、いまの頂点はその枠にボーン0を持つ。
         /// </summary>
         [Fact]

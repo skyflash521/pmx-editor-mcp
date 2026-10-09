@@ -534,7 +534,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.Redo()",
       "editKind": "directChange",
-      "basis": "取り消した編集をモデルへ戻すので、直接変更型に当たる。",
+      "basis": "元に戻した編集をモデルへ戻すので、直接変更型に当たる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -760,7 +760,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.Undo()",
       "editKind": "directChange",
-      "basis": "直前の編集をモデルから取り消すので、直接変更型に当たる。",
+      "basis": "直前の編集をモデルから元に戻すので、直接変更型に当たる。",
       "postcondition": [
         {
           "effectType": "observableChange",
@@ -780,7 +780,7 @@
     {
       "signatureKey": "PEPlugin.Form.IPEFormConnector.UndoCount()",
       "editKind": "read",
-      "basis": "取り消せる件数を返すだけで、エディタの状態を動かさない。",
+      "basis": "元に戻せる件数を返すだけで、エディタの状態を動かさない。",
       "embeddedIn": [
         "session_get_form_connector"
       ]
@@ -5020,7 +5020,7 @@
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.GetSelectedJointIndices()",
       "editKind": "read",
-      "basis": "選んでいるジョイントのリストの中の位置を返すだけで、エディタの状態を動かさない。",
+      "basis": "選んでいるJointのリストの中の位置を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -5130,7 +5130,7 @@
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SelectedJointIndex()",
       "editKind": "viewSession",
-      "basis": "いま選んでいるジョイントの位置という画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "いま選んでいるJointの位置という画面の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
       "embeddedIn": [
         "view_get_pmd_view_connector",
         "view_update_pmd_view_connector"
@@ -5191,7 +5191,7 @@
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.SetSelectedJointIndices(System.Int32[])",
       "editKind": "viewSession",
-      "basis": "選ぶジョイントを画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "選ぶJointを画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -5343,7 +5343,7 @@
     {
       "signatureKey": "PEPlugin.View.IPEPMDViewConnector.UpdateModel_Joint()",
       "editKind": "viewSession",
-      "basis": "画面が持つモデルのジョイントの見え方だけを作り直すので、モデルのデータにもファイルにも作用しない。",
+      "basis": "画面が持つモデルのJointの見え方だけを作り直すので、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -6393,7 +6393,7 @@
     {
       "signatureKey": "PEPlugin.View.IPEViewSettingConnector.JointPointSize()",
       "editKind": "viewSession",
-      "basis": "ジョイントの点の大きさという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "Jointの点の大きさという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
       "embeddedIn": [
         "view_get_view_setting_connector",
         "view_update_view_setting_connector"
@@ -6572,7 +6572,7 @@
     {
       "signatureKey": "PEPlugin.View.IPEViewSettingConnector.Visible_Joint()",
       "editKind": "viewSession",
-      "basis": "ジョイントを見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "Jointを見せるかどうかという表示の設定を持つだけで、モデルのデータにもファイルにも作用しない。",
       "embeddedIn": [
         "view_get_view_setting_connector",
         "view_update_view_setting_connector"
@@ -6795,7 +6795,7 @@
     {
       "signatureKey": "PEPlugin.View.IPXBodyJointVisibleChange.GetJointVisibles()",
       "editKind": "read",
-      "basis": "ジョイントひとつずつの表示の状態を返すだけで、エディタの状態を動かさない。",
+      "basis": "Jointひとつずつの表示の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -6826,7 +6826,7 @@
     {
       "signatureKey": "PEPlugin.View.IPXBodyJointVisibleChange.SetJointVisibles(System.Boolean[])",
       "editKind": "viewSession",
-      "basis": "ジョイントひとつずつの表示を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "Jointひとつずつの表示を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",
@@ -13639,7 +13639,7 @@
     {
       "signatureKey": "PXCPlugin.IPXViewControl.GetJointVisibles()",
       "editKind": "read",
-      "basis": "ジョイントひとつずつの表示の状態を返すだけで、エディタの状態を動かさない。",
+      "basis": "Jointひとつずつの表示の状態を返すだけで、エディタの状態を動かさない。",
       "postcondition": [
         {
           "effectType": "valueRead",
@@ -13717,7 +13717,7 @@
     {
       "signatureKey": "PXCPlugin.IPXViewControl.SetJointVisibles(System.Boolean[])",
       "editKind": "viewSession",
-      "basis": "ジョイントひとつずつの表示を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
+      "basis": "Jointひとつずつの表示を画面の側で決めるだけで、モデルのデータにもファイルにも作用しない。",
       "postcondition": [
         {
           "effectType": "stateWritten",

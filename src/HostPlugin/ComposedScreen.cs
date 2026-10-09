@@ -50,7 +50,7 @@ namespace PmxEditorMcp
     }
 
     /// <summary>
-    /// 画面とリストへ触る組み立てのツールを、UIスレッドの上で呼ぶ枠。まとめての反映も取り消しの
+    /// 画面とリストへ触る組み立てのツールを、UIスレッドの上で呼ぶ枠。まとめての反映もUndoの
     /// 抑止も通さず、どのPMXを相手にするかの指定も受け取らない。
     /// </summary>
     public sealed class ComposedScreen
@@ -168,7 +168,7 @@ namespace PmxEditorMcp
                     object setting = Wanted(needs, ScreenNeeds.Setting) ? _setting() : null;
                     if (view == null && Wanted(needs, ScreenNeeds.View))
                     {
-                        Refuse("3Dビューを取得できない。", out refusedCode, out refusedMessage);
+                        Refuse("PmxViewを取得できない。", out refusedCode, out refusedMessage);
 
                         return;
                     }

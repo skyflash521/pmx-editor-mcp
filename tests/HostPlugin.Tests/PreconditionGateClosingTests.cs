@@ -40,9 +40,9 @@ namespace PmxEditorMcp.Tests
         }
 
         /// <summary>
-        /// 取り消せる編集が0件でも、やり直せる編集が残っているなら閉じない。エディタが尋ねる状態
-        /// (履歴を切り詰めたあとに取り消し切った、0件でない件数で保存したあとに取り消して0件へ戻した)と
-        /// 尋ねない状態(保存したときの件数が0のまま取り消し切った)は、SDKからはどちらもこの形で読める。
+        /// 元に戻せる編集が0件でも、やり直せる編集が残っているなら閉じない。エディタが尋ねる状態
+        /// (履歴を切り詰めたあとに元に戻し切った、0件でない件数で保存したあとに元に戻して0件へ戻した)と
+        /// 尋ねない状態(保存したときの件数が0のまま元に戻し切った)は、SDKからはどちらもこの形で読める。
         /// </summary>
         [Theory]
         [InlineData(3)]
@@ -57,7 +57,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.NotApplicable, Code(envelope));
         }
 
-        /// <summary>取り消せる編集もやり直せる編集も無ければ閉じる。</summary>
         [Fact]
         public void ClosingWithNoHistoryCloses()
         {
@@ -68,7 +67,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(1, form.Closed);
         }
 
-        /// <summary>取り消せる編集が残っていれば閉じない。</summary>
         [Fact]
         public void ClosingWithSomethingToUndoIsRefused()
         {

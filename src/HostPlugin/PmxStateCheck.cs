@@ -259,7 +259,7 @@ namespace PmxEditorMcp
             Listed(items, UnusedVerticesName, unused);
         }
 
-        /// <summary>エディタの変形方式。0でない重みが1つなら、SDEF と QDEF の印があっても BDEF1 になる。</summary>
+        /// <summary>エディタの変形方式。0でないウェイトが1つなら、SDEF と QDEF の印があっても BDEF1 になる。</summary>
         private static Deform DeformOf(IPXVertex vertex)
         {
             int weighted = new[] { vertex.Weight1, vertex.Weight2, vertex.Weight3, vertex.Weight4 }

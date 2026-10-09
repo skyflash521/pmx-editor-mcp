@@ -107,7 +107,7 @@ namespace PmxEditorMcp
         private readonly Action _modelChanged = () => { };
 
         /// <summary>
-        /// 3Dビューのコネクタとリストのコネクタを引く手立てを与えて生成する。引けないときは null を返してよく、
+        /// PmxViewのコネクタとリストのコネクタを引く手立てを与えて生成する。引けないときは null を返してよく、
         /// その相手への手順は飛ばす。
         /// </summary>
         public ScreenRefresh(Func<object> view, Func<object> form)

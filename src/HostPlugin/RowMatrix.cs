@@ -131,7 +131,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// PMXエディタの CMath.MatrixToEuler_ZXY と同じく、単精度の成分と単精度の途中の値で、剛体と
-        /// ジョイントが持つ回転の角へ直す。エディタが NaN を得る asin の定義域の外だけは端へ寄せる。
+        /// Jointが持つ回転の角へ直す。エディタが NaN を得る asin の定義域の外だけは端へ寄せる。
         /// </summary>
         public V3 ToEulerZxy()
         {

@@ -28,7 +28,7 @@
       ]
     },
     {
-      "task": "要素の一括編集と取り消し",
+      "task": "要素の一括編集と元に戻す",
       "searches": [
         [
           "対象 vertex / 動作 add"
@@ -265,10 +265,10 @@
       ]
     },
     {
-      "task": "TransformView の姿勢の取り消し",
+      "task": "TransformView の姿勢の初期化",
       "searches": [
         [
-          "姿勢とモーフの値を取り消し"
+          "姿勢とモーフの値を初期化"
         ]
       ],
       "tools": [

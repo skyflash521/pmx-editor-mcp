@@ -8,7 +8,7 @@ namespace PmxEditorMcp
         /// <summary>
         /// 満たしていれば真。満たしていなければ偽で、断る理由を <paramref name="message"/> に
         /// 持たせる。<paramref name="counted"/> は種別ごとに読んだもの——いま選ばれているものの数、
-        /// 取り消せる編集の数、絞込の一覧に並んでいる項目の数、取り消せる操作かやり直せる操作の残りの数、
+        /// 元に戻せる編集の数、絞込の一覧に並んでいる項目の数、元に戻せる操作かやり直せる操作の残りの数、
         /// TransformView の一覧で選ばれているボーンの位置(選ばれていなければ -1)——で、読めなかったときは
         /// null とする。<paramref name="modified"/> は修飾キーが押されているかどうか。
         /// </summary>
@@ -131,7 +131,7 @@ namespace PmxEditorMcp
 
             if (listed <= 0)
             {
-                message = "PMXビューの絞込の一覧に項目が1つも並んでいないので呼べない。"
+                message = "PmxViewの絞込の一覧に項目が1つも並んでいないので呼べない。"
                     + "この一覧は絞込のウィンドウを一度表示するまで組まれず、"
                     + "組まれていない間は読み取りが空を返し、書き込みはどの項目へも届かない。"
                     + "view_update_parts_select_window へ visible に真を渡して"
@@ -145,7 +145,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 操作を1つ取り消すか、やり直してよいか。<paramref name="remaining"/> は取り消せる操作か、
+        /// 操作を1つ元に戻すか、やり直してよいか。<paramref name="remaining"/> は元に戻せる操作か、
         /// やり直せる操作の残りの数で、読めなかったときは null とする。
         /// </summary>
         private static bool TryRemaining(int? remaining, out string message)
@@ -153,7 +153,7 @@ namespace PmxEditorMcp
             message = null;
             if (remaining == null)
             {
-                message = "取り消せる操作・やり直せる操作の残りの数を読めなかったので、"
+                message = "元に戻せる操作・やり直せる操作の残りの数を読めなかったので、"
                     + "呼んでよいかを確かめられない。";
 
                 return false;
@@ -162,7 +162,7 @@ namespace PmxEditorMcp
             if (remaining <= 0)
             {
                 message = "戻せる操作が残っていないので呼べない。"
-                    + "session_undo なら取り消せる操作が、session_redo ならやり直せる操作が0件である。"
+                    + "session_undo なら元に戻せる操作が、session_redo ならやり直せる操作が0件である。"
                     + "呼んでもエディタは何もしない。";
 
                 return false;
@@ -244,7 +244,7 @@ namespace PmxEditorMcp
             message = null;
             if (undoable == null)
             {
-                message = "取り消せる編集の数を読めなかったので、閉じてよいかを確かめられない。"
+                message = "元に戻せる編集の数を読めなかったので、閉じてよいかを確かめられない。"
                     + "この数を読む呼び出しが、このバージョンのSDKでは中継を持たないか組み立てられなかった。"
                     + "sdk_status で稼働しているSDKのバージョンと中継を作れなかった行を読む。";
 
@@ -253,10 +253,10 @@ namespace PmxEditorMcp
 
             if (undoable > 0)
             {
-                message = "取り消せる編集が残っているので閉じない。"
+                message = "元に戻せる編集が残っているので閉じない。"
                     + "残っていると、エディタが未保存の編集について尋ねる表示を出して止まることがあり、"
                     + "出ないと確かめられるのは0件のときだけである。"
-                    + "エディタ側で閉じるか、編集を取り消してから呼ぶ。";
+                    + "エディタ側で閉じるか、編集を元に戻してから呼ぶ。";
 
                 return false;
             }

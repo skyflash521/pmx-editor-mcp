@@ -21,6 +21,19 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void TheEditorsEnglishNotationAndItsReadingFindEachOther()
+        {
+            Assert.True(TextMatch.Contains("剛体とJointを選ぶ", "ジョイント"));
+            Assert.True(TextMatch.Contains("剛体とジョイントを選ぶ", "joint"));
+            Assert.True(TextMatch.Contains("SoftBody の一覧", "ｿﾌﾄﾎﾞﾃﾞｨ"));
+            Assert.True(TextMatch.Contains("session_undo", "元に戻す"));
+            Assert.True(TextMatch.Contains("Emissive <- Ambient", "アンビエント"));
+            Assert.True(TextMatch.Contains("拡散色を変える", "ディフューズ"));
+            Assert.False(TextMatch.Contains("剛体を選ぶ", "ジョイント"));
+            Assert.False(TextMatch.Contains("剛体とJointを選ぶ", "ジョイントの数"));
+        }
+
+        [Fact]
         public void AnEmptyWordIsFoundEverywhereAndNothingIsFoundInNothing()
         {
             Assert.True(TextMatch.Contains("材質", string.Empty));

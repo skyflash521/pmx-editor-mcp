@@ -167,7 +167,7 @@ namespace PmxEditorMcp
         /// までの間、<paramref name="owner"/> を持ち主とするダイアログ(#32770)と、<paramref name="expected"/>
         /// か <paramref name="quiet"/> に当たる WinForms のフォームはここが受け持ち、人の応答を待つ表示に数えない。
         /// <paramref name="quiet"/> はフォームの Name の並び。<paramref name="expected"/> には答えを書いて押し、書けないまま、
-        /// または押しても閉じないまま <paramref name="limit"/> が過ぎたら取り消して閉じる。<paramref name="quiet"/> の
+        /// または押しても閉じないまま <paramref name="limit"/> が過ぎたらキャンセルで閉じる。<paramref name="quiet"/> の
         /// フォームは、自分で閉じるまで待つ。メッセージボックスは本文を控えて閉じる。どれとも見分けられないダイアログは閉じず、
         /// <paramref name="limit"/> が過ぎたら人の応答を待つ表示として数えるよう戻す。<paramref name="expected"/>
         /// は null でよく、そのときは答えるダイアログを待たない。
@@ -196,7 +196,7 @@ namespace PmxEditorMcp
         /// には並びの順に答える。はいといいえを持つ問いは、先に出た <paramref name="questions"/> 個まで、はいを押す。
         /// ボタンが1つだけでアイコンの付いたメッセージボックスは、先に出た <paramref name="cautions"/> 個まで、そのボタンを押す。ボタンが
         /// 1つだけでアイコンの無いメッセージボックスは、そのボタンを押す。押したダイアログの本文は <see cref="Agreed"/> へ控える。ほかの
-        /// ダイアログは、いいえか取り消しで閉じる。見分けられないものは <paramref name="limit"/> が過ぎたら取り消して閉じる。
+        /// ダイアログは、いいえかキャンセルで閉じる。見分けられないものは <paramref name="limit"/> が過ぎたらキャンセルで閉じる。
         /// </summary>
         internal static DialogAnswer StartAcknowledging(
             IEnumerable<AnsweredDialog> expected, int questions, int cautions, TimeSpan limit)
@@ -494,7 +494,7 @@ namespace PmxEditorMcp
             return found;
         }
 
-        /// <summary>OK だけのメッセージボックスでは、OK のボタンが取り消しの番号を持つ。</summary>
+        /// <summary>OK だけのメッセージボックスでは、OK のボタンがキャンセルの番号を持つ。</summary>
         private static void Agree(IntPtr dialog)
         {
             Press(dialog, YesCommand, OkCommand, CancelCommand);

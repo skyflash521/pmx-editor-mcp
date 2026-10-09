@@ -177,7 +177,7 @@
     {
       "declaringType": "PEPlugin.Pmx.IPXSoftBody",
       "memberName": "SHR",
-      "japaneseName": "ソフトボディ接触の硬さ",
+      "japaneseName": "SoftBody接触の硬さ",
       "basis": {
         "kind": "documentSection",
         "path": "Lib/PMX仕様/PMX仕様.txt",
@@ -189,7 +189,7 @@
     {
       "declaringType": "PEPlugin.Pmx.IPXSoftBody",
       "memberName": "SKHR_CL",
-      "japaneseName": "クラスタのソフトボディ対運動体の硬さ",
+      "japaneseName": "クラスタのSoftBody対運動体の硬さ",
       "basis": {
         "kind": "documentSection",
         "path": "Lib/PMX仕様/PMX仕様.txt",
@@ -201,7 +201,7 @@
     {
       "declaringType": "PEPlugin.Pmx.IPXSoftBody",
       "memberName": "SK_SPLT_CL",
-      "japaneseName": "クラスタのソフトボディ対運動体の力積分配",
+      "japaneseName": "クラスタのSoftBody対運動体の力積分配",
       "basis": {
         "kind": "memberShape"
       },
@@ -210,7 +210,7 @@
     {
       "declaringType": "PEPlugin.Pmx.IPXSoftBody",
       "memberName": "SRHR_CL",
-      "japaneseName": "クラスタのソフトボディ対剛体の硬さ",
+      "japaneseName": "クラスタのSoftBody対剛体の硬さ",
       "basis": {
         "kind": "documentSection",
         "path": "Lib/PMX仕様/PMX仕様.txt",
@@ -222,7 +222,7 @@
     {
       "declaringType": "PEPlugin.Pmx.IPXSoftBody",
       "memberName": "SR_SPLT_CL",
-      "japaneseName": "クラスタのソフトボディ対剛体の力積分配",
+      "japaneseName": "クラスタのSoftBody対剛体の力積分配",
       "basis": {
         "kind": "documentSection",
         "path": "Lib/PMX仕様/PMX仕様.txt",
@@ -234,7 +234,7 @@
     {
       "declaringType": "PEPlugin.Pmx.IPXSoftBody",
       "memberName": "SSHR_CL",
-      "japaneseName": "クラスタのソフトボディ対ソフトボディの硬さ",
+      "japaneseName": "クラスタのSoftBody対SoftBodyの硬さ",
       "basis": {
         "kind": "documentSection",
         "path": "Lib/PMX仕様/PMX仕様.txt",
@@ -246,7 +246,7 @@
     {
       "declaringType": "PEPlugin.Pmx.IPXSoftBody",
       "memberName": "SS_SPLT_CL",
-      "japaneseName": "クラスタのソフトボディ対ソフトボディの力積分配",
+      "japaneseName": "クラスタのSoftBody対SoftBodyの力積分配",
       "basis": {
         "kind": "memberShape"
       },
