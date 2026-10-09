@@ -174,6 +174,50 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
+        public async Task TheToolSearchRequiresOnlyTheTextsAndPublishesItsDefaultsAndRanges()
+        {
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            McpClient client = _shared.Client;
+
+            IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
+            System.Text.Json.JsonElement published = System.Text.Json.JsonDocument
+                .Parse(SchemaRefs.Inlined(
+                    Named(tools, FixedToolTable.FindToolName).ProtocolTool.InputSchema.GetRawText()))
+                .RootElement;
+            System.Text.Json.JsonElement properties = published.GetProperty("properties");
+            System.Text.Json.JsonElement taking = properties.GetProperty("limit");
+            System.Text.Json.JsonElement skipping = properties.GetProperty("offset");
+
+            Assert.Equal(new string[] { FixedToolTable.FindToolTextsParameter }, RequiredOf(published));
+            Assert.Equal(FixedToolTable.FindToolDefaultLimit, taking.GetProperty("default").GetInt32());
+            Assert.Equal(FixedToolTable.FindToolMinimumLimit, taking.GetProperty("minimum").GetInt32());
+            Assert.Equal(FixedToolTable.FindToolMaximumLimit, taking.GetProperty("maximum").GetInt32());
+            Assert.Equal(0, skipping.GetProperty("default").GetInt32());
+            Assert.Equal(0, skipping.GetProperty("minimum").GetInt32());
+        }
+
+        [Fact]
+        public async Task TheToolSearchAnswersWithoutTheLimitAndTheOffset()
+        {
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            McpClient client = _shared.Client;
+
+            CallToolResult result = await client.CallToolAsync(
+                FixedToolTable.FindToolName,
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    [FixedToolTable.FindToolTextsParameter] = new[] { "model_" },
+                },
+                cancellationToken: limit.Token);
+            string said = TextOf(result);
+
+            Assert.True(result.IsError != true, said);
+            System.Text.Json.Nodes.JsonObject value = System.Text.Json.Nodes.JsonNode
+                .Parse(said.Substring(said.IndexOf('{'))).AsObject();
+            Assert.Equal(FixedToolTable.FindToolDefaultLimit, value["tools"].AsArray().Count);
+        }
+
+        [Fact]
         public async Task TheLargeTextToolAppearsOnlyWithTheDebugEntry()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
