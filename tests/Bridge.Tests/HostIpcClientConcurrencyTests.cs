@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+using ModelContextProtocol.Protocol;
 using PmxEditorMcp.Contract.Tests;
 using Xunit;
 
@@ -265,6 +267,58 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
+        public async Task ABrokenEnvelopeDoesNotCloseTheConnectionOfTheNextCall()
+        {
+            string slowlyCheckedBrokenEnvelope =
+                "{\"ok\":true,\"value\":[" + string.Join(",", Enumerable.Repeat("0", 500000))
+                    + "],\"warnings\":[1]}";
+            using SemaphoreSlim holding = new SemaphoreSlim(0, 1);
+            TaskCompletionSource firstDone =
+                new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            Func<string, string> handshake = HandshakeResultOf(BudgetChars);
+            Func<string, CancellationToken, Task<string>> afterFirst = async (request, stopping) =>
+            {
+                if (MethodOf(request) == "handshake")
+                {
+                    return handshake(request);
+                }
+
+                await firstDone.Task.WaitAsync(stopping).ConfigureAwait(false);
+                return Result(request, "\"pong\"");
+            };
+            using FakeHost host = new FakeHost()
+                .Reply(handshake)
+                .ReplyAsync(async (request, stopping) =>
+                {
+                    await holding.WaitAsync(stopping).ConfigureAwait(false);
+                    return Result(request, slowlyCheckedBrokenEnvelope);
+                })
+                .ReplyAsync(afterFirst)
+                .ReplyAsync(afterFirst)
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            Task<CallToolResult> first = BridgeTools.RelayEnvelopeAsync(
+                client, "broken", null, false, null, CancellationToken.None);
+            _ = first.ContinueWith(
+                _ => firstDone.TrySetResult(), TaskScheduler.Default);
+            await WaitForRequestCount(host, 2);
+
+            Task<HostCallResult> second = client.CallAsync("second", null, CancellationToken.None);
+
+            holding.Release();
+            await WhenAllWithin(first, second);
+
+            CallToolResult broken = await first;
+            Assert.True(broken.IsError);
+            Assert.StartsWith(
+                BridgeErrorCodes.ProtocolError,
+                Assert.IsType<TextContentBlock>(Assert.Single(broken.Content)).Text,
+                StringComparison.Ordinal);
+            Assert.Equal("pong", (string)(await second).Result);
+        }
+
+        [Fact]
         public async Task CancellingDuringConnectLeavesNoPartialConnection()
         {
             using FakeHost host = new FakeHost()
@@ -314,10 +368,15 @@ namespace PmxEditorMcp.Bridge.Tests
             string[] methods = new string[requests.Count];
             for (int index = 0; index < methods.Length; index++)
             {
-                methods[index] = (string)JsonNode.Parse(requests[index]).AsObject()["method"];
+                methods[index] = MethodOf(requests[index]);
             }
 
             return methods;
+        }
+
+        private static string MethodOf(string request)
+        {
+            return (string)JsonNode.Parse(request).AsObject()["method"];
         }
 
         /// <summary>
