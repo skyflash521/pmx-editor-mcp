@@ -838,6 +838,49 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
+        public async Task NoticeNamesTheHostVersionTheHandshakeReturned()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars, "2.3.4.5"))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = Connect(host);
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.StartsWith("接続先: " + host.PipeName, response.TargetNotice, StringComparison.Ordinal);
+            Assert.Contains("2.3.4.5", response.TargetNotice, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public async Task ChangedTargetNoticeNamesTheHostVersionOfTheNewTarget()
+        {
+            using FakeHost left = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars, "1.1.1.1"))
+                .Reply(request => Result(request, "\"pong\""))
+                .Disconnect()
+                .Start();
+
+            using FakeHost right = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars, "2.2.2.2"))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = new HostIpcClient(
+                new FakeHostConnector(left.PipeName, right.PipeName), BudgetChars);
+
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+            await ThrowsWithin<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+            HostCallResult moved = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.StartsWith("接続先が変わった: ", moved.TargetNotice, StringComparison.Ordinal);
+            Assert.Contains("2.2.2.2", moved.TargetNotice, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public async Task NoticeKeepsOnlyAnnouncingWhenTargetIsUnchanged()
         {
             using FakeHost host = new FakeHost()
@@ -1050,9 +1093,14 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>ハンドシェイクの成功応答を、受け取った要求の識別子に合わせて組み立てる。</summary>
         private static Func<string, string> HandshakeResultOf(int budgetChars)
         {
+            return HandshakeResultOf(budgetChars, "1.0.0.0");
+        }
+
+        private static Func<string, string> HandshakeResultOf(int budgetChars, string hostVersion)
+        {
             return request => Result(
                 request,
-                "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\""
+                "{\"protocol\":1,\"hostVersion\":\"" + hostVersion + "\",\"toolMapDigest\":\""
                     + GeneratedToolDefinitions.ToolMapDigest + "\",\"budgetChars\":" + budgetChars + "}");
         }
 
