@@ -2,9 +2,6 @@ using System;
 
 namespace PmxEditorMcp.Bridge
 {
-    /// <summary>
-    /// ビルド時に組み立てたツール定義の1件。ブリッジは本文を持つだけで、定義を実行時に組み立てない。
-    /// </summary>
     internal sealed class GeneratedToolDefinition
     {
         internal GeneratedToolDefinition(
@@ -36,13 +33,9 @@ namespace PmxEditorMcp.Bridge
 
         internal string Description { get; }
 
-        /// <summary>入力の形をJSON Schemaで綴ったもの。</summary>
         internal string InputSchema { get; }
 
-        /// <summary>
-        /// 値が画像かどうか。真なら結果を画像の本文として返す——文字列で返すと、MCPクライアントは
-        /// 中身を見られない。
-        /// </summary>
+        /// <summary>値が画像かどうか。真なら結果を画像の本文として返す。</summary>
         internal bool ReturnsImage { get; }
 
         internal bool Destructive { get; }

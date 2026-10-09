@@ -15,23 +15,15 @@ namespace PmxEditorMcp.Bridge
 
         private const string NarrowingLabel = "絞り方: ";
 
-        /// <summary>
-        /// 画像の種別。ホストが送り出す画像はPNGに決まっている(ImageTransfer が定める)ので、
-        /// 包みからは読まずここで名乗る。
-        /// </summary>
         private const string ImageMimeType = "image/png";
 
         /// <summary>
         /// 包みをツール結果へ写す。成功なら値を、失敗なら「コード: メッセージ」を本文にし、警告が
         /// あれば同じ本文の末尾へ行として足す。本文が <paramref name="budgetChars"/> を超えるときは
         /// 本文を返さず、大きすぎる旨の誤りにし、<paramref name="narrowing"/> を持つならその手立ても
-        /// 添える。包みとして読めなければ
-        /// <see cref="FormatException"/>——ホストの応答が契約から外れている。呼び出し側は、これを
-        /// 受けたら接続を捨てて `BRIDGE_PROTOCOL_ERROR` にする。
-        ///
+        /// 添える。包みとして読めなければ <see cref="FormatException"/>。
         /// <paramref name="returnsImage"/> が真のツールは、成功した値を文字の本文へ入れず画像の
-        /// 本文として返す。文字列で返すとMCPクライアントは中身を見られず、しかも詰めた文字がそのまま本文の
-        /// 長さになって予算を超える。画像の大きさを抑えるのは長辺の上限で、本文の予算ではない。
+        /// 本文として返す。
         /// </summary>
         public static CallToolResult From(
             JsonNode result,
@@ -89,8 +81,7 @@ namespace PmxEditorMcp.Bridge
             };
             if (drawn)
             {
-                // Data はBase64の綴りをUTF-8のバイトで持つ。ホストから届くのはBase64の文字列
-                // なので、復号して詰め直さずそのまま写す。
+                // Data はBase64の綴りをUTF-8のバイトで持つ。
                 content.Add(new ImageContentBlock
                 {
                     Data = Encoding.UTF8.GetBytes(image),
@@ -105,10 +96,7 @@ namespace PmxEditorMcp.Bridge
             };
         }
 
-        /// <summary>
-        /// 画像を返すツールの値。PNGを詰めた文字列でなければ契約から外れている——画像を返す
-        /// ツールかどうかはビルド時に決まっていて、実行時の値では変わらない。
-        /// </summary>
+        /// <summary>画像を返すツールの値。PNGを詰めた文字列でなければ契約から外れている。</summary>
         private static string Image(JsonObject envelope)
         {
             if (!envelope.ContainsKey(ToolEnvelope.ValueName))
@@ -144,7 +132,6 @@ namespace PmxEditorMcp.Bridge
             return ok;
         }
 
-        /// <summary>成功の本文。値はJSONの表記にする——ツールの値は構造を持つ。</summary>
         private static string Value(JsonObject envelope)
         {
             if (!envelope.ContainsKey(ToolEnvelope.ValueName))

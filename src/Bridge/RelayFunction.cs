@@ -8,10 +8,7 @@ using Microsoft.Extensions.AI;
 
 namespace PmxEditorMcp.Bridge
 {
-    /// <summary>
-    /// ビルド時に組み立てた定義をそのまま名乗り、同じ名前のホストのメソッドへ中継する。名前と説明と
-    /// 入力の形は本文が持つので、委譲先の形から読み取らない。
-    /// </summary>
+    /// <summary>ビルド時に組み立てた定義をそのまま名乗り、同じ名前のホストのメソッドへ中継する。</summary>
     internal sealed class RelayFunction : AIFunction
     {
         private readonly GeneratedToolDefinition _definition;

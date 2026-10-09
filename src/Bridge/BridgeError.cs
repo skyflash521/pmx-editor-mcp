@@ -43,39 +43,27 @@ namespace PmxEditorMcp.Bridge
 
         private const string HostErrorPrefix = "HOST_";
 
-        /// <summary>ホストが返したJSON-RPCエラーのコードを、ブリッジのエラーコードへ写す。</summary>
         public static string ForHostError(int hostErrorCode)
         {
             return HostErrorPrefix + hostErrorCode.ToString(CultureInfo.InvariantCulture);
         }
     }
 
-    /// <summary>
-    /// MCPツール結果としてそのまま返せるエラー。ブリッジはこの例外まで到達した失敗を
-    /// プロセスの終了ではなくツール結果として返す。
-    /// </summary>
     public sealed class BridgeException : Exception
     {
-        /// <summary>エラーコードと、要求元へ返す説明を添えて生成する。</summary>
         public BridgeException(string code, string message)
             : base(message)
         {
             Code = code;
         }
 
-        /// <summary>ツール結果のテキスト本文へ載せるエラーコード。</summary>
         public string Code { get; }
 
-        /// <summary>ツール結果のテキスト本文。</summary>
         public string ToResultText()
         {
             return Code + ": " + Message;
         }
 
-        /// <summary>
-        /// MCPツール結果へ変換する。失敗はプロトコル層のエラーではなく isError=true の
-        /// ツール結果として返し、要求元が失敗の内容を確認できるようにする。
-        /// </summary>
         public CallToolResult ToToolResult()
         {
             return new CallToolResult

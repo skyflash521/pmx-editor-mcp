@@ -9,10 +9,8 @@ namespace PmxEditorMcp.Bridge
     /// <summary>stdioを使うMCPサーバーとしてのブリッジの構成。</summary>
     public static class BridgeServer
     {
-        /// <summary>MCPクライアントへ名乗るサーバー名。</summary>
         public const string ServerName = "pmx-editor-mcp";
 
-        /// <summary>初期化のときにクライアントへ渡す、このサーバーの使い方。</summary>
         public const string ServerInstructions =
             "PMXエディタを相手にするサーバー。ツールの名前は6つの系統に分かれ、" +
             "どれを引くかは何を知りたいかで決まる。" +
@@ -32,8 +30,8 @@ namespace PmxEditorMcp.Bridge
             "ショートカット・確認の文言——を受け持つ。";
 
         /// <summary>
-        /// stdioトランスポートのMCPサーバーを構成して動かす。標準出力はプロトコルの通り道なので、
-        /// ログと診断は標準エラー出力だけへ出す。
+        /// stdioトランスポートのMCPサーバーを構成して動かす。標準出力はプロトコルの通り道で、ログと
+        /// 診断は標準エラー出力だけへ出す。
         /// </summary>
         public static async Task RunAsync(string[] args, HostIpcClient client)
         {

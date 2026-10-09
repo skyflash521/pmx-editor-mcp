@@ -8,10 +8,8 @@ using PmxEditorMcp.SignatureDump;
 
 namespace PmxEditorMcp.Bridge
 {
-    /// <summary>接続先に選べるPMXエディタの1件。</summary>
     public sealed class EditorSurveyEntry
     {
-        /// <summary>プロセスIDと、ホストが待ち受けているかと、ウィンドウのタイトルを与えて生成する。</summary>
         public EditorSurveyEntry(int processId, bool listening, string title)
         {
             ProcessId = processId;
@@ -19,38 +17,28 @@ namespace PmxEditorMcp.Bridge
             Title = title;
         }
 
-        /// <summary>エディタのプロセスID。</summary>
         public int ProcessId { get; }
 
-        /// <summary>そのエディタのホストが待ち受けているか。</summary>
         public bool Listening { get; }
 
         /// <summary>エディタのメインウィンドウのタイトル。読めなければ空。</summary>
         public string Title { get; }
     }
 
-    /// <summary>
-    /// ホストの待受パイプ名を決める。接続先が選ばれていればそれだけを相手にし、選ばれていなければ
-    /// 待ち受けているホストが1つのときだけそれを接続先にする。決められないときは要求元へ返せる
-    /// エラーにする。
-    /// </summary>
     public static class PipeTargetResolver
     {
         /// <summary>
-        /// テスト専用。接続先のパイプ名を固定する環境変数の名前。実機ではホストが待ち受けて
-        /// いると自動発見が曖昧になるため、テストはこの指定で対象を固定する。利用者向けの
-        /// 接続先の選び分けにはこの環境変数を用いない。
+        /// テスト専用。接続先のパイプ名を固定する環境変数の名前。利用者向けの接続先の選び分けには
+        /// この環境変数を用いない。
         /// </summary>
         public const string TestPipeEnvironmentVariableName = "PMX_EDITOR_MCP_TEST_PIPE";
 
         /// <summary>
         /// テスト専用。接続先を選んでいないとき、候補をこのフォルダの実行ファイルから動くエディタに
-        /// 限る環境変数の名前。実機の検査が、ほかのエディタが動いている中で自分の起こしたエディタ
-        /// だけを相手にするために使う。
+        /// 限る環境変数の名前。
         /// </summary>
         public const string TestEditorDirectoryEnvironmentVariableName = "PMX_EDITOR_MCP_TEST_EDITOR_DIR";
 
-        /// <summary>待受が無いときの案内を分けるために数えるPMXエディタのプロセス名。</summary>
         public const string EditorProcessName = "PmxEditor_x64";
 
         /// <summary>エディタの導入フォルダの中で、ホストが置かれる場所。</summary>
@@ -59,12 +47,10 @@ namespace PmxEditorMcp.Bridge
         /// <summary>ホストの待受パイプ名の接頭辞。この後ろにエディタのプロセスIDが続く。</summary>
         public const string PipeNamePrefix = "pmx-editor-mcp-";
 
-        /// <summary>待ち受けているパイプが並ぶディレクトリ。ここを列挙して接続先を探す。</summary>
         public const string PipeDirectory = @"\\.\pipe\";
 
         private const int NotAHostPipe = -1;
 
-        /// <summary>エディタのプロセスIDからホストの待受パイプ名を作る。</summary>
         public static string PipeNameForProcess(int processId)
         {
             return PipeNamePrefix + processId.ToString(CultureInfo.InvariantCulture);
@@ -83,10 +69,6 @@ namespace PmxEditorMcp.Bridge
                 selectedPipeName);
         }
 
-        /// <summary>
-        /// 接続先を決める材料の取り方を差し替えて解決する。実機のパイプとプロセスに依存せずに
-        /// 経路を確かめられるようにするための入口。
-        /// </summary>
         internal static string ResolveFrom(
             Func<string, string> readEnvironmentVariable,
             Func<string, IReadOnlyList<string>> enumeratePipeDirectory,
@@ -148,8 +130,6 @@ namespace PmxEditorMcp.Bridge
 
             if (configuredPipeName != null)
             {
-                // 接続先が決まっているなら数えるものが無い。列挙には無関係なパイプが多数並ぶ
-                // ので、要らない呼び出しはここで打ち切る。
                 return configuredPipeName;
             }
 
@@ -238,10 +218,6 @@ namespace PmxEditorMcp.Bridge
             return SurveyFrom(Directory.GetFiles, FindEditorProcessIds, WindowTitleOf);
         }
 
-        /// <summary>
-        /// 並べる材料の取り方を差し替えて並べる。実機のパイプとプロセスに依存せずに確かめられる
-        /// ようにするための入口。
-        /// </summary>
         internal static IReadOnlyList<EditorSurveyEntry> SurveyFrom(
             Func<string, IReadOnlyList<string>> enumeratePipeDirectory,
             Func<string, IReadOnlyList<int>> findEditorProcessIds,
@@ -291,9 +267,7 @@ namespace PmxEditorMcp.Bridge
         }
 
         /// <summary>
-        /// 接続先を決める材料を取る。材料はいずれもOSから取るので、失敗の種類を数え上げられ
-        /// ない。素通しすると要求元へ返せない異常になってしまうので、どの材料を取れなかったか
-        /// を添えて、結果として返せる失敗にする。
+        /// 接続先を決める材料を取る。取れなかった材料を添えて、結果として返せる失敗にする。
         /// </summary>
         private static T TakeMaterial<T>(Func<T> take, string material)
         {
@@ -340,17 +314,12 @@ namespace PmxEditorMcp.Bridge
             int processId;
             if (!int.TryParse(processIdText, NumberStyles.None, CultureInfo.InvariantCulture, out processId))
             {
-                // 桁があふれた。ホストが名乗れる値ではない。
                 return NotAHostPipe;
             }
 
             return processId;
         }
 
-        /// <summary>
-        /// 待受の数で接続先を決める。エディタを数えるのは待受が無いときの案内を分けるため
-        /// だけなので、答えが出る場合まで数えさせない。
-        /// </summary>
         private static string Decide(
             IReadOnlyList<string> listeningPipeNames, Func<IReadOnlyList<int>> editorProcessIds)
         {
@@ -379,9 +348,6 @@ namespace PmxEditorMcp.Bridge
                         + EditorProcessName + ".exe を起動してから呼び出す。");
             }
 
-            // ホストを置いたエディタは在るのに待ち受けていない。メニューから停止した・設定が
-            // 不正で開始しなかった、のどちらなのかは外から区別できないので、稼働状態を確かめ
-            // られる場所だけを示す。
             return new BridgeException(
                 BridgeErrorCodes.NoHost,
                 "PMXエディタは起動しているが、待ち受けているホストがない。エディタのプラグイン"
@@ -425,10 +391,6 @@ namespace PmxEditorMcp.Bridge
             return false;
         }
 
-        /// <summary>
-        /// 複数のホストが待ち受けているときの説明を作る。読むのは呼び出し元のエージェントなので、
-        /// 決められない事実と候補に、接続先を選ぶツールを添える。
-        /// </summary>
         private static string DescribeCandidates(IReadOnlyList<string> listeningPipeNames)
         {
             StringBuilder described = new StringBuilder();
@@ -450,10 +412,8 @@ namespace PmxEditorMcp.Bridge
 
         /// <summary>
         /// 列挙した項目からホストの待受パイプ名だけを取り出す。候補にするのは待受パイプの名前が
-        /// 在るホストで、そのホストが今すぐ新しい接続を受けられるかどうかは見ない。
-        ///
-        /// 候補はプロセスIDの昇順に並べる——パイプの列挙順は保証されないので、並べ替えないと
-        /// 同じ状況でも案内の本文が呼び出しごとに変わる。
+        /// 在るホストで、そのホストが今すぐ新しい接続を受けられるかどうかは見ない。候補は
+        /// プロセスIDの昇順に並べる。
         /// </summary>
         private static IReadOnlyList<string> HostPipeNamesIn(IReadOnlyList<string> pipeDirectoryEntries)
         {
@@ -479,11 +439,6 @@ namespace PmxEditorMcp.Bridge
             return pipeNames;
         }
 
-        /// <summary>
-        /// ホストが名乗るプロセスIDの書き方かを見る。ホストは自分のプロセスIDを十進で書く
-        /// だけなので、符号・空白・桁区切り・ASCII以外の数字は現れない。先頭に0が付く形も、
-        /// プロセスIDに割り当てられない0そのものも同じく現れない。
-        /// </summary>
         private static bool IsProcessIdText(string text)
         {
             if (text.Length == 0 || text[0] == '0')
@@ -503,9 +458,8 @@ namespace PmxEditorMcp.Bridge
         }
 
         /// <summary>
-        /// その実行ファイルの導入フォルダにホストが置かれているか。同じ名前のエディタは別の導入
-        /// フォルダからも動き、ホストの置かれていない導入フォルダのエディタは待ち受けることが
-        /// ない。
+        /// その実行ファイルの導入フォルダにホストが置かれているか。ホストの置かれていない導入フォルダの
+        /// エディタは待ち受けることがない。
         /// </summary>
         internal static bool HostsInstalledBeside(string editorExecutablePath)
         {

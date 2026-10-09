@@ -4,7 +4,6 @@ using System.Text.Json.Nodes;
 
 namespace PmxEditorMcp.Bridge
 {
-    /// <summary>ホストから受け取った応答1件。</summary>
     public sealed class HostResponse
     {
         private HostResponse(JsonNode result, bool isError, int errorCode, string errorMessage)
@@ -15,7 +14,6 @@ namespace PmxEditorMcp.Bridge
             ErrorMessage = errorMessage;
         }
 
-        /// <summary>ホストがエラーを返したかどうか。</summary>
         public bool IsError { get; }
 
         /// <summary>成功応答の結果。<see cref="IsError"/> が偽のときだけ意味を持つ。</summary>
@@ -38,7 +36,6 @@ namespace PmxEditorMcp.Bridge
         }
     }
 
-    /// <summary>応答を1件解析した結果。</summary>
     public sealed class HostResponseParseResult
     {
         private HostResponseParseResult(HostResponse response, string invalidReason)
@@ -47,16 +44,12 @@ namespace PmxEditorMcp.Bridge
             InvalidReason = invalidReason;
         }
 
-        /// <summary>応答が契約に沿っているかどうか。</summary>
         public bool IsValid => InvalidReason == null;
 
         /// <summary>解析できた応答。<see cref="IsValid"/> が真のときだけ意味を持つ。</summary>
         public HostResponse Response { get; }
 
-        /// <summary>
-        /// 契約に沿わない理由。<see cref="IsValid"/> が偽のときだけ意味を持つ。呼び出し側は
-        /// これをエラー本文へ載せ、handshake が成立する前か後かでエラーコードを選ぶ。
-        /// </summary>
+        /// <summary>契約に沿わない理由。<see cref="IsValid"/> が偽のときだけ意味を持つ。</summary>
         public string InvalidReason { get; }
 
         internal static HostResponseParseResult Valid(HostResponse response)
@@ -73,10 +66,6 @@ namespace PmxEditorMcp.Bridge
     /// <summary>ホストとやり取りするJSON-RPC 2.0のサブセットの組み立てと解析。</summary>
     public static class BridgeJsonRpc
     {
-        /// <summary>
-        /// 解析で許す入れ子の深さ。ホストが組み立てうる深さの応答を受け取れるようにするための
-        /// 値で、これを下回るとホストが正しく返した深い応答まで不正と判定してしまう。
-        /// </summary>
         public const int MaxDepth = 100;
 
         private const string ProtocolVersion = "2.0";
@@ -96,7 +85,7 @@ namespace PmxEditorMcp.Bridge
 
             if (parameters != null)
             {
-                // 呼び出し側が渡した木をそのまま繋ぐと親が付け替わるので、複製を置く。
+                // 渡された木を直に繋ぐと呼び出し側の木に親が付き、親を持つ木を繋ぐと例外になる。
                 request["params"] = parameters.DeepClone();
             }
 
@@ -106,8 +95,7 @@ namespace PmxEditorMcp.Bridge
         /// <summary>
         /// 応答の本文を解析し、契約に沿っているかを判定する。成功応答の識別子は
         /// <paramref name="expectedId"/> と一致していなければならない。エラー応答は識別子が
-        /// null であることも許す——ホストは要求の識別子を判別できないときや応答が上限を
-        /// 超えたときに null を載せる契約であり、ここで弾くとホストが返した理由が失われる。
+        /// null であることも許す。
         /// </summary>
         public static HostResponseParseResult ParseResponse(string message, int expectedId)
         {

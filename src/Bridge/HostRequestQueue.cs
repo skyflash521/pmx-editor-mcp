@@ -4,11 +4,7 @@ using System.Threading.Tasks;
 
 namespace PmxEditorMcp.Bridge
 {
-    /// <summary>
-    /// ホストへの要求を到着順に1件ずつ通す順番待ち。ホストは要求を直列に処理するので、同時に
-    /// 未完了の要求を1件に抑える必要がある。単なる排他では待っている側のどれが次に通るかが
-    /// 決まらないため、待つ側を並びとして持ち、到着順に譲る。
-    /// </summary>
+    /// <summary>ホストへの要求を到着順に1件ずつ通す順番待ち。</summary>
     internal sealed class HostRequestQueue
     {
         private readonly object _gate = new object();
@@ -21,7 +17,6 @@ namespace PmxEditorMcp.Bridge
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                // 取り消し済みのまま順番を握ると、以後の呼び出しを永久に塞ぐ。
                 return Task.FromCanceled(cancellationToken);
             }
 
@@ -61,7 +56,6 @@ namespace PmxEditorMcp.Bridge
                         break;
                     }
 
-                    // 取り消された待ちは順番を消費しない。並びから外して次を見る。
                 }
 
                 if (next == null)

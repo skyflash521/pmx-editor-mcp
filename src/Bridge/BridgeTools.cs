@@ -9,7 +9,6 @@ using PmxEditorMcp.SignatureDump;
 
 namespace PmxEditorMcp.Bridge
 {
-    /// <summary>ブリッジがMCPサーバーへ登録するツールを作る。</summary>
     public static class BridgeTools
     {
         /// <summary>
@@ -18,17 +17,10 @@ namespace PmxEditorMcp.Bridge
         /// </summary>
         public const string ResultSizeMetaKey = "anthropic/maxResultSizeChars";
 
-        /// <summary>指定した文字数のテキストを返す、検査からだけ使うホストのメソッドの名前。</summary>
         public const string LargeTextMethod = FixedToolTable.LargeTextName;
 
-        /// <summary>そのメソッドへ渡す、返すテキストの文字数の引数の名前。</summary>
         public const string LargeTextCharsParameter = "chars";
 
-        /// <summary>
-        /// ブリッジが登録するツールを作る。ツール定義へ載せる応答サイズ予算は、handshake で
-        /// ホストと照合するのと同じ値をクライアントから取る——別々に受け取ると、宣言した値と
-        /// 照合する値を食い違わせられる。
-        /// </summary>
         public static IReadOnlyList<McpServerTool> Create(
             HostIpcClient client, bool declared, bool debugHooks)
         {
@@ -73,8 +65,7 @@ namespace PmxEditorMcp.Bridge
         }
 
         /// <summary>
-        /// 指定した文字数のテキストを返すツールを作る。応答の大きさをMCPクライアントがどう扱うかを
-        /// 確かめるために要るもので、検査からだけ使う入口が開いているときだけ登録する。
+        /// 指定した文字数のテキストを返すツールを作る。検査からだけ使う入口が開いているときだけ登録する。
         /// </summary>
         private static McpServerTool LargeText(
             HostIpcClient client, bool declared, string description)
@@ -95,10 +86,6 @@ namespace PmxEditorMcp.Bridge
                 });
         }
 
-        /// <summary>
-        /// ビルド時に組み立てた定義からツールを作る。名前も説明も入力の形も本文が持つので、
-        /// 委譲先の形から読み取らせない。
-        /// </summary>
         private static McpServerTool Generated(
             GeneratedToolDefinition definition, HostIpcClient client, bool declared)
         {
@@ -115,7 +102,6 @@ namespace PmxEditorMcp.Bridge
                 });
         }
 
-        /// <summary>語を当てる相手。ブリッジが自分で登録するツールも、組み立てた定義も入る。</summary>
         private static IList<ToolMatch.Entry> Entries(
             IDictionary<string, string> own, IReadOnlyList<GeneratedToolDefinition> generated)
         {
@@ -151,10 +137,7 @@ namespace PmxEditorMcp.Bridge
                 });
         }
 
-        /// <summary>
-        /// 接続先に選べるエディタを並べるツールを作る。ホストへは渡らない——並べるのはブリッジが
-        /// パイプとプロセスから読む。
-        /// </summary>
+        /// <summary>接続先に選べるエディタを並べるツールを作る。ホストへは渡らない。</summary>
         private static McpServerTool ListEditors(
             HostIpcClient client, bool declared, string description)
         {
@@ -209,9 +192,6 @@ namespace PmxEditorMcp.Bridge
                 false);
         }
 
-        /// <summary>
-        /// 接続先のエディタを選ぶツールを作る。選んだ接続先はこのブリッジのプロセスだけが持つ。
-        /// </summary>
         private static McpServerTool SelectEditor(
             HostIpcClient client, bool declared, string description)
         {
@@ -255,7 +235,6 @@ namespace PmxEditorMcp.Bridge
             }
         }
 
-        /// <summary>ホストの同名のメソッドへ中継するツールを作る。</summary>
         private static McpServerTool Relay(
             HostIpcClient client, bool declared, string method, string description)
         {
@@ -267,11 +246,6 @@ namespace PmxEditorMcp.Bridge
                     Name = method,
                     Description = description,
 
-                    // ツールごとに作る。使い回すと、書き換えられる同じ木を全ツールが共有する。
-                    //
-                    // 宣言するのはホストの本文に与えた予算そのものとする。先頭へ置く接続先の
-                    // 行はブリッジの上乗せで、予算が抑えたいホストの応答の大きさではない。
-                    // 予算に足すと、上限まで設定したときに宣言できる値を超えてしまう。
                     Meta = declared
                         ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
                         : null,
@@ -279,9 +253,7 @@ namespace PmxEditorMcp.Bridge
         }
 
         /// <summary>
-        /// 包みで返るツールを中継する。ホストの包みは値と誤りと警告に分かれているので、MCPの結果へ
-        /// 写し直す——包みのまま返すと、呼び出し元は成否を結果の印から読めず、値も包みごと受け取る。
-        /// 包みとして読めない応答は契約から外れているので、接続を捨てて誤りにする。
+        /// 包みで返るツールを中継する。包みとして読めない応答は、接続を捨てて誤りにする。
         /// </summary>
         internal static async Task<CallToolResult> RelayEnvelopeAsync(
             HostIpcClient client,
@@ -324,8 +296,6 @@ namespace PmxEditorMcp.Bridge
                     .CallAsync(method, parameters, cancellationToken)
                     .ConfigureAwait(false);
 
-                // 接続先は毎回名乗る。過去の知らせを覚えていることに頼ると、文脈が失われた
-                // 時点で、呼び出し元はどのエディタの応答かを確かめる手立てを失う。
                 return new CallToolResult
                 {
                     Content = new List<ContentBlock>
@@ -339,7 +309,6 @@ namespace PmxEditorMcp.Bridge
             }
             catch (BridgeException error)
             {
-                // 失敗はプロセスの異常終了ではなく、要求元が読めるツール結果として返す。
                 return error.ToToolResult();
             }
         }

@@ -13,7 +13,7 @@ namespace PmxEditorMcp.Bridge
             ResponseBudget budget = ResponseBudget.ReadFromEnvironment();
             if (!budget.IsValid)
             {
-                // 診断は標準エラー出力へ出す(stdioのプロトコルストリームを汚さない)。
+                // 標準出力はプロトコルの通り道で、診断は標準エラー出力へ出す。
                 Console.Error.WriteLine(budget.InvalidReason);
                 return InvalidBudgetExitCode;
             }

@@ -9,44 +9,33 @@ using System.Threading.Tasks;
 
 namespace PmxEditorMcp.Bridge
 {
-    /// <summary>開いたホストへの接続と、その接続先。</summary>
     public sealed class HostConnection
     {
-        /// <summary>開いた通信路と、その相手のパイプ名を与えて生成する。</summary>
         public HostConnection(Stream stream, string pipeName)
         {
             Stream = stream;
             PipeName = pipeName;
         }
 
-        /// <summary>ホストとの通信路。</summary>
         public Stream Stream { get; }
 
-        /// <summary>繋いだ相手のパイプ名。</summary>
         public string PipeName { get; }
     }
 
-    /// <summary>ホストの応答と、それを返した接続先の知らせ。</summary>
     public sealed class HostCallResult
     {
-        /// <summary>結果と接続先の知らせを与えて生成する。</summary>
         public HostCallResult(JsonNode result, string targetNotice)
         {
             Result = result;
             TargetNotice = targetNotice;
         }
 
-        /// <summary>ホストが返した結果。</summary>
         public JsonNode Result { get; }
 
-        /// <summary>
-        /// この応答を返した相手を伝える一行。応答と一緒に確定させる——別々に取りに行くと、
-        /// 間に入った呼び出しが繋ぎ直したときに、応答と知らせの相手が食い違う。
-        /// </summary>
+        /// <summary>この応答を返した相手を伝える一行。応答と一緒に確定させる。</summary>
         public string TargetNotice { get; }
     }
 
-    /// <summary>ホストへの接続を開く役。</summary>
     public interface IHostConnector
     {
         /// <summary>
@@ -57,33 +46,19 @@ namespace PmxEditorMcp.Bridge
         Task<HostConnection> ConnectAsync(string selectedPipeName, CancellationToken cancellationToken);
     }
 
-    /// <summary>待ち受けているホストから決めた名前付きパイプへ接続する。</summary>
     public sealed class NamedPipeHostConnector : IHostConnector
     {
-        /// <summary>
-        /// パイプが開くのを待つ上限。接続先を決めた時点でそのパイプは待ち受けていたので、開けない
-        /// のは待って解決する話ではない。決めてから開くまでの短い隙だけを見込んだ値にし、待ち
-        /// 続けずに接続の失敗として返す。
-        /// </summary>
         public static readonly TimeSpan ConnectWaitLimit = TimeSpan.FromSeconds(5);
 
         private readonly Func<string, string> _resolvePipeName;
         private readonly Func<string, CancellationToken, Task<Stream>> _openPipe;
         private readonly TimeSpan _waitLimit;
 
-        /// <summary>
-        /// 待ち受けているホストから接続先を決め、名前付きパイプを開く既定の処理で生成する。
-        /// </summary>
         public NamedPipeHostConnector()
             : this(PipeTargetResolver.ResolveFromRunningHosts, OpenNamedPipeAsync)
         {
         }
 
-        /// <summary>
-        /// 接続先を決める処理とパイプを開く処理を差し替えて生成する。入出力の失敗やアクセス拒否を
-        /// エラーコードへ変換する経路は、実際にそれらを起こさないと通らないため、外から与える。
-        /// 接続先の決定も差し替えるのは、実行環境のエディタの起動状況で手前の分岐へ逸れないようにするため。
-        /// </summary>
         internal NamedPipeHostConnector(
             Func<string, string> resolvePipeName,
             Func<string, CancellationToken, Task<Stream>> openPipe)
@@ -91,10 +66,6 @@ namespace PmxEditorMcp.Bridge
         {
         }
 
-        /// <summary>
-        /// 待つ上限を差し替えて生成する。パイプを開く処理は製品と同じものを通す。既定の上限は
-        /// 開かない相手を待ち切るのに実時間を費やすので、その振る舞いを確かめるときだけ短くする。
-        /// </summary>
         internal NamedPipeHostConnector(Func<string, string> resolvePipeName, TimeSpan waitLimit)
             : this(
                 resolvePipeName,
@@ -129,7 +100,6 @@ namespace PmxEditorMcp.Bridge
             }
             catch (TimeoutException)
             {
-                // どの原因でここへ来たかは区別できないので、事実だけを述べて考えられる原因を並べる。
                 throw new BridgeException(
                     BridgeErrorCodes.ConnectFailed,
                     "ホストのパイプ " + pipeName + " へ " + Describe(_waitLimit)
@@ -146,8 +116,6 @@ namespace PmxEditorMcp.Bridge
             }
             catch (ArgumentException error)
             {
-                // 明示指定は黙って自動発見へ落とさないので、OSが名前として受け付けない値も
-                // そのまま接続先になる。指定の誤りであって異常ではないため、結果として返す。
                 throw ConnectFailed(pipeName, error);
             }
         }
@@ -164,20 +132,12 @@ namespace PmxEditorMcp.Bridge
                 "ホストのパイプ " + pipeName + " へ接続できない: " + error.Message);
         }
 
-        /// <summary>
-        /// 名前付きパイプを実際に開く既定の処理。接続先の決定だけを差し替えて、この経路を
-        /// そのまま通すために内部へ開けている。
-        /// </summary>
         internal static Task<Stream> OpenNamedPipeAsync(
             string pipeName, CancellationToken cancellationToken)
         {
             return OpenNamedPipeAsync(pipeName, cancellationToken, ConnectWaitLimit);
         }
 
-        /// <summary>
-        /// 待つ上限を差し替えて開く。上限を外から与えるのは、開かない相手への振る舞いを確かめる
-        /// ときに既定の上限ぶんの実時間を費やさないためである。
-        /// </summary>
         internal static async Task<Stream> OpenNamedPipeAsync(
             string pipeName, CancellationToken cancellationToken, TimeSpan waitLimit)
         {
@@ -185,7 +145,6 @@ namespace PmxEditorMcp.Bridge
                 ".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
             try
             {
-                // 上限を付けずに待つと、パイプが無いだけの場合まで要求全体の上限まで待ってしまう。
                 await pipe.ConnectAsync((int)waitLimit.TotalMilliseconds, cancellationToken)
                     .ConfigureAwait(false);
                 return pipe;
@@ -207,7 +166,7 @@ namespace PmxEditorMcp.Bridge
     {
         /// <summary>
         /// 接続・handshake・ホストの要求処理を待つ上限。ホストの処理タイムアウトへ往復の余裕を
-        /// 足した値で、これより短いとホストが処理しきる要求まで打ち切ってしまう。
+        /// 足した値。
         /// </summary>
         public static readonly TimeSpan DefaultWaitLimit = TimeSpan.FromSeconds(125);
 
@@ -226,18 +185,11 @@ namespace PmxEditorMcp.Bridge
         private string _reportedPipeName;
         private string _selectedPipeName;
 
-        /// <summary>
-        /// 接続の開き方と、ホストと一致していなければならない応答サイズ予算の文字数を与えて生成する。
-        /// </summary>
         public HostIpcClient(IHostConnector connector, int budgetChars)
             : this(connector, budgetChars, DefaultWaitLimit)
         {
         }
 
-        /// <summary>
-        /// 待つ上限を差し替えて生成する。既定の上限は待ち切るのにテストが実時間を費やすため、
-        /// 打ち切りの振る舞いを確かめるときだけ短くする。
-        /// </summary>
         internal HostIpcClient(IHostConnector connector, int budgetChars, TimeSpan waitLimit)
         {
             if (connector == null)
@@ -253,10 +205,8 @@ namespace PmxEditorMcp.Bridge
         /// <summary>ホストと一致していなければならない応答サイズ予算の文字数。</summary>
         public int BudgetChars { get; }
 
-        /// <summary>接続・handshake・ホストの要求処理を待つ上限。</summary>
         public TimeSpan WaitLimit { get; }
 
-        /// <summary>ホストへの接続を保っているかどうか。</summary>
         public bool IsConnected => _channel != null;
 
         /// <summary>
@@ -339,7 +289,6 @@ namespace PmxEditorMcp.Bridge
                 .ConnectAsync(pipeName, cancellationToken)
                 .ConfigureAwait(false);
 
-            // 新しい接続の handshake が済むまで、いまの接続は閉じずに脇へ置く。
             Stream keptStream = _stream;
             BridgeMessageChannel keptChannel = _channel;
             string keptPipeName = _connectedPipeName;
@@ -385,7 +334,6 @@ namespace PmxEditorMcp.Bridge
             await _queue.EnterAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                // 順番を取った直後の取り消しは、まだ何も送っていないので接続に触れない。
                 cancellationToken.ThrowIfCancellationRequested();
 
                 using CancellationTokenSource limit =
@@ -398,8 +346,6 @@ namespace PmxEditorMcp.Bridge
                 }
                 catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
                 {
-                    // 呼び出し側ではなく待つ上限で打ち切った。遅れて届く応答を次の要求の応答と
-                    // 取り違えないよう、接続を捨てる。
                     string message = "ホストからの応答が " + Describe(WaitLimit) + " 以内に返らなかった。";
                     throw closesOnAbandon
                         ? FailAndClose(BridgeErrorCodes.Timeout, message)
@@ -407,8 +353,6 @@ namespace PmxEditorMcp.Bridge
                 }
                 catch (OperationCanceledException)
                 {
-                    // 呼び出し側の取り消し。実行されたか分からない要求を残すので接続を捨て、
-                    // 同じ要求を送り直さない。
                     if (closesOnAbandon)
                     {
                         Close();
@@ -438,24 +382,18 @@ namespace PmxEditorMcp.Bridge
                 string code = BridgeErrorCodes.ForHostError(response.ErrorCode);
                 if (HostDisconnectsAfter(response.ErrorCode))
                 {
-                    // ホストはこの応答のあと切断する契約なので、接続を保つと次の呼び出しが
-                    // 死んだ接続を使って必ず落ちる。ここで捨てて繋ぎ直せるようにする。
                     throw FailAndClose(code, response.ErrorMessage);
                 }
 
-                // ホストが接続を保つ契約のエラーなので、こちらも保ったままコードで知らせる。
                 throw new BridgeException(code, response.ErrorMessage);
             }
 
-            // 知らせを確定させるのはこの直列区間の中に限る。応答を返した後で別に取りに行くと、
-            // 間に入った呼び出しが繋ぎ直したときに、応答と知らせの相手が食い違う。
             return new HostCallResult(response.Result, TakeTargetNotice());
         }
 
         /// <summary>
         /// 結果の先頭へ置く接続先の知らせを作り、名乗った相手として控える。前に名乗った相手と
-        /// 違えば、変わった事実と前の相手も添える——黙って繋ぎ替えると、呼び出し元は前の応答で
-        /// 作った前提のまま別のエディタを操作する。
+        /// 違えば、変わった事実と前の相手も添える。
         /// </summary>
         private string TakeTargetNotice()
         {
@@ -487,7 +425,6 @@ namespace PmxEditorMcp.Bridge
             return pipeName + "(ホスト " + hostVersion + ")";
         }
 
-        /// <summary>保っている接続を閉じる。</summary>
         public void Dispose()
         {
             Close();
@@ -578,7 +515,6 @@ namespace PmxEditorMcp.Bridge
             int requestBytes = BridgeMessageChannel.MeasureBytes(request);
             if (requestBytes > _channel.MaxMessageBytes)
             {
-                // 送らないので接続は保つ。ホスト側の上限超過は切断を伴うので、そこへ持ち込まない。
                 throw new BridgeException(
                     BridgeErrorCodes.RequestTooLarge,
                     "要求が " + Describe(requestBytes) + " バイトで、上限の "
@@ -638,10 +574,6 @@ namespace PmxEditorMcp.Bridge
                 || hostErrorCode == JsonRpcErrorCodes.SessionRefused;
         }
 
-        /// <summary>
-        /// 応答の不正をどのコードで返すかは、handshake が成立する前か後かで決まる。成立前の不正は
-        /// 相手がホストとして噛み合っていないことを指し、成立後の不正は通信規約の違反を指す。
-        /// </summary>
         private static string ResponseErrorCode(bool duringHandshake)
         {
             return duringHandshake ? BridgeErrorCodes.HandshakeMismatch : BridgeErrorCodes.ProtocolError;
@@ -739,8 +671,6 @@ namespace PmxEditorMcp.Bridge
         {
             _channel = null;
 
-            // 名乗った相手は繋ぎ直しをまたいで覚えておく——忘れると、別のエディタへ移っても
-            // 初めての知らせに見えて、変わった事実が伝わらない。
             _connectedPipeName = null;
             _connectedHostVersion = null;
 
