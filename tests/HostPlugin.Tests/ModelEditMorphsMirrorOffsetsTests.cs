@@ -245,6 +245,36 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AMorphWhosePartnerVertexAlreadyHasTheMirroredOffsetIsNotCounted()
+        {
+            int handle = Pairs();
+            Morph("左目", MorphKind.Vertex, Moved(0, First), Moved(1, new V3(-First.X, First.Y, First.Z)));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(
+                Run(Full(handle, "x", new[] { 0 }, new[] { 0 })));
+
+            Assert.Equal(0, value[Changed]);
+            Assert.Equal(2, _fixture.Model.Morph[0].Offsets.Count);
+        }
+
+        [Fact]
+        public void AMorphWhosePartnerBoneAlreadyHasTheMirroredOffsetIsNotCounted()
+        {
+            int handle = Bones("x", "左腕", "右腕");
+            Morph(
+                "腕上げ",
+                MorphKind.Bone,
+                Posed(0, First, FirstTurn),
+                Posed(1, new V3(-First.X, First.Y, First.Z), new Q(FirstTurn.X, -FirstTurn.Y, -FirstTurn.Z, FirstTurn.W)));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(
+                Run(Full(handle, "x", new[] { 0 }, new[] { 0 })));
+
+            Assert.Equal(0, value[Changed]);
+            Assert.Equal(2, _fixture.Model.Morph[0].Offsets.Count);
+        }
+
+        [Fact]
         public void AnOffsetThePartnerBoneAlreadyHasIsReplacedNotAddedTo()
         {
             int handle = Bones("x", "左腕", "右腕");
