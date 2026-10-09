@@ -47,9 +47,11 @@ namespace PmxEditorMcp.Tests
         [InlineData(3e9)]
         public void AnOffsetThatIsNotACountIsRefused(object offset)
         {
-            Assert.Equal(
-                ToolEnvelope.InvalidArgument,
-                Code(Structure(new Dictionary<string, object>(StringComparer.Ordinal) { { UiTree.OffsetName, offset } })));
+            IDictionary<string, object> envelope =
+                Structure(new Dictionary<string, object>(StringComparer.Ordinal) { { UiTree.OffsetName, offset } });
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Equal("offset は 0 以上の整数でなければならない。", ComposedEditFixture.Message(envelope));
         }
 
         [Theory]
@@ -132,7 +134,7 @@ namespace PmxEditorMcp.Tests
                 new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { UiFind.TextsName, texts },
-                    { UiFind.LimitName, UiFind.MaxLimit },
+                    { UiFind.LimitName, int.MaxValue },
                 },
                 LargeBudget))["matches"];
 
@@ -145,7 +147,7 @@ namespace PmxEditorMcp.Tests
                     new Dictionary<string, object>(StringComparer.Ordinal)
                     {
                         { UiFind.TextsName, texts },
-                        { UiFind.LimitName, UiFind.MaxLimit },
+                        { UiFind.LimitName, int.MaxValue },
                         { UiFind.OffsetName, offset },
                     },
                     ResponseBudget.MinimumChars));
@@ -206,15 +208,18 @@ namespace PmxEditorMcp.Tests
         [InlineData(UiFind.OffsetName, 3e9)]
         public void ACountOutsideItsRangeIsRefused(string name, object count)
         {
+            IDictionary<string, object> envelope = Find(
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { UiFind.TextsName, new object[] { "タグ編集" } },
+                    { name, count },
+                },
+                ResponseBudget.MinimumChars);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
             Assert.Equal(
-                ToolEnvelope.InvalidArgument,
-                Code(Find(
-                    new Dictionary<string, object>(StringComparer.Ordinal)
-                    {
-                        { UiFind.TextsName, new object[] { "タグ編集" } },
-                        { name, count },
-                    },
-                    ResponseBudget.MinimumChars)));
+                name + " は " + (name == UiFind.LimitName ? "1" : "0") + " 以上の整数でなければならない。",
+                ComposedEditFixture.Message(envelope));
         }
 
         private static IDictionary<string, object> Structure(IDictionary<string, object> arguments)

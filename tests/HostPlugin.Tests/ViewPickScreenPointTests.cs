@@ -311,8 +311,23 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ALimitBelowOneIsRefused()
         {
-            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(Ask(
-                100, 100, Side, Side, Given(ViewPickScreenPoint.LimitName, 0))));
+            IDictionary<string, object> envelope = Ask(
+                100, 100, Side, Side, Given(ViewPickScreenPoint.LimitName, 0));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedScreenFixture.Code(envelope));
+            Assert.Equal("limit は 1 以上の整数でなければならない。", ComposedEditFixture.Message(envelope));
+        }
+
+        [Fact]
+        public void ANullLimitIsTheSameAsLeavingItOut()
+        {
+            Layer(0f, 0, 1, 2, false, Triangle(0f, 2f, 2f, -2f, -2f, -2f));
+            Layer(-1f, 0, 1, 2, false, Triangle(0f, 2f, 2f, -2f, -2f, -2f));
+
+            IList<IDictionary<string, object>> hits = Hits(Pick(
+                100, 100, Given(ViewPickScreenPoint.LimitName, null)));
+
+            Assert.Single(hits);
         }
 
         private static KeyValuePair<string, object> Given(string name, object value)

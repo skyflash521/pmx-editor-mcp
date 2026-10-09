@@ -1043,10 +1043,10 @@ namespace PmxEditorMcp
                 || !TryConfirm(context, out confirm, out code, out message)
                 || !TryPmxHandle(context, Accepts(call), out handle, out code, out message)
                 || !TryPassDanger(call, handle, confirm, out code, out message)
-                || (counts && !TryCount(
-                    context, IssuanceInput.CountName, 1, 1, out count, out code, out message))
-                || (call.Paged && !TryCount(context, OffsetName, 0, 0, out offset, out code, out message))
-                || (call.Paged && !TryCount(context, LimitName, int.MaxValue, 1, out limit, out code, out message))
+                || (counts && !TryOptionalNumber(
+                    context, IssuanceInput.CountName, 1, ref count, out code, out message))
+                || (call.Paged && !TryOptionalNumber(context, OffsetName, 0, ref offset, out code, out message))
+                || (call.Paged && !TryOptionalNumber(context, LimitName, 1, ref limit, out code, out message))
                 || (Joins(call) && !TryRuns(context, out runs, out code, out message)))
             {
                 return ToolEnvelope.Failure(code, message);
@@ -1649,15 +1649,15 @@ namespace PmxEditorMcp
             }
 
             known.AddRange(Pointing(call.Access, true, call.Receiver));
-            int offset;
-            int limit;
+            int offset = 0;
+            int limit = int.MaxValue;
             bool runs;
             if (!TryOnlyKnown(context, Known(known, Accepts(call)), out code, out message)
                 || !TryConfirm(context, out confirm, out code, out message)
                 || !TryPmxHandle(context, Accepts(call), out handle, out code, out message)
                 || !TryPassDanger(call, handle, confirm, out code, out message)
-                || !TryCount(context, OffsetName, 0, 0, out offset, out code, out message)
-                || !TryCount(context, LimitName, int.MaxValue, 1, out limit, out code, out message)
+                || !TryOptionalNumber(context, OffsetName, 0, ref offset, out code, out message)
+                || !TryOptionalNumber(context, LimitName, 1, ref limit, out code, out message)
                 || !TryRuns(context, out runs, out code, out message)
                 || !TryPointed(
                     context, call.Access, true, handle, out pointed, out code, out message,
@@ -2964,8 +2964,8 @@ namespace PmxEditorMcp
             IList<string> requested;
             IList<string> selected;
             long? handle;
-            int offset;
-            int limit;
+            int offset = 0;
+            int limit = int.MaxValue;
             IList<string> needles;
             Pointed pointed;
             ToolField named = NameField(tool);
@@ -2986,8 +2986,8 @@ namespace PmxEditorMcp
             if (!TryOnlyKnown(context, Known(known, tool.Receiver.Kind == ToolReceiverKind.Pmx), out code, out message)
                 || !TryView(context, out code, out message)
                 || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
-                || !TryCount(context, OffsetName, 0, 0, out offset, out code, out message)
-                || !TryCount(context, LimitName, int.MaxValue, 1, out limit, out code, out message)
+                || !TryOptionalNumber(context, OffsetName, 0, ref offset, out code, out message)
+                || !TryOptionalNumber(context, LimitName, 1, ref limit, out code, out message)
                 || !TryNameContains(context, out needles, out code, out message)
                 || !TryFields(context, out requested, out code, out message)
                 || !TryPointed(
@@ -5994,40 +5994,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>位置と件数。渡していなければ既定を使う。</summary>
-        private static bool TryCount(
-            McpMethodContext context,
-            string name,
-            int fallback,
-            int least,
-            out int taken,
-            out string code,
-            out string message)
-        {
-            code = null;
-            message = null;
-            taken = fallback;
-            object value;
-            if (!context.Params.TryGetValue(name, out value))
-            {
-                return true;
-            }
-
-            long number;
-            if (!ValueInput.TryInteger(value, out number) || number < least || number > int.MaxValue)
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = name + " は " + least.ToString(CultureInfo.InvariantCulture)
-                    + " 以上の整数でなければならない。";
-
-                return false;
-            }
-
-            taken = (int)number;
-
-            return true;
-        }
-
         /// <summary>返す項目の頼み方。渡していなければ選んでいないものとする。</summary>
         private static bool TryFields(
             McpMethodContext context, out IList<string> requested, out string code, out string message)
@@ -6320,6 +6286,24 @@ namespace PmxEditorMcp
             return ToolEnvelope.Failure(
                 code ?? ToolEnvelope.NotApplicable,
                 message ?? ("返す値を写せない型を取る: " + declared.FullName));
+        }
+
+        /// <summary>
+        /// 省いてよい、<paramref name="least"/> 以上の整数を読む。省かれているか空なら
+        /// <paramref name="taken"/> を変えずに真を返す。読めなければ偽を返し、断る符号と内容を渡す。
+        /// </summary>
+        private static bool TryOptionalNumber(
+            McpMethodContext context, string name, int least, ref int taken, out string code, out string message)
+        {
+            code = null;
+            if (ComposedInput.TryNumber(context, name, least, ref taken, out message))
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+
+            return false;
         }
 
         private sealed class ParentGroup

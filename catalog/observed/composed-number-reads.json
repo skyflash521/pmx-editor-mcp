@@ -1,9 +1,9 @@
 {
   "inputs": [
-    {"tool": "editor_find_operation", "input": "limit", "reads": "integer", "least": 1, "most": 2147483647, "basis": "UiFind.cs が1以上 MaxLimit(int の最大値)以下の整数として読む。"},
-    {"tool": "editor_find_operation", "input": "offset", "reads": "integer", "least": 0, "most": 2147483647, "basis": "UiFind.cs が0以上 int の最大値以下の整数として読む。"},
+    {"tool": "editor_find_operation", "input": "limit", "reads": "integer", "least": 1, "most": 2147483647, "basis": "UiFind.cs が ComposedInput.TryNumber で1以上 int の最大値以下の整数として読む。"},
+    {"tool": "editor_find_operation", "input": "offset", "reads": "integer", "least": 0, "most": 2147483647, "basis": "UiFind.cs が ComposedInput.TryNumber で0以上 int の最大値以下の整数として読む。"},
     {"tool": "editor_get_screen_structure", "input": "depth", "reads": "integer", "least": 0, "most": 100, "basis": "UiTree.cs が0以上 MaxDepth(100)以下の整数として読む。"},
-    {"tool": "editor_get_screen_structure", "input": "offset", "reads": "integer", "least": 0, "most": 2147483647, "basis": "UiTree.cs が0以上 int の最大値以下の整数として読む。"},
+    {"tool": "editor_get_screen_structure", "input": "offset", "reads": "integer", "least": 0, "most": 2147483647, "basis": "UiTree.cs が ComposedInput.TryNumber で0以上 int の最大値以下の整数として読む。"},
     {"tool": "model_clean_faces", "input": "indices[]", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
     {"tool": "model_clean_faces", "input": "pmxHandle", "reads": "integer", "least": -9223372036854775808, "most": 9223372036854775807, "basis": "ComposedEdit.cs が long の範囲の整数として読む。"},
     {"tool": "model_clean_faces", "input": "range.count", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "TargetInput.cs が int の範囲の整数として読む。"},
@@ -285,9 +285,9 @@
     {"tool": "view_capture_image", "input": "upVector[]", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewCaptureImage.cs が ComposedInput.TrySpot で単精度の有限の数として読む。"},
     {"tool": "view_pick_screen_point", "input": "imageHeight", "reads": "integer", "least": 1, "most": 2147483647, "basis": "ViewPickScreenPoint.cs が1以上 int の最大値以下の整数として読む。"},
     {"tool": "view_pick_screen_point", "input": "imageWidth", "reads": "integer", "least": 1, "most": 2147483647, "basis": "ViewPickScreenPoint.cs が1以上 int の最大値以下の整数として読む。"},
-    {"tool": "view_pick_screen_point", "input": "limit", "reads": "integer", "least": 1, "most": 2147483647, "basis": "ViewPickScreenPoint.cs が1以上 int の最大値以下の整数として読む。"},
+    {"tool": "view_pick_screen_point", "input": "limit", "reads": "integer", "least": 1, "most": 2147483647, "basis": "ViewPickScreenPoint.cs が ComposedInput.TryNumber で1以上 int の最大値以下の整数として読む。"},
     {"tool": "view_pick_screen_point", "input": "materialIndices[]", "reads": "integer", "least": -2147483648, "most": 2147483647, "basis": "ModelFindSurfaceDistances.cs の TryMaterials が int の範囲の整数として読む。"},
-    {"tool": "view_pick_screen_point", "input": "screen", "reads": "integer", "least": 0, "most": 3, "basis": "ViewPickScreenPoint.cs が0以上3以下の整数として読む。"},
+    {"tool": "view_pick_screen_point", "input": "screen", "reads": "integer", "least": 0, "most": 3, "basis": "ViewPickScreenPoint.cs が ComposedInput.TryNumber で0以上の整数として読み、3を超えれば断る。"},
     {"tool": "view_pick_screen_point", "input": "x", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewPickScreenPoint.cs が単精度の有限の数として読む。"},
     {"tool": "view_pick_screen_point", "input": "y", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewPickScreenPoint.cs が単精度の有限の数として読む。"},
     {"tool": "view_poll_events", "input": "limit", "reads": "integer", "least": 1, "most": 1000, "basis": "EventPoll.cs が1以上 EventQueue.MaxLimit(1000)以下の整数として読む。"},
@@ -297,9 +297,9 @@
     {"tool": "view_select_related", "input": "maxV", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewSelectRelated.cs が ComposedInput.TryFloat で単精度の有限の数として読む。"},
     {"tool": "view_select_related", "input": "minU", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewSelectRelated.cs が ComposedInput.TryFloat で単精度の有限の数として読む。"},
     {"tool": "view_select_related", "input": "minV", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ViewSelectRelated.cs が ComposedInput.TryFloat で単精度の有限の数として読む。"},
-    {"tool": "view_set_vmd_view_state", "input": "frame", "reads": "integer", "least": 0, "most": 2147483647, "basis": "ViewSetVmdViewState.cs が0以上 int の最大値以下の整数として読む。"},
-    {"tool": "view_set_vmd_view_state", "input": "playRangeEnd", "reads": "integer", "least": 0, "most": 2147483647, "basis": "ViewSetVmdViewState.cs が0以上 int の最大値以下の整数として読む。"},
-    {"tool": "view_set_vmd_view_state", "input": "playRangeStart", "reads": "integer", "least": 0, "most": 2147483647, "basis": "ViewSetVmdViewState.cs が0以上 int の最大値以下の整数として読む。"}
+    {"tool": "view_set_vmd_view_state", "input": "frame", "reads": "integer", "least": 0, "most": 2147483647, "basis": "ViewSetVmdViewState.cs が ComposedInput.TryNumber で0以上 int の最大値以下の整数として読む。"},
+    {"tool": "view_set_vmd_view_state", "input": "playRangeEnd", "reads": "integer", "least": 0, "most": 2147483647, "basis": "ViewSetVmdViewState.cs が ComposedInput.TryNumber で0以上 int の最大値以下の整数として読む。"},
+    {"tool": "view_set_vmd_view_state", "input": "playRangeStart", "reads": "integer", "least": 0, "most": 2147483647, "basis": "ViewSetVmdViewState.cs が ComposedInput.TryNumber で0以上 int の最大値以下の整数として読む。"}
   ],
   "lists": [
     {"tool": "model_clean_faces", "input": "indices", "basis": "TargetInput.cs が要素の数を問わずに読む。"},

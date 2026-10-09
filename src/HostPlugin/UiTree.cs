@@ -73,8 +73,8 @@ namespace PmxEditorMcp
                 return ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, message);
             }
 
-            int offset;
-            if (!TryOffset(context, out offset, out message))
+            int offset = 0;
+            if (!ComposedInput.TryNumber(context, OffsetName, 0, ref offset, out message))
             {
                 return ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, message);
             }
@@ -230,36 +230,6 @@ namespace PmxEditorMcp
             }
 
             return value;
-        }
-
-        private static bool TryOffset(McpMethodContext context, out int offset, out string message)
-        {
-            offset = 0;
-            message = null;
-            object given;
-            if (!context.Params.TryGetValue(OffsetName, out given) || given == null)
-            {
-                return true;
-            }
-
-            if (!ValueInput.IsNumber(given))
-            {
-                message = OffsetName + " は整数でなければならない。";
-
-                return false;
-            }
-
-            double taken = Convert.ToDouble(given, CultureInfo.InvariantCulture);
-            if (taken != Math.Floor(taken) || taken < 0 || taken > int.MaxValue)
-            {
-                message = OffsetName + " は0以上の整数である。";
-
-                return false;
-            }
-
-            offset = (int)taken;
-
-            return true;
         }
 
         /// <summary>名指しからウィンドウを選ぶ。木を付けてよいときは <paramref name="named"/> を真にする。</summary>

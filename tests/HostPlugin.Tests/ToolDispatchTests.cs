@@ -494,6 +494,19 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, object> envelope = Call("session_paged", Arguments("limit", 0));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
+            Assert.Equal("limit は 1 以上の整数でなければならない。", Message(envelope));
+        }
+
+        [Fact]
+        public void APagedCallTakesANullOffsetAndLimitAsLeftOut()
+        {
+            _target.Paged = Enumerable.Range(0, 10).ToArray();
+
+            IDictionary<string, object> value = Value(
+                Call("session_paged", Arguments("offset", null, "limit", null)));
+
+            Assert.Equal(10, value["total"]);
+            Assert.Equal(10, ((object[])value["items"]).Length);
         }
 
         [Fact]

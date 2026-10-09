@@ -146,26 +146,20 @@ namespace PmxEditorMcp
             return ComposedEditResult.Complete(controls.State());
         }
 
-        /// <summary>渡されていなければ <paramref name="number"/> は null。</summary>
+        /// <summary>渡されていないか空なら <paramref name="number"/> は null。</summary>
         private static bool TryIndex(McpMethodContext context, string name, out int? number, out string message)
         {
             number = null;
-            message = null;
-            object given;
-            if (!context.Params.TryGetValue(name, out given))
+            int taken = -1;
+            if (!ComposedInput.TryNumber(context, name, 0, ref taken, out message))
             {
-                return true;
-            }
-
-            int taken;
-            if (!ValueInput.TryIndex(given, out taken) || taken < 0)
-            {
-                message = name + " は0以上の整数でなければならない。";
-
                 return false;
             }
 
-            number = taken;
+            if (taken >= 0)
+            {
+                number = taken;
+            }
 
             return true;
         }

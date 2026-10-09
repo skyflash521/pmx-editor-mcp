@@ -283,24 +283,19 @@ namespace PmxEditorMcp
             int limit = 1;
             if (!Real(context, XName, out x, out message)
                 || !Real(context, YName, out y, out message)
-                || !Count(context, ImageWidthName, true, 1, out width, out message)
-                || !Count(context, ImageHeightName, true, 1, out height, out message)
-                || !Count(context, ScreenName, false, 0, out screen, out message)
-                || !Count(context, LimitName, false, 1, out limit, out message))
+                || !Count(context, ImageWidthName, 1, out width, out message)
+                || !Count(context, ImageHeightName, 1, out height, out message)
+                || !ComposedInput.TryNumber(context, ScreenName, 0, ref screen, out message)
+                || !ComposedInput.TryNumber(context, LimitName, 1, ref limit, out message))
             {
                 return false;
             }
 
-            if (context.Params.ContainsKey(ScreenName) && screen >= Screens)
+            if (screen >= Screens)
             {
                 message = ScreenName + " は0以上" + Screens + "未満の整数でなければならない。";
 
                 return false;
-            }
-
-            if (!context.Params.ContainsKey(LimitName))
-            {
-                limit = 1;
             }
 
             if (x < 0 || x > width || y < 0 || y > height)
@@ -335,7 +330,6 @@ namespace PmxEditorMcp
         private static bool Count(
             McpMethodContext context,
             string name,
-            bool required,
             int least,
             out int number,
             out string message)
@@ -345,11 +339,6 @@ namespace PmxEditorMcp
             object given;
             if (!context.Params.TryGetValue(name, out given))
             {
-                if (!required)
-                {
-                    return true;
-                }
-
                 message = name + " を渡さなければならない。";
 
                 return false;

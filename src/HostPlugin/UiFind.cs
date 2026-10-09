@@ -31,9 +31,6 @@ namespace PmxEditorMcp
         /// <summary>上限を省いたときに返す件数。</summary>
         public const int DefaultLimit = 50;
 
-        /// <summary>頼める件数の上限。</summary>
-        public const int MaxLimit = int.MaxValue;
-
         private const string TotalName = "total";
 
         private const string MatchesName = "matches";
@@ -82,8 +79,8 @@ namespace PmxEditorMcp
                 return ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, message);
             }
 
-            int offset;
-            if (!TryCount(context, OffsetName, 0, int.MaxValue, 0, out offset, out message))
+            int offset = 0;
+            if (!ComposedInput.TryNumber(context, OffsetName, 0, ref offset, out message))
             {
                 return ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, message);
             }
@@ -257,46 +254,9 @@ namespace PmxEditorMcp
 
         private static bool TryLimit(McpMethodContext context, out int limit, out string message)
         {
-            return TryCount(context, LimitName, 1, MaxLimit, DefaultLimit, out limit, out message);
-        }
+            limit = DefaultLimit;
 
-        /// <summary>範囲の中の整数を1つ読む。渡されていなければ既定を採る。</summary>
-        private static bool TryCount(
-            McpMethodContext context,
-            string name,
-            int least,
-            int most,
-            int fallback,
-            out int count,
-            out string message)
-        {
-            count = fallback;
-            message = null;
-            object given;
-            if (!context.Params.TryGetValue(name, out given) || given == null)
-            {
-                return true;
-            }
-
-            if (!ValueInput.IsNumber(given))
-            {
-                message = name + " は整数でなければならない。";
-
-                return false;
-            }
-
-            double taken = Convert.ToDouble(given, CultureInfo.InvariantCulture);
-            if (taken != Math.Floor(taken) || taken < least || taken > most)
-            {
-                message = name + " は" + least.ToString(CultureInfo.InvariantCulture) + "以上 "
-                    + most.ToString(CultureInfo.InvariantCulture) + " 以下の整数である。";
-
-                return false;
-            }
-
-            count = (int)taken;
-
-            return true;
+            return ComposedInput.TryNumber(context, LimitName, 1, ref limit, out message);
         }
     }
 }

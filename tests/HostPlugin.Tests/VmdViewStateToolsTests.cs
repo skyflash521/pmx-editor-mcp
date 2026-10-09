@@ -243,6 +243,47 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void NullFrameAndPlayRangeItemsAreTheSameAsLeavingThemOut()
+        {
+            OnSta(() =>
+            {
+                using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                using (Screen screen = new Screen(fixture, 120))
+                {
+                    screen.Frame.Value = 4;
+
+                    IDictionary<string, object> value = ComposedScreenFixture.Value(
+                        fixture.Call(
+                            SetTool,
+                            ComposedScreenFixture.Arguments(
+                                ComposedScreenFixture.Given("frame", null),
+                                ComposedScreenFixture.Given("playRangeStart", null),
+                                ComposedScreenFixture.Given("playRangeEnd", null))));
+
+                    Assert.Equal(4, screen.Frame.Value);
+                    Assert.Equal(4, value["frame"]);
+                    Assert.Equal("120", screen.RangeEnd.Text);
+                }
+            });
+        }
+
+        [Fact]
+        public void ANegativeFrameIsRefusedWithTheSharedWords()
+        {
+            OnSta(() =>
+            {
+                using (ComposedScreenFixture fixture = new ComposedScreenFixture())
+                using (Screen screen = new Screen(fixture, 120))
+                {
+                    IDictionary<string, object> envelope = fixture.Call(
+                        SetTool, ComposedScreenFixture.Arguments(ComposedScreenFixture.Given("frame", -1)));
+
+                    Assert.Equal("frame は 0 以上の整数でなければならない。", ComposedEditFixture.Message(envelope));
+                }
+            });
+        }
+
+        [Fact]
         public void ItemsOfTheWrongKindAreRefused()
         {
             OnSta(() =>
