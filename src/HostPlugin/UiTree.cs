@@ -7,22 +7,16 @@ namespace PmxEditorMcp
 {
     public static class UiTree
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "editor_get_screen_structure";
 
-        /// <summary>ウィンドウを選ぶ入力の名前。省くと一覧を返す。</summary>
         public const string WindowName = "window";
 
-        /// <summary>木の根から降りる名前の連なりを受け取る入力の名前。</summary>
         public const string PathName = "path";
 
-        /// <summary>返す深さを受け取る入力の名前。</summary>
         public const string DepthName = "depth";
 
-        /// <summary>並びの何番目から返すかを受け取る入力の名前。</summary>
         public const string OffsetName = "offset";
 
-        /// <summary>降りられる深さの上限。</summary>
         public const int MaxDepth = 100;
 
         private const string NodeName = "node";

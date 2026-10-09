@@ -13,10 +13,8 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ModelDrawUvLayout
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "model_draw_uv_layout";
 
-        /// <summary>描く画像の一辺の画素数。</summary>
         public const int Side = 1024;
 
         private static readonly Color Ground = Color.White;
@@ -33,7 +31,6 @@ namespace PmxEditorMcp
             Color.FromArgb(0, 150, 160),
         };
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit)
         {
             if (methods == null)

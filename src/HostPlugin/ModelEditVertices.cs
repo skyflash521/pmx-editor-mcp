@@ -9,22 +9,16 @@ namespace PmxEditorMcp
 {
     public static class ModelEditVertices
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "model_edit_vertices";
 
-        /// <summary>指した頂点を1つへまとめ、面の参照を付け替える。</summary>
         public const string Weld = "weld";
 
-        /// <summary>指した頂点のうち、しきい値より近いものどうしをまとめる。</summary>
         public const string WeldNear = "weldNear";
 
-        /// <summary>指した頂点の、指した軸の値を、指した頂点の平均へそろえる。</summary>
         public const string Align = "align";
 
-        /// <summary>指した頂点を、指した軸の鏡像として複製する。</summary>
         public const string MirrorCopy = "mirrorCopy";
 
-        /// <summary>指した頂点を、指した軸の鏡像へ移す。</summary>
         public const string MirrorModel = "mirrorModel";
 
         public const string ProjectOntoSurface = "projectOntoSurface";
@@ -81,36 +75,24 @@ namespace PmxEditorMcp
 
         public const string RemainingName = "remaining";
 
-        /// <summary>まとめる距離のしきい値を受け取る入力の名前。</summary>
         public const string ThresholdName = "threshold";
 
-        /// <summary>軸を受け取る入力の名前。</summary>
         public const string AxisName = "axis";
 
-        /// <summary>X軸。</summary>
         public const string AxisX = "x";
 
-        /// <summary>Y軸。</summary>
         public const string AxisY = "y";
 
-        /// <summary>Z軸。</summary>
         public const string AxisZ = "z";
 
         public const string OffsetName = "surfaceOffset";
 
-        /// <summary>変えた頂点の数を返す項目の名前。</summary>
         public const string ChangedName = "changed";
 
-        /// <summary>消えた頂点の数を返す項目の名前。</summary>
         public const string RemovedName = "removed";
 
-        /// <summary>3つの頂点が揃わなくなって落ちた面の数を返す項目の名前。</summary>
         public const string RemovedFacesName = "removedFaces";
 
-        /// <summary>
-        /// 足した頂点の位置を、先頭と件数の組で返す項目の名前。足した頂点は並びの末尾に連なる。
-        /// 足していなければ件数は0で、先頭は頂点の数になる。
-        /// </summary>
         public const string AddedName = "added";
 
         private const double Tolerance = 1e-9;
@@ -157,7 +139,6 @@ namespace PmxEditorMcp
             get { return new[] { AxisX, AxisY, AxisZ }; }
         }
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit)
         {
             if (methods == null)

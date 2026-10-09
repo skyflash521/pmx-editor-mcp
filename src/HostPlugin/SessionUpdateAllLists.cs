@@ -10,16 +10,10 @@ namespace PmxEditorMcp
     /// </summary>
     public static class SessionUpdateAllLists
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "session_update_all_lists";
 
-        /// <summary>
-        /// 作り直しを頼んだリストの区分の数を返す項目の名前。この数はいつも1で、全部の区分をまとめて
-        /// 1回で頼んだことを表す。
-        /// </summary>
         public const string UpdatedName = "updated";
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
         {
             if (methods == null)

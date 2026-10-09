@@ -9,7 +9,6 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ViewReloadModel
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "view_reload_model";
 
         /// <summary>

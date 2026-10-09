@@ -13,25 +13,18 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ModelEditMorphs
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "model_edit_morphs";
 
-        /// <summary>同じ名前のモーフを先頭の1つへまとめる。</summary>
         public const string MergeSameName = "mergeSameName";
 
-        /// <summary>同じ種類のモーフを先頭の1つへまとめる。</summary>
         public const string MergeSameKind = "mergeSameKind";
 
-        /// <summary>同じ種類のモーフを、同じ相手へのオフセットを足しながら1つへまとめる。</summary>
         public const string MergeSameKindAdd = "mergeSameKindAdd";
 
-        /// <summary>指したモーフを呼ぶグループモーフを1つ足す。</summary>
         public const string GroupInto = "groupInto";
 
-        /// <summary>指したモーフを切り替えるフリップモーフを1つ足す。</summary>
         public const string FlipInto = "flipInto";
 
-        /// <summary>頂点モーフを、動く頂点のまとまりごとの別々のモーフへ分ける。</summary>
         public const string SplitVertices = "splitVertices";
 
         public const string SplitVerticesByAxis = "splitVerticesByAxis";
@@ -40,33 +33,24 @@ namespace PmxEditorMcp
 
         public const string BoundaryName = "boundary";
 
-        /// <summary>いまの材質の値を写した材質モーフを1つ足す。</summary>
         public const string MaterialFromCurrent = "materialFromCurrent";
 
-        /// <summary>指したモーフへ、その種類が指す相手を指すオフセットを足す。</summary>
         public const string AddOffsets = "addOffsets";
 
-        /// <summary>指した頂点を動かす頂点モーフを1つ足す。</summary>
         public const string VertexMorphFromVertices = "vertexMorphFromVertices";
 
         public const string MirrorOffsets = "mirrorOffsets";
 
-        /// <summary>足すオフセットが指す相手の位置を受け取る入力の名前。</summary>
         public const string TargetIndicesName = "targetIndices";
 
-        /// <summary>オフセットが指す相手を、画面の選択で指す入力の名前。</summary>
         public const string TargetSelectedName = "targetSelected";
 
-        /// <summary>足したモーフの名前を受け取る入力の名前。</summary>
         public const string NameName = "name";
 
-        /// <summary>足したモーフの位置を返す項目の名前。</summary>
         public const string AddedName = "added";
 
-        /// <summary>変えたモーフの数を返す項目の名前。</summary>
         public const string ChangedName = "changed";
 
-        /// <summary>消えたモーフの数を返す項目の名前。</summary>
         public const string RemovedName = "removed";
 
         /// <summary>モーフを指さない操作。</summary>
@@ -97,7 +81,7 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>ツールを表へ足す。<paramref name="builder"/> は新しい要素を作る相手を返す。</summary>
+        /// <summary><paramref name="builder"/> は新しい要素を作る相手を返す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit, Func<object> builder)
         {
             if (methods == null)
@@ -582,7 +566,6 @@ namespace PmxEditorMcp
                 case MorphKind.Material:
                     IPXMaterialMorphOffset painted = builder.MaterialMorphOffset();
                     painted.Material = (IPXMaterial)aimed;
-                    // PMXの材質モーフは、操作形式が0なら値を掛け、1なら足す。
                     painted.Op = Adding;
                     painted.Diffuse = new V4(0f, 0f, 0f, 0f);
                     painted.Specular = new V3(0f, 0f, 0f);

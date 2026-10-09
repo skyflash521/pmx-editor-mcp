@@ -10,7 +10,6 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ViewSelectRelated
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "view_select_related";
 
         public const string VerticesToFaces = "verticesToFaces";
@@ -46,7 +45,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>材質の位置を受け取る入力の名前。</summary>
         public const string MaterialIndicesName = "materialIndices";
 
         public const string MaterialSelectedName = "materialSelected";
@@ -61,12 +59,10 @@ namespace PmxEditorMcp
 
         public const string MaxVName = "maxV";
 
-        /// <summary>選んだ要素の数を返す項目の名前。</summary>
         public const string SelectedName = "selected";
 
         public const string KindName = "kind";
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
         {
             if (methods == null)
@@ -338,7 +334,6 @@ namespace PmxEditorMcp
             return ViewSelection.Taken(parts.View, kind, ViewSelection.Count(model, kind));
         }
 
-        /// <summary>3つの頂点がすべて選ばれている面。</summary>
         private static IList<int> Whole(IList<IPXFace> faces, ICollection<IPXVertex> chosen)
         {
             return Enumerable.Range(0, faces.Count)
@@ -346,7 +341,6 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>指した面が使っている頂点の位置。</summary>
         private static IList<int> Used(IPXPmx model, IList<IPXFace> faces, IList<int> held)
         {
             IDictionary<IPXVertex, int> at = Placed(model.Vertex);
@@ -424,7 +418,6 @@ namespace PmxEditorMcp
             return made;
         }
 
-        /// <summary>指した材質が持つ面の位置。</summary>
         private static IList<int> Owned(IList<int> owners, IList<int> materials)
         {
             HashSet<int> chosen = new HashSet<int>(materials);
@@ -434,7 +427,6 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>選んだ頂点を使っている材質の位置。</summary>
         private static IList<int> Reaching(
             IList<IPXFace> faces, IList<int> owners, ICollection<IPXVertex> chosen)
         {
@@ -445,7 +437,6 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>どの面にも使われていない頂点の位置。</summary>
         private static IList<int> Loose(IPXPmx model, IList<IPXFace> faces)
         {
             HashSet<IPXVertex> used = new HashSet<IPXVertex>(
@@ -468,7 +459,6 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>エッジの倍率が1でない頂点の位置。</summary>
         private static IList<int> Edged(IPXPmx model)
         {
             return Enumerable.Range(0, model.Vertex.Count)
@@ -476,7 +466,6 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>その位置に居る頂点。</summary>
         private static HashSet<IPXVertex> Chosen(IPXPmx model, IList<int> held)
         {
             return new HashSet<IPXVertex>(

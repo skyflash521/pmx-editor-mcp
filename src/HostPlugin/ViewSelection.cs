@@ -1,5 +1,4 @@
-// 画面が持つ選択を種類ごとに読み書きし、選ぶ相手をモデルから引く。面の位置はモデル全体の通し番号で、
-// 材質の区切りをまたいで数える。
+// 面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。
 
 using System;
 using System.Collections.Generic;
@@ -289,7 +288,6 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>その種類の要素の数。</summary>
         public static int Count(IPXPmx model, string kind)
         {
             if (model == null)
@@ -344,7 +342,6 @@ namespace PmxEditorMcp
             return made;
         }
 
-        /// <summary>その面が使う3つの頂点。</summary>
         public static IPXVertex[] Corners(IPXFace face)
         {
             if (face == null)
@@ -356,8 +353,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 要素ごとの、その要素が置かれている点。面はどこか1点に置かれていないので、3つの頂点の点を
-        /// 並べて渡す。通し番号の順に並ぶ。
+        /// 要素ごとの、その要素が置かれている点。面は3つの頂点の点を並べて渡す。通し番号の順に並ぶ。
         /// </summary>
         public static IList<IList<V3>> Spots(IPXPmx model, string kind)
         {

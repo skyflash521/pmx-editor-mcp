@@ -13,40 +13,28 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ModelCreatePhysics
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "model_create_physics";
 
-        /// <summary>ボーンに追従する剛体を、ボーンごとに足す。</summary>
         public const string BodyFollowBone = "bodyFollowBone";
 
-        /// <summary>物理で動く剛体を、ボーンごとに足す。</summary>
         public const string BodyPhysics = "bodyPhysics";
 
-        /// <summary>指した剛体どうしを繋ぐJointを足す。</summary>
         public const string Joint = "joint";
 
-        /// <summary>物理で動く剛体と、親の剛体へ繋ぐJointを足す。</summary>
         public const string BodyAndJoint = "bodyAndJoint";
 
-        /// <summary>指した頂点を包む大きさの剛体を1つ足す。</summary>
         public const string BodyAtVertices = "bodyAtVertices";
 
-        /// <summary>剛体の当たりの形を受け取る入力の名前。</summary>
         public const string ShapeName = "shape";
 
-        /// <summary>球。</summary>
         public const string Sphere = "sphere";
 
-        /// <summary>箱。</summary>
         public const string Box = "box";
 
-        /// <summary>カプセル。</summary>
         public const string Capsule = "capsule";
 
-        /// <summary>足した剛体の位置を返す項目の名前。</summary>
         public const string AddedBodiesName = "addedBodies";
 
-        /// <summary>足したJointの位置を返す項目の名前。</summary>
         public const string AddedJointsName = "addedJoints";
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
@@ -67,7 +55,7 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>ツールを表へ足す。<paramref name="builder"/> は新しい要素を作る相手を返す。</summary>
+        /// <summary><paramref name="builder"/> は新しい要素を作る相手を返す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit, Func<object> builder)
         {
             if (methods == null)
@@ -149,7 +137,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>その操作が指す要素の種類。</summary>
         private static string Pointed(string operation)
         {
             switch (operation)
@@ -318,7 +305,6 @@ namespace PmxEditorMcp
             return Held(size);
         }
 
-        /// <summary>その軸で、剛体の中心から遠い側の端までの隔たり。</summary>
         private static double Reach(float least, float most, float middle)
         {
             return Math.Max(
@@ -354,7 +340,6 @@ namespace PmxEditorMcp
                 BitConverter.GetBytes(BitConverter.ToInt32(BitConverter.GetBytes(made), 0) + 1), 0);
         }
 
-        /// <summary>その大きさの3つの成分が、どれも単精度で持てる値か。</summary>
         private static bool Held(V3 size)
         {
             return !float.IsInfinity(size.X)

@@ -11,28 +11,20 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ViewSelectElements
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "view_select_elements";
 
-        /// <summary>その種類の要素を全部選ぶ。</summary>
         public const string All = "all";
 
-        /// <summary>いま選んでいるものと選んでいないものを入れ替える。</summary>
         public const string Invert = "invert";
 
-        /// <summary>いまの選択に、面で隣り合う要素を足す。</summary>
         public const string Expand = "expand";
 
-        /// <summary>いまの選択から、選んでいない要素と面で隣り合うものを外す。</summary>
         public const string Reduce = "reduce";
 
-        /// <summary>いまの選択に、面を伝ってつながる頂点をすべて足す。</summary>
         public const string Connected = "connected";
 
-        /// <summary>いま選んでいるボーンの子孫を足す。</summary>
         public const string ChildChain = "childChain";
 
-        /// <summary>指した軸の片側にある要素だけを選ぶ。</summary>
         public const string HalfModel = "halfModel";
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
@@ -44,21 +36,16 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>選ぶ要素の種類を受け取る入力の名前。</summary>
         public const string KindName = "kind";
 
         public const string KindsName = "kinds";
 
-        /// <summary>軸を受け取る入力の名前。</summary>
         public const string AxisName = "axis";
 
-        /// <summary>X軸の値が境より小さい側。</summary>
         public const string NegativeX = "negativeX";
 
-        /// <summary>Y軸の値が境より小さい側。</summary>
         public const string NegativeY = "negativeY";
 
-        /// <summary>Z軸の値が境より小さい側。</summary>
         public const string NegativeZ = "negativeZ";
 
         /// <summary>
@@ -81,15 +68,12 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>半モデルの境の値を受け取る入力の名前。</summary>
         public const string BoundaryName = "boundary";
 
-        /// <summary>選んだ要素の数を返す項目の名前。</summary>
         public const string SelectedName = "selected";
 
         public const string CountsName = "counts";
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
         {
             if (methods == null)
@@ -420,7 +404,6 @@ namespace PmxEditorMcp
             return reached.ToList();
         }
 
-        /// <summary>選んだボーンと、そのボーンを先祖に持つボーン。</summary>
         private static IList<int> Below(IPXPmx model, IList<int> held)
         {
             IDictionary<IPXBone, int> at = Placed(model.Bone);
@@ -437,7 +420,6 @@ namespace PmxEditorMcp
             return made;
         }
 
-        /// <summary>そのボーンが、選んだボーンのどれかを先祖に持つか。</summary>
         private static bool Descends(
             IPXBone bone, IDictionary<IPXBone, int> at, ICollection<int> chosen)
         {

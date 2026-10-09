@@ -12,16 +12,12 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ViewSetCameraRotateCenter
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "view_set_camera_rotate_center";
 
-        /// <summary>選んだ頂点の重心を中心にする。</summary>
         public const string Vertices = "vertices";
 
-        /// <summary>選んだボーンの重心を中心にする。</summary>
         public const string Bones = "bones";
 
-        /// <summary>選んだ面の重心を中心にする。</summary>
         public const string Face = "face";
 
         public const string FaceFront = "faceFront";
@@ -37,10 +33,8 @@ namespace PmxEditorMcp
 
         private const float Away = 10f;
 
-        /// <summary>決めた中心の座標を返す項目の名前。</summary>
         public const string CentreName = "centre";
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
         {
             if (methods == null)
@@ -126,7 +120,6 @@ namespace PmxEditorMcp
                 .ToList();
         }
 
-        /// <summary>その操作が重心を取る要素の種類。</summary>
         private static string Kind(string operation)
         {
             switch (operation)

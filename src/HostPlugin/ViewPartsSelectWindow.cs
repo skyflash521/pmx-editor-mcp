@@ -6,21 +6,16 @@ namespace PmxEditorMcp
 {
     public static class ViewPartsSelectWindow
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "view_update_parts_select_window";
 
         public const string VisibleName = "visible";
 
-        /// <summary>材質の一覧に並んでいる項目の数を返す項目の名前。</summary>
         public const string MaterialItemsName = "materialItemsCount";
 
-        /// <summary>ボーンの一覧に並んでいる項目の数を返す項目の名前。</summary>
         public const string BoneItemsName = "boneItemsCount";
 
-        /// <summary>表情の一覧に並んでいる項目の数を返す項目の名前。</summary>
         public const string ExpressionItemsName = "expressionItemsCount";
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
         {
             if (methods == null)

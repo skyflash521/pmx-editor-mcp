@@ -11,24 +11,18 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ModelCopyFromReference
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "model_copy_from_reference";
 
-        /// <summary>剛体の名前を、その剛体が指すボーンの名前にする。</summary>
         public const string BodyNameFromBone = "bodyNameFromBone";
 
-        /// <summary>Jointの名前を、そのJointが繋ぐ1つめの剛体の名前にする。</summary>
         public const string JointNameFromBodyA = "jointNameFromBodyA";
 
-        /// <summary>Jointの名前を、そのJointが繋ぐ2つめの剛体の名前にする。</summary>
         public const string JointNameFromBodyB = "jointNameFromBodyB";
 
-        /// <summary>Jointの位置を、繋ぐ剛体が指すボーンの位置にする。</summary>
         public const string JointPositionFromBone = "jointPositionFromBone";
 
         public const string JointPositionFromSameNameBone = "jointPositionFromSameNameBone";
 
-        /// <summary>変えた要素の数を返す項目の名前。</summary>
         public const string ChangedName = "changed";
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
@@ -47,7 +41,6 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit)
         {
             if (methods == null)

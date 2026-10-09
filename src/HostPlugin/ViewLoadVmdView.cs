@@ -37,7 +37,7 @@ namespace PmxEditorMcp
 
         public const string BootedName = "booted";
 
-        /// <summary>ツールを表へ足す。<paramref name="builder"/> はVMDやPMXを作る相手を返す。</summary>
+        /// <summary><paramref name="builder"/> はVMDやPMXを作る相手を返す。</summary>
         public static void AddTo(
             McpMethodTable methods, ComposedScreen screen, Func<object> builder)
         {
@@ -119,7 +119,6 @@ namespace PmxEditorMcp
                 });
         }
 
-        /// <summary>その道がPMDのファイルを指しているか。</summary>
         private static bool Older(string path)
         {
             return path != null
@@ -147,7 +146,6 @@ namespace PmxEditorMcp
             get { return new[] { WholeMotion, ModelMotion, CameraMotion, LightMotion }; }
         }
 
-        /// <summary>指した持ち物のキーだけを残す。</summary>
         private static void Kept(IPEVmd motion, string wanted)
         {
             if (string.Equals(wanted, WholeMotion, StringComparison.Ordinal))

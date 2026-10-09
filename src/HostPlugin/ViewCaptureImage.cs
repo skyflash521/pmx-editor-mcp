@@ -13,16 +13,12 @@ namespace PmxEditorMcp
     /// <summary>指した視点からPMXビューの画像を撮るツール。</summary>
     public static class ViewCaptureImage
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "view_capture_image";
 
-        /// <summary>視点の位置を受け取る入力の名前。</summary>
         public const string PositionName = "position";
 
-        /// <summary>視点が見る先を受け取る入力の名前。</summary>
         public const string TargetName = "target";
 
-        /// <summary>視点の上の向きを受け取る入力の名前。</summary>
         public const string UpVectorName = "upVector";
 
         public const string PerspectiveName = "perspective";
@@ -31,7 +27,6 @@ namespace PmxEditorMcp
 
         private const float PerspectiveMost = 179f;
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen)
         {
             if (methods == null)

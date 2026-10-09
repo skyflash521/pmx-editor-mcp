@@ -13,7 +13,6 @@ namespace PmxEditorMcp
 {
     public static class MotionSetCameraView
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "motion_set_camera_view";
 
         private const string ViewForm = "PmxViewForm.PMXView";
@@ -26,9 +25,7 @@ namespace PmxEditorMcp
 
         private static readonly string[] SplitPath = { "menuStrip1", "MenuItem_View", "MenuItem_MultiView" };
 
-        /// <summary>
-        /// ツールを表へ足す。<paramref name="forms"/> は開いているウィンドウを返す。UIスレッドで呼ばれる。
-        /// </summary>
+        /// <summary><paramref name="forms"/> は開いているウィンドウを返す。UIスレッドで呼ばれる。</summary>
         public static void AddTo(McpMethodTable methods, ComposedScreen screen, Func<IEnumerable<Form>> forms)
         {
             if (methods == null)

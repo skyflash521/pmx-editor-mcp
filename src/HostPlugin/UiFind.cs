@@ -6,29 +6,17 @@ using PmxEditorMcp.SignatureDump;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 文言で画面の部品を探し、主画面からその部品までの道筋を返すツール。答えは組み込んだ台帳
-    /// だけから作り、エディタが起きていなくても、ウィンドウが閉じていても同じ答えを返す。
-    ///
-    /// 当たりを探すのは、部品の文言と指したときに出る説明、ウィンドウのタイトル、そのクラスが出す確認・報告の
-    /// 文言である。確認・報告の文言に当たったものは、道筋の代わりにその文言を持つ。
-    ///
-    /// 当たった数を total で示し、返しきれなかった残りがあれば次に渡す offset を nextOffset で示す。
-    /// </summary>
+    /// <summary>文言で画面の部品を探し、主画面からその部品までの道筋を返すツール。</summary>
     public static class UiFind
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "editor_find_operation";
 
         public const string TextsName = "texts";
 
-        /// <summary>返す件数の上限を受け取る入力の名前。</summary>
         public const string LimitName = "limit";
 
-        /// <summary>並びの何番目から返すかを受け取る入力の名前。</summary>
         public const string OffsetName = "offset";
 
-        /// <summary>上限を省いたときに返す件数。</summary>
         public const int DefaultLimit = 50;
 
         private const string TotalName = "total";
@@ -46,7 +34,6 @@ namespace PmxEditorMcp
         /// <summary>並びの中で、当たり1件の手前に置く区切りの文字数。</summary>
         private const int SeparatorChars = 1;
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods)
         {
             if (methods == null)

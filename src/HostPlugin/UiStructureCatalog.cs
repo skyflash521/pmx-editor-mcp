@@ -4,10 +4,7 @@ using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp
 {
-    /// <summary>
-    /// 組み込んだ画面の構造の台帳を引く。台帳は初めて要るときに1度だけ解き、以後は同じものを
-    /// 返す。
-    /// </summary>
+    /// <summary>組み込んだ画面の構造の台帳を引く。</summary>
     internal static class UiStructureCatalog
     {
         internal const string EditorVersionName = "editorVersion";
@@ -65,7 +62,6 @@ namespace PmxEditorMcp
 
         private static IDictionary<string, object> _read;
 
-        /// <summary>台帳の全体。</summary>
         internal static IDictionary<string, object> Read()
         {
             lock (Gate)
@@ -133,7 +129,7 @@ namespace PmxEditorMcp
             return found;
         }
 
-        /// <summary>名前かタイトルに部分一致するウィンドウ。完全に一致するものが無いときの答えに使う。</summary>
+        /// <summary>名前かタイトルに部分一致するウィンドウ。</summary>
         internal static IList<IDictionary<string, object>> Similar(string named)
         {
             List<IDictionary<string, object>> found = new List<IDictionary<string, object>>();
@@ -176,7 +172,6 @@ namespace PmxEditorMcp
                 : null;
         }
 
-        /// <summary>その節の子。</summary>
         internal static IList<IDictionary<string, object>> Children(IDictionary<string, object> node)
         {
             List<IDictionary<string, object>> children = new List<IDictionary<string, object>>();
@@ -188,7 +183,6 @@ namespace PmxEditorMcp
             return children;
         }
 
-        /// <summary>台帳の節が、押すとエディタがクリップボードを読むか書く部品か。</summary>
         internal static bool UsesClipboard(IDictionary<string, object> node)
         {
             object given;
@@ -196,7 +190,6 @@ namespace PmxEditorMcp
             return node != null && node.TryGetValue(ClipboardName, out given) && given is bool && (bool)given;
         }
 
-        /// <summary>台帳の節が、押すと何かが起きる部品か。</summary>
         internal static bool Pressable(IDictionary<string, object> node)
         {
             return PressableTypes.Contains(Text(node, TypeName) ?? string.Empty);
@@ -281,7 +274,6 @@ namespace PmxEditorMcp
             return null;
         }
 
-        /// <summary>文字列の並びを取り出す。</summary>
         internal static IList<string> Texts(IDictionary<string, object> held, string name)
         {
             List<string> texts = new List<string>();

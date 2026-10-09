@@ -29,10 +29,7 @@ namespace PmxEditorMcp
 
         private volatile bool _ended;
 
-        /// <summary>
-        /// 終わらせたあとなら真。一度真になったら戻らない。別のスレッドが終わらせた結果を
-        /// 要求の処理が読むので、書いたことが読む側へ必ず見える形で持つ。
-        /// </summary>
+        /// <summary>終わらせたあとなら真。一度真になったら戻らない。</summary>
         public bool IsEnded
         {
             get { return _ended; }
@@ -43,10 +40,8 @@ namespace PmxEditorMcp
         /// <summary>ホストが発行した識別子。128ビットの乱数を16進で表した文字列。</summary>
         public string Id { get; }
 
-        /// <summary>このセッションが保つハンドルの台帳。</summary>
         public HandleLedger Handles { get; }
 
-        /// <summary>このセッションが溜めるイベント。</summary>
         public EventQueue Events { get; }
 
         /// <summary>このセッションを所有する接続元のプロセス。</summary>
@@ -54,8 +49,7 @@ namespace PmxEditorMcp
     }
 
     /// <summary>
-    /// ホストが持つセッションの集まり。識別子は推測できない乱数にする——連番やプロセスIDだと、
-    /// 別のクライアントが値を当てて他のセッションのハンドルとイベントを引き継げる。
+    /// ホストが持つセッションの集まり。識別子は推測できない乱数にする。
     /// 複数のスレッドから同時に呼んでよい。
     /// </summary>
     public sealed class SessionStore
@@ -76,10 +70,7 @@ namespace PmxEditorMcp
 
         private readonly EventSequenceIssuer _eventSequence;
 
-        /// <summary>
-        /// 要求の処理を直列化する錠。終わらせる前にこれを取るのは、要求が使っている最中の台帳と
-        /// 溜め場を閉じないため。所有者の終了による回収も明示の終了と同じここを通す。
-        /// </summary>
+        /// <summary>要求の処理を直列化する錠。</summary>
         private readonly object _serialGate;
 
         private readonly Func<IUiInvoker> _currentUi;
@@ -127,7 +118,6 @@ namespace PmxEditorMcp
             _currentUi = currentUi;
         }
 
-        /// <summary>いま持っているセッションの数。</summary>
         public int Count
         {
             get
@@ -143,8 +133,7 @@ namespace PmxEditorMcp
         /// 接続に結び付けるセッションを決める。<paramref name="presented"/> が null か知らない識別子
         /// なら新しいセッションを作り、知っている識別子でその所有者が
         /// <paramref name="client"/> と同じプロセスなら、そのセッションへ戻す。別のプロセスからの
-        /// 提示は偽を返して断る——認めると、所有者を接続元プロセスに置いた意味が失われる。
-        /// 戻したセッションは自分の所有者を保ち続けるので、そのときは
+        /// 提示は偽を返して断る。戻したセッションは自分の所有者を保ち続け、そのときは
         /// <paramref name="client"/> の持ち主が閉じる。
         /// </summary>
         public bool TryResolve(string presented, ClientProcess client, out Session session)
@@ -176,9 +165,7 @@ namespace PmxEditorMcp
                 created = session;
             }
 
-            // 所有者の終了を見張る。すでに終わっていれば登録した時点で合図されるので、handshake の
-            // 途中で終わった接続元のセッションも、作った直後に回収される。合図が先に走ると登録を
-            // 覚える前に終わりうるので、覚えたところで終わり済みかを見て、そのときは自分で解く。
+            // すでに終わっているプロセスの待機ハンドルは、登録した時点で合図される。
             RegisteredWaitHandle watch = ThreadPool.RegisterWaitForSingleObject(
                 created.Client.Exited,
                 (state, timedOut) => End(((Session)state).Id),
@@ -200,7 +187,8 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// セッションを終わらせる。ハンドルを解放して台帳を閉じ、所有者の待機ハンドルと見張りを
-        /// 解く。知らない識別子と、終わり済みの識別子では何もせず偽を返す。
+        /// 解く。知らない識別子と、終わり済みの識別子では何もせず偽を返す。走っている要求が戻るまで
+        /// 待つ。台帳と溜め場の錠を持ったまま呼ばない。
         /// </summary>
         public bool End(string id)
         {
@@ -209,8 +197,6 @@ namespace PmxEditorMcp
                 throw new ArgumentNullException(nameof(id));
             }
 
-            // 走っている要求が戻るまで待つ。取る順は直列化の錠が先で、持ち物の錠を持ったまま
-            // こちらを取る経路は作らない。
             lock (_serialGate)
             {
                 return EndUnderSerialGate(id);
@@ -230,8 +216,6 @@ namespace PmxEditorMcp
                 _sessions.Remove(id);
             }
 
-            // 見張りの解除と後始末は、台帳の錠の外で行う。所有者の終了から呼ばれる経路と、明示の
-            // 終了から呼ばれる経路が同じここへ来るので、取り出せた側だけが進む。
             lock (session.WatchGate)
             {
                 session.IsEnded = true;

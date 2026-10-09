@@ -11,13 +11,10 @@ namespace PmxEditorMcp
     /// </summary>
     public static class ModelEditNodes
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "model_edit_nodes";
 
-        /// <summary>どの枠にも載っていないボーンを、指した枠の末尾へ足す。</summary>
         public const string RegisterUnlistedBones = "registerUnlistedBones";
 
-        /// <summary>どの枠にも載っていないモーフを、指した枠の末尾へ足す。</summary>
         public const string RegisterUnlistedMorphs = "registerUnlistedMorphs";
 
         public const string RegisterPickedBones = "registerPickedBones";
@@ -26,16 +23,12 @@ namespace PmxEditorMcp
 
         public const string TargetIndicesName = "targetIndices";
 
-        /// <summary>枠へ足す要素を、画面の選択で指す入力の名前。</summary>
         public const string TargetSelectedName = "targetSelected";
 
-        /// <summary>表情の枠の中身を、モーフの並びの順にそろえる。</summary>
         public const string NormalizeExpressionNode = "normalizeExpressionNode";
 
-        /// <summary>足した枠の中身の数を返す項目の名前。</summary>
         public const string AddedName = "added";
 
-        /// <summary>変えた枠の数を返す項目の名前。</summary>
         public const string ChangedName = "changed";
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
@@ -54,7 +47,7 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>ツールを表へ足す。<paramref name="builder"/> は新しい中身を作る相手を返す。</summary>
+        /// <summary><paramref name="builder"/> は新しい中身を作る相手を返す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit, Func<object> builder)
         {
             if (methods == null)

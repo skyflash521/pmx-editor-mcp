@@ -196,8 +196,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// <paramref name="control"/> の中の、その名前のコントロール。台帳は SplitContainer の区画のような
-        /// 入れ物を道筋に挙げないので、じかの子に無ければ、浅いものから順に中を探す。無ければ null。
+        /// <paramref name="control"/> の中の、その名前のコントロール。じかの子に無ければ、浅いものから順に
+        /// 中を探す。無ければ null。
         /// </summary>
         private static Control Inner(Control control, string name)
         {

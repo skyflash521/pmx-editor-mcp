@@ -6,21 +6,16 @@ namespace PmxEditorMcp
 {
     public static class ModelDeleteElements
     {
-        /// <summary>このツールの名前。</summary>
         public const string ToolName = "model_delete_elements";
 
-        /// <summary>消した件数を返す項目の名前。</summary>
         public const string RemovedName = "removed";
 
-        /// <summary>つられて消えた要素を、種類ごとに並べて返す項目の名前。</summary>
         public const string FollowingName = "following";
 
-        /// <summary>つられて消えた要素の種類を返す項目の名前。</summary>
         public const string KindName = "kind";
 
         public const string RepairedName = "repaired";
 
-        /// <summary>ツールを表へ足す。</summary>
         public static void AddTo(McpMethodTable methods, ComposedEdit edit)
         {
             if (methods == null)
