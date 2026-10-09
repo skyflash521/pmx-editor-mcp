@@ -771,17 +771,20 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task RejectClosesTheConnectionAndReportsAProtocolError()
+        public async Task AResponseThatCannotBeReadClosesTheConnectionAndReportsAProtocolError()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
                 .Reply(request => Result(request, "\"pong\""))
                 .Start();
             using HostIpcClient client = Connect(host);
-            await client.CallAsync("ping", null, CancellationToken.None);
-            Assert.True(client.IsConnected);
 
-            BridgeException error = client.Reject("ツールの応答が包みの形でない。");
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync<string>(
+                    "ping",
+                    null,
+                    _ => throw new FormatException("ツールの応答が包みの形でない。"),
+                    CancellationToken.None));
 
             Assert.Equal(BridgeErrorCodes.ProtocolError, error.Code);
             Assert.Equal("ツールの応答が包みの形でない。", error.Message);
@@ -789,12 +792,29 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void RejectRequiresAMessage()
+        public async Task AReadResponseIsReturned()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            string read = await client.CallAsync(
+                "ping", null, response => (string)response.Result, CancellationToken.None);
+
+            Assert.Equal("pong", read);
+            Assert.True(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task CallingWithAReaderRequiresAReader()
         {
             using FakeHost host = new FakeHost().Start();
             using HostIpcClient client = Connect(host);
 
-            Assert.Throws<ArgumentNullException>(() => client.Reject(null));
+            await Assert.ThrowsAsync<ArgumentNullException>(
+                () => client.CallAsync<string>("ping", null, null, CancellationToken.None));
         }
 
         private static HostIpcClient Connect(FakeHost host)

@@ -278,6 +278,39 @@ namespace PmxEditorMcp.Bridge
         }
 
         /// <summary>
+        /// ホストのメソッドを1件呼び、成功応答を <paramref name="read"/> で写した値を返す。写すのは
+        /// 順番の中で行う。<paramref name="read"/> が <see cref="FormatException"/> を投げたら、応答が
+        /// 契約から外れているとして、順番を譲る前に接続を捨てて <c>BRIDGE_PROTOCOL_ERROR</c> にする。
+        /// </summary>
+        public Task<T> CallAsync<T>(
+            string method,
+            JsonObject parameters,
+            Func<HostCallResult, T> read,
+            CancellationToken cancellationToken)
+        {
+            if (read == null)
+            {
+                throw new ArgumentNullException(nameof(read));
+            }
+
+            return InTurnAsync(
+                async limited =>
+                {
+                    HostCallResult response = await CallCoreAsync(method, parameters, limited)
+                        .ConfigureAwait(false);
+                    try
+                    {
+                        return read(response);
+                    }
+                    catch (FormatException broken)
+                    {
+                        throw FailAndClose(BridgeErrorCodes.ProtocolError, broken.Message);
+                    }
+                },
+                cancellationToken);
+        }
+
+        /// <summary>
         /// 接続先に選んだパイプ。選んでいなければ null。選ぶと、以後の接続はこのパイプへだけ開く。
         /// </summary>
         public string SelectedPipeName => _selectedPipeName;
@@ -339,8 +372,8 @@ namespace PmxEditorMcp.Bridge
             return new HostCallResult(null, TakeTargetNotice());
         }
 
-        private Task<HostCallResult> InTurnAsync(
-            Func<CancellationToken, Task<HostCallResult>> body, CancellationToken cancellationToken)
+        private Task<T> InTurnAsync<T>(
+            Func<CancellationToken, Task<T>> body, CancellationToken cancellationToken)
         {
             return InTurnAsync(body, cancellationToken, true);
         }
@@ -349,8 +382,8 @@ namespace PmxEditorMcp.Bridge
         /// 順番を取り、待つ上限を掛けて <paramref name="body"/> を走らせる。
         /// <paramref name="closesOnAbandon"/> が真なら、打ち切りと取り消しでは接続を捨てる。
         /// </summary>
-        private async Task<HostCallResult> InTurnAsync(
-            Func<CancellationToken, Task<HostCallResult>> body,
+        private async Task<T> InTurnAsync<T>(
+            Func<CancellationToken, Task<T>> body,
             CancellationToken cancellationToken,
             bool closesOnAbandon)
         {
@@ -451,20 +484,6 @@ namespace PmxEditorMcp.Bridge
         {
             return "接続先が変わった: " + previousPipeName + " から " + pipeName
                 + " へ。以前の応答は別のエディタのものである。";
-        }
-
-        /// <summary>
-        /// ホストの応答が契約から外れているとブリッジが判じたときに、接続を捨てて誤りを作る。
-        /// 契約から外れた応答を返す相手とは、次の要求の応答も対応づけられない。
-        /// </summary>
-        public BridgeException Reject(string message)
-        {
-            if (message == null)
-            {
-                throw new ArgumentNullException(nameof(message));
-            }
-
-            return FailAndClose(BridgeErrorCodes.ProtocolError, message);
         }
 
         /// <summary>保っている接続を閉じる。</summary>

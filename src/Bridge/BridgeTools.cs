@@ -299,22 +299,18 @@ namespace PmxEditorMcp.Bridge
         {
             try
             {
-                HostCallResult response = await client
-                    .CallAsync(method, parameters, cancellationToken)
+                return await client
+                    .CallAsync(
+                        method,
+                        parameters,
+                        response => ToolEnvelopeResult.From(
+                            response.Result,
+                            response.TargetNotice,
+                            client.BudgetChars,
+                            returnsImage,
+                            narrowing),
+                        cancellationToken)
                     .ConfigureAwait(false);
-                try
-                {
-                    return ToolEnvelopeResult.From(
-                        response.Result,
-                        response.TargetNotice,
-                        client.BudgetChars,
-                        returnsImage,
-                        narrowing);
-                }
-                catch (FormatException broken)
-                {
-                    throw client.Reject(broken.Message);
-                }
             }
             catch (BridgeException error)
             {
