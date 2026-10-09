@@ -613,6 +613,42 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
+        public void OnlyTheDangerousToolsAreMarkedDestructive()
+        {
+            IList<ToolDefinition> definitions = ToolDefinitionBuilder.Build(
+                new ToolSchemaTable(new[]
+                {
+                    Tool("confirming", Branch(Input("name", "text", true))),
+                    Tool("emptying", Branch(Input("name", "text", true), Input("pmxHandle", "number", false))),
+                    Tool("reading", Branch(Input("name", "text", true))),
+                }),
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    { "confirming", "受け持つこと" },
+                    { "emptying", "受け持つこと" },
+                    { "reading", "受け持つこと" },
+                },
+                new AssumedLength(Lengths),
+                ValueChars,
+                RequestBytes,
+                TokenLimit,
+                NoSdkShapes,
+                new HashSet<string>(new[] { "confirming", "emptying" }, StringComparer.Ordinal),
+                new HashSet<string>(new[] { "emptying" }, StringComparer.Ordinal),
+                NoDangerousTools,
+                NoDrawingTools);
+
+            Assert.Equal(
+                new object[] { true, true, false },
+                definitions.Select(DestructiveOf).ToArray());
+        }
+
+        private static object DestructiveOf(ToolDefinition definition)
+        {
+            return typeof(ToolDefinition).GetProperty("Destructive")?.GetValue(definition);
+        }
+
+        [Fact]
         public void AToolThatIsNotDangerousDoesNotTakeTheConfirmation()
         {
             Assert.DoesNotContain(

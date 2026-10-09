@@ -11,7 +11,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Json.Schema;
+using ModelContextProtocol.Client;
 using PmxEditorMcp.Bridge;
 using PmxEditorMcp.SignatureDump;
 using Xunit;
@@ -115,6 +118,26 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.True(Takes(schema, "{\"boneNames\":[\"a\"],\"morphNames\":[\"b\"]}"));
             Assert.False(Takes(schema, "{\"morphNames\":[\"b\"]}"));
             Assert.False(Takes(schema, "{\"boneNames\":[\"a\"]}"));
+        }
+
+        [Fact]
+        public async Task OnlyTheDangerousToolsAreListedAsDestructive()
+        {
+            using CancellationTokenSource limit = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await using McpClient client = await BridgeToolsTests.StartBridgeAsync(null, null, limit.Token);
+
+            IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
+            ISet<string> dangerous = ToolsTheHostConfirms();
+            dangerous.Add(ClearingOnlyTheModelItsHandlePointsAt);
+
+            Assert.Equal(
+                dangerous.OrderBy(name => name, StringComparer.Ordinal).ToArray(),
+                tools
+                    .Where(tool => tool.ProtocolTool.Annotations?.DestructiveHint == true)
+                    .Select(tool => tool.Name)
+                    .OrderBy(name => name, StringComparer.Ordinal)
+                    .ToArray());
+            Assert.DoesNotContain(tools, tool => tool.ProtocolTool.Annotations?.ReadOnlyHint != null);
         }
 
         [Fact]
