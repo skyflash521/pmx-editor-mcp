@@ -65,7 +65,6 @@ namespace PmxEditorMcp.Tests
             exit.Set();
 
             Assert.True(WaitForCount(store, 0), "所有者が終わってもセッションが残っている。");
-            Assert.Null(store.Find(session.Id));
             Assert.True(
                 WaitUntil(() => session.Handles.IsClosed), "台帳が閉じられていない。");
             Assert.Equal(0, session.Handles.Count);
@@ -98,8 +97,7 @@ namespace PmxEditorMcp.Tests
             leaving.Set();
 
             Assert.True(WaitForCount(store, 1), "片方だけが回収されていない。");
-            Assert.Null(store.Find(first.Id));
-            Assert.NotNull(store.Find(second.Id));
+            Assert.True(WaitUntil(() => first.Handles.IsClosed), "回収した側の台帳が閉じられていない。");
             Assert.False(second.Handles.IsClosed);
         }
 
@@ -173,7 +171,6 @@ namespace PmxEditorMcp.Tests
             string id = SessionOf(responses[0]);
             Assert.Equal(id, ResultOf(responses[2]));
             Assert.Equal(0, connection.Sessions.Count);
-            Assert.Null(connection.Sessions.Find(id));
             Assert.True(ledger.IsClosed);
         }
 
@@ -212,14 +209,23 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void EndingMarksTheSessionAndClosesItsQueue()
         {
-            JsonRpcConnection connection = Connection(new McpMethodTable());
-            string id = SessionOf(Exchange(connection, Handshake())[0]);
-            Session session = connection.Sessions.Find(id);
+            HandleLedger handles = null;
+            EventQueue events = null;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("grab", context =>
+            {
+                handles = context.Handles;
+                events = context.Events;
+
+                return null;
+            });
+            JsonRpcConnection connection = Connection(methods);
+            string id = SessionOf(Exchange(connection, Handshake(), Request(2, "grab"))[0]);
 
             Assert.True(connection.Sessions.End(id));
-            Assert.True(session.IsEnded);
-            Assert.True(session.Events.IsClosed);
-            Assert.True(session.Handles.IsClosed);
+            Assert.Equal(0, connection.Sessions.Count);
+            Assert.True(events.IsClosed);
+            Assert.True(handles.IsClosed);
         }
 
         [Fact]

@@ -730,7 +730,7 @@ namespace PmxEditorMcp
             }
 
             object protocol;
-            if (!parameters.TryGetValue("protocol", out protocol) || !IsNumber(protocol))
+            if (!parameters.TryGetValue("protocol", out protocol) || !ValueInput.IsNumber(protocol))
             {
                 Respond(channel, errors, request.Id, JsonRpcErrorCodes.InvalidParams,
                     "handshake には数値の protocol が要る。");
@@ -796,11 +796,6 @@ namespace PmxEditorMcp
             id = value as string;
 
             return id != null;
-        }
-
-        private static bool IsNumber(object value)
-        {
-            return value is int || value is long || value is decimal || value is double;
         }
 
         /// <summary>

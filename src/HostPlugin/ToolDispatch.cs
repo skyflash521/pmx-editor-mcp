@@ -33,7 +33,6 @@ namespace PmxEditorMcp
 
         private const string NameFieldName = "name";
 
-
         /// <summary>更新が受け取る値の組の名前。</summary>
         public const string ValueName = "value";
 
@@ -1231,12 +1230,12 @@ namespace PmxEditorMcp
                 }
             }, out failure, out unavailable))
             {
-                return Unavailable(unavailable);
+                return ToolFailure.Unavailable(unavailable);
             }
 
             if (failure != null)
             {
-                return Failed(failure, stage);
+                return ToolFailure.Failed(failure, stage);
             }
 
             if (refused != null)
@@ -1809,12 +1808,12 @@ namespace PmxEditorMcp
                 refused = Commit(context, call.Receiver, target);
             }, out failure, out unavailable))
             {
-                return Unavailable(unavailable);
+                return ToolFailure.Unavailable(unavailable);
             }
 
             if (failure != null)
             {
-                return Failed(failure, stage);
+                return ToolFailure.Failed(failure, stage);
             }
 
             if (refused != null)
@@ -3084,12 +3083,12 @@ namespace PmxEditorMcp
                 }
             }, out failure, out unavailable))
             {
-                return Unavailable(unavailable);
+                return ToolFailure.Unavailable(unavailable);
             }
 
             if (failure != null)
             {
-                return Failed(failure, EditStage.BeforeCommit);
+                return ToolFailure.Failed(failure, EditStage.BeforeCommit);
             }
 
             if (refused != null)
@@ -3349,12 +3348,12 @@ namespace PmxEditorMcp
                 }
             }, out failure, out unavailable))
             {
-                return Unavailable(unavailable);
+                return ToolFailure.Unavailable(unavailable);
             }
 
             if (failure != null)
             {
-                return Failed(failure, stage);
+                return ToolFailure.Failed(failure, stage);
             }
 
             return refused != null
@@ -3592,12 +3591,12 @@ namespace PmxEditorMcp
                     ?? CarryFilePath(tool.Receiver, target, writing, pointing);
             }, out failure, out unavailable))
             {
-                return Unavailable(unavailable);
+                return ToolFailure.Unavailable(unavailable);
             }
 
             if (failure != null)
             {
-                return Failed(failure, stage);
+                return ToolFailure.Failed(failure, stage);
             }
 
             return refused != null
@@ -3770,12 +3769,12 @@ namespace PmxEditorMcp
                 }
             }, out failure, out unavailable))
             {
-                return Unavailable(unavailable);
+                return ToolFailure.Unavailable(unavailable);
             }
 
             if (failure != null)
             {
-                return Failed(failure, stage);
+                return ToolFailure.Failed(failure, stage);
             }
 
             if (refused != null)
@@ -3870,12 +3869,12 @@ namespace PmxEditorMcp
                 }
             }, out failure, out unavailable))
             {
-                return Unavailable(unavailable);
+                return ToolFailure.Unavailable(unavailable);
             }
 
             if (failure != null)
             {
-                return Failed(failure, stage);
+                return ToolFailure.Failed(failure, stage);
             }
 
             if (refused != null)
@@ -3962,12 +3961,12 @@ namespace PmxEditorMcp
                 found = column;
             }, out failure, out unavailable))
             {
-                return Unavailable(unavailable);
+                return ToolFailure.Unavailable(unavailable);
             }
 
             if (failure != null)
             {
-                return Failed(failure, EditStage.BeforeCommit);
+                return ToolFailure.Failed(failure, EditStage.BeforeCommit);
             }
 
             if (refused != null)
@@ -4046,12 +4045,12 @@ namespace PmxEditorMcp
                 refused = Commit(context, tool.Receiver, target);
             }, out failure, out unavailable))
             {
-                return Unavailable(unavailable);
+                return ToolFailure.Unavailable(unavailable);
             }
 
             if (failure != null)
             {
-                return Failed(failure, stage);
+                return ToolFailure.Failed(failure, stage);
             }
 
             return refused != null
@@ -6068,7 +6067,6 @@ namespace PmxEditorMcp
                 context.Params, names, handles, out request, out code, out message);
         }
 
-
         private static bool TryValue(
             McpMethodContext context,
             ToolArgument argument,
@@ -6322,24 +6320,6 @@ namespace PmxEditorMcp
             return ToolEnvelope.Failure(
                 code ?? ToolEnvelope.NotApplicable,
                 message ?? ("返す値を写せない型を取る: " + declared.FullName));
-        }
-
-        /// <summary>
-        /// 呼び出しをUIスレッドで行えなかったことを返す。事情を知っているのは委譲した側なので
-        /// その説明をそのまま載せ、委譲を渡していない回は投げ直せる断り方で返す。
-        /// </summary>
-        private static IDictionary<string, object> Unavailable(UiInvocation invocation = null)
-        {
-            return ToolFailure.Unavailable(invocation);
-        }
-
-        /// <summary>
-        /// SDKの呼び出しが落ちたことを返す。例外の内容だけでは、どこまで変わったのかを受け取った
-        /// 先が判じられないので、失敗した位置から決まる状態を添える。
-        /// </summary>
-        private static IDictionary<string, object> Failed(Exception failure, EditStage stage)
-        {
-            return ToolFailure.Failed(failure, stage);
         }
 
         private sealed class ParentGroup

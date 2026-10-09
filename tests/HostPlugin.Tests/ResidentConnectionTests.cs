@@ -47,7 +47,6 @@ namespace PmxEditorMcp.Tests
             using (ResidentConnection connection = ResidentConnection.Hold(runArgs, _log))
             {
                 Assert.Same(runArgs, connection.RunArgs);
-                Assert.False(connection.IsHolding);
             }
 
             Assert.Equal(0, _system.CloneCount);
@@ -84,7 +83,6 @@ namespace PmxEditorMcp.Tests
             {
                 connection.Expire();
 
-                Assert.False(connection.IsHolding);
                 Assert.Same(_cPluginConnector, connection.Use());
                 Assert.Equal(2, _system.CloneCount);
             }
@@ -163,7 +161,6 @@ namespace PmxEditorMcp.Tests
             connection.Dispose();
 
             Assert.Single(Lines(), l => l.Contains("Cプラグインコネクタの破棄"));
-            Assert.False(connection.IsHolding);
         }
 
         [Fact]

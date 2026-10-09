@@ -447,7 +447,7 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            if (IsNumber(value))
+            if (ValueInput.IsNumber(value))
             {
                 return TryFinite(
                     value, Convert.ToDouble(value, CultureInfo.InvariantCulture),
@@ -517,27 +517,6 @@ namespace PmxEditorMcp
             json = written;
 
             return true;
-        }
-
-        private static bool IsNumber(object value)
-        {
-            switch (Convert.GetTypeCode(value))
-            {
-                case TypeCode.SByte:
-                case TypeCode.Byte:
-                case TypeCode.Int16:
-                case TypeCode.UInt16:
-                case TypeCode.Int32:
-                case TypeCode.UInt32:
-                case TypeCode.Int64:
-                case TypeCode.UInt64:
-                case TypeCode.Single:
-                case TypeCode.Double:
-                case TypeCode.Decimal:
-                    return true;
-                default:
-                    return false;
-            }
         }
 
         private static bool TryFinite(object value, double number, out object json, out string code, out string message)

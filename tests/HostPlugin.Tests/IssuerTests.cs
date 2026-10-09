@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -51,8 +52,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheLastIdBeforeTheReservedOneIsStillIssued()
         {
-            HandleIdIssuer issuer = new HandleIdIssuer();
-            issuer.SkipTo(HandleIdIssuer.Reserved - 2);
+            HandleIdIssuer issuer = IssuedUpTo(HandleIdIssuer.Reserved - 2);
 
             Assert.Equal(HandleIdIssuer.Reserved - 1, issuer.Next());
             Assert.Throws<InvalidOperationException>(() => issuer.Next());
@@ -61,8 +61,16 @@ namespace PmxEditorMcp.Tests
         /// <summary>予約の1つ手前まで配った発行器。</summary>
         private static HandleIdIssuer Exhausted()
         {
+            return IssuedUpTo(HandleIdIssuer.Reserved - 1);
+        }
+
+        /// <summary>そこまで配った発行器。</summary>
+        private static HandleIdIssuer IssuedUpTo(long issued)
+        {
             HandleIdIssuer issuer = new HandleIdIssuer();
-            issuer.SkipTo(HandleIdIssuer.Reserved - 1);
+            typeof(HandleIdIssuer)
+                .GetField("_last", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(issuer, issued);
 
             return issuer;
         }

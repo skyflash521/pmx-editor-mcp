@@ -32,17 +32,6 @@ namespace PmxEditorMcp
             return (int)next;
         }
 
-        /// <summary>直前に配ったID。まだ配っていなければ0。</summary>
-        internal int Last
-        {
-            get { return (int)Interlocked.Read(ref _last); }
-        }
-
-        /// <summary>そこまで配った状態にする。配り切る境目を確かめるために要る。</summary>
-        internal void SkipTo(int issued)
-        {
-            Interlocked.Exchange(ref _last, issued);
-        }
     }
 
     /// <summary>

@@ -30,8 +30,6 @@ namespace PmxEditorMcp
 
         internal const string PathName = "path";
 
-        internal const string HandlerName = "handler";
-
         internal const string TypeName = "type";
 
         internal const string NameName = "name";

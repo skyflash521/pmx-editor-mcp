@@ -28,18 +28,6 @@ namespace PmxEditorMcp
         /// <summary>常駐保持する接続の根。各コネクタ・ビルダはここから辿って得る。</summary>
         public IPERunArgs RunArgs { get; }
 
-        /// <summary>Cプラグイン連携の実行引数を保持しているかどうか。</summary>
-        public bool IsHolding
-        {
-            get
-            {
-                lock (_gate)
-                {
-                    return _cPluginRunArgs != null;
-                }
-            }
-        }
-
         /// <summary>
         /// 接続の根を保持する。Cプラグイン連携の実行引数はここでは得ない——得られなくても根は
         /// 保ち、そこから辿るほかの機能を動かし続けるためである。

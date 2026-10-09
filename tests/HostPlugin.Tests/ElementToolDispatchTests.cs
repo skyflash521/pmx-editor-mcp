@@ -2103,7 +2103,7 @@ namespace PmxEditorMcp.Tests
                 handles)));
 
             HandleReleaseResult released;
-            Assert.True(handles.TryRelease(handle, new InlineInvoker(), out released));
+            Assert.True(handles.TryReleaseAll(new[] { handle }, new InlineInvoker(), out released));
             Assert.False(handles.IsValid(element));
         }
 

@@ -254,22 +254,6 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>その識別子のセッション。知らなければ null。</summary>
-        public Session Find(string id)
-        {
-            if (id == null)
-            {
-                return null;
-            }
-
-            lock (_gate)
-            {
-                Session session;
-
-                return _sessions.TryGetValue(id, out session) ? session : null;
-            }
-        }
-
         private string NewId()
         {
             byte[] bytes = new byte[IdBytes];

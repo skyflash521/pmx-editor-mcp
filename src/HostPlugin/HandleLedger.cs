@@ -231,34 +231,6 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// ハンドルを解放する。依存する子を先に解放してから自分を解放し、失効させる。知らない・
-        /// 解放済みのハンドルでは偽。
-        /// </summary>
-        public bool TryRelease(int id, IUiInvoker ui, out HandleReleaseResult result)
-        {
-            if (ui == null)
-            {
-                throw new ArgumentNullException(nameof(ui));
-            }
-
-            result = null;
-            List<Taken> taken;
-            lock (_gate)
-            {
-                if (!_entries.ContainsKey(id))
-                {
-                    return false;
-                }
-
-                taken = Take(Ordered(new[] { id }));
-            }
-
-            result = ReleaseInOrder(taken, ui);
-
-            return true;
-        }
-
-        /// <summary>
         /// 指したハンドルをまとめて解放する。指したものとその依存子を合わせ、重なりを除いて
         /// それぞれをちょうど一度だけ解放する。どれか1つでも台帳に無ければ、何も解放せず偽。
         /// </summary>

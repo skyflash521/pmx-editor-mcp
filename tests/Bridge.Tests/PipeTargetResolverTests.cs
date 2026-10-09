@@ -58,7 +58,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void ExplicitTargetIsUsedWithoutEnumeratingListeners()
         {
-            string resolved = PipeTargetResolver.Resolve(
+            string resolved = ResolveWith(
                 "pmx-editor-mcp-9", Entries("pmx-editor-mcp-1234", "pmx-editor-mcp-5678"), new int[] { 1234, 5678 });
 
             Assert.Equal("pmx-editor-mcp-9", resolved);
@@ -67,7 +67,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void ListenerEnumerationHappensOnlyWithoutExplicitTarget()
         {
-            string resolved = PipeTargetResolver.Resolve(
+            string resolved = ResolveWith(
                 string.Empty, Entries("pmx-editor-mcp-1234"), new int[] { 1234 });
 
             Assert.Equal(string.Empty, resolved);
@@ -76,7 +76,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void SingleListeningHostBecomesTarget()
         {
-            string resolved = PipeTargetResolver.Resolve(
+            string resolved = ResolveWith(
                 null, Entries("pmx-editor-mcp-1234"), new int[] { 1234 });
 
             Assert.Equal("pmx-editor-mcp-1234", resolved);
@@ -85,7 +85,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void TargetIsReturnedAsPipeNameNotDirectoryEntry()
         {
-            string resolved = PipeTargetResolver.Resolve(
+            string resolved = ResolveWith(
                 null, Entries("pmx-editor-mcp-1234"), new int[] { 1234 });
 
             Assert.DoesNotContain(PipeTargetResolver.PipeDirectory, resolved);
@@ -95,7 +95,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [MemberData(nameof(NamesThatAreNotHostListeners))]
         public void OnlyHostListenersAreCandidatesAmongOtherEntries(string notHostPipeName)
         {
-            string resolved = PipeTargetResolver.Resolve(
+            string resolved = ResolveWith(
                 null, Entries(notHostPipeName, "pmx-editor-mcp-1234"), new int[] { 1234 });
 
             Assert.Equal("pmx-editor-mcp-1234", resolved);
@@ -104,7 +104,7 @@ namespace PmxEditorMcp.Bridge.Tests
         [Fact]
         public void TargetIsResolvedWithMultipleEditorsButOneListener()
         {
-            string resolved = PipeTargetResolver.Resolve(
+            string resolved = ResolveWith(
                 null, Entries("pmx-editor-mcp-5678"), new int[] { 1234, 5678, 9012 });
 
             Assert.Equal("pmx-editor-mcp-5678", resolved);
@@ -156,7 +156,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public void NoEditorAndNoListenerYieldsStartupPromptError()
         {
             BridgeException error = Assert.Throws<BridgeException>(
-                () => PipeTargetResolver.Resolve(null, Entries("lsass"), new int[0]));
+                () => ResolveWith(null, Entries("lsass"), new int[0]));
 
             Assert.Equal(BridgeErrorCodes.NoEditor, error.Code);
             Assert.Equal(
@@ -172,7 +172,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public void EditorWithoutListenerYieldsStatusCheckPrompt(int[] editorProcessIds)
         {
             BridgeException error = Assert.Throws<BridgeException>(
-                () => PipeTargetResolver.Resolve(null, Entries("lsass"), editorProcessIds));
+                () => ResolveWith(null, Entries("lsass"), editorProcessIds));
 
             Assert.Equal(BridgeErrorCodes.NoHost, error.Code);
             Assert.Equal(
@@ -186,7 +186,7 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             // 桁数の違う値を混ぜる。同じ桁数だけでは、名前の文字列順に並べる実装と区別できない。
             BridgeException error = Assert.Throws<BridgeException>(
-                () => PipeTargetResolver.Resolve(
+                () => ResolveWith(
                     null,
                     Entries("pmx-editor-mcp-30", "lsass", "pmx-editor-mcp-2", "pmx-editor-mcp-10"),
                     new int[] { 2, 10, 30 }));
@@ -202,7 +202,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public void MultipleListenerGuidanceDoesNotDemandConfiguration(string forbidden)
         {
             BridgeException error = Assert.Throws<BridgeException>(
-                () => PipeTargetResolver.Resolve(
+                () => ResolveWith(
                     null,
                     Entries("pmx-editor-mcp-5678", "pmx-editor-mcp-1234"),
                     new int[] { 1234, 5678 }));
@@ -513,6 +513,15 @@ namespace PmxEditorMcp.Bridge.Tests
             EditorSurveyEntry only = Assert.Single(surveyed);
             Assert.Equal(7, only.ProcessId);
             Assert.True(only.Listening);
+        }
+
+        private static string ResolveWith(
+            string configuredPipeName, IReadOnlyList<string> pipeDirectoryEntries, IReadOnlyList<int> editorProcessIds)
+        {
+            return PipeTargetResolver.ResolveFrom(
+                name => name == PipeTargetResolver.TestPipeEnvironmentVariableName ? configuredPipeName : null,
+                directory => pipeDirectoryEntries,
+                processName => editorProcessIds);
         }
 
         /// <summary>パイプ名の並びを、ディレクトリを列挙したときの項目の形へ直す。</summary>

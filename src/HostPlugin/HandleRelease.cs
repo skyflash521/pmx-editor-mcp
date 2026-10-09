@@ -104,40 +104,13 @@ namespace PmxEditorMcp
             }
 
             object value;
-            object[] items = context.Params.TryGetValue(HandlesName, out value)
-                ? value as object[]
-                : null;
-            if (items == null)
+            context.Params.TryGetValue(HandlesName, out value);
+            if (!TargetInput.TryHandleList(value, HandlesName, out handles, out message))
             {
-                message = HandlesName + " はハンドルの配列でなければならない。";
-
                 return false;
             }
 
-            List<long> taken = new List<long>();
-            foreach (object item in items)
-            {
-                if (!ValueInput.IsNumber(item))
-                {
-                    message = HandlesName + " は整数の配列でなければならない。";
-
-                    return false;
-                }
-
-                double written = Convert.ToDouble(item, CultureInfo.InvariantCulture);
-                if (written != Math.Floor(written) || written < long.MinValue
-                    || written > long.MaxValue)
-                {
-                    message = HandlesName + " は整数の配列でなければならない。";
-
-                    return false;
-                }
-
-                taken.Add((long)written);
-            }
-
             code = null;
-            handles = taken;
 
             return true;
         }

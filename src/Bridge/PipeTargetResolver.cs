@@ -71,36 +71,6 @@ namespace PmxEditorMcp.Bridge
         }
 
         /// <summary>
-        /// 接続先のパイプ名を決める。<paramref name="configuredPipeName"/> が null のときだけ
-        /// <paramref name="pipeDirectoryEntries"/> から決める。項目は
-        /// <see cref="PipeDirectory"/> を列挙した結果をそのまま渡してよく、ホストの待受パイプで
-        /// ないものはここで落とす。<paramref name="editorProcessIds"/> は待ち受けているホストが
-        /// 無いときの案内を分けるためだけに使う。
-        /// </summary>
-        public static string Resolve(
-            string configuredPipeName,
-            IReadOnlyList<string> pipeDirectoryEntries,
-            IReadOnlyList<int> editorProcessIds)
-        {
-            if (configuredPipeName != null)
-            {
-                return configuredPipeName;
-            }
-
-            if (pipeDirectoryEntries == null)
-            {
-                throw new ArgumentNullException(nameof(pipeDirectoryEntries));
-            }
-
-            if (editorProcessIds == null)
-            {
-                throw new ArgumentNullException(nameof(editorProcessIds));
-            }
-
-            return Decide(HostPipeNamesIn(pipeDirectoryEntries), () => editorProcessIds);
-        }
-
-        /// <summary>
         /// 待ち受けているホストから接続先のパイプ名を決める。<paramref name="selectedPipeName"/> が
         /// null でなければ、それが待ち受けているときだけそれを返す。
         /// </summary>

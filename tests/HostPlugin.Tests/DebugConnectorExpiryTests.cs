@@ -62,7 +62,6 @@ namespace PmxEditorMcp.Tests
             {
                 DebugConnectorExpiry.Expire(resident);
 
-                Assert.True(resident.IsHolding);
                 Assert.Same(_cPluginConnector, resident.Use());
             }
         }

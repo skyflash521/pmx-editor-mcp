@@ -96,7 +96,7 @@ namespace PmxEditorMcp.Tests
         {
             int id = Issue(UiModel);
             HandleReleaseResult result;
-            _ledger.TryRelease(id, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result);
 
             object found;
 
@@ -117,7 +117,7 @@ namespace PmxEditorMcp.Tests
         {
             int id = Issue(UiModel);
             HandleReleaseResult result;
-            _ledger.TryRelease(id, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result);
 
             object found;
 
@@ -132,7 +132,7 @@ namespace PmxEditorMcp.Tests
 
             HandleReleaseResult result;
 
-            Assert.True(_ledger.TryRelease(id, new InlineInvoker(), out result));
+            Assert.True(_ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result));
             Assert.Equal(new[] { id }, result.Invalidated);
             Assert.Empty(result.Failed);
             Assert.Equal(new[] { id }, _releases);
@@ -143,9 +143,9 @@ namespace PmxEditorMcp.Tests
         {
             int id = Issue(UiModel);
             HandleReleaseResult result;
-            _ledger.TryRelease(id, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result);
 
-            Assert.False(_ledger.TryRelease(id, new InlineInvoker(), out result));
+            Assert.False(_ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result));
             Assert.Null(result);
             Assert.Equal(new[] { id }, _releases);
         }
@@ -157,7 +157,7 @@ namespace PmxEditorMcp.Tests
             int listener = Issue(Listener, model);
 
             HandleReleaseResult result;
-            _ledger.TryRelease(model, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { model }, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { listener, model }, result.Invalidated);
             Assert.Equal(new[] { listener, model }, _releases);
@@ -171,7 +171,7 @@ namespace PmxEditorMcp.Tests
             int leaf = Issue(Listener, listener);
 
             HandleReleaseResult result;
-            _ledger.TryRelease(model, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { model }, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { leaf, listener, model }, result.Invalidated);
         }
@@ -185,7 +185,7 @@ namespace PmxEditorMcp.Tests
                 Listener, new object(), () => _releases.Add(3), new[] { model, connector });
 
             HandleReleaseResult result;
-            _ledger.TryRelease(connector, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { connector }, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { listener, connector }, result.Invalidated);
             Assert.True(_ledger.IsValid(model));
@@ -198,7 +198,7 @@ namespace PmxEditorMcp.Tests
             int listener = Issue(Listener, model);
 
             HandleReleaseResult result;
-            _ledger.TryRelease(listener, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { listener }, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { listener }, result.Invalidated);
             Assert.True(_ledger.IsValid(model));
@@ -212,7 +212,7 @@ namespace PmxEditorMcp.Tests
             int listener = Issue(Listener, model);
 
             HandleReleaseResult result;
-            _ledger.TryRelease(model, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { model }, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { listener, model }, result.Invalidated);
             Assert.Equal(new[] { model }, result.Failed);
@@ -231,7 +231,7 @@ namespace PmxEditorMcp.Tests
                 Listener, new object(), () => _releases.Add(4), new[] { left, right });
 
             HandleReleaseResult result;
-            _ledger.TryRelease(root, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { root }, new InlineInvoker(), out result);
 
             Assert.Equal(new[] { leaf, right, left, root }, result.Invalidated);
             Assert.Equal(new[] { 4 }, _releases.Where(r => r == 4));
@@ -280,7 +280,7 @@ namespace PmxEditorMcp.Tests
 
             Stopwatch elapsed = Stopwatch.StartNew();
             HandleReleaseResult result;
-            _ledger.TryRelease(root, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { root }, new InlineInvoker(), out result);
             elapsed.Stop();
 
             Assert.Equal(last, result.Invalidated[0]);
@@ -360,7 +360,7 @@ namespace PmxEditorMcp.Tests
             int id = Issue(UiModel);
             HandleReleaseResult result;
 
-            _ledger.TryRelease(id, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result);
 
             Assert.Single(Lines(), l => l.Contains("ハンドルの解放: id=" + id + " type=" + UiModel));
         }
@@ -372,7 +372,7 @@ namespace PmxEditorMcp.Tests
                 UiModel, new object(), () => { throw new InvalidOperationException("解放に失敗。"); });
             HandleReleaseResult result;
 
-            _ledger.TryRelease(id, new InlineInvoker(), out result);
+            _ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result);
 
             Assert.Single(Lines(), l => l.Contains("ハンドルの解放で例外が起きた: id=" + id));
         }
@@ -402,7 +402,7 @@ namespace PmxEditorMcp.Tests
             Assert.Throws<ArgumentNullException>(() => _ledger.TryGet(1, null, out found));
 
             HandleReleaseResult released;
-            Assert.Throws<ArgumentNullException>(() => _ledger.TryRelease(1, null, out released));
+            Assert.Throws<ArgumentNullException>(() => _ledger.TryReleaseAll(new[] { 1 }, null, out released));
             Assert.Throws<ArgumentNullException>(
                 () => _ledger.TryReleaseAll(new[] { 1 }, null, out released));
             Assert.Throws<ArgumentNullException>(() => _ledger.ReleaseIssuedAfter(0, null));

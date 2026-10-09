@@ -329,11 +329,28 @@ namespace PmxEditorMcp
                 return true;
             }
 
+            if (!TryHandleList(value, names.Handles, out handles, out message))
+            {
+                code = ToolEnvelope.InvalidArgument;
+
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// ハンドルの配列を読む。配列でないか整数でない要素を含めば偽を返し、
+        /// <paramref name="name"/> を挙げて断る内容を渡す。
+        /// </summary>
+        internal static bool TryHandleList(object value, string name, out IList<long> handles, out string message)
+        {
+            handles = null;
+            message = null;
             object[] items = value as object[];
             if (items == null)
             {
-                code = ToolEnvelope.InvalidArgument;
-                message = names.Handles + " はハンドルの配列でなければならない。";
+                message = name + " はハンドルの配列でなければならない。";
 
                 return false;
             }
@@ -344,8 +361,7 @@ namespace PmxEditorMcp
                 long number;
                 if (!ValueInput.TryInteger(item, out number))
                 {
-                    code = ToolEnvelope.InvalidArgument;
-                    message = names.Handles + " は整数の配列でなければならない。";
+                    message = name + " は整数の配列でなければならない。";
 
                     return false;
                 }
