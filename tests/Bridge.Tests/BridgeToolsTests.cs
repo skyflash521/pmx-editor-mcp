@@ -528,7 +528,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 "ping", cancellationToken: limit.Token);
 
             Assert.NotEqual(true, result.IsError);
-            Assert.Equal("接続先: " + host.PipeName + "\npong", TextOf(result));
+            Assert.Equal(Relayed(host.PipeName, "pong"), TextOf(result));
         }
 
         [Fact]
@@ -625,7 +625,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             Assert.NotEqual(true, selected.IsError);
             Assert.Equal(
-                "接続先: " + chosen.PipeName + "\n{\"processId\":2000000002}", TextOf(selected));
+                Relayed(chosen.PipeName, "{\"processId\":2000000002}"), TextOf(selected));
             Assert.Equal(Relayed(chosen.PipeName, "pong"), TextOf(pinged));
             Assert.Equal(new string[] { "handshake", "ping" }, MethodsOf(chosen.Requests));
             Assert.Empty(other.Requests);
@@ -780,7 +780,7 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>接続先の行を先頭に置いた、要求元へ返る本文を組み立てる。</summary>
         private static string Relayed(string pipeName, string body)
         {
-            return "接続先: " + pipeName + "\n" + body;
+            return "接続先: " + pipeName + "(ホスト 1.0.0.0)\n" + body;
         }
 
         private static int DeclaredResultSize(McpClientTool tool)

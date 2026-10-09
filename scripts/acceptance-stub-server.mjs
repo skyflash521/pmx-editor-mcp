@@ -21,6 +21,8 @@ const TARGET_CHANGED_PREFIX = "接続先が変わった: ";
 const TARGET_CHANGED_MIDDLE = " から ";
 const TARGET_CHANGED_SUFFIX = " へ。以前の応答は別のエディタのものである。";
 
+const HOST_VERSION = "(ホスト 1.0.0.0)";
+
 /** 作った画像を塗る値。 */
 const PLAIN_SHADE = 0x00;
 
@@ -196,11 +198,11 @@ function notice(expect, remembered, firstEditor, broken) {
         ? undefined
         : fill(expect.notice, remembered);
     if (wanted === undefined || wanted.editor !== undefined) {
-        return TARGET_PREFIX + PIPE_PREFIX + ((wanted?.editor ?? firstEditor) + shift);
+        return TARGET_PREFIX + PIPE_PREFIX + ((wanted?.editor ?? firstEditor) + shift) + HOST_VERSION;
     }
 
     return TARGET_CHANGED_PREFIX + PIPE_PREFIX + (wanted.changedFrom + shift)
-        + TARGET_CHANGED_MIDDLE + PIPE_PREFIX + (wanted.changedTo + shift)
+        + TARGET_CHANGED_MIDDLE + PIPE_PREFIX + (wanted.changedTo + shift) + HOST_VERSION
         + TARGET_CHANGED_SUFFIX;
 }
 

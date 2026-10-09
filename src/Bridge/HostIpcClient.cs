@@ -231,6 +231,7 @@ namespace PmxEditorMcp.Bridge
         private BridgeMessageChannel _channel;
         private int _lastRequestId;
         private string _connectedPipeName;
+        private string _connectedHostVersion;
         private string _reportedPipeName;
         private string _selectedPipeName;
 
@@ -351,9 +352,11 @@ namespace PmxEditorMcp.Bridge
             Stream keptStream = _stream;
             BridgeMessageChannel keptChannel = _channel;
             string keptPipeName = _connectedPipeName;
+            string keptHostVersion = _connectedHostVersion;
             _stream = null;
             _channel = null;
             _connectedPipeName = null;
+            _connectedHostVersion = null;
             try
             {
                 await HandshakeAsync(connection, cancellationToken).ConfigureAwait(false);
@@ -364,6 +367,7 @@ namespace PmxEditorMcp.Bridge
                 _stream = keptStream;
                 _channel = keptChannel;
                 _connectedPipeName = keptPipeName;
+                _connectedHostVersion = keptHostVersion;
                 throw;
             }
 
@@ -469,21 +473,27 @@ namespace PmxEditorMcp.Bridge
 
             if (previous == null || previous == _connectedPipeName)
             {
-                return DescribeTarget(_connectedPipeName);
+                return DescribeTarget(_connectedPipeName, _connectedHostVersion);
             }
 
-            return DescribeChangedTarget(previous, _connectedPipeName);
+            return DescribeChangedTarget(previous, _connectedPipeName, _connectedHostVersion);
         }
 
-        private static string DescribeTarget(string pipeName)
+        private static string DescribeTarget(string pipeName, string hostVersion)
         {
-            return "接続先: " + pipeName;
+            return "接続先: " + DescribeHost(pipeName, hostVersion);
         }
 
-        private static string DescribeChangedTarget(string previousPipeName, string pipeName)
+        private static string DescribeChangedTarget(
+            string previousPipeName, string pipeName, string hostVersion)
         {
-            return "接続先が変わった: " + previousPipeName + " から " + pipeName
+            return "接続先が変わった: " + previousPipeName + " から " + DescribeHost(pipeName, hostVersion)
                 + " へ。以前の応答は別のエディタのものである。";
+        }
+
+        private static string DescribeHost(string pipeName, string hostVersion)
+        {
+            return pipeName + "(ホスト " + hostVersion + ")";
         }
 
         /// <summary>保っている接続を閉じる。</summary>
@@ -525,12 +535,18 @@ namespace PmxEditorMcp.Bridge
                         + BridgeErrorCodes.ForHostError(response.ErrorCode) + "): " + response.ErrorMessage);
             }
 
+            string hostVersion;
             int hostBudgetChars;
             string hostToolMapDigest;
             string session;
             string invalidReason;
             if (!TryReadHandshake(
-                response.Result, out hostBudgetChars, out hostToolMapDigest, out session, out invalidReason))
+                response.Result,
+                out hostVersion,
+                out hostBudgetChars,
+                out hostToolMapDigest,
+                out session,
+                out invalidReason))
             {
                 throw FailAndClose(BridgeErrorCodes.HandshakeMismatch, invalidReason);
             }
@@ -558,6 +574,8 @@ namespace PmxEditorMcp.Bridge
             {
                 _sessionsByPipeName[connection.PipeName] = session;
             }
+
+            _connectedHostVersion = hostVersion;
         }
 
         private async Task<HostResponse> ExchangeAsync(
@@ -640,11 +658,13 @@ namespace PmxEditorMcp.Bridge
 
         private static bool TryReadHandshake(
             JsonNode result,
+            out string hostVersion,
             out int budgetChars,
             out string toolMapDigest,
             out string session,
             out string invalidReason)
         {
+            hostVersion = null;
             budgetChars = 0;
             toolMapDigest = null;
             session = null;
@@ -674,7 +694,6 @@ namespace PmxEditorMcp.Bridge
             }
 
             JsonNode hostVersionNode;
-            string hostVersion;
             if (!handshake.TryGetPropertyValue("hostVersion", out hostVersionNode)
                 || !BridgeJsonRpc.TryGetString(hostVersionNode, out hostVersion))
             {
@@ -732,6 +751,7 @@ namespace PmxEditorMcp.Bridge
             // 名乗った相手は繋ぎ直しをまたいで覚えておく——忘れると、別のエディタへ移っても
             // 初めての知らせに見えて、変わった事実が伝わらない。
             _connectedPipeName = null;
+            _connectedHostVersion = null;
 
             Stream stream = _stream;
             _stream = null;

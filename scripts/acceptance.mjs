@@ -30,6 +30,9 @@ const TARGET_PREFIX = "接続先: ";
 /** 接続先が移ったことを知らせる行の書き出し。ブリッジの実装が定める。 */
 const TARGET_CHANGED_PREFIX = "接続先が変わった: ";
 
+const HOST_VERSION_OPEN = "(ホスト ";
+const HOST_VERSION_CLOSE = ")";
+
 /** 警告の行の書き出し。ブリッジの実装が定める。 */
 const WARNING_PREFIX = "警告: ";
 
@@ -519,10 +522,12 @@ function judgeEvents(expected, parsed, remembered) {
 function judgeNotice(expected, notice, remembered) {
     const wanted = fill(expected, remembered);
     if (wanted.editor !== undefined) {
-        const line = TARGET_PREFIX + PIPE_PREFIX + wanted.editor;
+        const line = TARGET_PREFIX + PIPE_PREFIX + wanted.editor + HOST_VERSION_OPEN;
 
-        return notice === line ? null : "接続先の知らせが " + JSON.stringify(line)
-            + " で始まりません: " + JSON.stringify(notice);
+        return notice !== null && notice.startsWith(line) && notice.endsWith(HOST_VERSION_CLOSE)
+            ? null
+            : "接続先の知らせが " + JSON.stringify(line) + " で始まりホストの版で終わる行ではありません: "
+                + JSON.stringify(notice);
     }
 
     if (notice === null || !notice.startsWith(TARGET_CHANGED_PREFIX)) {
@@ -535,7 +540,7 @@ function judgeNotice(expected, notice, remembered) {
     }
 
     if (wanted.changedTo !== undefined
-        && !notice.includes(" から " + PIPE_PREFIX + wanted.changedTo + " へ。")) {
+        && !notice.includes(" から " + PIPE_PREFIX + wanted.changedTo + HOST_VERSION_OPEN)) {
         return "移った先が " + PIPE_PREFIX + wanted.changedTo + " ではありません: " + notice;
     }
 

@@ -15,6 +15,10 @@ namespace PmxEditorMcp.Bridge.Tests
 {
     public class HostIpcClientTests
     {
+        private const string HostVersion = "1.0.0.0";
+
+        private const string HostOf = "(ホスト " + HostVersion + ")";
+
         private const int BudgetChars = 100000;
 
         /// <summary>テストが待つ上限。製品側が待つ上限を掛け忘れても有限時間で失敗させる。</summary>
@@ -834,7 +838,7 @@ namespace PmxEditorMcp.Bridge.Tests
             HostCallResult response = await WithinTestWait(
                 client.CallAsync("ping", null, CancellationToken.None));
 
-            Assert.Equal("接続先: " + host.PipeName, response.TargetNotice);
+            Assert.Equal(Announced(host.PipeName), response.TargetNotice);
         }
 
         [Fact]
@@ -894,7 +898,7 @@ namespace PmxEditorMcp.Bridge.Tests
             HostCallResult response = await WithinTestWait(
                 client.CallAsync("ping", null, CancellationToken.None));
 
-            Assert.Equal("接続先: " + host.PipeName, response.TargetNotice);
+            Assert.Equal(Announced(host.PipeName), response.TargetNotice);
         }
 
         [Fact]
@@ -916,7 +920,7 @@ namespace PmxEditorMcp.Bridge.Tests
 
             HostCallResult first = await WithinTestWait(
                 client.CallAsync("ping", null, CancellationToken.None));
-            Assert.Equal("接続先: " + left.PipeName, first.TargetNotice);
+            Assert.Equal(Announced(left.PipeName), first.TargetNotice);
 
             await ThrowsWithin<BridgeException>(
                 () => client.CallAsync("ping", null, CancellationToken.None));
@@ -925,7 +929,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 client.CallAsync("ping", null, CancellationToken.None));
 
             Assert.Equal(
-                "接続先が変わった: " + left.PipeName + " から " + right.PipeName
+                "接続先が変わった: " + left.PipeName + " から " + right.PipeName + HostOf
                     + " へ。以前の応答は別のエディタのものである。",
                 moved.TargetNotice);
         }
@@ -949,14 +953,14 @@ namespace PmxEditorMcp.Bridge.Tests
             HostCallResult selected = await WithinTestWait(
                 client.SelectAsync(right.PipeName, CancellationToken.None));
             Assert.Equal(
-                "接続先が変わった: " + left.PipeName + " から " + right.PipeName
+                "接続先が変わった: " + left.PipeName + " から " + right.PipeName + HostOf
                     + " へ。以前の応答は別のエディタのものである。",
                 selected.TargetNotice);
 
             HostCallResult response = await WithinTestWait(
                 client.CallAsync("ping", null, CancellationToken.None));
 
-            Assert.Equal("接続先: " + right.PipeName, response.TargetNotice);
+            Assert.Equal(Announced(right.PipeName), response.TargetNotice);
             Assert.Equal(2, left.Requests.Count);
             Assert.Equal(2, right.Requests.Count);
             Assert.Equal(right.PipeName, client.SelectedPipeName);
@@ -1001,7 +1005,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 client.SelectAsync(host.PipeName, CancellationToken.None));
             await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
 
-            Assert.Equal("接続先: " + host.PipeName, selected.TargetNotice);
+            Assert.Equal(Announced(host.PipeName), selected.TargetNotice);
             Assert.Equal(1, connector.ConnectCount);
             Assert.Equal(host.PipeName, client.SelectedPipeName);
         }
@@ -1025,7 +1029,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 client.CallAsync("ping", null, CancellationToken.None));
 
             Assert.Equal(BridgeErrorCodes.NoEditor, error.Code);
-            Assert.Equal("接続先: " + host.PipeName, response.TargetNotice);
+            Assert.Equal(Announced(host.PipeName), response.TargetNotice);
             Assert.Null(client.SelectedPipeName);
             Assert.Equal(3, host.Requests.Count);
         }
@@ -1053,7 +1057,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 client.CallAsync("ping", null, CancellationToken.None));
 
             Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
-            Assert.Equal("接続先: " + current.PipeName, response.TargetNotice);
+            Assert.Equal(Announced(current.PipeName), response.TargetNotice);
             Assert.Null(client.SelectedPipeName);
             Assert.Equal(3, current.Requests.Count);
             Assert.Equal(2, connector.ConnectCount);
@@ -1085,7 +1089,7 @@ namespace PmxEditorMcp.Bridge.Tests
             HostCallResult response = await WithinTestWait(
                 client.CallAsync("ping", null, CancellationToken.None));
 
-            Assert.Equal("接続先: " + current.PipeName, response.TargetNotice);
+            Assert.Equal(Announced(current.PipeName), response.TargetNotice);
             Assert.Null(client.SelectedPipeName);
             Assert.Equal(3, current.Requests.Count);
         }
@@ -1093,7 +1097,12 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>ハンドシェイクの成功応答を、受け取った要求の識別子に合わせて組み立てる。</summary>
         private static Func<string, string> HandshakeResultOf(int budgetChars)
         {
-            return HandshakeResultOf(budgetChars, "1.0.0.0");
+            return HandshakeResultOf(budgetChars, HostVersion);
+        }
+
+        private static string Announced(string pipeName)
+        {
+            return "接続先: " + pipeName + HostOf;
         }
 
         private static Func<string, string> HandshakeResultOf(int budgetChars, string hostVersion)
