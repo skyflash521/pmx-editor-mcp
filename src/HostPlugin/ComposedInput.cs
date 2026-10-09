@@ -24,7 +24,7 @@ namespace PmxEditorMcp
         {
             unit = null;
             V3 given;
-            if (!ViewCaptureImage.TrySpot(context, name, out given, out code, out message))
+            if (!TrySpot(context, name, out given, out code, out message))
             {
                 return false;
             }
@@ -36,6 +36,69 @@ namespace PmxEditorMcp
             }
 
             unit = new V3((float)(given.X / length), (float)(given.Y / length), (float)(given.Z / length));
+
+            return true;
+        }
+
+        /// <summary>3つの有限の数の並びを受け取る。受け取れなければ断る符号と事情を返す。</summary>
+        public static bool TrySpot(
+            McpMethodContext context, string name, out V3 spot, out string code, out string message)
+        {
+            spot = new V3(0f, 0f, 0f);
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            object given;
+            context.Params.TryGetValue(name, out given);
+            object[] items = given as object[];
+            float[] taken = new float[3];
+            if (items == null || items.Length != taken.Length)
+            {
+                message = name + " は3つの数の並びでなければならない。";
+
+                return false;
+            }
+
+            for (int at = 0; at < taken.Length; at++)
+            {
+                if (!ValueInput.TrySingle(items[at], out taken[at]))
+                {
+                    message = name + " は3つの有限の数の並びでなければならない。";
+
+                    return false;
+                }
+            }
+
+            code = null;
+            spot = new V3(taken[0], taken[1], taken[2]);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 省いてよい、<paramref name="least"/> 以上の整数を読む。省かれているか空なら
+        /// <paramref name="taken"/> を変えずに真を返す。範囲外なら偽を返し、断る内容を渡す。
+        /// </summary>
+        public static bool TryNumber(
+            McpMethodContext context, string name, int least, ref int taken, out string message)
+        {
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(name, out given) || given == null)
+            {
+                return true;
+            }
+
+            long number;
+            if (!ValueInput.TryInteger(given, out number)
+                || number < least
+                || number > int.MaxValue)
+            {
+                message = name + " は " + Spelled(least) + " 以上の整数でなければならない。";
+
+                return false;
+            }
+
+            taken = (int)number;
 
             return true;
         }

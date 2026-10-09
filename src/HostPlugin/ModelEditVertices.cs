@@ -853,17 +853,19 @@ namespace PmxEditorMcp
             IPXPmx model,
             IList<int> chosen)
         {
-            Vec from;
-            Vec to;
-            Vec across;
+            V3 from;
+            V3 to;
+            V3 across;
             IList<KeyValuePair<double, double>> knots;
             LateralScaling scaling;
+            string code;
             string message;
-            if (!TryPoint(context, FromName, out from, out message)
-                || !TryPoint(context, ToName, out to, out message)
-                || !TryPoint(context, AcrossName, out across, out message)
+            if (!ComposedInput.TrySpot(context, FromName, out from, out code, out message)
+                || !ComposedInput.TrySpot(context, ToName, out to, out code, out message)
+                || !ComposedInput.TrySpot(context, AcrossName, out across, out code, out message)
                 || !TryKnots(context, out knots, out message)
-                || !LateralScaling.TryCreate(from, to, across, knots, out scaling, out message))
+                || !LateralScaling.TryCreate(
+                    Vec.Of(from), Vec.Of(to), Vec.Of(across), knots, out scaling, out message))
             {
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
             }
@@ -895,35 +897,6 @@ namespace PmxEditorMcp
             }
 
             return Answer(made.Count, 0, 0, None(model), new[] { ElementKinds.Vertex });
-        }
-
-        private static bool TryPoint(
-            McpMethodContext context, string name, out Vec point, out string message)
-        {
-            point = default(Vec);
-            message = name + " は、3つの有限の数の並びでなければならない。";
-            object given;
-            object[] parts;
-            float[] axes = new float[3];
-            if (!context.Params.TryGetValue(name, out given)
-                || (parts = given as object[]) == null
-                || parts.Length != axes.Length)
-            {
-                return false;
-            }
-
-            for (int at = 0; at < axes.Length; at++)
-            {
-                if (!ValueInput.TrySingle(parts[at], out axes[at]))
-                {
-                    return false;
-                }
-            }
-
-            message = null;
-            point = new Vec(axes[0], axes[1], axes[2]);
-
-            return true;
         }
 
         private static bool TryKnots(

@@ -79,9 +79,9 @@ namespace PmxEditorMcp
             string message;
             if (!ModelFindSurfaceDistances.TryMaterials(
                     context, model, ModelFindVertexBounds.MaterialIndicesName, out materials, out code, out message)
-                || !ViewCaptureImage.TrySpot(context, PlanePointName, out point, out code, out message)
+                || !ComposedInput.TrySpot(context, PlanePointName, out point, out code, out message)
                 || !ComposedInput.TryDirection(context, PlaneNormalName, out normal, out code, out message)
-                || !ViewCaptureImage.TrySpot(context, PlaneNormalName, out normal, out code, out message))
+                || !ComposedInput.TrySpot(context, PlaneNormalName, out normal, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -467,9 +467,9 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            return ViewCaptureImage.TrySpot(context, FromName, out from, out code, out message)
-                && ViewCaptureImage.TrySpot(context, ToName, out to, out code, out message)
-                && (!hasVia || ViewCaptureImage.TrySpot(context, ViaName, out via, out code, out message));
+            return ComposedInput.TrySpot(context, FromName, out from, out code, out message)
+                && ComposedInput.TrySpot(context, ToName, out to, out code, out message)
+                && (!hasVia || ComposedInput.TrySpot(context, ViaName, out via, out code, out message));
         }
 
         private static bool TrySpacing(

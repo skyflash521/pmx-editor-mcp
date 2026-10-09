@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using PEPlugin.Pmx;
 
@@ -66,8 +65,8 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(code, message);
             }
 
-            if (!TryNumber(context, OffsetName, 0, ref offset, out message)
-                || !TryNumber(context, LimitName, 1, ref limit, out message))
+            if (!ComposedInput.TryNumber(context, OffsetName, 0, ref offset, out message)
+                || !ComposedInput.TryNumber(context, LimitName, 1, ref limit, out message))
             {
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
             }
@@ -166,32 +165,6 @@ namespace PmxEditorMcp
             }
 
             return value;
-        }
-
-        internal static bool TryNumber(
-            McpMethodContext context, string name, int least, ref int taken, out string message)
-        {
-            message = null;
-            object given;
-            if (!context.Params.TryGetValue(name, out given) || given == null)
-            {
-                return true;
-            }
-
-            long number;
-            if (!ValueInput.TryInteger(given, out number)
-                || number < least
-                || number > int.MaxValue)
-            {
-                message = name + " は " + least.ToString(CultureInfo.InvariantCulture)
-                    + " 以上の整数でなければならない。";
-
-                return false;
-            }
-
-            taken = (int)number;
-
-            return true;
         }
 
         private sealed class Tally

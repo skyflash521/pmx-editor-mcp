@@ -431,39 +431,13 @@ namespace PmxEditorMcp
             }
 
             if (cuts
-                && (!TryNumber(context, OffsetName, 0, ref offset, out message)
-                    || !TryNumber(context, LimitName, 1, ref limit, out message)))
+                && (!ComposedInput.TryNumber(context, OffsetName, 0, ref offset, out message)
+                    || !ComposedInput.TryNumber(context, LimitName, 1, ref limit, out message)))
             {
                 return false;
             }
 
             code = null;
-
-            return true;
-        }
-
-        private static bool TryNumber(
-            McpMethodContext context, string name, int least, ref int taken, out string message)
-        {
-            message = null;
-            object given;
-            if (!context.Params.TryGetValue(name, out given) || given == null)
-            {
-                return true;
-            }
-
-            long number;
-            if (!ValueInput.TryInteger(given, out number)
-                || number < least
-                || number > int.MaxValue)
-            {
-                message = name + " は " + least.ToString(CultureInfo.InvariantCulture)
-                    + " 以上の整数でなければならない。";
-
-                return false;
-            }
-
-            taken = (int)number;
 
             return true;
         }

@@ -88,8 +88,8 @@ namespace PmxEditorMcp
             int limit = int.MaxValue;
             if (!TryThreshold(context, out threshold, out message)
                 || !TrySpreadLimit(context, out spreadLimit, out message)
-                || !ModelFindBoneWeights.TryNumber(context, OffsetName, 0, ref offset, out message)
-                || !ModelFindBoneWeights.TryNumber(context, LimitName, 1, ref limit, out message))
+                || !ComposedInput.TryNumber(context, OffsetName, 0, ref offset, out message)
+                || !ComposedInput.TryNumber(context, LimitName, 1, ref limit, out message))
             {
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
             }

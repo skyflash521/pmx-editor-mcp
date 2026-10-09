@@ -207,7 +207,7 @@ namespace PmxEditorMcp
                     string axes;
                     if (!ComposedInput.TryChoice(
                             context, AxesName, Axes, out axes, out code, out message)
-                        || !TryPoint(context, PositionName, out given, out code, out message))
+                        || !ComposedInput.TrySpot(context, PositionName, out given, out code, out message))
                     {
                         return false;
                     }
@@ -217,7 +217,7 @@ namespace PmxEditorMcp
                     return true;
 
                 case TranslateBy:
-                    if (!TryPoint(context, OffsetName, out given, out code, out message))
+                    if (!ComposedInput.TrySpot(context, OffsetName, out given, out code, out message))
                     {
                         return false;
                     }
@@ -255,7 +255,7 @@ namespace PmxEditorMcp
                         return true;
                     }
 
-                    if (!TryPoint(context, RotationName, out given, out code, out message)
+                    if (!ComposedInput.TrySpot(context, RotationName, out given, out code, out message)
                         || !TryCenter(context, ref center, out code, out message))
                     {
                         return false;
@@ -271,7 +271,7 @@ namespace PmxEditorMcp
 
                 default:
                     RowMatrix frame;
-                    if (!TryPoint(context, ScaleName, out given, out code, out message)
+                    if (!ComposedInput.TrySpot(context, ScaleName, out given, out code, out message)
                         || !TryFrame(context, out frame, out code, out message)
                         || !TryCenter(context, ref center, out code, out message))
                     {
@@ -459,7 +459,7 @@ namespace PmxEditorMcp
             message = null;
 
             return !context.Params.ContainsKey(CenterName)
-                || TryPoint(context, CenterName, out center, out code, out message);
+                || ComposedInput.TrySpot(context, CenterName, out center, out code, out message);
         }
 
         private static Change Turned(object item, RowMatrix turn, V3 center)
@@ -505,7 +505,7 @@ namespace PmxEditorMcp
             if (turned)
             {
                 V3 angles;
-                if (!TryPoint(context, ScaleFrameRotationName, out angles, out code, out message))
+                if (!ComposedInput.TrySpot(context, ScaleFrameRotationName, out angles, out code, out message))
                 {
                     return false;
                 }
@@ -736,39 +736,6 @@ namespace PmxEditorMcp
             message = given + " は " + operation + " では渡せない。";
 
             return false;
-        }
-
-        private static bool TryPoint(
-            McpMethodContext context, string name, out V3 spot, out string code, out string message)
-        {
-            spot = null;
-            code = ToolEnvelope.InvalidArgument;
-            message = null;
-            object given;
-            context.Params.TryGetValue(name, out given);
-            object[] items = given as object[];
-            float[] taken = new float[3];
-            if (items == null || items.Length != taken.Length)
-            {
-                message = name + " は3つの数の並びでなければならない。";
-
-                return false;
-            }
-
-            for (int at = 0; at < taken.Length; at++)
-            {
-                if (!ValueInput.TrySingle(items[at], out taken[at]))
-                {
-                    message = name + " は3つの有限の数の並びでなければならない。";
-
-                    return false;
-                }
-            }
-
-            code = null;
-            spot = new V3(taken[0], taken[1], taken[2]);
-
-            return true;
         }
 
         private static IList<object> Held(IPXPmx model, string kind)

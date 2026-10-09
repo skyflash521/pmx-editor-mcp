@@ -211,8 +211,7 @@ namespace PmxEditorMcp
             direction = null;
             code = ToolEnvelope.InvalidArgument;
             message = null;
-            object given;
-            bool pointed = context.Params.TryGetValue(DirectionName, out given);
+            bool pointed = context.Params.ContainsKey(DirectionName);
             if (!string.Equals(operation, ProjectFromView, StringComparison.Ordinal))
             {
                 if (pointed)
@@ -227,48 +226,7 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            V3 taken;
-            if (!pointed || !TryVector(given, out taken))
-            {
-                message = DirectionName + " は " + ProjectFromView + " のときに渡す3つの数である。";
-
-                return false;
-            }
-
-            if (!Vectors.HasLength(taken))
-            {
-                message = DirectionName + " は長さを持たなければならない。";
-
-                return false;
-            }
-
-            direction = Vectors.Normalized(taken);
-            code = null;
-
-            return true;
-        }
-
-        private static bool TryVector(object given, out V3 taken)
-        {
-            taken = null;
-            object[] items = given as object[];
-            if (items == null || items.Length != 3)
-            {
-                return false;
-            }
-
-            float[] numbers = new float[items.Length];
-            for (int at = 0; at < items.Length; at++)
-            {
-                if (!ValueInput.TrySingle(items[at], out numbers[at]))
-                {
-                    return false;
-                }
-            }
-
-            taken = new V3(numbers[0], numbers[1], numbers[2]);
-
-            return true;
+            return ComposedInput.TryDirection(context, DirectionName, out direction, out code, out message);
         }
     }
 }

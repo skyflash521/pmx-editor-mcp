@@ -75,8 +75,8 @@ namespace PmxEditorMcp
             int offset = 0;
             int limit = int.MaxValue;
             if (!TryWeldDistance(context, ref weld, out message)
-                || !ModelFindBoneWeights.TryNumber(context, OffsetName, 0, ref offset, out message)
-                || !ModelFindBoneWeights.TryNumber(context, LimitName, 1, ref limit, out message))
+                || !ComposedInput.TryNumber(context, OffsetName, 0, ref offset, out message)
+                || !ComposedInput.TryNumber(context, LimitName, 1, ref limit, out message))
             {
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
             }

@@ -66,9 +66,9 @@ namespace PmxEditorMcp
             V3 up;
             string code;
             string message;
-            if (!ViewCaptureImage.TrySpot(context, ViewCaptureImage.PositionName, out position, out code, out message)
-                || !ViewCaptureImage.TrySpot(context, ViewCaptureImage.TargetName, out target, out code, out message)
-                || !ViewCaptureImage.TrySpot(context, ViewCaptureImage.UpVectorName, out up, out code, out message))
+            if (!ComposedInput.TrySpot(context, ViewCaptureImage.PositionName, out position, out code, out message)
+                || !ComposedInput.TrySpot(context, ViewCaptureImage.TargetName, out target, out code, out message)
+                || !ComposedInput.TrySpot(context, ViewCaptureImage.UpVectorName, out up, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
