@@ -5,10 +5,7 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 項目1件をJSONへ写したときの想定文字数。上限ではなく、一覧の件数を逆算するための
-    /// 取り決めである。
-    /// </summary>
+    /// <summary>項目1件をJSONへ写したときの想定文字数。上限ではない。</summary>
     public sealed class AssumedLength
     {
         /// <summary>組の中の項目1件が、名前と区切りに使う分。</summary>

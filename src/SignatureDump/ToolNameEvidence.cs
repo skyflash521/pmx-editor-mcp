@@ -5,18 +5,15 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 行キーからツールの名前を引く表を、型役割表と公開API列挙から導く。名前は担当群と動作の語と
-    /// 要素名詞で決まるので、行は名前を書かない。
-    /// </summary>
+    /// <summary>行キーからツールの名前を引く表を、型役割表と公開API列挙から導く。</summary>
     public static class ToolNameEvidence
     {
         /// <summary>生成のツールの動作の語の頭。要素名詞を続けて動作の語にする。</summary>
         private const string CreatePrefix = "create_";
 
         /// <summary>
-        /// 独立したツールを持つのは直接ディスパッチの行だけなので、その行キーだけを持つ表を返す。
-        /// 導けないものがあれば <see cref="InvalidOperationException"/>。
+        /// 直接ディスパッチの行キーだけを持つ表を返す。導けないものがあれば
+        /// <see cref="InvalidOperationException"/>。
         /// </summary>
         public static IDictionary<string, string> Resolve(
             ToolMap map,
@@ -85,8 +82,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 同じ担当群で2つ以上のツールに現れる動作の語。コネクタ型の出所修飾の要否を決める。同名の
-        /// オーバーロードは1つのツールへ集まるので、宣言型と動作の語の組を1件として数える。
+        /// 同じ担当群で2つ以上のツールに現れる動作の語。コネクタ型の出所修飾の要否を決める。
+        /// 宣言型と動作の語の組を1件として数える。
         /// </summary>
         private static IDictionary<string, ISet<string>> Colliding(
             IEnumerable<string> dispatched,

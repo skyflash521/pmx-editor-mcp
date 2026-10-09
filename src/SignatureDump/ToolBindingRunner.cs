@@ -144,10 +144,6 @@ namespace PmxEditorMcp.SignatureDump
             return File.ReadAllText(path);
         }
 
-        /// <summary>
-        /// 中身が変わっていなければ書かない。書き直すと更新時刻が動いて、ホストのビルドが毎回
-        /// やり直しになる。
-        /// </summary>
         private static void WriteIfChanged(string path, string text)
         {
             if (File.Exists(path)

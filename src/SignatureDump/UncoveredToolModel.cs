@@ -28,18 +28,14 @@ namespace PmxEditorMcp.SignatureDump
             Reason = reason;
         }
 
-        /// <summary>そのツールの名前。</summary>
         public string Tool { get; }
 
-        /// <summary>覆われない理由。</summary>
         public UncoveredReason Reason { get; }
     }
 
     /// <summary>
-    /// 実機の検査に覆われないツールの正本。覆えないことを1か所へ集めて見えるようにするもので、
-    /// 検査を緩めるものではない——載っているツールが覆われるようになったら、判定はそれを食い違いと
-    /// して落とす。載せるのは名前と理由だけで、言葉で述べた事情は持たない。判定はその2つを導き直して
-    /// 突き合わせるが、言葉は突き合わせる相手を持たないので、書いても本当かどうかを誰も確かめない。
+    /// 実機の検査に覆われないツールの正本。載っているツールが覆われるようになったら、判定はそれを
+    /// 食い違いとして落とす。載せるのは名前と理由だけで、言葉で述べた事情は持たない。
     /// </summary>
     public sealed class UncoveredToolTable
     {

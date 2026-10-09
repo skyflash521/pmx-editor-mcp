@@ -111,8 +111,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 1件以上の並び。鍵の名前を渡すと、その項目が二度現れないことと、序数の昇順に並ぶことを
-        /// 併せて求める。<paramref name="allowEmpty"/> を真にすると、1件も無い並びも受け付ける
-        /// ——載せるものが無いこと自体が正しい表がある。
+        /// 併せて求める。<paramref name="allowEmpty"/> を真にすると、1件も無い並びも受け付ける。
         /// </summary>
         public static JsonForm Array(JsonForm element, string key = null, bool allowEmpty = false)
         {

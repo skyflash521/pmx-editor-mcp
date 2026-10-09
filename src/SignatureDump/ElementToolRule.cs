@@ -5,9 +5,7 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 所有するリストの要素の型が持つ、追加と削除と、在る要素をハンドルで指すツールの名前を
-    /// 決める。これらのツールは行を持たず、そのリストの行が能力対応表へ載ることで現れるので、
-    /// 名前の決め方をここ1つに置く。
+    /// 所有するリストの要素の型が持つ、追加と削除と、在る要素をハンドルで指すツールの名前を決める。
     /// </summary>
     public static class ElementToolRule
     {

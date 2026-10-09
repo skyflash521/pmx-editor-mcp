@@ -113,10 +113,7 @@ namespace PmxEditorMcp.SignatureDump
             get { return _composedTools; }
         }
 
-        /// <summary>
-        /// 要素型の名前から、その要素を並びへ加えるツールの名前へ。事後条件の用意の操作が要素型で
-        /// 指すので、その名前から呼ぶ先を引く。
-        /// </summary>
+        /// <summary>要素型の名前から、その要素を並びへ加えるツールの名前へ。</summary>
         public IDictionary<string, string> ElementAdders(InventoryRecord inventory)
         {
             if (inventory == null)
@@ -137,9 +134,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その要素を相手にするツールの名前から、その要素をリストへ加えるツールの名前へ。位置で
-        /// 指して書く検査は、書かれる側の並びに1つも無いと、全件を指しても1件も触らずに済み、
-        /// 読み返すものも持たない。どちらも確かめられないので、呼ぶ前に1つ加える。
+        /// その要素を相手にするツールの名前から、その要素をリストへ加えるツールの名前へ。
         /// </summary>
         public IDictionary<string, string> ElementAddersByTool(InventoryRecord inventory)
         {
@@ -171,9 +166,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 要素をリストへ加えるツールの名前から、その要素を書き換えるツールの名前へ。作った要素
-        /// は、位置で指す項目を埋めてから並びへ加える——埋めずに加えると、指す先を持たない要素
-        /// として書き戻しで捨てられる。
+        /// 要素をリストへ加えるツールの名前から、その要素を書き換えるツールの名前へ。作った要素は、
+        /// 位置で指す項目を埋めてから並びへ加える。
         /// </summary>
         public IDictionary<string, string> ElementUpdatersByAdder(InventoryRecord inventory)
         {
@@ -198,10 +192,7 @@ namespace PmxEditorMcp.SignatureDump
             return byAdder;
         }
 
-        /// <summary>
-        /// 型の名前から、その型の要素をリストへ加えるツールの名前へ。位置で指す項目が指す先の
-        /// 並びを用意するのに使う。
-        /// </summary>
+        /// <summary>型の名前から、その型の要素をリストへ加えるツールの名前へ。</summary>
         public IDictionary<string, string> ElementAddersByType(InventoryRecord inventory)
         {
             if (inventory == null)
@@ -226,9 +217,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 要素をリストへ加えるツールの名前から、その要素の親をリストへ加えるツールの名前へ。
-        /// 親のリストに1つも無い要素は加えられないので、用意する側は親から順に辿る。PMXが直に
-        /// 持つ並びの要素は親を持たないので、この対応表にも載らない。
+        /// 要素をリストへ加えるツールの名前から、その要素の親をリストへ加えるツールの名前へ。PMXが
+        /// 直に持つ並びの要素は親を持たず、この対応表にも載らない。
         /// </summary>
         public IDictionary<string, string> ElementParents(InventoryRecord inventory)
         {
@@ -270,7 +260,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// ツールの名前から、そのツールが位置で数える並びの先頭に固定で並ぶ件数へ。固定の要素が
-        /// 無い並びのツールは持たない。位置を渡す検査は、この件数より後ろの位置を指す。
+        /// 無い並びのツールは持たない。
         /// </summary>
         public IDictionary<string, int> FixedLeading(InventoryRecord inventory)
         {
@@ -314,8 +304,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 要素をリストから外すツールの名前から、その要素をリストへ加えるツールの名前へ。外す
-        /// 相手は段取りが加えた要素である——新しく作った要素はまだ並びに無いので外せない。
+        /// 要素をリストから外すツールの名前から、その要素をリストへ加えるツールの名前へ。
         /// </summary>
         public IDictionary<string, string> ElementRemovers(InventoryRecord inventory)
         {
@@ -337,8 +326,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 要素を並べるリストへ加えるツールの名前から、その要素を1つ作るツールの名前へ。作る
-        /// ツールが1つに決まらない型は持たない——どれを使うかがここでは決められない。
+        /// 要素を並べるリストへ加えるツールの名前から、その要素を1つ作るツールの名前へ。
+        /// 作るツールが1つに決まらない型は持たない。
         /// </summary>
         public IDictionary<string, string> ElementFactories(InventoryRecord inventory)
         {
@@ -379,10 +368,7 @@ namespace PmxEditorMcp.SignatureDump
             return factories;
         }
 
-        /// <summary>
-        /// 型の名前から、その型の実体を1つ得るまでに順に呼ぶツールの列へ。引数でハンドルを取る
-        /// 呼び出しは、渡す相手をこの列で作る。
-        /// </summary>
+        /// <summary>型の名前から、その型の実体を1つ得るまでに順に呼ぶツールの列へ。</summary>
         public IDictionary<string, IList<string>> TypePaths(InventoryRecord inventory)
         {
             if (inventory == null)
@@ -396,8 +382,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 受け手をハンドルで要るツールの名前から、その受け手を得るまでに順に呼ぶツールの列へ。
-        /// 受け手へ至る列を持たないツールは持たない。受け手の型は行の宣言型から取る——スキーマの
-        /// 側の型は呼び出しの引数だけを写すので、受け手は載らない。
+        /// 受け手へ至る列を持たないツールは持たない。受け手の型は行の宣言型から取る。
         /// </summary>
         public IDictionary<string, IList<string>> ReceiverPaths(InventoryRecord inventory)
         {
@@ -428,10 +413,7 @@ namespace PmxEditorMcp.SignatureDump
                     TypeDefinitionName.Of(signature.ValueType), typeName, StringComparison.Ordinal);
         }
 
-        /// <summary>
-        /// 値を書き換えるツールの名前から、同じ型を読むツールの名前へ。書いた値を読み返す検査が
-        /// 相手を決めるのに使う。
-        /// </summary>
+        /// <summary>値を書き換えるツールの名前から、同じ型を読むツールの名前へ。</summary>
         public IDictionary<string, string> Readers(InventoryRecord inventory)
         {
             if (inventory == null)
@@ -442,10 +424,7 @@ namespace PmxEditorMcp.SignatureDump
             return AggregationToolRule.Readers(OwnedRoles(inventory).Types);
         }
 
-        /// <summary>
-        /// いま選ばれている対象を相手にする行の行キー。呼ぶ前に確かめることの規則がこれらを分けて
-        /// いる——選ばれているものが無いと、エディタが人の応答を待つ表示を出す。
-        /// </summary>
+        /// <summary>いま選ばれている対象を相手にする行の行キー。</summary>
         public ISet<string> PickingRows(InventoryRecord inventory)
         {
             if (inventory == null)
@@ -692,8 +671,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 型から値の表現の綴りへ。操作対象型は要素の位置で、ハンドル操作型はハンドルの番号で写すので、
-        /// 型役割表からその綴りを足す。どちらも数で写るが、指すものは位置と番号で別である。
+        /// 型から値の表現の綴りへ。操作対象型は要素の位置で、ハンドル操作型はハンドルの番号で写す。
         /// </summary>
         private IDictionary<string, string> Positioned()
         {
@@ -741,8 +719,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// Undoの記録を止めることを頼めるツールの名前。止めても効くのはまとめて反映するときの
-        /// 登録だけなので、複製編集型の行を持つツールに限る。
+        /// Undoの記録を止めることを頼めるツールの名前。複製編集型の行を持つツールに限る。
         /// </summary>
         public ISet<string> SuppressingTools(InventoryRecord inventory)
         {
@@ -860,7 +837,7 @@ namespace PmxEditorMcp.SignatureDump
             return ToolNameEvidence.Resolve(Map, owned, _assignments, inventory);
         }
 
-        /// <summary>確認を要する行キー。名前で決まるので列挙から判じる。</summary>
+        /// <summary>確認を要する行キー。列挙から判じる。</summary>
         public ISet<string> Dangerous(InventoryRecord inventory)
         {
             if (inventory == null)

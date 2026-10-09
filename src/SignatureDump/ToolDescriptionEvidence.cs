@@ -144,9 +144,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 項目を集める取得と更新のツールごとの行。これらのツールは行を持たず、埋め込み先として
-        /// 名指しされることで現れるので、名指しの側から集める。埋め込み先がイベントの分岐や
-        /// ほかのツールであるものは、そのツールの材料が別に在るのでここには入らない。
+        /// 項目を集める取得と更新のツールごとの行。名指しの側から集める。埋め込み先がイベントの
+        /// 分岐やほかのツールであるものはここには入らない。
         /// </summary>
         private static IEnumerable<Aggregated> Aggregations(
             ToolMap map,
@@ -221,7 +220,6 @@ namespace PmxEditorMcp.SignatureDump
                 Rows = rows;
             }
 
-            /// <summary>そのツールの名前。</summary>
             public string Tool { get; }
 
             /// <summary>そのツールの名前を導く型。</summary>
@@ -381,10 +379,7 @@ namespace PmxEditorMcp.SignatureDump
                 : word.Substring(0, word.Length - qualifier.Length - 1);
         }
 
-        /// <summary>
-        /// そのツールの行が指す1つの宣言型。対象も出所もこの型から決まるので、違う型の行が
-        /// 混じっていれば止める。
-        /// </summary>
+        /// <summary>そのツールの行が指す1つの宣言型。違う型の行が混じっていれば止める。</summary>
         private static SignatureRecord OneType(
             string tool, IList<ToolMapRow> rows, IDictionary<string, SignatureRecord> signatures)
         {
@@ -456,8 +451,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 値を持つメンバーの行キーごとの日本語名。名前を起こした項目は正本から採り、ほかは記載から
-        /// 採る——正本に載るのは記載を引けない項目だけなので、載っていなければ記載が名前になる。
+        /// 値を持つメンバーの行キーごとの日本語名。名前を起こした項目は正本から採り、ほかは
+        /// 記載から採る。
         /// </summary>
         private static IDictionary<string, string> JapaneseNames(
             IList<PropertyNameRecord> names,

@@ -61,8 +61,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 行キーから、その行が採る種別を引く表。行は種別を書かないので、照合も要約もここから引く。
-        /// 行キーが公開API列挙に在ることを前提とする。
+        /// 行キーから、その行が採る種別を引く表。行キーが公開API列挙に在ることを前提とする。
         /// </summary>
         public static IDictionary<string, ToolMapRowKind> RowKinds(
             ToolMap map, ToolMapEvidence evidence, CommonAssignmentTable assignments)
@@ -95,9 +94,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その行が、引数の組の項目そのものを表す行か。組の項目を持ち込む種別のうち、項目になる
-        /// プロパティとフィールドに限る——ほかは組の項目にならないので、台帳が数えない行だけが
-        /// 残る。
+        /// その行が、引数の組の項目そのものを表す行か。組の項目を持ち込む種別のうち、
+        /// 項目になるプロパティとフィールドに限る。
         /// </summary>
         private static bool Carried(
             ToolMapRow row, ToolMapEvidence evidence, IDictionary<string, ToolMapRowKind> kinds)
@@ -124,7 +122,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>反映の指定は列挙子の名前なので、その列挙型に実在することまで求める。</summary>
+        /// <summary>反映の指定は列挙子の名前で、その列挙型に実在することまで求める。</summary>
         private static void RequireUpdateKind(ToolMapRow row, ToolMapEvidence evidence)
         {
             string update = row.UpdateSpec == null ? null : row.UpdateSpec.Update;
@@ -143,9 +141,7 @@ namespace PmxEditorMcp.SignatureDump
                     .SelectMany(j => j.Setup ?? (IList<SetupOperation>)new SetupOperation[0]));
         }
 
-        /// <summary>
-        /// 用意の操作が指す要素型と型は別の正本が持つ語なので、そこに実在することまで求める。
-        /// </summary>
+        /// <summary>用意の操作が指す要素型と型は、別の正本に実在することまで求める。</summary>
         private static void RequireSetup(
             string owner, IEnumerable<SetupOperation> setups, ToolMapEvidence evidence)
         {
@@ -204,10 +200,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 効果を呼び出しの記録だけで確かめる行に、確かめられない理由を求める。確かめられるのに
-        /// 確かめていないのか、確かめられないから記録で済ませているのかは、行を読むだけでは
-        /// 分かれない。理由の言い回しをここが指定するので、書き手が書いたかどうかは機械で見える
-        /// ——書いた理由が本当かどうかは見えないので、そこはレビューが受け持つ。
+        /// 効果を呼び出しの記録だけで確かめる行に、確かめられない理由を求める。理由の
+        /// 言い回しはここが指定する。
         /// </summary>
         private static void RequireObservedOrExplained(ToolMapRow row)
         {
@@ -225,10 +219,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 出たハンドルと、見える状態の変化のどちらかか。この2つだけを挙げるのは、実機へ投げる
-        /// 検査が呼んだ後に見に行く手立てを持つのがこの2つだからである——ハンドルは観測ツールで
-        /// 引き、見える状態の変化は一覧を読み比べる。ほかの効果まで広げるなら、その効果を見に行く
-        /// 段を組み立てられるようにしてからここへ足す。
+        /// 出たハンドルと、見える状態の変化のどちらかか。ハンドルは観測ツールで引き、見える状態の
+        /// 変化は一覧を読み比べる。
         /// </summary>
         private static bool Observed(EffectType effectType)
         {
@@ -318,10 +310,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// 共通契約割当の正本の項目が、すべて行を持つことを求める。割当の内容はその正本が持つので、
-        /// ここで見るのは行の側に載っているかどうかだけである。
-        /// </summary>
+        /// <summary>共通契約割当の正本の項目が、すべて行を持つことを求める。</summary>
         private static void RequireCommonContract(
             ToolMap map,
             IDictionary<string, ToolMapRowKind> kinds,

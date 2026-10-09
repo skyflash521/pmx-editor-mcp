@@ -38,8 +38,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 説明文が、材料を持つツールと合成ツールを合わせたものを覆うことを求める。合成ツールは行を
-        /// 持たないので材料からは現れない。
+        /// 説明文が、材料を持つツールと合成ツールを合わせたものを覆うことを求める。
         /// </summary>
         private static void RequireSameTools(
             IList<ToolDescriptionMaterial> materials,

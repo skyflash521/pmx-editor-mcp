@@ -345,8 +345,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 応答の値そのものと配列の要素は名前を持たない。イベントの payload は形を分岐の側が
-        /// 持つので、3つの表し方のどれも持たない。
+        /// 応答の値そのものと配列の要素は名前を持たない。イベントの payload は、3つの表し方のどれも
+        /// 持たない。
         /// </summary>
         private static SchemaItem ReadItem(
             IDictionary<string, object> members, bool named, bool input, bool polls = false)

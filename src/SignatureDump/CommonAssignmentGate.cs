@@ -4,12 +4,6 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 共通契約割当が規則どおりかを検査する。割当の意味そのものは測れないので、機械で確かめられる
-    /// 範囲——行キーが提供対象に実在すること、常駐アクセスオブジェクトの取得と解放・破棄が漏れなく
-    /// 表に在ること、束縛を導けること、導いた束縛のスロットがその割当で使えるものであること、
-    /// 解放がツールへの束縛で対象名が揃っていること——に限る。
-    /// </summary>
     public static class CommonAssignmentGate
     {
         private const string ConnectFlow = "connect";
@@ -107,10 +101,6 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// 常駐アクセスオブジェクトの取得は独立したツールを作らないので、1件でも表から漏れると
-        /// そのシグネチャの割当先が決まらない。
-        /// </summary>
         private static void RequireResidentObjectsAreConnectFlows(
             IList<CommonAssignmentRecord> records, ISet<string> residentObjects)
         {
@@ -135,10 +125,6 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// 解放・破棄も独立したツールを作らないので、1件でも表から漏れるとそのシグネチャの割当先が
-        /// 決まらない。
-        /// </summary>
         private static void RequireReleasesAreListed(
             IList<CommonAssignmentRecord> records, ISet<string> releases)
         {
@@ -194,8 +180,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 解放・破棄と、解放の対象を束縛する行は、ツールが受け持つ。ホストが自分で呼ぶ流れへ
-        /// 書き替えると、台帳の失効と切り離された解放になる。対象名は書き手が書く語なので、綴りの
+        /// 解放・破棄と、解放の対象を束縛する行は、ツールが受け持つことを求める。対象名は綴りの
         /// 揺れを一つにそろえる。
         /// </summary>
         private static void RequireOneToolForTheReleases(

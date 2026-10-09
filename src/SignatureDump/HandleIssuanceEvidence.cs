@@ -6,8 +6,8 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// ハンドルを返しうるシグネチャと、その発行の種別を列挙から導く。新しいハンドルを発行するのか
-    /// 既にあるものを返すだけなのかは列挙からは決まらないので、ここでは決めない。
+    /// ハンドルを返しうるシグネチャと、その発行の種別を列挙から導く。新しいハンドルを
+    /// 発行するのか既にあるものを返すだけなのかは、ここでは決めない。
     /// </summary>
     public static class HandleIssuanceEvidence
     {
@@ -77,11 +77,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// どれかの行が作ると述べる型の名前。作る行の戻り値から並びと配列の印を外して集め、枝の型を
-        /// 作れる抽象の型も併せて持つ——作れる枝を並びへ入れれば、その抽象の型としても指せる。
-        /// <paramref name="concrete"/> は抽象の型からその枝の型を引く表である。
-        /// 戻り値の綴りが <see cref="object"/> の行はどの型も持ち込まない。その行が預けるのは
-        /// 受け手から決まる型(<see cref="Issued"/>)だが、それは元の要素の複製であって元の要素では
-        /// ないので、在る要素を指す道の代わりにはならない。
+        /// 作れる抽象の型も併せて持つ。<paramref name="concrete"/> は抽象の型からその枝の型を
+        /// 引く表である。戻り値の綴りが <see cref="object"/> の行はどの型も持ち込まない。
         /// </summary>
         public static ISet<string> Made(
             ToolMap map,
@@ -175,8 +172,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// その行が、1回の呼び出しで頼まれた数だけ発行できるか。コネクタから作る行と公開の
-        /// コンストラクタが当たる。受け手に紐づく発行は当たらない——受け手1件につき1個を発行する
-        /// ので、発行する数は受け手の件数が決める。
+        /// コンストラクタが当たる。受け手に紐づく発行は当たらない。
         /// </summary>
         public static bool Batches(
             ToolMapRow row, SignatureRecord signature, IDictionary<string, TypeRole> roles)

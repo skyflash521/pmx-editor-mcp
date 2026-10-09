@@ -34,7 +34,7 @@ namespace PmxEditorMcp.SignatureDump
 
         public string TypeName { get; }
 
-        /// <summary>要素の表現を包む型では綴りが1つに決まらないので null。</summary>
+        /// <summary>要素の表現を包む型では null。</summary>
         public string Shape { get; }
     }
 
@@ -141,28 +141,22 @@ namespace PmxEditorMcp.SignatureDump
 
         public IDictionary<string, ComposedTool> ComposedTools { get; }
 
-        /// <summary>
-        /// ビューの画像を返すツールの名前から、そのビューの名前へ。画像がどのビューのものかは
-        /// 呼び先の型からは決まらないので、ここが決める。
-        /// </summary>
+        /// <summary>ビューの画像を返すツールの名前から、そのビューの名前へ。</summary>
         public IDictionary<string, string> ViewImages { get; }
 
         /// <summary>ビューを写さず、呼び出しが描いた画像を返すツールの名前。</summary>
         public ISet<string> DrawnImages { get; }
 
-        /// <summary>ファイルへ書き込むので確認を要する合成ツールの名前。</summary>
+        /// <summary>確認を要する、ファイルへ書き込む合成ツールの名前。</summary>
         public ISet<string> OverwritingTools { get; }
 
         /// <summary>
-        /// 値を書き換えるツールの名前から、書いてもモデルが持ち続けない項目の名前へ。持ち主の
-        /// 状態によって捨てられる項目がどれかは、呼び先の型からは決まらないのでここが決める。
+        /// 値を書き換えるツールの名前から、書いてもモデルが持ち続けない項目の名前へ。
         /// </summary>
         public IDictionary<string, ISet<string>> UnkeptMembers { get; }
 
         /// <summary>
         /// 値を書き換えるツールの名前から、要素を並びへ加える前に指す先を埋める項目の名前へ。
-        /// 指す先を持たないまま加えると書き戻しで捨てられる要素がどれかは、呼び先の型からは
-        /// 決まらないのでここが決める。
         /// </summary>
         public IDictionary<string, ISet<string>> TargetedMembers { get; }
 

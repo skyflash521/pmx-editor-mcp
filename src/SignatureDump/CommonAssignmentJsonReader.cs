@@ -44,9 +44,7 @@ namespace PmxEditorMcp.SignatureDump
                 { "internalFlow", CommonAssignmentKind.InternalFlow },
             };
 
-        /// <summary>
-        /// 内部フローへの割当の対象名になる流れ。ハンドル解放はツールが受け持つのでここに無い。
-        /// </summary>
+        /// <summary>内部フローへの割当の対象名になる流れ。ハンドル解放は含まない。</summary>
         private static readonly Dictionary<string, string> Flows =
             new Dictionary<string, string>(StringComparer.Ordinal)
             {

@@ -137,7 +137,6 @@ namespace PmxEditorMcp.SignatureDump
             return ExitCodes.Success;
         }
 
-        /// <summary>中身が変わっていなければ書かない。更新時刻が動くと、読む側が作り直しと見る。</summary>
         private static void WriteIfChanged(string path, string text)
         {
             if (File.Exists(path)

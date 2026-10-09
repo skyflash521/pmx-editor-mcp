@@ -3,10 +3,7 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 値の型から、一列に並ぶ並びの印を外した先の型を取る。並びかどうかと、並びの中身が何かを
-    /// 見る箇所が複数あるので、判定をここ1つに置く。
-    /// </summary>
+    /// <summary>値の型から、一列に並ぶ並びの印を外した先の型を取る。</summary>
     public static class ValueTypeName
     {
         private const string ListTypeName = "System.Collections.Generic.IList";

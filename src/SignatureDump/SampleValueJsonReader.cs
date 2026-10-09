@@ -15,7 +15,7 @@ namespace PmxEditorMcp.SignatureDump
             Purpose = purpose;
         }
 
-        /// <summary>ファイルの種別。検査はこの名前で引くので、表の中で二度現れない。</summary>
+        /// <summary>ファイルの種別。表の中で二度現れない。</summary>
         public string Kind { get; }
 
         /// <summary>書き出すときに付ける拡張子。点から始まる。</summary>
@@ -41,10 +41,8 @@ namespace PmxEditorMcp.SignatureDump
             File = file;
         }
 
-        /// <summary>値を写す型の名前。</summary>
         public string TypeName { get; }
 
-        /// <summary>既定として使う値。</summary>
         public object First { get; }
 
         /// <summary>書き込む前の値が既定と一致するときに使う値。</summary>
@@ -78,13 +76,10 @@ namespace PmxEditorMcp.SignatureDump
             Says = says;
         }
 
-        /// <summary>値を渡す相手の行キー。</summary>
         public string SignatureKey { get; }
 
-        /// <summary>その行を呼ぶときに渡す引数。</summary>
         public IDictionary<string, object> Arguments { get; }
 
-        /// <summary>その値を選んだ根拠の一文。</summary>
         public string Basis { get; }
 
         /// <summary>
@@ -94,8 +89,8 @@ namespace PmxEditorMcp.SignatureDump
         public string Refused { get; }
 
         /// <summary>
-        /// 断る理由を見分ける文面。断ることを確かめる行だけが持ち、ほかは null。綴りだけでは
-        /// 狙った理由とほかの失敗を見分けられないので、文面まで一致を求める。
+        /// 断る理由を見分ける文面。断ることを確かめる行だけが持ち、ほかは null。文面まで一致を
+        /// 求める。
         /// </summary>
         public string Says { get; }
     }
@@ -117,8 +112,7 @@ namespace PmxEditorMcp.SignatureDump
         public IList<SampleValueRow> Types { get; }
 
         /// <summary>
-        /// 行ごとに渡す値。型から決められる最小の値では意味を成さない呼び出しだけが持つ
-        /// ——在りもしないファイルの位置や、要素を持たない立体の大きさになってしまう。
+        /// 行ごとに渡す値。型から決められる最小の値では意味を成さない呼び出しだけが持つ。
         /// </summary>
         public IList<SampleCallRow> Calls { get; }
     }

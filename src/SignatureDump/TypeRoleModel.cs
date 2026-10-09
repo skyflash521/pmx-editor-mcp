@@ -119,7 +119,6 @@ namespace PmxEditorMcp.SignatureDump
 
         public TypeRole Role { get; }
 
-        /// <summary>その役割と判じた根拠の一文。</summary>
         public string Basis { get; }
 
         /// <summary>ツール名と説明文が対象を指すのに使う名詞。持たない役割では空。</summary>
@@ -129,9 +128,8 @@ namespace PmxEditorMcp.SignatureDump
         public string ElementNounPlural { get; }
 
         /// <summary>
-        /// その型のツールが属する担当群。持たない役割と、台帳が決めるので表が書かない型では
-        /// <see cref="CapabilityOwner.None"/>——後者は
-        /// <see cref="TypeGroupRule.Resolve"/> が解決する。
+        /// その型のツールが属する担当群。持たない役割と、台帳が決める型では
+        /// <see cref="CapabilityOwner.None"/>。
         /// </summary>
         public CapabilityOwner Group { get; }
 
@@ -173,7 +171,6 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>新しいハンドルを発行するか。既にあるものを返すだけなら偽。</summary>
         public bool Issues { get; }
 
-        /// <summary>そう判じた根拠の一文。</summary>
         public string Basis { get; }
     }
 
@@ -206,7 +203,6 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>要素を所有するか。他所が所有する要素を指すだけなら偽。</summary>
         public bool Owns { get; }
 
-        /// <summary>そう判じた根拠の一文。</summary>
         public string Basis { get; }
 
         /// <summary>そのリストへ至る段の列。所有しないリストでは空。</summary>
@@ -356,9 +352,7 @@ namespace PmxEditorMcp.SignatureDump
         }
     }
 
-    /// <summary>
-    /// 日本語名を起こしたプロパティ1件。記載を引ける項目の名前は記載から導けるので、表に現れない。
-    /// </summary>
+    /// <summary>日本語名を起こしたプロパティ1件。記載を引ける項目は表に現れない。</summary>
     public sealed class PropertyNameRecord
     {
         public PropertyNameRecord(
@@ -385,7 +379,7 @@ namespace PmxEditorMcp.SignatureDump
 
         public string MemberName { get; }
 
-        /// <summary>列挙結果と表の項目を突き合わせる鍵。プロパティの型は列挙が持つので入れない。</summary>
+        /// <summary>列挙結果と表の項目を突き合わせる鍵。プロパティの型は入れない。</summary>
         public string Key
         {
             get { return DeclaringType + "|" + MemberName; }
@@ -393,7 +387,6 @@ namespace PmxEditorMcp.SignatureDump
 
         public string JapaneseName { get; }
 
-        /// <summary>意味の根拠。</summary>
         public NameBasis Basis { get; }
 
         /// <summary>名前の由来の一文。</summary>

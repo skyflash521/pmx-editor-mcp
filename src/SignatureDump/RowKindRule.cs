@@ -4,15 +4,11 @@ using System.Collections.ObjectModel;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 行がどの種別を採るかを、行の外の材料から導く。種別はシグネチャの種類と特別規則の表から
-    /// 決まるので、行は種別を書かない。
-    /// </summary>
+    /// <summary>行がどの種別を採るかを、行の外の材料から導く。行は種別を書かない。</summary>
     public static class RowKindRule
     {
         /// <summary>
-        /// 行キーから、その行が採る種別を引く表。公開API列挙に無い行キーは、実在するかどうかを
-        /// 能力対応表の照合が見るので、この表には載せない。
+        /// 行キーから、その行が採る種別を引く表。公開API列挙に無い行キーは載せない。
         /// </summary>
         public static IDictionary<string, ToolMapRowKind> Resolve(
             ToolMap map,
@@ -90,12 +86,11 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その行が採る種別。<paramref name="embedded"/> は、宣言型が独立したツールを持たない役割
-        /// (イベント引数型・DTO型)かどうか。<paramref name="reaches"/> は、値の型が並びの印を
-        /// 外した先で独立したツールを持つ役割の型かどうか。<paramref name="handed"/> は、値が
-        /// ハンドルで指す型の実体で、かつ要素を並べるリストではないかどうか。
-        /// <paramref name="traversed"/> は、その行が受け手へ至る道の一歩かどうか——道であれば
-        /// その先の型のツールが通る経路で、道でなければ相手を値として指すだけの項目である。
+        /// その行が採る種別。<paramref name="embedded"/> は、宣言型が独立したツールを
+        /// 持たない役割(イベント引数型・DTO型)かどうか。<paramref name="reaches"/> は、値の型が
+        /// 並びの印を外した先で独立したツールを持つ役割の型かどうか。<paramref name="handed"/> は、
+        /// 値がハンドルで指す型の実体で、かつ要素を並べるリストではないかどうか。
+        /// <paramref name="traversed"/> は、その行が受け手へ至る道の一歩かどうか。
         /// </summary>
         public static ToolMapRowKind Of(
             MemberKind memberKind,

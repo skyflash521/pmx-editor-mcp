@@ -6,8 +6,7 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 危険操作に当たるシグネチャについて、決め方が導くものと台帳が記すものを突き合わせる。片方に
-    /// しか無いものが残ると、危険操作かどうかが2つの資料で食い違う。
+    /// 危険操作に当たるシグネチャについて、決め方が導くものと台帳が記すものを突き合わせる。
     /// </summary>
     public static class DangerousOperationGate
     {

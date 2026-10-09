@@ -6,9 +6,8 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 型の役割の判定へ、列挙結果から機械で導ける根拠を与える。役割そのものは意味を含む判定なので
-    /// ここでは決めず、機械で確かめられる事実だけを返す。型の名前は総称型引数を数へ置き換えた鍵で
-    /// 扱う。
+    /// 型の役割の判定へ、列挙結果から機械で導ける根拠を与える。役割そのものはここでは決めない。型の
+    /// 名前は総称型引数を数へ置き換えた鍵で扱う。
     /// </summary>
     public static class TypeRoleEvidence
     {
@@ -74,8 +73,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 経路を辿り直す側が、各段で名前から一つの先を選べることだけを確かめる。経路そのものは
-        /// 要るときに <see cref="ReachableFromRoots"/> で導くので、ここでは捨てる。選べない段が
-        /// 在れば <see cref="InvalidOperationException"/>。
+        /// 捨てる。選べない段が在れば <see cref="InvalidOperationException"/>。
         /// </summary>
         public static void RequireStepsSelectOneTarget(
             InventoryRecord inventory, IEnumerable<string> roots)
@@ -84,8 +82,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 経路を辿り直す側が、各段で名前から一つの先を選べることを求める。接続の根の並びは一つの段
-        /// として数える——経路の先頭の名前は、どれか一つの根のものでなければならない。
+        /// 経路を辿り直す側が、各段で名前から一つの先を選べることを求める。接続の根の並びは一つの
+        /// 段として数える。
         /// </summary>
         private static void RequireStepsSelectOneTarget(
             IDictionary<string, IList<SignatureRecord>> members,
@@ -139,10 +137,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// コネクタ型になりうる型。呼び出し側が実体を用意せずに呼べる型がこれに当たり、次の3つから
-        /// なる。接続の根から辿り着ける型。その基底型——基底型は自分では辿り着く先にならないが、
-        /// 辿り着ける型の実体はその基底型の実体でもある。そして宣言するメンバーがすべて静的な型——
-        /// 実体を持たないので保持する先が要らない。根の扱いは <see cref="ReachableFromRoots"/> と
+        /// コネクタ型になりうる型。呼び出し側が実体を用意せずに呼べる型がこれに当たり、次の
+        /// 3つからなる。接続の根から辿り着ける型。その基底型。
+        /// そして宣言するメンバーがすべて静的な型。根の扱いは <see cref="ReachableFromRoots"/> と
         /// 同じ。
         /// </summary>
         public static ISet<string> ConnectorCandidates(

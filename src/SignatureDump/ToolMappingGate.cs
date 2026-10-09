@@ -5,10 +5,7 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 能力対応表とスキーマ正本が、写像の規則に合うことを確かめる。埋め込み先も呼び分けの
-    /// 見分けも機械で決まるので、書き手が別のものを書けばここで落ちる。
-    /// </summary>
+    /// <summary>能力対応表とスキーマ正本が、写像の規則に合うことを確かめる。</summary>
     public static class ToolMappingGate
     {
         /// <summary>画像として写す値の綴り。共通契約の正本が定める。</summary>
@@ -133,9 +130,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 名指しされた項目が、そのツールが書き換える項目に実在することを確かめる。名指しが
-        /// 実在しなくなると、その名指しに掛かっている検査だけが黙って減る——持ち続けない項目
-        /// では読み返して確かめる検査が、指す先を埋める項目では加える前に埋める段が消える。
+        /// 名指しされた項目が、そのツールが書き換える項目に実在することを確かめる。
         /// </summary>
         private static void RequireNamedMembers(
             ToolSchemaTable schemas,
@@ -178,8 +173,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 画像を返すツールが、ビューの名前を引く表か描いた画像を返すツールの表のどちらか一方だけに
-        /// 載ることを確かめる。対応が欠けると、その画像がどのビューのものかを確かめる検査だけが
-        /// 黙って減る。行が返す画像はビューを写すので、描いた画像を返すツールの表には載せられない。
+        /// 載ることを確かめる。行が返す画像はビューを写す。
         /// </summary>
         private static void RequireViewImages(
             ToolMap map,
@@ -256,10 +250,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// 導いた名前が合成ツールの名前にならないことを求める。合成ツールは行を持たないので、
-        /// 同じ名前になると1つのツールが行と合成ツールの表の両方から現れる。
-        /// </summary>
+        /// <summary>導いた名前が合成ツールの名前にならないことを求める。</summary>
         private static void RequireNoComposedName(
             IDictionary<string, string> toolNames, IDictionary<string, ComposedTool> composedTools)
         {
@@ -273,8 +264,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 項目を集める取得と更新のツールの名前。これらのツールは行を持たないので、埋め込み先として
-        /// 名指しされたものを母集合へ入れる。
+        /// 項目を集める取得と更新のツールの名前。埋め込み先として名指しされたものを母集合へ入れる。
         /// </summary>
         private static ISet<string> Aggregations(
             ToolMap map,
@@ -320,9 +310,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 行から導いた名前と合成ツールに入出力の形が在ること、およびスキーマ正本が持つツールが
-        /// そのどちらかに在ることを求める。分岐を持つ合成ツールの形は、その分岐の出どころで
-        /// あるイベント行が無ければ書けないので、イベント行が在るときだけ求める。
+        /// 行から導いた名前と合成ツールに入出力の形が在ること、およびスキーマ正本が
+        /// 持つツールがそのどちらかに在ることを求める。分岐を持つ合成ツールの形は、イベント行が
+        /// 在るときだけ求める。
         /// </summary>
         private static void RequireSameTools(
             ToolSchemaTable schemas,
@@ -445,10 +435,7 @@ namespace PmxEditorMcp.SignatureDump
             return false;
         }
 
-        /// <summary>
-        /// その項目が持つ組の中身。組と、空にできない組の配列が持つ。空にできる配列は、空の要求が
-        /// どちらの呼び分けにも当てはまるので見分けに使えない。
-        /// </summary>
+        /// <summary>その項目が持つ組の中身。組と、空にできない組の配列が持つ。</summary>
         private static IList<SchemaItem> Grouped(SchemaItem item)
         {
             if (item.Members != null)
@@ -487,10 +474,7 @@ namespace PmxEditorMcp.SignatureDump
                 + Convert.ToString(value, CultureInfo.InvariantCulture);
         }
 
-        /// <summary>
-        /// 埋め込み先が、宣言型の役割に応じた先であることを求める。埋め込み先は名前でしか指せない
-        /// ので、綴りの取り違えはここでしか出ない。
-        /// </summary>
+        /// <summary>埋め込み先が、宣言型の役割に応じた先であることを求める。</summary>
         private static void RequireEmbedded(
             string embedded,
             SignatureRecord signature,

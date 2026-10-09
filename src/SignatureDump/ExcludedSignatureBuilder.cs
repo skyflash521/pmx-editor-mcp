@@ -6,10 +6,6 @@ using System.Text;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 提供対象から除く公開シグネチャを一元に決める。生成側も対応表側もこの一覧だけを見るので、
-    /// 除外の判断が二重にならない。
-    /// </summary>
     public static class ExcludedSignatureBuilder
     {
         private const string StreamTypeName = "System.IO.Stream";
@@ -126,10 +122,7 @@ namespace PmxEditorMcp.SignatureDump
                 { StreamTypeName };
             }
 
-            /// <summary>
-            /// 形式が同じかどうかは一次資料でしか決まらないので、Streamを扱うシグネチャを除外するか
-            /// 残すかは機械で決められない。ベースライン正本に無いものが在れば止める。
-            /// </summary>
+            /// <summary>ベースライン正本に無い Stream のシグネチャが在れば止める。</summary>
             public void RequireStreamsFrozen()
             {
                 SignatureRecord found = inventory.Signatures.FirstOrDefault(
@@ -253,8 +246,8 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             /// <summary>
-            /// イベントはハンドラ型がデリゲートでも購読の仕組みで扱うので、宣言そのものは対象に
-            /// しない。値としてデリゲートを受け渡すシグネチャだけを見る。
+            /// イベントの宣言そのものは対象にしない。値としてデリゲートを受け渡すシグネチャだけを
+            /// 見る。
             /// </summary>
             private bool UsesDelegateValue(SignatureRecord signature)
             {
@@ -304,9 +297,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 対応表の組をPMX版へ置き換えた表記。閉じた総称型や配列の内側に現れるPMD型も置き換えるので、
-        /// 型を包んで受け渡す形でも同じ位置の対応が取れる。名前の一部が偶然一致するだけの型を
-        /// 巻き込まないよう、型名の区切りに挟まれた出現だけを置き換える。
+        /// 対応表の組をPMX版へ置き換えた表記。閉じた総称型や配列の内側に現れるPMD型も置き換える。
+        /// 型名の区切りに挟まれた出現だけを置き換える。
         /// </summary>
         private static string WithCounterparts(string typeName)
         {
@@ -355,8 +347,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 右隣の山括弧はその型自身が総称型である印で、包みの区切りではない。対応表が持つのは
-        /// 非総称の組なので、総称型を巻き込まないよう境界として認めない。
+        /// 右隣の山括弧はその型自身が総称型である印で、包みの区切りではない。境界として認めない。
         /// </summary>
         private static bool IsRightBoundary(string typeName, int index)
         {
@@ -387,8 +378,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// PMDモデル本体は非対応なので、値の表現も、実体を得る提供対象の経路も無い。配列で受け渡す
-        /// 形も同じ理由で扱えない。
+        /// PMDモデル本体は非対応で、値の表現も、実体を得る提供対象の経路も無い。配列で受け渡す形も
+        /// 扱えない。
         /// </summary>
         private static bool TakesOrReturnsPmdModel(SignatureRecord signature)
         {
@@ -404,8 +395,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 総称型引数は宣言ごとに別の型で、分類を持たない。表記が名前空間を持たない型と重なるので、
-        /// 分類を引く前に取り除く。
+        /// 総称型引数は宣言ごとに別の型で、分類を持たない。分類を引く前に取り除く。
         /// </summary>
         private static IEnumerable<string> ClassifiableTypes(SignatureRecord signature)
         {
@@ -427,8 +417,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 包みを外した型名と、閉じた総称型の各段の引数を再帰的に集める。総称型そのものの表記は
-        /// 列挙が記録する形なので残し、引数の数を落とした定義名は別の型と当たるので加えない。
+        /// 包みを外した型名と、閉じた総称型の各段の引数を再帰的に集める。引数の数を落とした定義名は
+        /// 加えない。
         /// </summary>
         private static IEnumerable<string> Components(string typeName)
         {
@@ -442,7 +432,7 @@ namespace PmxEditorMcp.SignatureDump
             return names;
         }
 
-        /// <summary>要素の型で分類するので、配列の次元は落とす。</summary>
+        /// <summary>配列の次元は落とす。</summary>
         private static string WithoutArrayMark(string typeName)
         {
             string name = typeName;

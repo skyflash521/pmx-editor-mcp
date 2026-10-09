@@ -11,7 +11,6 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class UiStructureSourceBuilder
     {
-        /// <summary>1つの文字列に入れる文字数。</summary>
         private const int ChunkChars = 2000;
 
         public static string Build(string catalog)

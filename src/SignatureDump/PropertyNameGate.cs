@@ -5,10 +5,7 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 日本語名の正本が、規則どおりに付いているかを検査する。名前が的確かどうかは測れないので、
-    /// 機械で確かめられる範囲——名前を起こす項目の過不足、根拠の解決、同一型内の重複——に限る。
-    /// </summary>
+    /// <summary>日本語名の正本が、規則どおりに付いているかを検査する。</summary>
     public static class PropertyNameGate
     {
         /// <summary>
@@ -112,10 +109,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// 表が持つのは、記載を引けない項目だけであることを求める。引ける項目の名前は記載から導ける
-        /// ので、書けば導き直しを忘れたときにずれが残る。引けない項目を落とすと名前が決まらない。
-        /// </summary>
+        /// <summary>表が持つのは、記載を引けない項目だけであることを求める。</summary>
         private static void RequireAuthoredExactlyWhereTheNoteCannotBeQuoted(
             IList<PropertyNameRecord> records,
             IList<PropertyRecord> properties,
@@ -161,8 +155,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 同じ宣言型の中で日本語名が重ならないことを、導いた名前と起こした名前の両方で見る。導いた
-        /// 名前どうしは記載が一意なので重ならないが、起こした名前とは重なりうる。
+        /// 同じ宣言型の中で日本語名が重ならないことを、導いた名前と起こした名前の両方で見る。
         /// </summary>
         private static void RequireDistinctNamesWithinAType(
             IList<PropertyNameRecord> records,

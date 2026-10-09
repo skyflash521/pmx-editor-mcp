@@ -60,8 +60,8 @@ namespace PmxEditorMcp.SignatureDump
         public bool IsOptional { get; }
 
         /// <summary>
-        /// 型が総称型引数かどうか。表記は宣言ごとの名前そのままで、名前空間を持たない型と同じ形に
-        /// なりうるので、型の分類を引く側はこの印で見分ける。
+        /// 型が総称型引数かどうか。表記は宣言ごとの名前そのままで、名前空間を持たない型と
+        /// 同じ形になりうる。
         /// </summary>
         public bool IsTypeArgument { get; }
     }
@@ -185,9 +185,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// その型が継承・実装している公開の型の表記(表記の昇順)。基底クラスの連鎖と、
-        /// インターフェースを推移的に含む。<see cref="object"/> や構造体の基底のように、言語が
-        /// その種類のすべての型へ与える基底は含めない。列挙型とデリゲートでは、基底が型の種類で
-        /// 一つに決まるので空。
+        /// インターフェースを推移的に含む。<see cref="object"/> や構造体の基底のように、言語がその
+        /// 種類のすべての型へ与える基底は含めない。列挙型とデリゲートでは空。
         /// </summary>
         public IList<string> BaseTypes { get; }
 
@@ -224,10 +223,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>表記の昇順。</summary>
         public IList<TypeRecord> Types { get; }
 
-        /// <summary>
-        /// シグネチャが参照する、対象アセンブリの外で宣言された型。表記の昇順。型の種類を名前から
-        /// 推し量らずに済ませるために持つ。
-        /// </summary>
+        /// <summary>シグネチャが参照する、対象アセンブリの外で宣言された型。表記の昇順。</summary>
         public IList<TypeRecord> ReferencedTypes { get; }
 
         /// <summary>行キーの昇順。</summary>

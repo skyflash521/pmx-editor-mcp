@@ -145,9 +145,7 @@ namespace PmxEditorMcp.SignatureDump
             return ExitCodes.Success;
         }
 
-        /// <summary>
-        /// 受け手の要る宣言型。静的なメンバーだけを持たせた行は呼ぶ相手が無いので、道も要らない。
-        /// </summary>
+        /// <summary>受け手の要る宣言型。静的なメンバーだけを持たせた行は含まない。</summary>
         private static IEnumerable<string> Receiving(ToolMap toolMap, InventoryRecord inventory)
         {
             HashSet<string> rows = new HashSet<string>(

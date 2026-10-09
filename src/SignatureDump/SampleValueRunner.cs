@@ -108,7 +108,7 @@ namespace PmxEditorMcp.SignatureDump
                     type.IsCombinable);
             }
 
-            // 書体の飾りは配布物でなく実行環境の枠組みが持つ列挙なので、そちらから引く。
+            // 書体の飾りは配布物でなく実行環境の枠組みが持つ列挙である。
             members[typeof(FontStyle).FullName] = new EnumMemberSet(
                 new HashSet<string>(Enum.GetNames(typeof(FontStyle)), StringComparer.Ordinal),
                 typeof(FontStyle).IsDefined(typeof(FlagsAttribute), false));

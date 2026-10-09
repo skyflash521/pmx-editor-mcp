@@ -9,8 +9,7 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// 能力台帳の各行が指す公開型と公開シグネチャを、公開API列挙と突き合わせて決める。台帳は
-    /// 名前だけを書き、それが型を指すのかメンバーを指すのかは書かないので、列挙の側と突き合わせて
-    /// 初めて決まる。
+    /// 名前だけを書き、それが型を指すのかメンバーを指すのかは書かない。
     /// </summary>
     public sealed class LedgerPopulation
     {
@@ -32,8 +31,8 @@ namespace PmxEditorMcp.SignatureDump
         public ISet<string> Types { get; }
 
         /// <summary>
-        /// 公開型の名前から、その型を名前で指す行の能力ID。名前がその型として解決された行だけを
-        /// 数えるので、その型を継承する型を指す行も、その型のメンバーを指す行も含まない。
+        /// 公開型の名前から、その型を名前で指す行の能力ID。その型を継承する型を指す行も、その型の
+        /// メンバーを指す行も含まない。
         /// </summary>
         public IDictionary<string, ISet<string>> NamedTypes { get; }
 
@@ -44,15 +43,15 @@ namespace PmxEditorMcp.SignatureDump
         public IDictionary<string, ISet<string>> Owners { get; }
 
         /// <summary>
-        /// 行キーから、そのメンバーを名前で指す行が名前の頭に書いた型。継承したメンバーを指す行では、
-        /// 宣言する型ではなく書かれた型が入る。型の名前だけを書く行は、その型のどのメンバーを指したかを
-        /// 述べていないので入らない。まとめて指す書き方の行も型の名前を書かないので入らない。
+        /// 行キーから、そのメンバーを名前で指す行が名前の頭に書いた型。継承したメンバーを
+        /// 指す行では、宣言する型ではなく書かれた型が入る。型の名前だけを書く行と、
+        /// まとめて指す書き方の行は入らない。
         /// </summary>
         public IDictionary<string, ISet<string>> WrittenOwners { get; }
 
         /// <summary>
         /// 指す先を決められない行があれば <see cref="InvalidOperationException"/>。解決の結果が
-        /// 0件になること自体は許す——公開メンバーを自分では宣言しない入れ物の型が実在する。
+        /// 0件になること自体は許す。
         /// </summary>
         public static LedgerPopulation Resolve(IList<CapabilityRecord> ledger, InventoryRecord inventory)
         {
@@ -352,8 +351,8 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             /// <summary>
-            /// その型を台帳がどう書きうるか。完全修飾の名前と、名前空間を落とした名前の2通りとする。
-            /// 名前空間を持たない型では両方が同じになるので、重ならないようにして返す。
+            /// その型を台帳がどう書きうるか。完全修飾の名前と、名前空間を落とした名前の2通りとし、
+            /// 重ならないようにして返す。
             /// </summary>
             private static IEnumerable<string> WrittenNames(string name)
             {
@@ -373,8 +372,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             /// <summary>
-            /// 山括弧で囲まれた型引数だけを落とす。入れ子の型は段ごとに型引数を持ちうるので、最初の
-            /// 山括弧から末尾までを捨てると内側の段が失われる。
+            /// 山括弧で囲まれた型引数だけを落とす。入れ子の型は段ごとに型引数を持ちうる。
             /// </summary>
             private static string WithoutTypeArguments(string name)
             {

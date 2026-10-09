@@ -7,9 +7,8 @@ using System.Text;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 同梱する第三者ライセンス表示を、出荷台帳と転記元から組み立てて書き出す配線。
-    /// 書き出す先は配布物の中で、追跡下には残さない——出荷する物を数えれば毎回同じ物が作れるので、
-    /// 写しをバージョン管理に置いても読む相手がいない。
+    /// 同梱する第三者ライセンス表示を、出荷台帳と転記元から組み立てて書き出す配線。書き出す先は
+    /// 配布物の中で、追跡下には残さない。
     /// </summary>
     public static class ThirdPartyNoticeRunner
     {
@@ -57,8 +56,7 @@ namespace PmxEditorMcp.SignatureDump
                 return ExitCodes.InputUnavailable;
             }
 
-            // 出所のある物が1つも無い表示は、数え落としと見分けが付かない。自己完結で発行した
-            // 実行ファイルは少なくともランタイムを取り込むので、空になるのは台帳が壊れたときである。
+            // 自己完結で発行した実行ファイルは、少なくともランタイムを取り込む。
             if (counted == 0)
             {
                 error.WriteLine("出荷台帳が第三者の出所を1つも挙げていない。");

@@ -12,9 +12,9 @@ namespace PmxEditorMcp.SignatureDump
     {
         /// <summary>
         /// 型の名前から、その型を担当する行の担当を引ける表。数えるのは、その型を名前で指す行と、
-        /// その型が宣言するシグネチャを担当する行である。型の名前は型役割表と同じ、型引数の数を書く形に
-        /// そろえる。担当を持たない行——分類が提供でない行——は数えないので、そういう行だけが担当する型は
-        /// 空の集合を持つ。どちらでも担当されない型は表に現れない。
+        /// その型が宣言するシグネチャを担当する行である。型の名前は型役割表と同じ、型引数の数を
+        /// 書く形にそろえる。担当を持たない行——分類が提供でない行——は数えず、そういう行だけが
+        /// 担当する型は空の集合を持つ。どちらでも担当されない型は表に現れない。
         /// </summary>
         public static IDictionary<string, ISet<CapabilityOwner>> OwnersByType(
             IList<CapabilityRecord> ledger, InventoryRecord inventory)

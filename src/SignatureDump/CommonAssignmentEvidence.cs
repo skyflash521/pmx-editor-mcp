@@ -63,8 +63,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 提供対象のシグネチャの行キーから、そのシグネチャの束縛。どのスロットとも決まらない引数・
-        /// 戻り値が在れば <see cref="InvalidOperationException"/>——決め方がその形を覆えていない。
+        /// 提供対象のシグネチャの行キーから、そのシグネチャの束縛。どのスロットとも
+        /// 決まらない引数・戻り値が在れば <see cref="InvalidOperationException"/>。
         /// </summary>
         public static IDictionary<string, SlotBinding> Bindings(
             InventoryRecord inventory, IDictionary<string, TypeRole> roles, ISet<string> keys)

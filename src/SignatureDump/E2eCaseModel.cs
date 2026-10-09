@@ -26,9 +26,8 @@ namespace PmxEditorMcp.SignatureDump
         Reads,
 
         /// <summary>
-        /// 呼ぶ前に読んだものと違うものが読めること。何と比べるかは <see cref="E2eCase.Differs"/>
-        /// が持つ。どこがどう変わるかまでは述べない行のために在る——変わったことだけが、その行の
-        /// 述べる効果である。
+        /// 呼ぶ前に読んだものと違うものが読めること。何と比べるかは <see cref="E2eCase.Differs"/> が
+        /// 持つ。
         /// </summary>
         Changed,
 
@@ -118,16 +117,13 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>接続の根から受け手の型へ至る経路。辿り着けない型では空。</summary>
         public string ConnectionPath { get; }
 
-        /// <summary>呼ぶツールの名前。</summary>
         public string Tool { get; }
 
         /// <summary>この1件が確かめること。落ちたときに何を見ていたかが分かる言葉にする。</summary>
         public string Purpose { get; }
 
-        /// <summary>渡す引数。</summary>
         public IDictionary<string, object> Arguments { get; }
 
-        /// <summary>確かめる結末。</summary>
         public E2eExpectation Expectation { get; }
 
         /// <summary>断ることを確かめるとき、その理由の綴り。成功を確かめるときは null。</summary>
@@ -143,8 +139,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 引数の中の道から、借りる元の道へ。どちらも斜線で区切る。借りる元は覚えた値の名前で
-        /// 始まり、続く段はその値の中を指す——指した先の値が、引数の道の行き着く位置へ入る。
-        /// 借りない検査は null。
+        /// 始まり、続く段はその値の中を指す。借りない検査は null。
         /// </summary>
         public IDictionary<string, string> Borrowed { get; }
 
@@ -170,9 +165,8 @@ namespace PmxEditorMcp.SignatureDump
         public string Differs { get; }
 
         /// <summary>
-        /// この検査が確かめる事後条件の識別子。確かめない検査は null。行の覆いを数える検査が
-        /// これを読む——どの検査がどの宣言を確かめたのかは、結末や引数の形からは見分けられない。
-        /// 実機へ投げる綴りには出さない。実行器はどの宣言のために呼ぶのかを知らずに済む。
+        /// この検査が確かめる事後条件の識別子。確かめない検査は null。実機へ投げる綴りには
+        /// 出さない。
         /// </summary>
         public string Checks { get; }
 

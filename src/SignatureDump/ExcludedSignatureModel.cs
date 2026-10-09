@@ -12,10 +12,7 @@ namespace PmxEditorMcp.SignatureDump
         Category,
     }
 
-    /// <summary>
-    /// 述語で機械検査する除外カテゴリ。恣意的な除外を入れられないよう、ここに無い理由では除外
-    /// できない。
-    /// </summary>
+    /// <summary>述語で機械検査する除外カテゴリ。ここに無い理由では除外できない。</summary>
     public enum ExclusionCategory
     {
         /// <summary>カテゴリを根拠にしない。</summary>

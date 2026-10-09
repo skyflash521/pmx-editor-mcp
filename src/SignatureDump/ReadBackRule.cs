@@ -4,10 +4,6 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 値を返さずに位置の並びを1つ書き込むメンバーの、書いた並びを読み返すメンバーを引く。同じ型に、名前の
-    /// Set を Get に替えた、引数を取らず位置の並びを返すメンバーがあればそれを採る。
-    /// </summary>
     public static class ReadBackRule
     {
         private const string VoidTypeName = "System.Void";

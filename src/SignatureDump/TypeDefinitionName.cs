@@ -11,10 +11,7 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class TypeDefinitionName
     {
-        /// <summary>
-        /// 参照と配列の印を外し、総称型引数を引数の数へ置き換えた鍵。値の型は参照渡しでも配列でも
-        /// 同じ型を指すので、型を引くときはこちらを使う。
-        /// </summary>
+        /// <summary>参照と配列の印を外し、総称型引数を引数の数へ置き換えた鍵。</summary>
         public static string OfElement(string typeName)
         {
             RequireText(typeName);
@@ -74,10 +71,7 @@ namespace PmxEditorMcp.SignatureDump
             return builder.ToString();
         }
 
-        /// <summary>
-        /// 山括弧の中が表す引数の数。既に数で書かれている形はその数のまま返す——鍵へ写したものを
-        /// もう一度写しても同じ鍵になるようにする。
-        /// </summary>
+        /// <summary>山括弧の中が表す引数の数。既に数で書かれている形はその数のまま返す。</summary>
         private static string Counted(string arguments)
         {
             int written;

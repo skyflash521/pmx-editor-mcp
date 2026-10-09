@@ -21,17 +21,16 @@ namespace PmxEditorMcp.SignatureDump
         public string Steps { get; }
 
         /// <summary>
-        /// 辿る前に呼ぶ初期化のメンバー名。初期化を持たない道では null。初期化は呼ぶ側の
-        /// スレッドの状態を作るので、辿るのと同じ呼び出しの中で呼ぶ。
+        /// 辿る前に呼ぶ初期化のメンバー名。初期化を持たない道では null。辿るのと同じ呼び出しの中で
+        /// 呼ぶ。
         /// </summary>
         public string Initialize { get; }
     }
 
     /// <summary>
-    /// 受け手の型へ至る道を、根ごとに辿って決める。道は列挙から導くので正本へ書かない。同じ型へ
-    /// 道が複数あるときは、一歩の数が最も少ないものを採り、並ぶときは根の並びで先のものを採る。
-    /// 自分自身へ至る道を持たない型は、その型を実装する型を通る——実装する型の実体はその型としても
-    /// 受け取れる。通れる実装する型が2つ以上あるときは、どちらを通るかで受け手が変わるので採らない。
+    /// 受け手の型へ至る道を、根ごとに辿って決める。同じ型へ道が複数あるときは、一歩の数が最も
+    /// 少ないものを採り、並ぶときは根の並びで先のものを採る。自分自身へ至る道を持たない型は、その
+    /// 型を実装する型を通る。通れる実装する型が2つ以上あるときは採らない。
     /// </summary>
     public static class ReceiverEvidence
     {
@@ -145,7 +144,7 @@ namespace PmxEditorMcp.SignatureDump
                 : null;
         }
 
-        /// <summary>一歩の数で比べる。根の並びで先に見つけたものを残すので、同数では入れ替えない。</summary>
+        /// <summary>一歩の数で比べる。同数では入れ替えない。</summary>
         private static bool Shorter(string steps, string found)
         {
             return Count(steps) < Count(found);

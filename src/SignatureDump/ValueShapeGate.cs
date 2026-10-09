@@ -5,8 +5,7 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 値の表現の表を、提供対象から導いた、値として写せる型の集合と規則へ照合する。表に載らない型が残ると、
-    /// その型の写し方は誰も決めていないことになる。
+    /// 値の表現の表を、提供対象から導いた、値として写せる型の集合と規則へ照合する。
     /// </summary>
     public static class ValueShapeGate
     {

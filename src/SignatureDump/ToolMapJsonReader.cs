@@ -121,7 +121,7 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly Regex EnumeratorName = new Regex(
             "^[A-Za-z][A-Za-z0-9]*$", RegexOptions.CultureInvariant);
 
-        /// <summary>SDKの引数の名前。名前を決めるのはSDKの側なので、識別子の形までとする。</summary>
+        /// <summary>SDKの引数の名前。識別子の形までとする。</summary>
         private static readonly Regex SdkArgumentName = new Regex(
             "^[A-Za-z_][A-Za-z0-9_]*$", RegexOptions.CultureInvariant);
 
@@ -135,8 +135,8 @@ namespace PmxEditorMcp.SignatureDump
             "^(|[a-z][A-Za-z0-9]*|items\\[\\]\\.[a-z][A-Za-z0-9]*)$", RegexOptions.CultureInvariant);
 
         /// <summary>
-        /// 用意の操作が取れるサンプル値への参照。型名は公開API列挙の表記なので、総称型の山括弧と
-        /// 配列の角括弧を含む。
+        /// 用意の操作が取れるサンプル値への参照。型名は公開API列挙の表記で、総称型の山括弧と配列の
+        /// 角括弧を含む。
         /// </summary>
         private static readonly Regex SampleReference = new Regex(
             "^sample2?:[A-Za-z][A-Za-z0-9_.+<>,\\[\\]]*$", RegexOptions.CultureInvariant);
@@ -226,9 +226,8 @@ namespace PmxEditorMcp.SignatureDump
             };
 
         /// <summary>
-        /// 行を書かれた順に返す。行キーが序数の昇順に重複なく並ぶことと、行だけで決まる項目の
-        /// 要否——複製編集型の行が反映の指定を持つこと——を求める。種別ごとの要否は行の外の材料が
-        /// 要るので照合が見る。形が違えば <see cref="FormatException"/>。
+        /// 行を書かれた順に返す。行キーが序数の昇順に重複なく並ぶことと、複製編集型の行が反映の
+        /// 指定を持つことを求める。形が違えば <see cref="FormatException"/>。
         /// </summary>
         public static ToolMap Read(string json)
         {
@@ -381,8 +380,6 @@ namespace PmxEditorMcp.SignatureDump
             bool observed = (kind == EffectCheckKind.Readback || kind == EffectCheckKind.Handle)
                 && comparison != EffectComparison.AnyChanged;
 
-            // 呼ぶ前と後で読み比べる判定も、どの一覧を読むかは述べる。渡すものは述べない——
-            // 一覧の全体を読むので、指す対象が無い。
             bool compared = kind == EffectCheckKind.Readback
                 && comparison == EffectComparison.AnyChanged;
             RequirePresence(members, ObserverToolName, observed || compared);
@@ -429,9 +426,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 用意の操作が出した値への参照が、同じ判定の操作が出した名前を指すことを求める。名前で引く
-        /// ので、出していない名前を指すと束縛が決まらない。操作の引数が指せるのは、その操作より前が
-        /// 出した名前に限る——列は順に実行するので、後で出す名前は先の操作から引けない。
+        /// 用意の操作が出した値への参照が、同じ判定の操作が出した名前を指すことを求める。操作の
+        /// 引数が指せるのは、その操作より前が出した名前に限る。
         /// </summary>
         private static void RequireOutputsExist(Postcondition judgement)
         {
@@ -489,10 +485,7 @@ namespace PmxEditorMcp.SignatureDump
             return value;
         }
 
-        /// <summary>
-        /// 呼ぶツールへ渡す値1つ。参照の綴りは入れ子の中でも参照として見る——組や配列の中へ
-        /// 書いた参照を素通りさせると、綴りを誤ったものが検査に掛からないまま呼び先へ渡る。
-        /// </summary>
+        /// <summary>呼ぶツールへ渡す値1つ。参照の綴りは入れ子の中でも参照として見る。</summary>
         private static void RequireGiven(object value)
         {
             object[] items = value as object[];

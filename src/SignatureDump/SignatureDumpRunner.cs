@@ -81,8 +81,6 @@ namespace PmxEditorMcp.SignatureDump
             return ExitCodes.Success;
         }
 
-        // 途中まで書けたファイルを残すと、読み手が完全な結果と区別できない。取り除けないときは
-        // 追加の報告をせず書き出し失敗の結果をそのまま返すので、部分的なファイルは残る。
         private static void Discard(string outputPath)
         {
             try

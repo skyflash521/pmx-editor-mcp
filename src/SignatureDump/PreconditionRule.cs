@@ -18,9 +18,9 @@ namespace PmxEditorMcp.SignatureDump
         PickedObjects,
 
         /// <summary>
-        /// 取り消せる編集が残っていると、エディタが人の応答を待つ表示を出すことがある。出すかどうかは
-        /// エディタが持つ保存済みの印との差で決まり、その印は読めない。プラグインからの保存もその印を
-        /// 更新しないので、こちらから出ないと言えるのは、取り消せる編集が残っていないときだけである。
+        /// 取り消せる編集が残っていると、エディタが人の応答を待つ表示を出すことがある。
+        /// 出すかどうかはエディタが持つ保存済みの印との差で決まり、その印は読めない。
+        /// プラグインからの保存もその印を更新しない。
         /// </summary>
         SavedEdits,
 
@@ -52,10 +52,6 @@ namespace PmxEditorMcp.SignatureDump
         HeldModifiers,
     }
 
-    /// <summary>
-    /// どのシグネチャが、呼ぶ前に確かめることを持つかを決める。危険操作と同じく、名前だけで決めると
-    /// 意味の近い別のメンバーを巻き込むので、宣言型と組で名指しする。
-    /// </summary>
     public static class PreconditionRule
     {
         private const string GuideTypeName = "PEPlugin.View.IPEVertexGuideConnector";
@@ -181,9 +177,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// そのシグネチャが相手にする絞込の一覧について、並んでいる項目の数を読むシグネチャの行キー。
-        /// 相手にする呼び出しと同じ受け手の上に在るので、受け手を解き直さずに読める。相手にする一覧を
-        /// 持たないシグネチャと、数を読むシグネチャが見つからないときは null。
+        /// そのシグネチャが相手にする絞込の一覧について、並んでいる項目の数を読むシグネチャの
+        /// 行キー。相手にする呼び出しと同じ受け手の上に在る。相手にする一覧を持たないシグネチャと、
+        /// 数を読むシグネチャが見つからないときは null。
         /// </summary>
         public static string Listed(
             SignatureRecord signature, IEnumerable<SignatureRecord> signatures)
@@ -296,8 +292,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 取り消せる編集の数を読むシグネチャの行キー。閉じる呼び出しと同じ受け手の上に在るので、
-        /// 受け手を解き直さずに読める。見つからなければ null。
+        /// 取り消せる編集の数を読むシグネチャの行キー。閉じる呼び出しと同じ受け手の上に在る。
+        /// 見つからなければ null。
         /// </summary>
         public static string Counting(IEnumerable<SignatureRecord> signatures)
         {

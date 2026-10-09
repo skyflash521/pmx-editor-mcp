@@ -114,12 +114,7 @@ namespace PmxEditorMcp.SignatureDump
             return compacted.Length < schema.Length ? compacted : schema;
         }
 
-        /// <summary>
-        /// 同じ値を通し同じ値を断る、短い同義の綴りへ置き換えた綴り。置き換えるのは次の3つだけである。
-        /// 根が type object のとき、根の anyOf・allOf・oneOf の要素が重ねて持つ type object を外す。
-        /// const が真偽値か文字のとき、それと同じ型を言うだけの type を外す。uniqueItems の並びの要素が
-        /// enum だけで値を選ぶとき、enum の値の数以上の maxItems を外す。
-        /// </summary>
+        /// <summary>同じ値を通し同じ値を断る、短い同義の綴りへ置き換えた綴り。</summary>
         public static string Shortened(string schema)
         {
             if (schema == null)

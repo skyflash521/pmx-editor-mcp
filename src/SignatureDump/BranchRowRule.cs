@@ -5,15 +5,13 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 1つのツールへ集めた行と呼び分けの対応。引数の名前が同じで型だけが違う行は名前で見分けられ
-    /// ないので、分岐を選ぶ項目の値にその引数の綴りを採り、ここで結び付ける。
+    /// 1つのツールへ集めた行と呼び分けの対応。分岐を選ぶ項目の値にその引数の綴りを採る。
     /// </summary>
     public static class BranchRowRule
     {
         /// <summary>
         /// 行キーから呼び分けへ引く表。分岐を選ぶ項目を持たないツールと、行が1件のツールは1件も
-        /// 持たない——後者が選ぶ項目で分かれるのは行ではなく、要素の具象の型である。結び付け
-        /// られなければ <see cref="InvalidOperationException"/>。
+        /// 持たない。結び付けられなければ <see cref="InvalidOperationException"/>。
         /// </summary>
         public static IDictionary<string, SchemaBranch> Resolve(
             ToolSchema schema,
@@ -102,8 +100,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 行どうしを分ける引数の名前。どの行も同じ名前で持ち、綴りが行ごとに違う引数が1つだけ
-        /// あることを求める——2つ以上あると、1つの値ではどの行かが決まらない。
+        /// 行どうしを分ける引数の名前。どの行も同じ名前で持ち、綴りが行ごとに違う引数が
+        /// 1つだけあることを求める。
         /// </summary>
         private static string Distinguishing(
             string tool, IList<SignatureRecord> rows, IDictionary<string, string> shapesByType)

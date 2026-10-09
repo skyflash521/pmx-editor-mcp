@@ -93,7 +93,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>項目の名前。応答の値そのものと配列の要素では null。</summary>
         public string Name { get; }
 
-        /// <summary>ホストが決める項目の出所。SDKに由来する項目は書かないので null。</summary>
+        /// <summary>ホストが決める項目の出所。SDKに由来する項目では null。</summary>
         public ItemOrigin? Origin { get; }
 
         /// <summary>入力に現れる項目が必須かどうか。まとまりに入る項目では null。</summary>
@@ -102,7 +102,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>省略したときに使う値。持たない項目では null。</summary>
         public object Default { get; }
 
-        /// <summary>既定を持つか。null そのものを既定にできるので、値の有無とは別に持つ。</summary>
+        /// <summary>既定を持つか。null そのものを既定にできる。</summary>
         public bool HasDefault { get; }
 
         /// <summary>値の取りうる範囲。持たない項目では null。</summary>
@@ -121,7 +121,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>ホストが自分で入れる引数か。</summary>
         public bool Injected { get; }
 
-        /// <summary>一次資料が定めた要素数の上限。導ける上限は正本に無いので null。</summary>
+        /// <summary>一次資料が定めた要素数の上限。導ける上限では null。</summary>
         public int? MaxItems { get; }
 
         /// <summary>名前の上では空にできない並びのうち、空を通してよいもの。</summary>

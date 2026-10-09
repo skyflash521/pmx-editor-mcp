@@ -11,9 +11,7 @@ using System.Xml.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 配布物のドキュメントXMLから、公開プロパティ・フィールドとメソッドの記載を取り出す。名前を
-    /// 採るのも、決め方を分けるために同一型内で数えるのも同じ文字列を見るので、取り出し方をここ1つに
-    /// 置く。
+    /// 配布物のドキュメントXMLから、公開プロパティ・フィールドとメソッドの記載を取り出す。
     /// </summary>
     public static class DocumentNoteReader
     {
@@ -26,10 +24,9 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly string[] AccessorSuffixes = { "get/set", "get", "set" };
 
         /// <summary>
-        /// member 名(接頭辞 <c>P:</c>・<c>F:</c> を除いたもの)から記載への対応を返す。値を持つ
-        /// メンバーは、プロパティでもフィールドでも同じ名前で引ける——C#は同じ型の中で名前を
-        /// 重ねられない。記載を取り出せない member は入れない。形が違えば
-        /// <see cref="FormatException"/>。
+        /// member 名(接頭辞 <c>P:</c>・<c>F:</c> を除いたもの)から記載への対応を返す。値を
+        /// 持つメンバーは、プロパティでもフィールドでも同じ名前で引ける。記載を取り出せない member
+        /// は入れない。形が違えば <see cref="FormatException"/>。
         /// </summary>
         public static IDictionary<string, string> Read(string xml)
         {
@@ -44,8 +41,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// member 名(接頭辞 <c>M:</c> を除いたもの)から記載への対応を返す。取り出し方は
-        /// プロパティと同じだが、get/set の後置はプロパティの記載の書き方なので落とさない。
+        /// member 名(接頭辞 <c>M:</c> を除いたもの)から記載への対応を返す。get/set の後置は
+        /// 落とさない。
         /// </summary>
         public static IDictionary<string, string> ReadMethods(string xml)
         {
@@ -98,7 +95,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 列挙側の型表記とプロパティ名から、ドキュメントXMLの member 名を組み立てる。XMLは入れ子を
-        /// 点で区切り、総称型をその段自身の型引数の数で表すので、その表記へそろえる。
+        /// 点で区切り、総称型をその段自身の型引数の数で表す。
         /// </summary>
         public static string MemberName(string typeName, string propertyName)
         {
@@ -120,9 +117,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// メソッドのシグネチャから、ドキュメントXMLの member 名を組み立てる。XMLは総称型引数を
-        /// その段自身の数で表し、閉じた総称型を波括弧で、型引数を位置で、参照渡しをアットマークで
-        /// 表すので、その表記へそろえる。
+        /// メソッドのシグネチャから、ドキュメントXMLの member 名を組み立てる。XMLは総称型引数をその
+        /// 段自身の数で表し、閉じた総称型を波括弧で、型引数を位置で、参照渡しをアットマークで表す。
         /// </summary>
         public static string MemberName(SignatureRecord signature)
         {

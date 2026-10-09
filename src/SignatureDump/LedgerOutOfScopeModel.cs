@@ -23,9 +23,7 @@ namespace PmxEditorMcp.SignatureDump
         ArgumentOnly,
     }
 
-    /// <summary>
-    /// 台帳が行を作らない公開型1件。理由は列挙から導けるので持たず、照合が導いて確かめる。
-    /// </summary>
+    /// <summary>台帳が行を作らない公開型1件。理由は持たず、照合が導いて確かめる。</summary>
     public sealed class OutOfScopeTypeEntry
     {
         public OutOfScopeTypeEntry(string name)
@@ -40,8 +38,8 @@ namespace PmxEditorMcp.SignatureDump
     }
 
     /// <summary>
-    /// 台帳が行を作る型に属しながら、台帳のどの行も指さない公開シグネチャ1件。型ごと対象外に
-    /// なる理由はシグネチャ単位で現れないので、ここに載るのは経路だけになる。
+    /// 台帳が行を作る型に属しながら、台帳のどの行も指さない公開シグネチャ1件。ここに載るのは
+    /// 経路だけになる。
     /// </summary>
     public sealed class OutOfScopeSignatureEntry
     {
@@ -56,11 +54,7 @@ namespace PmxEditorMcp.SignatureDump
         public string Key { get; }
     }
 
-    /// <summary>
-    /// 明示的な対象外一覧の正本1件ぶん。型単位とシグネチャ単位を分けて持つ。シグネチャの差集合
-    /// だけで照合すると、公開メンバーを1件も宣言しない型が台帳から漏れても差集合に現れず
-    /// 素通りするので、型単位の並びを別に持つ。
-    /// </summary>
+    /// <summary>明示的な対象外一覧の正本1件ぶん。型単位とシグネチャ単位を分けて持つ。</summary>
     public sealed class LedgerOutOfScopeRecord
     {
         public LedgerOutOfScopeRecord(

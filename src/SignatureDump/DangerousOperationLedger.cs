@@ -7,8 +7,8 @@ using System.Text.RegularExpressions;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 能力台帳の備考から、危険操作に当たると記した箇所を読む。備考は人が書く文なので、決まった形の
-    /// 断りだけを拾い、それ以外は読まない。
+    /// 能力台帳の備考から、危険操作に当たると記した箇所を読む。決まった形の断りだけを拾い、
+    /// それ以外は読まない。
     /// </summary>
     public static class DangerousOperationLedger
     {

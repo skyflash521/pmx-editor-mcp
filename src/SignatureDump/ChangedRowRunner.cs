@@ -62,8 +62,6 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, string> held = Spelled(before, RowsName, SignatureKeyName)
                 .ToDictionary(row => row.Key, row => row.Value, StringComparer.Ordinal);
 
-            // 書き出す順はいまの版の並びに従う。正本が行キーの昇順を保つので、読む側は並べ直さずに
-            // そのまま使える。
             foreach (KeyValuePair<string, string> row in Spelled(after, RowsName, SignatureKeyName))
             {
                 string kept;

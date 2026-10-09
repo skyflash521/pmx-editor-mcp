@@ -9,7 +9,7 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// 受入シナリオの定義を、登録されるツール定義へ突き合わせる配線。実機のエディタも
-    /// MCPクライアントも要らないので、常設の検査から走らせられる。
+    /// MCPクライアントも要らない。
     /// </summary>
     public static class AcceptanceScenarioRunner
     {

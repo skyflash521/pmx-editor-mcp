@@ -47,8 +47,8 @@ namespace PmxEditorMcp.SignatureDump
     }
 
     /// <summary>
-    /// 1つの型のJSON表現。配列とnull許容は要素の表現を包む形で表す。<see cref="Identifier"/> は
-    /// オーバーロードを分割する接尾辞に使うので、包み方まで含めて1つの表現に1つの綴りが対応する。
+    /// 1つの型のJSON表現。配列とnull許容は要素の表現を包む形で表す。<see cref="Identifier"/> は、
+    /// 包み方まで含めて1つの表現に1つの綴りが対応する。
     /// </summary>
     public sealed class ValueRepresentation
     {

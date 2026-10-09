@@ -33,8 +33,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 名前で引く経路を作る型。ここに載る型のメンバーは、<see cref="Allowed"/> に挙げたものを
-        /// 除いてすべて落とす——名前で引くメンバーを1つずつ数え上げる形では、数え落としたものが
-        /// そのまま抜け道になる。
+        /// 除いてすべて落とす。
         /// </summary>
         private static readonly ReadOnlyCollection<string> GatedTypes =
             Array.AsReadOnly(new[]
@@ -80,8 +79,8 @@ namespace PmxEditorMcp.SignatureDump
             });
 
         /// <summary>
-        /// 上の型と綴りの頭に当たるもののうち、名前で型やメンバーを引かないので通すもの。型そのものの
-        /// 形を見るだけの経路と、コンパイラが言語の機能のために置く経路である。
+        /// 上の型と綴りの頭に当たるもののうち通すもの。型そのものの形を見るだけの経路と、
+        /// コンパイラが言語の機能のために置く経路である。
         /// </summary>
         private static readonly ReadOnlyCollection<string> Allowed =
             Array.AsReadOnly(new[]
@@ -135,9 +134,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// メタデータのメンバー参照の表を1行ずつ引く。行が尽きたところで終わる。綴りを取れない行は
-        /// 判じずに数える——判じられなかったものを通せば、この検査が保証するのは参照の一部だけになる。
-        /// 見るのはメタデータが持つ外部メンバーの参照で、本体の命令を読み解かない——命令の長さを
-        /// 解さずに読むと、引数の並びを命令と取り違える。
+        /// 判じずに数える。見るのはメタデータが持つ外部メンバーの参照で、本体の命令を読み解かない。
         /// </summary>
         public static ReflectionScan Scan(Module module)
         {
@@ -164,8 +161,7 @@ namespace PmxEditorMcp.SignatureDump
                 }
                 catch (ArgumentException)
                 {
-                    // 総称の変数を含む綴りは、その変数に何を当てるかを添えないと引けない。何を
-                    // 当てても宣言型とメンバーの名前は変わらないので、変数の数だけ器を渡す。
+                    // 総称の変数を含む綴りは、その変数に何を当てるかを添えないと引けない。
                     member = TryResolveWithContext(module, MemberRefTable | row);
                     if (member == null)
                     {
@@ -223,9 +219,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 属性を組み立てる呼び出しかどうか。属性は組み立てられた先で何も引かないので、上の型と
-        /// 綴りの頭に当たっても通す——ビルドが置く属性は増えうるので、1つずつ挙げない。
-        /// 綴りではなく継いだ先で判じる——綴りで判じると、属性でない型が同じ綴りを名乗れる。
+        /// 属性を組み立てる呼び出しかどうか。属性は上の型と綴りの頭に当たっても通す。
+        /// 綴りではなく継いだ先で判じる。
         /// </summary>
         public static bool IsAttributeConstructor(MemberInfo member)
         {

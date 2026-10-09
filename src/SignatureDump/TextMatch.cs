@@ -3,8 +3,7 @@ using System.Globalization;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 探す語を文へ当てる規則。エンドユーザーが打つ語とエディタやツールの文言は、大文字小文字も
-    /// 全角半角も仮名の種類も揃わないので、そのどれも区別せずに当てる。
+    /// 探す語を文へ当てる規則。大文字小文字も全角半角も仮名の種類も区別せずに当てる。
     /// </summary>
     public static class TextMatch
     {

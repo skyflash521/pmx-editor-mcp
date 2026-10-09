@@ -5,7 +5,6 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>ツールを探す1回の検索。</summary>
     public sealed class DiscoverySearch
     {
         public DiscoverySearch(IList<string> terms)
@@ -21,7 +20,6 @@ namespace PmxEditorMcp.SignatureDump
         public IList<string> Terms { get; }
     }
 
-    /// <summary>用途の作業1つと、それを頼むときの検索と、その作業に要るツール。</summary>
     public sealed class DiscoveryTask
     {
         public DiscoveryTask(
@@ -50,7 +48,6 @@ namespace PmxEditorMcp.SignatureDump
         public IList<string> Required { get; }
     }
 
-    /// <summary>用途の作業の表。</summary>
     public sealed class DiscoveryTaskTable
     {
         public DiscoveryTaskTable(IList<DiscoveryTask> tasks)

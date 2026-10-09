@@ -7,8 +7,8 @@ using System.Text;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 出荷台帳と転記元から、配布物へ同梱する第三者ライセンス表示を組み立てる。
-    /// 表示は組み立てた物と1バイトも違わないことを条件にするので、並びも改行も一意に決める。
+    /// 出荷台帳と転記元から、配布物へ同梱する第三者ライセンス表示を組み立てる。並びも改行も一意に
+    /// 決める。
     /// </summary>
     public static class ThirdPartyNoticeBuilder
     {
@@ -71,7 +71,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 転記元の本文を一意な形へそろえる。バイト順の印を外し、改行をLFへそろえ、末尾の空行を
-        /// 落とす——同じ中身が、書き手の環境の違いで別物に見えないようにするためである。
+        /// 落とす。
         /// </summary>
         public static string Normalize(string text)
         {

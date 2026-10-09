@@ -104,14 +104,12 @@ namespace PmxEditorMcp.SignatureDump
 
         public CommonAssignmentKind Assignment { get; }
 
-        /// <summary>割当の対象名。</summary>
         public string Target { get; }
 
         /// <summary>そう割り当てた根拠の一文。</summary>
         public string Basis { get; }
     }
 
-    /// <summary>共通契約割当の正本。</summary>
     public sealed class CommonAssignmentTable
     {
         public CommonAssignmentTable(IList<CommonAssignmentRecord> assignments)

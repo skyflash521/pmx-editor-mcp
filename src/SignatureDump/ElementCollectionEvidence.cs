@@ -7,7 +7,7 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// 役割対象の型の実体を並べるリストのプロパティを列挙から導く。そのリストが要素を所有するのか、
-    /// 他所が所有する要素を指すだけなのかは列挙からは決まらないので、ここでは決めない。
+    /// 他所が所有する要素を指すだけなのかは、ここでは決めない。
     /// </summary>
     public static class ElementCollectionEvidence
     {
@@ -59,9 +59,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 役割対象の型の名前から、それを継承する葉のインターフェースの名前。葉は、それを継承する
-        /// 役割対象のインターフェースが一つも無いものをいう。継承するインターフェースが一つも無い型は
-        /// 現れない。実体を持ちうるクラスは、継承されていても具象型の選択肢から外れないので数えない。
+        /// 役割対象の型の名前から、それを継承する葉のインターフェースの名前。葉は、それを
+        /// 継承する役割対象のインターフェースが一つも無いものをいう。継承するインターフェースが
+        /// 一つも無い型は現れない。実体を持ちうるクラスは数えない。
         /// </summary>
         public static IDictionary<string, IList<string>> ConcreteTypes(
             InventoryRecord inventory, IDictionary<string, TypeRole> roles)

@@ -51,8 +51,8 @@ namespace PmxEditorMcp.SignatureDump
     }
 
     /// <summary>
-    /// 発行が解決した資産の一覧。第三者ライセンス表示の母集団は、パッケージの一覧ではなくこれが
-    /// 決める——自己完結の発行が取り込むランタイムパックの構成物は、パッケージの一覧に出ない。
+    /// 発行が解決した資産の一覧。第三者ライセンス表示の母集団はこれが決める。自己完結の発行が
+    /// 取り込むランタイムパックの構成物は、パッケージの一覧に出ない。
     /// </summary>
     public sealed class ShippingLedger
     {
@@ -68,7 +68,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>パッケージを展開してある置き場。転記元はここから読む。</summary>
         public string PackageRoot { get; }
 
-        /// <summary>出所のあるものだけ。自分たちが作った物は出所を持たないので入らない。</summary>
+        /// <summary>出所のあるものだけ。自分たちが作った物は出所を持たない。</summary>
         public IReadOnlyList<ShippedPackage> Packages { get; }
 
         /// <summary>形が違えば <see cref="FormatException"/>。</summary>

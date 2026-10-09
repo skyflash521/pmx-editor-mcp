@@ -6,16 +6,13 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// 列挙を型名で引けるかどうかを確かめる。総称型引数の表記は宣言時の名前そのままで、名前空間を
-    /// 持たない型と同じ形になりうる。両方が同じ名前で在ると、どの出現がどちらかを表記からは
-    /// 決められないので、名前で引く側が黙って取り違えないように止める。
+    /// 持たない型と同じ形になりうる。
     /// </summary>
     public static class InventoryAmbiguity
     {
         /// <summary>
-        /// 同じ表記へ写る型定義が2つ以上在れば <see cref="InvalidOperationException"/>。名前で型を引く側は
-        /// 1つの表記が1つの型を指すことに頼るので、別のアセンブリの同名型のように複数の実体が
-        /// 同じ表記になるなら、型の同一性が残っているここで止める。閉じた総称型は引数の数だけを
-        /// 残した表記へ正規化されるので、その形でも重ならないことを確かめる。
+        /// 同じ表記へ写る型定義が2つ以上在れば <see cref="InvalidOperationException"/>。
+        /// 閉じた総称型は、引数の数だけを残した表記でも重ならないことを確かめる。
         /// </summary>
         public static void RequireDistinctNames(IEnumerable<Type> types)
         {
@@ -54,8 +51,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 型引数と同じ名前の型が在れば <see cref="InvalidOperationException"/>。列挙が書き出さない型も
-        /// 基底型として名前で引かれるので、その名前も渡す。
+        /// 型引数と同じ名前の型が在れば <see cref="InvalidOperationException"/>。列挙が
+        /// 書き出さない型の名前も渡す。
         /// </summary>
         public static void RequireNoSharedName(
             IEnumerable<string> typeNames, IEnumerable<string> parameterNames)

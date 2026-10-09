@@ -59,9 +59,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 合成ツールの入力と応答の項目が出所を書くことを求める。合成ツールは行を持たないので、
-        /// 出所を書かない項目は導く先のシグネチャを持てない。`payloads` の項目は、イベント行と
-        /// スキーマ埋め込み行が導く先を持つので見ない。
+        /// 合成ツールの入力と応答の項目が出所を書くことを求める。`payloads` の項目は見ない。
         /// </summary>
         private static void RequireComposedOrigins(
             ToolSchemaTable schemas, IDictionary<string, ComposedTool> composedTools)
@@ -84,7 +82,6 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 在る合成ツールの形について、イベントの分岐の有無が正本の分岐の欄と合うことを求める。
-        /// 欄は形を求めるかどうかを決めるので、形と照らさないと書き換えだけで検査を外せる。
         /// </summary>
         private static void RequireSameBranching(
             ToolSchemaTable schemas, IDictionary<string, ComposedTool> composedTools)
@@ -167,10 +164,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// 一覧を返すツールの `limit` が、既定と上限を書いていないことを求める。どちらも一覧の
-        /// 件数の規則が導く値なので、書けば導き直しを忘れたときにずれが残る。
-        /// </summary>
+        /// <summary>一覧を返すツールの `limit` が、既定と上限を書いていないことを求める。</summary>
         private static void RequireDerivedListingLimits(ToolSchema schema)
         {
             if (!ListingLimitRule.IsListing(schema))
@@ -193,7 +187,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>綴りの閉じた集合は共通契約の正本が持つので、そこに実在することまで求める。</summary>
+        /// <summary>綴りは共通契約の正本の閉じた集合に実在することまで求める。</summary>
         private static void RequireShapes(ToolSchema schema, ISet<string> spellings)
         {
             foreach (SchemaItem item in schema.AllItems.Where(i => i.Shape != null))

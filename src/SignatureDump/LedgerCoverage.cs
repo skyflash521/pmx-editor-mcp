@@ -39,7 +39,6 @@ namespace PmxEditorMcp.SignatureDump
 
         public int PublicSignatures { get; }
 
-        /// <summary>台帳の母集合。</summary>
         public int Population { get; }
 
         /// <summary>シグネチャ単位の対象外。型単位の対象外が宣言するものは含まない。</summary>
@@ -254,9 +253,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 備考が非対応件数を書いていれば真とし、その数を返す。書いていなければ偽で、このとき
-        /// <paramref name="value"/> は0になる。接頭辞が先頭以外に現れる備考と、数を伴わない
-        /// 接頭辞は、書いたつもりで検査を素通りするので不合格にする。
+        /// 備考が非対応件数を書いていれば真とし、その数を返す。書いていなければ偽で、
+        /// このとき<paramref name="value"/> は0になる。接頭辞が先頭以外に現れる備考と、数を
+        /// 伴わない接頭辞は不合格にする。
         /// </summary>
         private static bool TryReadCount(CapabilityRecord row, out int value)
         {

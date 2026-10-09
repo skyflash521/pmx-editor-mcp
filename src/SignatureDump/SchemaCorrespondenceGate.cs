@@ -5,8 +5,7 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// ツールを持つ行のシグネチャと、そのツールの入出力の形が対応することを確かめる。引数と受け手と
-    /// 戻り値は呼び出しの成立に要るので、スキーマの側に行き先が無ければその行は呼べない。
+    /// ツールを持つ行のシグネチャと、そのツールの入出力の形が対応することを確かめる。
     /// </summary>
     public static class SchemaCorrespondenceGate
     {
@@ -47,8 +46,8 @@ namespace PmxEditorMcp.SignatureDump
         private const string ReaderPrefix = ".Get";
 
         /// <summary>
-        /// ホストが入れる引数の型。呼び出す側は持てないので、入力として受け取らない。接続の道から
-        /// 得る受け手を取る引数も同じで、そちらは型役割から分かる。
+        /// ホストが入れる引数の型。入力として受け取らない。接続の道から得る受け手を取る引数は、
+        /// 型役割から分かる。
         /// </summary>
         private static readonly string[] HostSupplied =
         {
@@ -223,8 +222,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// ホストが入れる引数の入力だけが、受け取らない印を持つことを求める。器の内側へ置いた入力も
-        /// 同じ——印がずれると、呼ぶ側は渡すよう求められた値をホストに捨てられるか、渡せない値を
-        /// 求められる。
+        /// 同じ。
         /// </summary>
         private static void RequireInjection(
             SignatureRecord signature,
@@ -254,7 +252,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 入力に現れる引数がいずれかの呼び分けの入力に、出力に現れる引数が応答に、同じ名前で
-        /// 在ることを求める。入力の項目は組と配列で入れ子になるので内側まで見る。
+        /// 在ることを求める。入力の項目は入れ子の内側まで見る。
         /// </summary>
         private static void RequireArguments(SignatureRecord signature, ToolSchema schema)
         {
@@ -328,8 +326,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// ハンドルを発行するツールの `count` が、上限を書いていないことを求める。上限は要素数の
-        /// 上限の規則が分岐ごとに導く値なので、書けば導き直しを忘れたときにずれが残る。
+        /// ハンドルを発行するツールの `count` が、上限を書いていないことを求める。
         /// </summary>
         private static void RequireDerivedIssuanceLimit(ToolSchema schema)
         {

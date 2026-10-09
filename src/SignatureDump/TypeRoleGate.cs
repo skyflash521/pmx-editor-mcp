@@ -4,22 +4,13 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 型ごとの役割が、規則どおりに割り当てられているかを検査する。役割の意味そのものは測れないので、
-    /// 機械で確かめられる範囲——型の過不足、接続の根、イベント引数型の必要十分、コネクタ型を
-    /// 呼び出し側が実体を用意せずに呼べること、接続の経路、ハンドルを返しうるシグネチャの
-    /// 過不足と発行の種別、要素を並べるリストの過不足と所有の一意、担当群と台帳の担当の一致、
-    /// ツール名と要素名詞の一致、入れる・出すツールと所有するリストの要素の一致、許容する具象型と
-    /// 列挙の一致——に限る。
-    /// </summary>
     public static class TypeRoleGate
     {
         /// <summary>
-        /// 規則に反していれば <see cref="InvalidOperationException"/>。<paramref name="roleTypes"/> は
-        /// 表が覆うべき型の集合で、接続の根とその経路上の型を含めて渡すこと。
-        /// <paramref name="connectorCandidates"/> には
-        /// <see cref="TypeRoleEvidence.ConnectorCandidates"/> の結果を渡すこと——コネクタ型に
-        /// なりうるかは、この集合に在るかどうかで見る。
+        /// 規則に反していれば <see cref="InvalidOperationException"/>。
+        /// <paramref name="roleTypes"/> は表が覆うべき型の集合で、接続の根とその経路上の型を
+        /// 含めて渡すこと。<paramref name="connectorCandidates"/> には
+        /// <see cref="TypeRoleEvidence.ConnectorCandidates"/> の結果を渡すこと。
         /// <paramref name="issuanceCandidates"/> には
         /// <see cref="HandleIssuanceEvidence.Candidates"/> の結果を、
         /// <paramref name="collectionCandidates"/> には
@@ -110,10 +101,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// 接続の根は、接続初期化が最初に触る接続点そのものなので、表がコネクタ型として持つことを
-        /// 課す。
-        /// </summary>
+        /// <summary>接続の根は、表がコネクタ型として持つことを課す。</summary>
         private static void RequireRootsAreConnectors(
             IList<TypeRoleRecord> records, IEnumerable<string> connectionRoots)
         {
@@ -134,9 +122,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// イベント引数型は列挙から必要十分に決まるので、両向きで突き合わせる。
-        /// </summary>
+        /// <summary>イベント引数型は両向きで突き合わせる。</summary>
         private static void RequireEventArgumentsMatchTheEvidence(
             IList<TypeRoleRecord> records, ISet<string> eventArgumentTypes)
         {

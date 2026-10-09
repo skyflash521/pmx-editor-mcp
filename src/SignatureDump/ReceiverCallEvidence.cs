@@ -6,18 +6,15 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// 呼び出しの受け手をハンドルで要るツールへ、そのハンドルを得るまでに順に呼ぶツールの列を
-    /// 与える。列は根——受け手を渡さずに呼べるツール——から始まり、次の段は前の段が出した
-    /// ハンドルを受け取る。段数に上限は置かない。
-    /// 同じ相手へ届く列が2つ以上あるときは、段数が少ないものを採り、段数が並ぶときはツールの
-    /// 名前を先頭から綴りの順で比べて先のものを採る——どれを採るかを決めないと、入力の並び
-    /// しだいで組み立てる検査が変わる。
+    /// 与える。列は根——受け手を渡さずに呼べるツール——から始まり、次の段は前の段が出したハンドルを
+    /// 受け取る。段数に上限は置かない。同じ相手へ届く列が2つ以上あるときは、段数が少ないものを
+    /// 採り、段数が並ぶときはツールの名前を先頭から綴りの順で比べて先のものを採る。
     /// </summary>
     public static class ReceiverCallEvidence
     {
         /// <summary>
-        /// 型の名前から、その型の実体を1つ得るまでに順に呼ぶツールの列へ。派生型へ至る列は、
-        /// その型が継承・実装する型の名前からも引ける——基底型の受け手には派生型の実体を渡せる。
-        /// 根から辿り着けない型は持たない。
+        /// 型の名前から、その型の実体を1つ得るまでに順に呼ぶツールの列へ。派生型へ至る列は、その
+        /// 型が継承・実装する型の名前からも引ける。根から辿り着けない型は持たない。
         /// </summary>
         public static IDictionary<string, IList<string>> ByType(
             InventoryRecord inventory,
@@ -68,12 +65,9 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 受け手をハンドルで要るツールの名前から、そのハンドルを得るまでに順に呼ぶツールの列へ。
-        /// 自分の行を持たない集約のツールも、並べる要素を所有する型のハンドルを要るので同じ列で
-        /// 引ける。受け手を要さないツールと、受け手へ至る列の無いツールは持たない——ただし
-        /// <paramref name="aimed"/> が挙げるツールは、受け手を渡さずに呼べても列を持つ。対象を
-        /// 指さずに呼ぶと、いま開いているものを相手にしてしまう。
-        /// <paramref name="roles"/> は担当群を解いた型役割表である——行を持たない集約のツールの
-        /// 名前は担当群から決まるので、解く前の表では決まらない。
+        /// 自分の行を持たない集約のツールも同じ列で引ける。受け手を要さないツールと、受け手へ
+        /// 至る列の無いツールは持たない——ただし <paramref name="aimed"/> が挙げるツールは、受け手を
+        /// 渡さずに呼べても列を持つ。<paramref name="roles"/> は担当群を解いた型役割表である。
         /// </summary>
         public static IDictionary<string, IList<string>> ByTool(
             InventoryRecord inventory,
@@ -120,7 +114,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// ツールの名前から、そのツールがハンドルで受け取る型の名前へ。項目を集めるツールが
-        /// 受け取るのは、並べる要素そのものである——所有する側ではない。
+        /// 受け取るのは、並べる要素そのものである。
         /// </summary>
         private static IDictionary<string, string> Receivers(
             InventoryRecord inventory,
@@ -175,20 +169,17 @@ namespace PmxEditorMcp.SignatureDump
                 Made = made;
             }
 
-            /// <summary>呼ぶツールの名前。</summary>
             public string Tool { get; }
 
             /// <summary>渡す受け手の型の名前。受け手を渡さずに呼べるなら null。</summary>
             public string Receiver { get; }
 
-            /// <summary>出るハンドルの型の名前。</summary>
             public string Made { get; }
         }
 
         /// <summary>
-        /// ハンドルを出すと述べる行のうち、受け手のほかに渡すものを持たない呼び出し。渡すものが
-        /// あると、その値をここでは決められない。渡すものを持たないかはスキーマで見る——行の
-        /// 引数のうち受け手へ至る経路で埋まるものは、呼び出しの入力に現れない。
+        /// ハンドルを出すと述べる行のうち、受け手のほかに渡すものを持たない呼び出し。渡すものを
+        /// 持たないかはスキーマで見る。
         /// </summary>
         private static IList<Step> Steps(
             InventoryRecord inventory,
@@ -286,10 +277,7 @@ namespace PmxEditorMcp.SignatureDump
                 : held.Concat(new[] { step.Tool }).ToArray();
         }
 
-        /// <summary>
-        /// その型の受け手に渡せる実体へ届く、最も良い列。代入互換で合わせるので、派生型の実体も
-        /// 渡せる。
-        /// </summary>
+        /// <summary>その型の受け手に渡せる実体へ届く、最も良い列。代入互換で合わせる。</summary>
         private static IList<string> Held(
             IDictionary<string, ISet<string>> bases,
             IDictionary<string, IList<string>> made,

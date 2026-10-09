@@ -8,8 +8,8 @@ using System.Text;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// ツール定義を組み立ててブリッジへ組み込むC#として書き出す配線。ホストの中継と同じ能力対応表
-    /// から作るので、同じ指紋を名乗る。
+    /// ツール定義を組み立ててブリッジへ組み込むC#として書き出す配線。ホストの中継と
+    /// 同じ能力対応表から作り、同じ指紋を名乗る。
     /// </summary>
     public static class ToolDefinitionRunner
     {

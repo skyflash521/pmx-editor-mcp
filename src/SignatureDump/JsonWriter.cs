@@ -6,8 +6,7 @@ using System.Text;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 組み立てたJSONを書き出す。並べた順をそのまま書くので、同じ入力からは同じ綴りが出る
-    /// ——指紋を取る相手なので、順が動くと中身が同じでも別物になる。
+    /// 組み立てたJSONを書き出す。並べた順をそのまま書き、同じ入力からは同じ綴りが出る。
     /// </summary>
     public sealed class JsonObjectText
     {
@@ -72,7 +71,6 @@ namespace PmxEditorMcp.SignatureDump
         }
     }
 
-    /// <summary>JSONの値を綴る。</summary>
     public static class JsonWriter
     {
         /// <summary>整数で表せる数値は小数点を付けずに綴る。</summary>
@@ -86,7 +84,6 @@ namespace PmxEditorMcp.SignatureDump
             return value.ToString("R", CultureInfo.InvariantCulture);
         }
 
-        /// <summary>並びを綴る。</summary>
         public static string Array(IEnumerable<string> items)
         {
             if (items == null)
@@ -110,7 +107,6 @@ namespace PmxEditorMcp.SignatureDump
             return text.Append(']').ToString();
         }
 
-        /// <summary>文字列の並びを綴る。</summary>
         public static string TextArray(IEnumerable<string> values)
         {
             if (values == null)

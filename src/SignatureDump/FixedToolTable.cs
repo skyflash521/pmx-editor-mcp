@@ -9,13 +9,10 @@ namespace PmxEditorMcp.SignatureDump
     /// </summary>
     public static class FixedToolTable
     {
-        /// <summary>ホストが応答することを確かめるツールの名前。</summary>
         public const string PingName = "ping";
 
-        /// <summary>稼働しているSDKと中継の状態を返すツールの名前。</summary>
         public const string SdkStatusName = "sdk_status";
 
-        /// <summary>語からツールを引くツールの名前。</summary>
         public const string FindToolName = "find_tool";
 
         public const string FindToolTextsParameter = "texts";
@@ -26,16 +23,12 @@ namespace PmxEditorMcp.SignatureDump
 
         public const int FindToolMaximumLimit = int.MaxValue;
 
-        /// <summary>接続先に選べるPMXエディタを並べるツールの名前。</summary>
         public const string ListEditorsName = "list_editors";
 
-        /// <summary>接続先のPMXエディタを選ぶツールの名前。</summary>
         public const string SelectEditorName = "select_editor";
 
-        /// <summary>そのツールへ渡す、選ぶエディタのプロセスIDの引数の名前。</summary>
         public const string SelectEditorProcessIdParameter = "processId";
 
-        /// <summary>指定した文字数のテキストを返す、検査からだけ使うツールの名前。</summary>
         public const string LargeTextName = "debug_large_text";
 
         /// <summary>引数の名前と型と必須かどうか、既定と取りうる範囲を書き、説明は持たない。</summary>

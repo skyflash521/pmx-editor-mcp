@@ -8,7 +8,7 @@ namespace PmxEditorMcp.SignatureDump
     {
         /// <summary>
         /// 両端を引用符で囲み、JSONが生のまま置けない文字を逃がす。制御文字は仕様が必ず逃がすことを
-        /// 求めるので、行キーに紛れ込んでも壊れたJSONにならない。
+        /// 求める。
         /// </summary>
         public static string Quote(string value)
         {

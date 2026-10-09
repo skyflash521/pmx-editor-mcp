@@ -4,10 +4,7 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 一次資料が要素数を定めていない並びの上限を導く。予算と構造トークンの上限から決まる値なので、
-    /// 正本へ書かず、スキーマを組み立てるときにここで導く。
-    /// </summary>
+    /// <summary>一次資料が要素数を定めていない並びの上限を導く。</summary>
     public static class ElementLimitRule
     {
         /// <summary>対象の全要素へ同じものを配る組の名前。</summary>
@@ -20,14 +17,10 @@ namespace PmxEditorMcp.SignatureDump
         private const int EnvelopeTokens = 4;
 
         /// <summary>
-        /// 分岐の要求の並びごとの上限。並びが入れ子になるときは、外側と内側の上限の積が予算へ
-        /// 収まればよいので、その段数の乗根を段ごとの上限とする。一次資料が要素数を定めた並びを
-        /// またぐときは、その要素数を積へ掛けてから分ける。配る組の内側の並びは、要求の大きさが
-        /// 対象の件数で変わらないので上限を持たず、返す表に現れない。構造トークンの残りが並びに
-        /// 足りないか、要素が想定文字数を持たなければ <see cref="InvalidOperationException"/>。
-        /// <paramref name="bounded"/> はホストが要素数の上限を宣言した並びのその上限を返し、宣言が
-        /// 無ければ null を返す。宣言した並びは一次資料が要素数を定めた並びと同じく積へ掛け、自身の
-        /// 上限は宣言と取り分の小さい方になる。
+        /// 分岐の要求の並びごとの上限。配る組の内側の並びは上限を持たず、返す表に現れない。
+        /// 構造トークンの残りが並びに足りないか、要素が想定文字数を
+        /// 持たなければ<see cref="InvalidOperationException"/>。<paramref name="bounded"/> は
+        /// ホストが要素数の上限を宣言した並びのその上限を返し、宣言が無ければ null を返す。
         /// </summary>
         public static IDictionary<SchemaItem, int> Request(
             SchemaBranch branch,
@@ -126,10 +119,7 @@ namespace PmxEditorMcp.SignatureDump
             return Math.Min(requestLimit, responseLimit);
         }
 
-        /// <summary>
-        /// ハンドルを新しく発行するツールの分岐が `count` に持つ上限。配列でない `count` には並びの
-        /// 規則が上限を作らないので、その分岐の要求の並びと応答の並びの逆算値の最も小さいものを採る。
-        /// </summary>
+        /// <summary>ハンドルを新しく発行するツールの分岐が `count` に持つ上限。</summary>
         public static int Issued(IEnumerable<int> requestLimits, int responseLimit)
         {
             if (requestLimits == null)
@@ -246,10 +236,7 @@ namespace PmxEditorMcp.SignatureDump
             return count;
         }
 
-        /// <summary>
-        /// 呼び出す側が実際に送る入力。ホストが自分で入れる引数は要求に現れないので、要求の
-        /// 大きさにも数えない。
-        /// </summary>
+        /// <summary>呼び出す側が実際に送る入力。ホストが自分で入れる引数は含まない。</summary>
         private static IList<SchemaItem> Sent(SchemaBranch branch)
         {
             return branch.Inputs.Where(i => !i.Injected).ToList();
@@ -261,10 +248,7 @@ namespace PmxEditorMcp.SignatureDump
             return EnvelopeTokens + 1 + (sent.Count - 1) + sent.Sum(i => Tokens(i));
         }
 
-        /// <summary>
-        /// 項目1件が使う最大の構造トークン数。上限を導く並びは0とする——その並びが使う分は、現れる
-        /// 回数のぶんまで自分の予算が持つ。
-        /// </summary>
+        /// <summary>項目1件が使う最大の構造トークン数。上限を導く並びは0とする。</summary>
         private static int Tokens(SchemaItem item)
         {
             if (item.Members != null)

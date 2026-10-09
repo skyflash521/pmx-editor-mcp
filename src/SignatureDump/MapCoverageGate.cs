@@ -47,10 +47,7 @@ namespace PmxEditorMcp.SignatureDump
                 rows.Where(k => !provided.Contains(k) && !Embedded(signatures, embeddedTypes, k)));
         }
 
-        /// <summary>
-        /// 独立したツールを持たない役割の型が、入出力へ埋め込む項目か。この型は提供対象の引数と
-        /// して現れるだけなので、その項目の行は提供対象に無い。
-        /// </summary>
+        /// <summary>独立したツールを持たない役割の型が、入出力へ埋め込む項目か。</summary>
         private static bool Embedded(
             IDictionary<string, SignatureRecord> signatures,
             ISet<string> embeddedTypes,
@@ -65,9 +62,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 行を持たなければならない提供対象。次の2つは数えない。独立したツールを持たない役割の型で
-        /// 行になるのは入出力へ埋め込む項目だけなので、その型のメソッドとコンストラクタは数えない。
-        /// 値の型が型引数そのもののメンバーは、実引数が決まるまで写す表現が決まらないので数えない。
+        /// 行を持たなければならない提供対象。独立したツールを持たない役割の型のメソッドと
+        /// コンストラクタと、値の型が型引数そのもののメンバーは数えない。
         /// </summary>
         private static IEnumerable<string> Needing(
             ISet<string> provided,

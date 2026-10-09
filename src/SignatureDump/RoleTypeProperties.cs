@@ -12,11 +12,11 @@ namespace PmxEditorMcp.SignatureDump
     public static class RoleTypeProperties
     {
         /// <summary>
-        /// 役割対象の型が持つ読み取り可能な公開プロパティを、宣言型とメンバー名の組で重複を除いて
-        /// 返す。並びは宣言型・メンバー名の序数の昇順。宣言型の表記は
-        /// <see cref="TypeNameFormatter"/> に従うので、同じ総称型でも開いた定義と閉じた型は別の
-        /// 項目になる(プロパティの型が違い、応答の形も違うため)。同じ宣言型の同じ名前で
-        /// プロパティの型だけが違う項目に当たったら <see cref="InvalidOperationException"/>。
+        /// 役割対象の型が持つ読み取り可能な公開プロパティを、宣言型とメンバー名の組で重複を
+        /// 除いて返す。並びは宣言型・メンバー名の序数の昇順。宣言型の表記は
+        /// <see cref="TypeNameFormatter"/> に従い、同じ総称型でも開いた定義と閉じた型は別の
+        /// 項目になる。同じ宣言型の同じ名前でプロパティの型だけが違う項目に当たったら
+        /// <see cref="InvalidOperationException"/>。
         /// </summary>
         public static IList<PropertyRecord> Enumerate(ISet<string> roleTypes, IEnumerable<Type> candidates)
         {
@@ -78,8 +78,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        // インターフェイスの GetProperties は継いだインターフェイスの分を返さないので、実装している
-        // インターフェイスを辿って足す。
+        // インターフェイスの GetProperties は継いだインターフェイスの分を返さない。
         private static IEnumerable<PropertyInfo> Readable(Type type)
         {
             List<PropertyInfo> properties = Declared(type).ToList();

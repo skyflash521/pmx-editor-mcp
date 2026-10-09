@@ -57,10 +57,7 @@ namespace PmxEditorMcp.SignatureDump
         public string OwnerType { get; }
     }
 
-    /// <summary>
-    /// 操作対象型の受け手がPMXのどこに居るかを、型役割表と公開API列挙から導く。道は導けるので
-    /// 正本へ書かない。
-    /// </summary>
+    /// <summary>操作対象型の受け手がPMXのどこに居るかを、型役割表と公開API列挙から導く。</summary>
     public static class ElementPathEvidence
     {
         /// <summary>道が始まる型。</summary>
@@ -127,10 +124,7 @@ namespace PmxEditorMcp.SignatureDump
             return new ReadOnlyDictionary<string, AccessPath>(paths);
         }
 
-        /// <summary>
-        /// 受け手へ至る道が辿る行のキー。ここに在る行は、その先の型のツールが相手を得るのに通る
-        /// 経路そのもので、値として写す相手ではない。
-        /// </summary>
+        /// <summary>受け手へ至る道が辿る行のキー。</summary>
         public static ISet<string> Traversed(InventoryRecord inventory, TypeRoleTable roles)
         {
             HashSet<string> traversed = new HashSet<string>(StringComparer.Ordinal);
@@ -171,8 +165,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// ハンドルを発行されうる型。所有するリストの要素になる型がこれに当たる——そこへ加える
-        /// ために作られた生成物は、加わるまで台帳が保つ。
+        /// ハンドルを発行されうる型。所有するリストの要素になる型がこれに当たる。
         /// </summary>
         public static ISet<string> Issued(InventoryRecord inventory, TypeRoleTable roles)
         {
@@ -264,10 +257,7 @@ namespace PmxEditorMcp.SignatureDump
             return issued;
         }
 
-        /// <summary>
-        /// その一歩を直に持つ型。親をハンドルで指せない道では null——親へハンドルが発行されない
-        /// 道である。
-        /// </summary>
+        /// <summary>その一歩を直に持つ型。親をハンドルで指せない道では null。</summary>
         public static string Owner(
             IDictionary<string, SignatureRecord> signatures,
             ISet<string> issued,

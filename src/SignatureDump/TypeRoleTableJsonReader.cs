@@ -148,10 +148,7 @@ namespace PmxEditorMcp.SignatureDump
             return records;
         }
 
-        /// <summary>
-        /// 要素名詞はツール名と説明文が対象を指す語なので、単数形と複数形をまたいで表の中で一意に
-        /// する。二つの型が同じ語を名乗ると、どちらのツールかが名前から決まらない。
-        /// </summary>
+        /// <summary>要素名詞は、単数形と複数形をまたいで表の中で一意にする。</summary>
         private static void RequireUnique(ISet<string> nouns, string noun)
         {
             if (noun.Length != 0 && !nouns.Add(noun))
@@ -195,10 +192,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// 役割ごとに、持つべき名前に加えて項目が持ってもよい名前。担当群は台帳が決める型では
-        /// 書かないので、必須にせずここへ置く。
-        /// </summary>
+        /// <summary>役割ごとに、持つべき名前に加えて項目が持ってもよい名前。</summary>
         private static string[] OptionalNamesFor(TypeRole role)
         {
             return TypeRoleRecord.HasIndependentTool(role)
@@ -247,7 +241,7 @@ namespace PmxEditorMcp.SignatureDump
             return group;
         }
 
-        /// <summary>要素名詞はツール名の一部になるので、小文字と数字と下線だけの語に限る。</summary>
+        /// <summary>要素名詞は、小文字と数字と下線だけの語に限る。</summary>
         private static string Noun(string text, string name)
         {
             if (!SnakeCase.IsMatch(text))

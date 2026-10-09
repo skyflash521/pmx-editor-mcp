@@ -144,8 +144,8 @@ namespace PmxEditorMcp.SignatureDump
         public const string SetupOut = "setupOut:";
 
         /// <summary>
-        /// その行の呼び出しが相手にするもの。呼ぶ前の段取りが同じ相手を整えるのに使う。指すのは
-        /// 実体そのものなので、接頭辞の後ろには何も続かない。
+        /// その行の呼び出しが相手にするもの。呼ぶ前の段取りが同じ相手を整えるのに使う。接頭辞の
+        /// 後ろには何も続かない。
         /// </summary>
         public const string Receiver = "receiver:";
     }
@@ -163,9 +163,7 @@ namespace PmxEditorMcp.SignatureDump
         CallTool,
     }
 
-    /// <summary>
-    /// 事後条件の用意の操作1件。タグごとに持つ項目が変わるので、取らない項目は null で置く。
-    /// </summary>
+    /// <summary>事後条件の用意の操作1件。取らない項目は null で置く。</summary>
     public sealed class SetupOperation
     {
         private SetupOperation(
@@ -279,7 +277,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>期待。JSONのリテラルか参照元1つ。持たない判定では null。</summary>
         public object Expected { get; }
 
-        /// <summary>期待を持つか。null そのものを期待にできるので、値の有無とは別に持つ。</summary>
+        /// <summary>期待を持つか。null そのものを期待にできる。</summary>
         public bool HasExpected { get; }
 
         /// <summary>既知の状態を作る操作の列。持たない判定では null。</summary>
@@ -292,8 +290,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 判定が束縛できる位置に置かれた文字列。参照元が現れうる場所はこの3つで尽きるので、
-        /// どこを見るかはここに一度だけ書く。接頭辞で見分けるのは読む側の役目とする。
+        /// 判定が束縛できる位置に置かれた文字列。接頭辞で見分けるのは読む側の役目とする。
         /// </summary>
         public IEnumerable<string> Bound
         {
@@ -333,7 +330,7 @@ namespace PmxEditorMcp.SignatureDump
         public IList<RefreshTarget> Refresh { get; }
     }
 
-    /// <summary>能力対応表の行1件。行の種別ごとに持つ項目が変わるので、取らない項目は null で置く。</summary>
+    /// <summary>能力対応表の行1件。取らない項目は null で置く。</summary>
     public sealed class ToolMapRow
     {
         public ToolMapRow(
@@ -378,7 +375,6 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>複製編集型の行だけが持つ。</summary>
         public UpdateSpec UpdateSpec { get; }
 
-        /// <summary>編集の分類と反映の指定をそう決めた根拠の一文。</summary>
         public string Basis { get; }
 
         /// <summary>事後条件。直接ディスパッチの行だけが持つ。</summary>
@@ -397,7 +393,6 @@ namespace PmxEditorMcp.SignatureDump
         public IList<SetupOperation> Setup { get; }
     }
 
-    /// <summary>能力対応表。</summary>
     public sealed class ToolMap
     {
         public ToolMap(
@@ -418,8 +413,8 @@ namespace PmxEditorMcp.SignatureDump
         public IList<ToolMapRow> Rows { get; }
 
         /// <summary>
-        /// ツールの名前から、そのツールを呼ぶ前の段取りへ。行から名前を引けないツールは
-        /// 行の段取りを持てないので、ここが持つ。
+        /// ツールの名前から、そのツールを呼ぶ前の段取りへ。行から名前を引けないツールの段取りを
+        /// 持つ。
         /// </summary>
         public IDictionary<string, IList<SetupOperation>> ToolSetups { get; }
     }

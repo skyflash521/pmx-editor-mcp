@@ -5,17 +5,12 @@ using System.Text;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 能力対応表の中身から指紋を作る。ホストの中継もブリッジのツール定義もこの表から生成するので、
-    /// 両方が同じ指紋を名乗れば同じ表から作られたことになる。接続の確立で照らし合わせる。
-    /// 行キーだけでなく本文まるごとを材料にする——行キーが同じでも、種別や更新の指定が変われば
-    /// 組み立てるツールが変わる。
+    /// 能力対応表の中身から指紋を作る。ホストの中継とブリッジのツール定義が、接続の確立で
+    /// 照らし合わせる。行キーだけでなく本文まるごとを材料にする。
     /// </summary>
     public static class ToolMapDigest
     {
-        /// <summary>
-        /// 能力対応表の本文の指紋。改行の綴りはそろえてから数える——同じ中身が置き場によって
-        /// 別の指紋になると、食い違っていない組み合わせを断る。
-        /// </summary>
+        /// <summary>能力対応表の本文の指紋。改行の綴りはそろえてから数える。</summary>
         public static string Of(string toolMapText)
         {
             if (toolMapText == null)

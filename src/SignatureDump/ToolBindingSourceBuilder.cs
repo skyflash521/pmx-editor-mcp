@@ -32,8 +32,7 @@ namespace PmxEditorMcp.SignatureDump
 
     /// <summary>
     /// ツールの名前から、呼ぶ行・受け手の得方・引数の型・確認の要否を引く表と、所有するリストを
-    /// 読み書きする中継をC#として組み立てる。どれも行と型役割から導けるので、ホストは名前で引く
-    /// 経路を持たずに振り分けられる。
+    /// 読み書きする中継をC#として組み立てる。
     /// </summary>
     public static class ToolBindingSourceBuilder
     {
@@ -309,12 +308,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// スキーマ正本が載せるツールに、応える先が在ることを求める。ブリッジは正本の名前をその
-        /// ままクライアントへ載せ、ホストは登録に無い名前を未知のメソッドとして断るので、受け持つ
-        /// ものの無い名前を正本へ足すと、呼んだ側はその断りを受け取る。応える先は、いま組み立てた
-        /// 3つの群のどれかか、共通契約が合成のツールとして載せたもの——ホストが手書きのクラスで
-        /// 受け持ち、行から結線を組み立てられないので3つの群に現れない——である。合成のツールを
-        /// ホストが実際に登録しているかは、受入シナリオが実機で呼んで確かめる。
+        /// スキーマ正本が載せるツールに、応える先が在ることを求める。応える先は、
+        /// いま組み立てた3つの群のどれかか、共通契約が合成のツールとして載せたものである。合成の
+        /// ツールをホストが実際に登録しているかは、受入シナリオが実機で呼んで確かめる。
         /// </summary>
         private static void RequireAnsweringTools(
             ToolSchemaTable schemas,
@@ -340,8 +336,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 応答をハンドルの並びで返すツールの名前。呼び分けのどれかが並びを預けるなら、どの
-        /// 呼び分けでも並びで返す——選んだ呼び分けで応答の形が変わらないようにする。頼まれた数だけ
-        /// 発行できる行も並びで返す——数によって応答の形が変わらないようにする。
+        /// 呼び分けでも並びで返す。頼まれた数だけ発行できる行も並びで返す。
         /// </summary>
         private static ISet<string> Responding(
             ToolMap map,
@@ -374,7 +369,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// その行が項目を持ち込む取得と更新のツール。名前と、そのツールが書き込む側かどうかを返す。
-        /// 埋め込み先が取得と更新のどちらでもないものは、そのツールの側が項目を持つので返さない。
+        /// 埋め込み先が取得と更新のどちらでもないものは返さない。
         /// </summary>
         private static IEnumerable<Embedding> Aggregations(
             ToolMapRow row,
@@ -421,8 +416,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その行の項目を集めうる型。宣言型そのものと、宣言型を具象として並べる抽象の型である
-        /// ——抽象の型を並べるリストでは、具象の型の項目はそのリストのツールへ集まる。
+        /// その行の項目を集めうる型。宣言型そのものと、宣言型を具象として並べる抽象の型である。
         /// </summary>
         private static IEnumerable<TypeRoleRecord> Holders(
             TypeRoleRecord owner,
@@ -469,10 +463,8 @@ namespace PmxEditorMcp.SignatureDump
                 ItemType = itemType;
             }
 
-            /// <summary>持ち込む先のツールの名前。</summary>
             public string Tool { get; }
 
-            /// <summary>そのツールが書き込む側か。</summary>
             public bool Updates { get; }
 
             /// <summary>そのツールの名前を導く型。</summary>
@@ -664,7 +656,7 @@ namespace PmxEditorMcp.SignatureDump
         /// その実体を手放す行のキーと、手放す呼び出しが生成物を引数に取るか。手順を持たない型では
         /// 空。解放のツールが受け持つと定めたメンバーのうち、その型が宣言する引数なしのものか、
         /// 預ける呼び出しと同じ型が宣言してその実体を1つだけ引数に取るものがこれに当たる。どちらの
-        /// 形でも呼べないなら、預けても手放せないので <see cref="InvalidOperationException"/>。
+        /// 形でも呼べないなら <see cref="InvalidOperationException"/>。
         /// </summary>
         private static string[] Releases(
             SignatureRecord issuing,
@@ -859,10 +851,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 項目を集めたツールの編集の流れ。いまのPMXから辿って得た相手はその複製なので、書き換えた
-        /// ぶんをまとめて反映する流れになる。行の分類は、その行のメンバーを1つ呼ぶときの流れで
-        /// あって、項目を集めたツールがどの流れで書くかを決めない——集める行のどれが先に現れるかで
-        /// ツールの流れが変わってしまう。
+        /// 項目を集めたツールの編集の流れ。いまのPMXから辿って得た相手はその複製で、
+        /// 書き換えたぶんをまとめて反映する流れになる。行の分類は、項目を集めたツールがどの流れで
+        /// 書くかを決めない。
         /// </summary>
         private static ToolMapEditKind Writing(
             ToolMapRow row, TypeRoleRecord owner, AccessPath path, bool writes, bool held)
@@ -920,7 +911,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// Cプラグイン連携の橋渡しが直に返す型。そこから得た受け手は、複製と反映もそちらの流れで
-        /// 行う——片方の流れで作った中身は、もう片方の流れでは反映できない。
+        /// 行う。片方の流れで作った中身は、もう片方の流れでは反映できない。
         /// </summary>
         private static ISet<string> Bridged(InventoryRecord inventory)
         {
@@ -1168,8 +1159,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 組で受け取る引数の組み立て方。書き込める項目をそのツールへ持ち込む行から採る。持ち込む
-        /// 行が無ければ、渡された組から実体を作れないので <see cref="InvalidOperationException"/>。
+        /// 組で受け取る引数の組み立て方。書き込める項目をそのツールへ持ち込む行から採る。
+        /// 持ち込む行が無ければ <see cref="InvalidOperationException"/>。
         /// </summary>
         private static string Building(
             string typeName,
@@ -1326,7 +1317,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 複製編集の流れが通る行キー。状態取得は引数を取らないもの、反映は複製だけを取るものを
-        /// 採る。ほかの形は反映する範囲を別に受け取るので、流れの既定にはしない。
+        /// 採る。
         /// </summary>
         private static IList<string> Flows(
             CommonAssignmentTable assignments, IDictionary<string, SignatureRecord> signatures)
@@ -1646,8 +1637,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// イベント種別ごとの、値を組へ直す文。項目の名前と綴りはスキーマ正本が持つ——取り出しは
-        /// 1つのSDKメンバーへ写らない合成ツールなので、その形の正本はそちらにある。
+        /// イベント種別ごとの、値を組へ直す文。項目の名前と綴りはスキーマ正本が持つ。
         /// </summary>
         private static SortedDictionary<string, string> Payloads(
             ToolMap map,
@@ -1687,9 +1677,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// ツールの名前から、呼ぶ前に確かめることの組み立て文へ。確かめる材料は、別の受け手から読む
-        /// ものは読み取りのツールの名前で、同じ受け手の上で読むものは行キーで添える。材料が揃って
-        /// いるかを見るのは、これを読んで組み立てる側である。
+        /// ツールの名前から、呼ぶ前に確かめることの組み立て文へ。確かめる材料は、別の
+        /// 受け手から読むものは読み取りのツールの名前で、同じ受け手の上で読むものは行キーで添える。
         /// </summary>
         private static SortedDictionary<string, string> Preconditions(
             ToolMap map,

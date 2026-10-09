@@ -79,9 +79,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 実物の定義が立てる期待の形と、エディタとホストの操作・置き場・応答を作る相手の
-        /// 起こし直しの各段が頼む行いの種類が、突き合わせの題材にも在ることを求める。実行器が
-        /// それらを突き合わせているかを見る照合は題材で走るので、題材に無いものは、実行器が
-        /// 見ていなくても気づけないまま通る。
+        /// 起こし直しの各段が頼む行いの種類が、突き合わせの題材にも在ることを求める。
         /// </summary>
         public static void RequireCoveredByStub(JsonNode scenarios, JsonNode stub)
         {
@@ -118,10 +116,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>
-        /// その定義が立てる期待の形。1つの期待が2つの形を立てることがあるので、期待の名前では
-        /// なく中身で決める——名前ごとに1つへ決めると、2つ立てた段の片方が数えられないまま残る。
-        /// </summary>
+        /// <summary>その定義が立てる期待の形。1つの期待が2つの形を立てることがある。</summary>
         private static ISet<string> Forms(JsonNode defined)
         {
             HashSet<string> forms = new HashSet<string>(StringComparer.Ordinal);
@@ -267,7 +262,7 @@ namespace PmxEditorMcp.SignatureDump
             IDictionary<string, JsonSchema> schemas = Schemas(definitions, fixedTools);
             ISet<int> ids = new HashSet<int>();
 
-            // 覚えた値はシナリオをまたいで残るので、名前の照合も並び順のまま通して行う。
+            // 覚えた値はシナリオをまたいで残る。
             IDictionary<string, string> recorded =
                 new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (JsonNode scenario in scenarios["scenarios"].AsArray())
@@ -456,8 +451,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 覚えた値を差し込む組を、その印の値へ置き換えた写し。数の並びとして覚えた値は、1件だけ
-        /// 持つ並びへ置き換える——並びを取る入力へ数を1つ置くと、形が違うとして落ちる。
+        /// 覚えた値を差し込む組を、その印の値へ置き換えた写し。数の並びとして覚えた値は、
+        /// 1件だけ持つ並びへ置き換える。
         /// </summary>
         private static JsonNode Substitute(
             JsonNode node, IDictionary<string, string> recorded)
@@ -521,7 +516,7 @@ namespace PmxEditorMcp.SignatureDump
             return schemas;
         }
 
-        /// <summary>照合へ渡せる形。組み立てた木をそのまま渡せないので、綴り直して読み込む。</summary>
+        /// <summary>照合へ渡せる形。組み立てた木はそのまま渡せない。</summary>
         private static JsonElement Element(JsonNode node)
         {
             using (JsonDocument document = JsonDocument.Parse(node.ToJsonString()))

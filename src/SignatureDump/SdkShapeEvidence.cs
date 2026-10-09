@@ -6,8 +6,7 @@ using System.Text;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// SDKに由来する項目の表現の綴りを、行キーのシグネチャと型ごとの表現の表から導く。正本は綴りを
-    /// 書かないので、組み立てる側はここから引く。
+    /// SDKに由来する項目の表現の綴りを、行キーのシグネチャと型ごとの表現の表から導く。
     /// </summary>
     public static class SdkShapeEvidence
     {
@@ -22,9 +21,8 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>
         /// 項目から綴りへ引く表。SDKに由来する項目をすべて持ち、ホストが決める項目は持たない。
         /// 項目へ写す値は <paramref name="valuesByType"/> から引き、行と呼び分けの結び付けは
-        /// <paramref name="spellings"/> の綴りで決めるので、後者には型から綴りへの表を渡す。
-        /// 綴りを導けない項目と、埋め込み先に持ち込む項目が無い行があれば
-        /// <see cref="InvalidOperationException"/>。
+        /// <paramref name="spellings"/> の綴りで決める。綴りを導けない項目と、埋め込み先に
+        /// 持ち込む項目が無い行があれば <see cref="InvalidOperationException"/>。
         /// </summary>
         public static IDictionary<SchemaItem, string> Resolve(
             ToolSchemaTable schemas,
@@ -294,8 +292,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 項目とその内側へ綴りを配る。並びを表す項目は要素の側が綴りを持つので、要素の型まで
-        /// 剥がして配る。組を表す項目は、その組の項目を持ち込む行が別に在るので配らない。
+        /// 項目とその内側へ綴りを配る。並びを表す項目は要素の型まで剥がして配る。組を表す項目は
+        /// 配らない。
         /// </summary>
         private static void Assign(
             IDictionary<SchemaItem, string> shapes,

@@ -6,7 +6,6 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// 台帳が行を作らない対象の理由を決める。理由は挙げた順に評価し、最初に該当した一つを採る。
-    /// 対象外一覧はこの理由を持たないので、照合はここが理由を算出できるかどうかだけを見る。
     /// </summary>
     public sealed class OutOfScopeClassifier
     {
@@ -83,8 +82,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// シグネチャを対象外にできる理由。どの理由にも当たらなければ null。列挙型・デリゲート型・
-        /// 引数専用型は型ごと対象外になるので、シグネチャ単位では経路だけを採る。
+        /// シグネチャを対象外にできる理由。どの理由にも当たらなければ null。シグネチャ単位では
+        /// 経路だけを採る。
         /// </summary>
         public OutOfScopeReason? ClassifySignature(SignatureRecord signature)
         {

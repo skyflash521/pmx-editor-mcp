@@ -33,10 +33,7 @@ namespace PmxEditorMcp.SignatureDump
         public int LimitMaximum { get; }
     }
 
-    /// <summary>
-    /// 一覧が返す件数の既定と最大を、要素1件の想定文字数から逆算する。予算を変えれば値も変わるので、
-    /// この値は正本へ書かず、スキーマを組み立てるときにここで導く。
-    /// </summary>
+    /// <summary>一覧が返す件数の既定と最大を、要素1件の想定文字数から逆算する。</summary>
     public static class ListingLimitRule
     {
         /// <summary>切り出した並びを載せる項目の名前。</summary>

@@ -4,10 +4,7 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 台帳と公開APIの突き合わせは工程ごとに別の入力と出力を持つので、下位コマンドの名前で
-    /// 実行を振り分ける。
-    /// </summary>
+    /// <summary>下位コマンドの名前で実行を振り分ける。</summary>
     public static class CommandRunner
     {
         /// <summary>SDKの公開APIを列挙して書き出す。</summary>

@@ -4,9 +4,6 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// その並びを空にできるかどうかを、項目の名前から決める。
-    /// </summary>
     public static class NonEmptyArrayRule
     {
         /// <summary>空にできない並びの名前。</summary>

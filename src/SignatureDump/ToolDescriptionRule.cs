@@ -66,7 +66,6 @@ namespace PmxEditorMcp.SignatureDump
 
         public string Tool { get; }
 
-        /// <summary>群のプレフィクス。</summary>
         public string Group { get; }
 
         /// <summary>ツール名から群と出所修飾を除いた動作の語。</summary>

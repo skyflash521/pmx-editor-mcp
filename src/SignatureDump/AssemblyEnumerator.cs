@@ -5,30 +5,6 @@ using System.Reflection;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// アセンブリの公開APIをリフレクションで列挙する。母集合は <see cref="Type.IsVisible"/> が
-    /// 真の型とし、入れ子の公開型を落とさない。外側が公開でない入れ子の型は、入れ子の側が公開でも
-    /// 母集合に入らない。
-    ///
-    /// 行にするのは、各型が自分で宣言する公開メンバーと、その型が継承する公開メンバーのうち、
-    /// メソッド・プロパティ・フィールド・イベント・コンストラクタの5種類だけである。継承した
-    /// メンバーを行にするのは、宣言元が対象アセンブリの外の型であるものに限る——SDKの中の基底型
-    /// まで含めると、基底が宣言する同じAPIに派生型のぶんだけ行が立つ。
-    /// <see cref="object"/>・<see cref="ValueType"/>・<see cref="Enum"/>・<see cref="Delegate"/>・
-    /// <see cref="MulticastDelegate"/> が宣言するものは、実行環境がすべての型へ配るので行にしない。
-    /// 静的なメンバーと、型引数の決まっていない型が継承するメンバーも行にしない。プロパティとイベントの取得・設定・追加・削除の
-    /// アクセサーはメソッドの形で現れるが、そのプロパティ・イベントの行が表すので別の行にしない。
-    /// 入れ子の型もメンバーの形で現れるが、型として記録するので行にしない。演算子のように、
-    /// 言語が特別な名前を与えるメソッドでも、アクセサーでなければ行にする。
-    ///
-    /// 上の5種類のうち、次の閉じた集合だけは行にしない。
-    /// 列挙型では、値の記憶域 <c>value__</c> と列挙子のフィールド。値の集合は
-    /// <see cref="TypeRecord.EnumMembers"/> が持つので落ちない。
-    /// デリゲート型では、コンストラクタと <c>BeginInvoke</c> と <c>EndInvoke</c>。どのデリゲート
-    /// にも同じ形で現れ、その型固有の引数と戻り値は <c>Invoke</c> が持つ。
-    /// これ以外はすべて行にする。デリゲートの <c>Invoke</c> も、クラスが明示的に宣言しない
-    /// 公開コンストラクタも行にする。
-    /// </summary>
     public static class AssemblyEnumerator
     {
         private const string DelegateInvokeName = "Invoke";
@@ -56,6 +32,7 @@ namespace PmxEditorMcp.SignatureDump
                 throw new ArgumentNullException(nameof(assembly));
             }
 
+            // 外側が公開でない入れ子の型は、入れ子の側が公開でも IsVisible が偽になる。
             Type[] types = assembly.GetTypes().Where(t => t.IsVisible).ToArray();
             List<TypeRecord> typeRecords = new List<TypeRecord>();
             List<SignatureRecord> signatures = new List<SignatureRecord>();
@@ -108,7 +85,6 @@ namespace PmxEditorMcp.SignatureDump
                 signatures.OrderBy(s => s.Key, StringComparer.Ordinal).ToList());
         }
 
-        // 総称型の引数もそれ自体が分類の対象になるので、閉じた総称型とあわせて記録する。
         private static void Spread(Type used, ISet<Type> referenced)
         {
             Type type = Element(used);
@@ -142,8 +118,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// メンバーが引数・戻り値・値の型として指している型。配列は要素の型へ落として返すので、
-        /// 引く側も同じ形へ落としてから型の種類を引く。
+        /// メンバーが引数・戻り値・値の型として指している型。配列は要素の型へ落として返す。
         /// </summary>
         private static IEnumerable<Type> CollectReferencedTypes(Type type, TypeKind kind)
         {
@@ -216,10 +191,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 同じ名前と同じ引数の数で多重定義されたもののうち、ほかを受け取れる一般の側だけを残す。
-        /// 継承で1つの型へ集まる多重定義には、基底の型を取る版と派生の型を取る版が並ぶことがあり、
-        /// 派生の版で呼べることは基底の版でも呼べる。両方を残すと、同じ呼び出しに2つのツールが
-        /// 立ち、引数の名前が同じなので呼び分けを入力で判別できなくなる。自分で宣言するものは
-        /// その型の契約そのものなので落とさない。
+        /// 自分で宣言するものは落とさない。
         /// </summary>
         private static IEnumerable<MethodInfo> General(Type type, IList<MethodInfo> methods)
         {
@@ -279,7 +251,7 @@ namespace PmxEditorMcp.SignatureDump
         /// その型の行にするメンバー。自分で宣言するものを先に、継承するもののうち持ち込む条件を
         /// 満たすものを後に並べる。<paramref name="declared"/> は型が自分で宣言するものを、
         /// <paramref name="reachable"/> は継承したものまで含めて引く。インタフェースは基底の
-        /// メンバーをこの引き方では返さないので、実装している側を1つずつ辿る。
+        /// メンバーをこの引き方では返さない。
         /// </summary>
         private static IEnumerable<TMember> Members<TMember>(
             Type type,
@@ -335,8 +307,6 @@ namespace PmxEditorMcp.SignatureDump
             return parameters.Select(p => Element(p.ParameterType));
         }
 
-        // 総称型引数は宣言ごとに別の型になり、分類の対象にならない。配列は要素の型で分類するので、
-        // 次元に依らず要素まで辿る。
         private static Type Element(Type type)
         {
             if (type == null)
@@ -353,7 +323,7 @@ namespace PmxEditorMcp.SignatureDump
             return element.IsGenericParameter ? null : element;
         }
 
-        // 列挙型は値型でもあり、デリゲートはクラスでもあるので、狭い分類から先に見る。
+        // 列挙型は値型でもあり、デリゲートはクラスでもある。
         private static TypeKind ClassifyType(Type type)
         {
             if (type.IsEnum)
@@ -408,8 +378,7 @@ namespace PmxEditorMcp.SignatureDump
                 return new List<string>();
             }
 
-            // 値の順ではなく宣言順で並べたいので、値からではなくフィールドから採る。メンバーを
-            // 返す順序は保証されないので、宣言順に対応するメタデータの並びで明示的に整列する。
+            // メンバーを返す順序は保証されない。
             return type.GetFields(DeclaredPublic)
                 .Where(f => f.IsLiteral)
                 .OrderBy(f => f.MetadataToken)

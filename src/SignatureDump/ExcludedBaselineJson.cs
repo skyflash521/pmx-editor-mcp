@@ -7,7 +7,7 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// 凍結した除外の組をJSONへ書き出す。同じ入力からは常に同じバイト列になり、配列の要素は
-    /// 1行ずつに分かれるので、行単位の差分で変化を追える。
+    /// 1行ずつに分かれる。
     /// </summary>
     public static class ExcludedBaselineJson
     {

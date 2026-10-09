@@ -4,10 +4,7 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// プロパティを集めるツールの名前を、型の役割から決める。これらのツールは行を持たず、
-    /// 埋め込み先として名指しされることで現れるので、名前の決め方をここ1つに置く。
-    /// </summary>
+    /// <summary>プロパティを集めるツールの名前を、型の役割から決める。</summary>
     public static class AggregationToolRule
     {
         /// <summary>その型の項目を集める先。取得と更新の2つで、追加と削除は集める先にならない。</summary>
@@ -42,10 +39,7 @@ namespace PmxEditorMcp.SignatureDump
             return ToolNameRule.OfRole(owner, ToolVerb.Update);
         }
 
-        /// <summary>
-        /// 書き換えるツールの名前から、同じ型を読むツールの名前へ。書いた値を読み返す相手は
-        /// この組で決まる。
-        /// </summary>
+        /// <summary>書き換えるツールの名前から、同じ型を読むツールの名前へ。</summary>
         public static IDictionary<string, string> Readers(IEnumerable<TypeRoleRecord> owners)
         {
             if (owners == null)

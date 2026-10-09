@@ -7,7 +7,7 @@ namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
     /// 能力対応表と突き合わせる側を、台帳・除外一覧・公開API列挙・型役割表から導いたもの。表が
-    /// 書かない提供能力のIDと契約注記を導く入口も、同じ材料を読むのでここに持つ。
+    /// 書かない提供能力のIDと契約注記を導く入口も持つ。
     /// </summary>
     public sealed class ToolMapEvidence
     {
@@ -84,8 +84,8 @@ namespace PmxEditorMcp.SignatureDump
         public ISet<string> Provided { get; }
 
         /// <summary>
-        /// 提供対象のシグネチャの引数の型としてだけ現れる型の名前。台帳は能力として数えないが、
-        /// その組の書き方は引数を取る行の側で要るので、組の項目を持ち込むメンバーは行を持てる。
+        /// 提供対象のシグネチャの引数の型としてだけ現れる型の名前。組の項目を持ち込むメンバーは行を
+        /// 持てる。
         /// </summary>
         public ISet<string> Carried { get; }
 
@@ -224,10 +224,7 @@ namespace PmxEditorMcp.SignatureDump
             return new ReadOnlyDictionary<string, string>(bySignature);
         }
 
-        /// <summary>
-        /// 独立したツールを持たない役割の型の名前。引き当てと同じ鍵にするため、総称と配列の印を
-        /// 外して持つ。
-        /// </summary>
+        /// <summary>独立したツールを持たない役割の型の名前。総称と配列の印を外して持つ。</summary>
         public static ISet<string> EmbeddedTypeNames(TypeRoleTable roles)
         {
             if (roles == null)
@@ -241,10 +238,7 @@ namespace PmxEditorMcp.SignatureDump
                 StringComparer.Ordinal);
         }
 
-        /// <summary>
-        /// 独立したツールを持つ役割の型の名前。引き当てと同じ鍵にするため、総称と配列の印を
-        /// 外して持つ。
-        /// </summary>
+        /// <summary>独立したツールを持つ役割の型の名前。総称と配列の印を外して持つ。</summary>
         public static ISet<string> IndependentToolTypeNames(TypeRoleTable roles)
         {
             if (roles == null)
@@ -258,9 +252,7 @@ namespace PmxEditorMcp.SignatureDump
                 StringComparer.Ordinal);
         }
 
-        /// <summary>
-        /// ハンドルで指す役割の型の名前。引き当てと同じ鍵にするため、総称と配列の印を外して持つ。
-        /// </summary>
+        /// <summary>ハンドルで指す役割の型の名前。総称と配列の印を外して持つ。</summary>
         public static ISet<string> HandleTypeNames(TypeRoleTable roles)
         {
             if (roles == null)
@@ -287,8 +279,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 行キーから、それを指す提供能力のIDを引く表。台帳は非対応の行も同じシグネチャを指しうるので、
-        /// 分類が提供の能力だけに絞る。
+        /// 行キーから、それを指す提供能力のIDを引く表。分類が提供の能力だけに絞る。
         /// </summary>
         public static IDictionary<string, ISet<string>> ProvidedOwners(
             IDictionary<string, ISet<string>> owners, IEnumerable<CapabilityRecord> ledger)
@@ -315,8 +306,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 契約注記を持つ提供能力のIDから、その注記の本文を引く表。本文は固定の接頭辞から備考の
-        /// 末尾までとする。接頭辞が二度現れる備考と、本文を伴わない接頭辞は、書いたつもりで検査を
-        /// 素通りするので不合格にする。
+        /// 末尾までとする。接頭辞が二度現れる備考と、本文を伴わない接頭辞は不合格にする。
         /// </summary>
         public static IDictionary<string, string> ContractNotes(IEnumerable<CapabilityRecord> ledger)
         {

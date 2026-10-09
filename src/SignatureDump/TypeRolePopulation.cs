@@ -5,11 +5,9 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 型役割表が受け持つ型の母集合を機械導出する。提供対象のシグネチャに現れる型を推移的に
-    /// 辿り、値の表現で写せる型を除いた残りが型役割表の母集合になる。
-    ///
-    /// どちらの集合にも入らないのは、総称型引数とデリゲート型である。前者は宣言ごとに別の型で役割を
-    /// 持たず、後者は呼び出し側が実装を渡すもので、値としても操作の対象としても写せない。
+    /// 型役割表が受け持つ型の母集合を機械導出する。提供対象のシグネチャに現れる型を推移的に辿り、
+    /// 値の表現で写せる型を除いた残りが型役割表の母集合になる。どちらの集合にも入らないのは、
+    /// 総称型引数とデリゲート型である。
     /// </summary>
     public sealed class TypeRolePopulation
     {
@@ -65,9 +63,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 接続の根から提供対象の型へ至る経路の上にある型を母集合へ足す。これらは台帳が能力の行を
-        /// 作らないので提供対象のシグネチャには現れないが、接続の初期化がここを通るので役割を持つ。
-        /// 値の表現で写せる型は足さない。
+        /// 接続の根から提供対象の型へ至る経路の上にある型を母集合へ足す。値の表現で写せる型は
+        /// 足さない。
         /// </summary>
         private static TypeRolePopulation WithConnectionRoutes(
             TypeRolePopulation provided, InventoryRecord inventory)

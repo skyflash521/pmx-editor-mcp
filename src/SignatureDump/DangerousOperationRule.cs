@@ -18,10 +18,6 @@ namespace PmxEditorMcp.SignatureDump
         Reset,
     }
 
-    /// <summary>
-    /// どのシグネチャが危険操作に当たるかを決める。名前だけで決めると意味の近い別のメンバーを
-    /// 巻き込むので、宣言型と組で名指しできるものはそうする。
-    /// </summary>
     public static class DangerousOperationRule
     {
         private const string FormConnectorTypeName = "PEPlugin.Form.IPEFormConnector";

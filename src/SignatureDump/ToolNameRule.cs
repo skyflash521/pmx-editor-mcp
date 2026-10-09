@@ -5,10 +5,7 @@ using System.Text;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// ツールの名前を規則から組み立て、群のなかで衝突する動作の語を数える。名前を作るのも衝突を
-    /// 数えるのも同じ分け方を見るので、ここ1つに置く。
-    /// </summary>
+    /// <summary>ツールの名前を規則から組み立て、群のなかで衝突する動作の語を数える。</summary>
     public static class ToolNameRule
     {
         private const char Separator = '_';
@@ -46,8 +43,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 役割対象の型が持つ、はたらきごとのツールの名前。単数と複数のどちらの名詞を採るかは
-        /// はたらきと役割で決まる——コネクタ型は自分1つを指すので、更新も単数を採る。
+        /// 役割対象の型が持つ、はたらきごとのツールの名前。単数と複数のどちらの名詞を
+        /// 採るかははたらきと役割で決まり、コネクタ型は更新も単数を採る。
         /// </summary>
         public static string OfRole(TypeRoleRecord record, ToolVerb verb)
         {

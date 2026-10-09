@@ -4,10 +4,6 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 型ごとの担当群を決める。台帳がその型へ担当を一つだけ与えているなら台帳が決め、与えていない
-    /// ——担当が複数ある型と、担当を一つも与えられていない型——ときだけ表の値が決める。
-    /// </summary>
     public static class TypeGroupRule
     {
         /// <summary>

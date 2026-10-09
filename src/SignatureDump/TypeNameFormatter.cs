@@ -50,10 +50,8 @@ namespace PmxEditorMcp.SignatureDump
             return type.FullName ?? type.Name;
         }
 
-        // 総称型引数は、入れ子のどの段のものかまで表さないと一意にならない。段をまたいで平らに
-        // 並べると、外側が総称の入れ子型と、外側が非総称で内側が2つの型引数を持つ入れ子型が同じ
-        // 表記になる。リフレクションは各段の型引数へ外側のぶんも含めて返すので、段ごとの数の差を
-        // その段自身の型引数として切り出す。
+        // 総称型引数は、入れ子のどの段のものかまで表さないと一意にならない。リフレクションは各段の
+        // 型引数へ外側のぶんも含めて返す。
         private static string FormatGeneric(Type type)
         {
             Type definition = type.IsGenericTypeDefinition ? type : type.GetGenericTypeDefinition();
@@ -86,8 +84,7 @@ namespace PmxEditorMcp.SignatureDump
             return string.IsNullOrEmpty(definition.Namespace) ? joined : definition.Namespace + "." + joined;
         }
 
-        // 総称型の名前は、リフレクション上では型引数の数を表す接尾辞を持つ。数は山括弧の中身から
-        // 分かるので、表記へは残さない。
+        // 総称型の名前は、リフレクション上では型引数の数を表す接尾辞を持つ。
         private static string StripArity(string name)
         {
             int tick = name.IndexOf('`');

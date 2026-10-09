@@ -4,10 +4,7 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 所有の経路が、列挙のメンバーの並びとしてつながっていることを検査する。段の意味は列挙から
-    /// 決まるので、書いた経路が実在の辿り方かどうかはここで確かめられる。
-    /// </summary>
+    /// <summary>所有の経路が、列挙のメンバーの並びとしてつながっていることを検査する。</summary>
     public static class OwnerPathGate
     {
         /// <summary>

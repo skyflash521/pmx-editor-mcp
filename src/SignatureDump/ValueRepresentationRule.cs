@@ -5,8 +5,7 @@ using System.Linq;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 型をJSONの値表現へ写す。ここで表現が決まらない型は型役割表が受け持つので、この判定は
-    /// 表に載る型を過不足なく拾い、それ以外へは何も返さない。
+    /// 型をJSONの値表現へ写す。表に載る型を過不足なく拾い、それ以外へは何も返さない。
     /// </summary>
     public sealed class ValueRepresentationRule
     {
@@ -61,7 +60,7 @@ namespace PmxEditorMcp.SignatureDump
             this.enums = enums;
         }
 
-        /// <summary>列挙型かどうかは名前では決まらないので、列挙の分類から引く。</summary>
+        /// <summary>列挙型かどうかは列挙の分類から引く。</summary>
         public static ValueRepresentationRule Create(InventoryRecord inventory)
         {
             if (inventory == null)

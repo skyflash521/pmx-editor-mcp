@@ -6,8 +6,7 @@ using System.Text;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 除外一覧をJSONへ書き出す。同じ入力からは常に同じバイト列になり、1件が1行に収まるので、
-    /// 行単位の差分で除外の増減を追える。
+    /// 除外一覧をJSONへ書き出す。同じ入力からは常に同じバイト列になり、1件が1行に収まる。
     /// </summary>
     public static class ExcludedSignatureJson
     {
@@ -60,9 +59,7 @@ namespace PmxEditorMcp.SignatureDump
             return builder.Append("}").ToString();
         }
 
-        /// <summary>
-        /// 読む側は綴りで分岐するので、列挙子の名前を変えても書き出す綴りは動かさない。
-        /// </summary>
+        /// <summary>列挙子の名前を変えても書き出す綴りは動かさない。</summary>
         private static string Name(ExclusionQualification qualification)
         {
             switch (qualification)

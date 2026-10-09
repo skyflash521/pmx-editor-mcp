@@ -36,7 +36,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>成分を並べる表現の綴り。</summary>
         private const string NumberArrayShape = "number_array";
 
-        /// <summary>値を持てない表現の綴り。渡せる値が無いので、サンプル値も持たない。</summary>
+        /// <summary>値を持てない表現の綴り。サンプル値も持たない。</summary>
         private const string NullShape = "null_value";
 
         /// <summary>書体の飾りを写す列挙の名前。</summary>

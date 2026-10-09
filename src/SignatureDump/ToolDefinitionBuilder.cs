@@ -32,8 +32,7 @@ namespace PmxEditorMcp.SignatureDump
         public string InputSchema { get; }
 
         /// <summary>
-        /// 値が画像かどうか。ブリッジはこれを見て、結果を文字列でなく画像の本文として返す——画像を
-        /// 文字列で返すと、MCPクライアントは中身を見られない。
+        /// 値が画像かどうか。ブリッジはこれを見て、結果を文字列でなく画像の本文として返す。
         /// </summary>
         public bool ReturnsImage { get; }
 
@@ -42,8 +41,7 @@ namespace PmxEditorMcp.SignatureDump
 
     /// <summary>
     /// スキーマ正本と説明文から、MCPクライアントへ載せるツール定義を組み立てる。一覧の件数の既定と
-    /// 要素数の上限は正本に書かず、[逆算の規則](ListingLimitRule)と[要素数の規則](ElementLimitRule)が
-    /// 導いた値をここで入れる——予算を変えれば動く値なので、書き写せば必ず食い違う。
+    /// 要素数の上限は正本に書かず、逆算の規則と要素数の規則が導いた値をここで入れる。
     /// </summary>
     public static class ToolDefinitionBuilder
     {
@@ -483,8 +481,6 @@ namespace PmxEditorMcp.SignatureDump
                 }
             }
 
-            // 確認の共通引数は、どのシグネチャが危険操作に当たるかの決め方が導くので正本に書かない。
-            // 要らないツールには現れない。
             if (confirms)
             {
                 properties.Add(new KeyValuePair<string, string>(
@@ -492,8 +488,6 @@ namespace PmxEditorMcp.SignatureDump
                 required.Add(ConfirmName);
             }
 
-            // 抑止の共通引数も、どの行が複製編集型かの決め方が導くので正本に書かない。まとめて
-            // 反映する呼び出しにだけ現れ、渡さなければ止めない。
             if (suppresses)
             {
                 properties.Add(new KeyValuePair<string, string>(
@@ -1030,7 +1024,6 @@ namespace PmxEditorMcp.SignatureDump
             {
                 range = writing.Dispatched ? NumberRange.Counted() : new NumberRange();
 
-                // 一覧の件数と発行する数は、応答で返せる件数から導く値なので正本に書かない。
                 if (writing.Listing != null
                     && string.Equals(item.Name, LimitName, StringComparison.Ordinal))
                 {

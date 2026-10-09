@@ -5,10 +5,7 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>
-    /// 能力対応表とスキーマ正本から、実機のエディタへ投げる検査を組み立てる。行ごとに書き下ろさず
-    /// ここで導くので、行が増えれば検査も増える。
-    /// </summary>
+    /// <summary>能力対応表とスキーマ正本から、実機のエディタへ投げる検査を組み立てる。</summary>
     public static class E2eCaseBuilder
     {
         /// <summary>危険操作が確認を求めるときに使う共通引数の名前。</summary>
@@ -47,8 +44,8 @@ namespace PmxEditorMcp.SignatureDump
         private const string OpenWindowToolName = "editor_open_window";
 
         /// <summary>
-        /// いま開いているモデルをPMDで書き出すツールの名前。共通契約が名前を定める。読み込める
-        /// モデルを作れるのはエディタだけなので、読み込む中身が要るツールはこれが書いたものを読む。
+        /// いま開いているモデルをPMDで書き出すツールの名前。共通契約が名前を定める。
+        /// 読み込めるモデルを作れるのはエディタだけである。
         /// </summary>
         public const string SavingPmdToolName = "session_save_pmd_file";
 
@@ -68,19 +65,13 @@ namespace PmxEditorMcp.SignatureDump
         public const string SavedViewSettingPath =
             "%PMX_EDITOR_MCP_E2E_TEMP%\\読み込み元.xml";
 
-        /// <summary>
-        /// 覚えておく名前を行ごとに分ける区切り。読み比べる段は行ごとに同じツールを2度呼ぶので、
-        /// 名前を分けないと別の行の覚えた値を借りる。
-        /// </summary>
+        /// <summary>覚えておく名前を行ごとに分ける区切り。</summary>
         private const string Scoped = "#";
 
         /// <summary>借りる値を差し込む先を、引数の中の道で指すときの区切り。</summary>
         private const string PathStep = "/";
 
-        /// <summary>
-        /// 呼ぶ前と後で読むときに受け取る件数。一覧は総数も返すので、1件だけ読めば総数の変化は
-        /// 見える——全件を読むと、要素の多いモデルでは読むだけで時間の上限に届く。
-        /// </summary>
+        /// <summary>呼ぶ前と後で読むときに受け取る件数。</summary>
         private const int ReadbackLimit = 1;
 
         /// <summary>台帳に無いハンドルを並びで渡す検査が確かめること。</summary>
@@ -96,10 +87,8 @@ namespace PmxEditorMcp.SignatureDump
         private const string ConfirmRefusal = "確認を渡さない呼び出しを断ること";
 
         /// <summary>
-        /// 共通の入口が断ることを確かめる検査。どれもツールごとに違う振る舞いを見ておらず、同じ
-        /// 経路を繰り返し通すだけなので、代表だけを実機へ投げる。断る経路そのものはホストの単体
-        /// テストが固定している。並びは入口をどこまで進むかの順で、深いものが先に来る——1件しか
-        /// 残せないツールには、深くまで進むものを残す。
+        /// 共通の入口が断ることを確かめる検査。代表だけを実機へ投げる。並びは入口をどこまで進むかの
+        /// 順で、深いものが先に来る。
         /// </summary>
         private static readonly string[] SharedRefusals =
         {
@@ -133,21 +122,15 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>名前を載せる応答の項目の名前。</summary>
         private const string NameName = "name";
 
-        /// <summary>
-        /// 位置で指す項目へ渡す、どのリストにも無い位置。負でない整数の上限なので、要素の数が
-        /// これに届くことはない。
-        /// </summary>
+        /// <summary>位置で指す項目へ渡す、どのリストにも無い位置。</summary>
         private const int UnknownPosition = int.MaxValue;
 
-        /// <summary>
-        /// 位置で指す項目へ渡す、並びの先頭。段取りがどの並びへも要素を1つ入れるので、この位置は
-        /// どの並びにも在る。
-        /// </summary>
+        /// <summary>位置で指す項目へ渡す、並びの先頭。</summary>
         private const int FirstPosition = 0;
 
         /// <summary>
-        /// そのツールが動かせる、いちばん手前の位置。並びの先頭に固定で並ぶ要素は取り除くことも
-        /// 動かすこともできないので、その件数だけ後ろを指す。
+        /// そのツールが動かせる、いちばん手前の位置。並びの先頭に固定で並ぶ要素の件数だけ後ろを
+        /// 指す。
         /// </summary>
         private static int Movable(string tool, IDictionary<string, int> fixedLeading)
         {
@@ -159,8 +142,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 対象を指す項目の名前。対象が決まっている呼び出しでは、この組を埋めない——ハンドルで
-        /// 指した対象は、位置でも親でも指し直せない。
+        /// 対象を指す項目の名前。対象が決まっている呼び出しでは、この組を埋めない。
         /// </summary>
         private static readonly string[] PointingNames =
         {
@@ -169,16 +151,14 @@ namespace PmxEditorMcp.SignatureDump
         };
 
         /// <summary>
-        /// 台帳に無いハンドルとして渡す値。ホストの発行器がこの値を決して発行しないので、どの
-        /// 台帳にも在り得ない。
+        /// 台帳に無いハンドルとして渡す値。ホストの発行器がこの値を決して発行しない。
         /// </summary>
         private const int UnknownHandle = int.MaxValue;
 
         /// <summary>
         /// 検査を組み立てる。<paramref name="connectionPaths"/> は型から接続の経路へ、
-        /// <paramref name="dangerous"/> は確認を要する行キーの集合。断る理由の綴りはここが名指し
-        /// する——どの綴りがどの断り方を指すかは機械では導けない。
-        /// 名指しが実装とずれていれば、その検査が実機で落ちて分かる。
+        /// <paramref name="dangerous"/> は確認を要する行キーの集合。断る理由の綴りはここが
+        /// 名指しする。
         /// </summary>
         public static IList<E2eCase> Build(
             ToolMap map,
@@ -241,8 +221,7 @@ namespace PmxEditorMcp.SignatureDump
 
             IDictionary<SchemaItem, string> handleTargets = HandleTargets(sdkTypes, handled);
 
-            // 母集団はスキーマ正本が持つツールである。行から導く名前を持たない共通契約のツールも
-            // 検査の相手なので、行の側を母集団にすると落ちる。
+            // 母集団はスキーマ正本が持つツールである。
             Dictionary<string, ToolMapRow> byTool = new Dictionary<string, ToolMapRow>(
                 StringComparer.Ordinal);
             Dictionary<string, IList<SetupOperation>> stepSetups =
@@ -309,14 +288,8 @@ namespace PmxEditorMcp.SignatureDump
             List<E2eCase> cases = new List<E2eCase>(PreparingCases(schemas));
             cases.AddRange(SetupCases(schemas, factories, wiring));
 
-            // 直に呼ぶと状態が動く行は、その動きが後の検査の見るものを変える——取り消しは段取りが
-            // 作った要素を消し、再生の開始はビューを動かし続ける。順に並べる中では避けられないので、
-            // 最後へ回して、あとに続く検査を持たせない。事後条件を実機で確かめる行だけは回さない
-            // ——回すと、確かめる相手が既に使えなくなっている。
             List<E2eCase> trailing = new List<E2eCase>();
 
-            // 選ばれている対象を相手にする呼び出しは、対象を選ぶ呼び出しより後でなければ、
-            // 選ぶものが無いことを尋ねる表示が出る。名前の順ではそれが先に来るので、最後へ回す。
             List<E2eCase> picked = new List<E2eCase>();
             foreach (ToolSchema schema in schemas.Tools.OrderBy(t => t.Tool, StringComparer.Ordinal))
             {
@@ -417,8 +390,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// どの検査よりも先に流す段取り。読み込む中身が要るツールのために、いま開いているものを
-        /// 一時の置き場へ書き出す。読み込めるものを作れるのはエディタだけなので、検査の中で作る。
+        /// どの検査よりも先に流す段取り。いま開いているものを一時の置き場へ書き出す。
         /// </summary>
         private static IEnumerable<E2eCase> PreparingCases(ToolSchemaTable schemas)
         {
@@ -453,9 +425,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 先に流す段取り。要素を1つ作って並びへ加える。中身の無い並びでは、項目を読む検査が
-        /// 一度も項目を読まないまま通ってしまう。親の並びへ入れる要素を先に流す——親の並びが
-        /// 空のままでは、その中の並びへ入れる先を指せない。
+        /// 先に流す段取り。要素を1つ作って並びへ加える。親の並びへ入れる要素を先に流す。
         /// </summary>
         private static IEnumerable<E2eCase> SetupCases(
             ToolSchemaTable schemas,
@@ -511,8 +481,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 覚えた応答から、ハンドル1つを指す道。応答を並びで返すツールは、出たハンドルもその並びの
-        /// 中へ入れるので、借りるのはその先頭である。並びを重ねて返すツールでは、重ねた数だけ下りる。
+        /// 覚えた応答から、ハンドル1つを指す道。応答を並びで返すツールでは先頭を借り、並びを
+        /// 重ねて返すツールでは、重ねた数だけ下りる。
         /// </summary>
         private static string Borrowed(string name, ToolSchema making)
         {
@@ -565,11 +535,7 @@ namespace PmxEditorMcp.SignatureDump
             };
         }
 
-        /// <summary>
-        /// 借りて渡す引数へ、正本が書いた値と確認を上書きで足したもの。正本が値を書いている
-        /// 危険な行は、その値を渡して初めて呼べる——型ごとのサンプルで埋めた値では、書いた側が
-        /// 選んだ渡し先にならない。
-        /// </summary>
+        /// <summary>借りて渡す引数へ、正本が書いた値と確認を上書きで足したもの。</summary>
         private static IDictionary<string, object> Written(
             IDictionary<string, object> arguments,
             string rowKey,
@@ -588,10 +554,7 @@ namespace PmxEditorMcp.SignatureDump
             return confirmed ? Confirmed(arguments) : arguments;
         }
 
-        /// <summary>
-        /// 正本が書いた値へ、受け手のハンドルを補ったもの。受け手は呼ぶときに借りて渡すので、
-        /// 正本には書けない——書けない値の不在で、書いた値の収まりを否まない。
-        /// </summary>
+        /// <summary>正本が書いた値へ、受け手のハンドルを補ったもの。</summary>
         private static IDictionary<string, object> Receiving(
             SchemaBranch branch, IDictionary<string, object> arguments)
         {
@@ -614,9 +577,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 書き換えるツールへ渡す項目の組を、書いた直後に読み返せる項目ぶんだけ埋めたもの。埋めた
-        /// 組はそのまま引数へ入る。値の組を受け取らないツールと、埋められる項目を1つも持たない
-        /// ツールでは null——書いていないものは読み返せない。
+        /// 書き換えるツールへ渡す項目の組を、書いた直後に読み返せる項目ぶんだけ埋めたもの。
+        /// 埋めた組はそのまま引数へ入る。値の組を受け取らないツールと、埋められる項目を1つも
+        /// 持たないツールでは null。
         /// </summary>
         private static IDictionary<string, object> Filled(
             ToolSchema schema,
@@ -665,8 +628,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 書いた項目を読み返して確かめる検査。相手は書いたその要素で、呼び出しと同じハンドルを
-        /// 借りる——並び全体を読むと、書いていない要素の値まで見てしまう。読み返す相手を持たない
-        /// ツールでは null。
+        /// 借りる。読み返す相手を持たないツールでは null。
         /// </summary>
         private static E2eCase ReadingBack(
             string rowKey,
@@ -713,10 +675,7 @@ namespace PmxEditorMcp.SignatureDump
                 : null;
         }
 
-        /// <summary>
-        /// その項目が、ハンドルで指した相手へ書いても預かりに回るか。要素の位置で指す項目は、
-        /// 相手がまだどのPMXにも入っていない間は解けないので、書いた直後には読み返せない。
-        /// </summary>
+        /// <summary>その項目が、ハンドルで指した相手へ書いても預かりに回るか。</summary>
         private static bool Deferred(
             SchemaItem member,
             IDictionary<SchemaItem, string> sdkTypes,
@@ -744,19 +703,13 @@ namespace PmxEditorMcp.SignatureDump
                     && string.Equals(i.Name, HandlesName, StringComparison.Ordinal));
         }
 
-        /// <summary>
-        /// 段取りがその要素を並びへ加えるか。加えないなら、外す相手が並びに居ないので借りる名前も
-        /// 出ない。
-        /// </summary>
+        /// <summary>段取りがその要素を並びへ加えるか。</summary>
         private static bool Prepares(ToolSchema adding)
         {
             return adding != null && (Handed(adding) || Assigned(adding));
         }
 
-        /// <summary>
-        /// 並びの先頭を位置で指す引数。位置で指せないツールでは null——どの要素を相手にするかが
-        /// ここでは決まらない。
-        /// </summary>
+        /// <summary>並びの先頭を位置で指す引数。位置で指せないツールでは null。</summary>
         private static IDictionary<string, object> Pointed(
             ToolSchema schema,
             IDictionary<SchemaItem, string> sdkShapes,
@@ -821,8 +774,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 組み立てた引数が、そのツールのどれかの呼び分けの要る項目をすべて埋めているか。借りる
-        /// 空きは値をまだ持たないので、値の形ではなく項目の名前で見る。
+        /// 組み立てた引数が、そのツールのどれかの呼び分けの要る項目をすべて埋めているか。項目の
+        /// 名前で見る。
         /// </summary>
         private static bool Satisfied(ToolSchema schema, IDictionary<string, object> arguments)
         {
@@ -847,8 +800,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その呼び分けの必須の組を、相手を選ぶ値で埋める。全体を相手にできるならそれを、でき
-        /// なければ並びの先頭を位置で指す。どちらもできない組が在れば偽——相手が決まらない。
+        /// その呼び分けの必須の組を、相手を選ぶ値で埋める。全体を相手にできるならそれを、
+        /// できなければ並びの先頭を位置で指す。どちらもできない組が在れば偽。
         /// </summary>
         private static bool Chose(SchemaBranch branch, IDictionary<string, object> arguments)
         {
@@ -895,8 +848,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 作った要素を、親と要素の組で渡して呼べるツールか。組が親を位置で指すものだけを採る
-        /// ——ハンドルで親を指す組では、どの親を指すかがここでは決まらない。
+        /// 作った要素を、親と要素の組で渡して呼べるツールか。組が親を位置で指すものだけを採る。
         /// </summary>
         private static bool Assigned(ToolSchema schema)
         {
@@ -976,10 +928,6 @@ namespace PmxEditorMcp.SignatureDump
             bool heldOnly = aimed != null && aimed.Contains(tool);
             bool confirmed = row != null && dangerous.Contains(rowKey) && !heldOnly;
 
-            // 確認を要さず、渡すものが決まる行は実際に呼ぶ。呼べない行は呼び先まで届く検査を1つも
-            // 持たないままになる——呼び先が在ることだけを見ても、その行の振る舞いは確かめられない。
-            // 確認を要する行を呼ぶのは、渡す値が正本に書かれている行に限る。値を書くのは書く側の
-            // 明示の選択なので、エディタを閉じる行やモデルを消す行が黙って呼ばれることがない。
             bool written = row != null && given != null && given.ContainsKey(rowKey);
             IDictionary<string, object> calling =
                 new Dictionary<string, object>(StringComparer.Ordinal);
@@ -987,9 +935,6 @@ namespace PmxEditorMcp.SignatureDump
                 && TryCalling(row, schema, sdkShapes, sampled, handleTargets, given, out calling)
                 && Satisfied(schema, calling);
 
-            // 行を持たないツールも、引数を要さないなら呼ぶ。呼べるのに呼ばないままだと、この
-            // ツールが覆う行は呼び先まで届く検査を1つも持たず、網羅の判定で落ちる。項目を選ばず
-            // に読む検査を別に持つツールだけは呼ばない——同じ引数で同じツールを二度呼ぶことになる。
             if (row == null && Unchosen(schema) != null && !reading.Contains(schema.Tool))
             {
                 calls = true;
@@ -1003,8 +948,6 @@ namespace PmxEditorMcp.SignatureDump
             string making = string.IsNullOrEmpty(rowKey) ? tool : rowKey;
             IDictionary<string, string> borrowing = null;
 
-            // 引数にハンドルで相手を取る呼び出しは、その相手も作ってから渡す。道ごとに作る列を
-            // 分けて覚える——同じ型を2か所で取る呼び出しもあるが、渡すのは別の実体でよい。
             IDictionary<string, IList<string>> handing = null;
             if (!calls && maker != null && heldOnly && Aims(schema))
             {
@@ -1061,9 +1004,6 @@ namespace PmxEditorMcp.SignatureDump
             string adder;
             string factory;
 
-            // 並びから取り除くツールは、取り除く相手を自分で用意してから呼ぶ。並びの中身は、
-            // 先に置いた要素がそのまま残るとは限らない——途中の検査がモデルを空へ戻すので、
-            // 直前に1つ加えておかなければ、位置で指した先が無いまま呼ぶことになる。
             IList<string> filling = null;
             if (!calls && row == null && removers != null
                 && removers.TryGetValue(tool, out adder)
@@ -1111,8 +1051,6 @@ namespace PmxEditorMcp.SignatureDump
             SampleCallRow denied;
             bool denies = row != null && refused.TryGetValue(rowKey, out denied);
 
-            // 観測の段を組み立てられるかは、呼び出しを組み立てるかに依らず確かめる。受け取らない
-            // 引数を指す宣言は正本の誤りで、呼び出しの有無で見え隠れしてよいものではない。
             Postcondition[] drawn = Drawn(row).ToArray();
             foreach (Postcondition judgement in drawn)
             {
@@ -1127,12 +1065,8 @@ namespace PmxEditorMcp.SignatureDump
 
             string wrote = Wrote(row, schema, rowKey);
 
-            // 断られることを確かめる呼び出しは、断られた時点でハンドルを出さない。その行の観測は
-            // 借りるものを持たないので組み立てない。
             bool draws = calls && !denies && drawn.Length != 0;
 
-            // 断られる呼び出しは何も動かさないので、読み比べても違いが出ない。確かめているのが
-            // 行の効果でなく断りになるので、その行の読み比べは組み立てない。
             bool reads = calls && !denies && compared.Length != 0;
 
             string held = Borrowed(rowKey, schema);
@@ -1448,10 +1382,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 並べたものが名前を載せる観測ツールか。在ることを見るだけなので返す項目は要らないが、
-        /// 1つも選ばない頼み方は断られる。名前を載せるならそれ1つに絞る——項目を選ばずに頼むと
-        /// 位置で指す項目まで返そうとして、まだどのPMXにも入っていない実体では解けずに断られる。
-        /// 名前を載せないツールでは絞る相手が無いので、項目を選ばずに頼む。
+        /// 並べたものが名前を載せる観測ツールか。名前を載せるならそれ1つに絞り、載せないツールでは
+        /// 項目を選ばずに頼む。
         /// </summary>
         private static bool Named(ToolSchema observer)
         {
@@ -1504,8 +1436,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// その行がファイルを書くと宣言した先を渡す引数の名前。宣言しない行では null。指す引数を
-        /// ツールが受け取らない宣言は、実機へ投げても在りもしない位置を見に行くだけなので、ここで
-        /// 組み立てを止める。1回の呼び出しで確かめられる書き先は1つまでとする。
+        /// ツールが受け取らない宣言は、ここで組み立てを止める。1回の呼び出しで確かめられる書き先は
+        /// 1つまでとする。
         /// </summary>
         private static string Wrote(ToolMapRow row, ToolSchema schema, string rowKey)
         {
@@ -1535,8 +1467,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// そのツールの受け手を得るまでに順に呼ぶツールの列。列を持たないツールでは null——渡す
-        /// 相手が決まらないツールは呼べないままで、呼び先まで届く検査を1つも持たない。
+        /// そのツールの受け手を得るまでに順に呼ぶツールの列。列を持たないツールでは null。
         /// </summary>
         private static IList<string> Maker(
             string tool, IDictionary<string, IList<string>> makers)
@@ -1550,7 +1481,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 作った要素を並びへ加えるまでに要るものの引き当て。位置で指す項目を持つ要素は、指す先を
-        /// 埋めてから加える——埋めずに加えると、指す先を持たない要素として書き戻しで捨てられる。
+        /// 埋めてから加える。
         /// </summary>
         private sealed class ElementWiring
         {
@@ -1594,8 +1525,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 要素を1つ作って並びへ加える2段。加える形は加える側のツールで分かれる——作った要素を
-        /// ハンドルで渡すだけで済むものと、親を位置で指す組で渡すものがある。差し込む先の道は
-        /// その形ごとに違うので、道を選ぶところをここ1か所に持つ。
+        /// ハンドルで渡すだけで済むものと、親を位置で指す組で渡すものがある。
         /// </summary>
         private static IEnumerable<E2eCase> Filling(
             string rowKey,
@@ -1615,8 +1545,6 @@ namespace PmxEditorMcp.SignatureDump
                 : Chosen(Of(schemas, writing), making);
             IDictionary<string, string> aiming = Aimed(wiring, adding, Of(schemas, writing), writes);
 
-            // 指す先の並びが空だと、位置で指す項目を埋められない。指す先を先に用意する——その
-            // 並びの要素は位置で指す項目を持たないものとして扱い、ここから先は辿らない。
             foreach (string adder in aiming.Values
                 .Select(t => Added(wiring, t))
                 .Where(a => a != null)
@@ -1721,9 +1649,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その要素を並びへ加える前に埋める、位置で指す項目の名前とその項目が指す型。選んだ
-        /// 呼び分けが受け取る項目だけを採る——種別で呼び分ける書き換えでは、呼び分けごとに
-        /// 受け取る項目が違う。埋めるものが無ければ空。
+        /// その要素を並びへ加える前に埋める、位置で指す項目の名前とその項目が指す型。
+        /// 選んだ呼び分けが受け取る項目だけを採る。埋めるものが無ければ空。
         /// </summary>
         private static IDictionary<string, string> Aimed(
             ElementWiring wiring,
@@ -1791,10 +1718,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 並びへ加えるツールごとの、位置で指す項目の名前とその項目が指す型。共通契約が挙げた
-        /// 項目だけを採る——指す先を持たないまま加えると書き戻しで捨てられる要素はそこが決める。
-        /// 捨てられない要素にまで指す先を用意すると、確かめるものが増えないまま実機の検査が
-        /// 伸びる。
+        /// 並びへ加えるツールごとの、位置で指す項目の名前とその項目が指す型。共通契約が
+        /// 挙げた項目だけを採る。
         /// </summary>
         private static IDictionary<string, IDictionary<string, string>> Aiming(
             ToolSchemaTable schemas,
@@ -1880,11 +1805,10 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その要素を並びへ加えるまでに、順に呼ぶ加える側のツールの列。親の並びに1つも無い要素は
-        /// 加えられないので、根に近い親から並べる。用意しきれない並びでは null を返す——どこかの
-        /// 段に作る手立てか加える手立てが無いとき、列の先頭がまだ親を要するとき(親を辿れずに
-        /// 終わったか、親を辿る先が巡って打ち切られたとき)である。通らない用意の段を組み立てると、
-        /// 落ちた理由が別の系統として数えられ、原因の切り分けが後ろへ回る。
+        /// その要素を並びへ加えるまでに、順に呼ぶ加える側のツールの列。根に近い親から並べる。
+        /// 用意しきれない並びでは null を返す——どこかの段に作る手立てか加える手立てが無いとき、列の
+        /// 先頭がまだ親を要するとき(親を辿れずに終わったか、親を辿る先が巡って打ち切られたとき)
+        /// である。
         /// </summary>
         private static IList<string> Filling(
             string adder,
@@ -1956,8 +1880,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 引数へ渡す相手を、道ごとにどう作るか。作る列を引けない型が1つでもあれば null——
-        /// 渡すものが揃わない呼び出しは組み立てない。取る相手が無ければ空の対応表になる。
+        /// 引数へ渡す相手を、道ごとにどう作るか。作る列を引けない型が1つでもあれば null。取る相手が
+        /// 無ければ空の対応表になる。
         /// </summary>
         private static IDictionary<string, IList<string>> Handing(
             IDictionary<string, string> wanted,
@@ -1981,10 +1905,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 呼び出しより先に出す段が、出したハンドルを覚えておく名前。<paramref name="part"/> は
-        /// その段が何のためのものかを分ける綴りで、引数の道でも、先に呼ぶツールの名前でもよい。
-        /// 道の区切りは名前に残さない——借りる側は斜線で覚えた値の中を辿るので、名前に斜線が
-        /// あると、名前の途中までを名前と読んでしまう。
+        /// 呼び出しより先に出す段が、出したハンドルを覚えておく名前。<paramref name="part"/> はその
+        /// 段が何のためのものかを分ける綴りで、引数の道でも、先に呼ぶツールの名前でもよい。道の
+        /// 区切りは名前に残さない。
         /// </summary>
         private static string Scoping(string making, string part)
         {
@@ -2015,8 +1938,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 呼ぶ前と後で読むツール。宣言の無い判定と、並びの全体を読めないツールを指す判定は、
-        /// 何と何を読み比べるのかが決まらないので、ここで組み立てを止める。
+        /// 呼ぶ前と後で読むツール。宣言の無い判定と、並びの全体を読めないツールを指す判定では、
+        /// 組み立てを止める。
         /// </summary>
         private static ToolSchema Reader(
             Postcondition judgement, ToolSchemaTable schemas, string rowKey)
@@ -2064,10 +1987,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 呼ぶ前と後で読むときに渡す引数。相手をハンドルで受け取る観測へ受け手を渡したときは、
-        /// そのハンドルの空きだけを持つ組を返す。渡さないときは並びの全体を指す組で、全体をどう
-        /// 指すかは呼び分けごとに違うので、指せる呼び分けを探してその指し方で埋める。どの呼び分け
-        /// でも指せなければ null。
+        /// 呼ぶ前と後で読むときに渡す引数。相手をハンドルで受け取る観測へ受け手を渡したときは、その
+        /// ハンドルの空きだけを持つ組を返す。渡さないときは並びの全体を指す組で、指せる呼び分けを
+        /// 探してその指し方で埋める。どの呼び分けでも指せなければ null。
         /// </summary>
         private static IDictionary<string, object> Reading(
             ToolSchema observer, string receiver)
@@ -2090,8 +2012,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その呼び分けで並びの全体を指す引数。位置や範囲でしか指せない組を持つ呼び分けでは null
-        /// ——どこを指すかがここでは決まらない。
+        /// その呼び分けで並びの全体を指す引数。位置や範囲でしか指せない組を持つ呼び分けでは null。
         /// </summary>
         private static IDictionary<string, object> Whole(SchemaBranch branch)
         {
@@ -2193,8 +2114,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 段取りが呼ぶときの引数。その行の呼び出しが相手にするものを指す値は、借りる空きへ替えて
-        /// 借りる先を覚える——段取りは呼び出しと同じ相手を整えるので、相手は借りて渡す。
+        /// 段取りが呼ぶときの引数。その行の呼び出しが相手にするものを指す値は、借りる空きへ
+        /// 替えて借りる先を覚える。
         /// </summary>
         private static IDictionary<string, object> Receiving(
             IDictionary<string, object> args,
@@ -2419,7 +2340,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 観測ツールが、判定の指す引数を受け取るか。受け取る項目を名前ごとに返す。どの呼び分けも
-        /// 受け取らない引数を指す判定は、実機へ投げても断られるだけなので、ここで組み立てを止める。
+        /// 受け取らない引数を指す判定では、組み立てを止める。
         /// </summary>
         private static IDictionary<string, SchemaItem> Observed(
             Postcondition judgement, ToolSchemaTable schemas, string rowKey)
@@ -2513,8 +2434,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 渡す値がその呼び分けに収まるか。受け取らない項目を含まず、必ず要る組をどれも欠かさない
-        /// ことをいう——どちらかが外れていると、呼び先まで届く前に断られる。
+        /// 渡す値がその呼び分けに収まるか。受け取らない項目を含まず、必ず要る組をどれも
+        /// 欠かさないことをいう。
         /// </summary>
         private static bool Fits(SchemaBranch branch, IDictionary<string, object> arguments)
         {
@@ -2533,9 +2454,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その値が、項目の受け取る形をしているか。並びは要素まで、組は項目まで見る——外側だけを
-        /// 見ると、中身の形が違う値も通ってしまう。綴りを持たない項目はSDKに由来する値なので、
-        /// ここでは形を決められず真とする。
+        /// その値が、項目の受け取る形をしているか。並びは要素まで、組は項目まで見る。綴りを
+        /// 持たない項目はSDKに由来する値で、ここでは形を決められず真とする。
         /// </summary>
         private static bool Shaped(SchemaItem item, object value)
         {
@@ -2586,10 +2506,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その行を実際に呼ぶときの引数。読み取りの行は最小の値で埋めて呼べる——何を渡しても
-        /// エディタは動かないので、値が意味を成さなくても呼び先までは届く。状態を動かす行は
-        /// 引数を渡さずに呼べるものだけを呼ぶ——最小の値は、在りもしないファイルや範囲の外の
-        /// 位置になり、確かめたい振る舞いではなくその断りを見ることになる。
+        /// その行を実際に呼ぶときの引数。読み取りの行は最小の値で埋めて呼び、状態を動かす行は引数を
+        /// 渡さずに呼べるものだけを呼ぶ。
         /// </summary>
         private static bool TryCalling(
             ToolMapRow row,
@@ -2617,8 +2535,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 行ごとに渡すと決めた値。書かれた行がその名前のツールを持ち、渡す項目がそのツールの
-        /// 受け取る入力であることをここで確かめる——書いた値が届かないまま検査が増えたように
-        /// 見えるのを防ぐ。
+        /// 受け取る入力であることをここで確かめる。
         /// </summary>
         private static IDictionary<string, IDictionary<string, object>> Given(
             SampleValueTable samples,
@@ -2658,9 +2575,9 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 読み取りの行を実際に呼ぶときの引数。対象を選ばずに呼べるなら空でよく、要る組を持つ
-        /// 呼び分けが1つだけなら最小の値で埋める。対象を指す組が要る呼び分けは偽——何を指すかが
-        /// ここでは決まらない。呼び分けが2つ以上あるときも偽で、どれを選ぶかが決まらない。
+        /// 読み取りの行を実際に呼ぶときの引数。対象を選ばずに呼べるなら空でよく、要る組を
+        /// 持つ呼び分けが1つだけなら最小の値で埋める。対象を指す組が要る呼び分けと、呼び分けが
+        /// 2つ以上あるときは偽。
         /// </summary>
         private static bool TryReading(
             ToolSchema schema,
@@ -2695,7 +2612,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// その呼び分けで、対象を指す組のほかに必ず要る組を、最小の値で埋める。埋められない形が
-        /// 在れば偽——確かめたい断り方ではなく、埋め忘れを断ることになるからである。
+        /// 在れば偽。
         /// </summary>
         private static bool TryFill(
             ToolSchema schema,
@@ -2716,11 +2633,7 @@ namespace PmxEditorMcp.SignatureDump
             return true;
         }
 
-        /// <summary>
-        /// その呼び分けを飛ばすか。引数が既に別の呼び分けを選んでいれば飛ばす——選ばれていない
-        /// 呼び分けの項目を埋めると、選んだ呼び分けが受け取らない項目を渡すことになり、呼び先
-        /// まで届かない。
-        /// </summary>
+        /// <summary>その呼び分けを飛ばすか。引数が既に別の呼び分けを選んでいれば飛ばす。</summary>
         private static bool Skipped(SchemaBranch branch, IDictionary<string, object> arguments)
         {
             object chosen;
@@ -2785,12 +2698,10 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その項目の最小の値。組は必ず要る項目だけを埋めた組、配列は要素1つの並び、綴りは
-        /// その綴りが受け取る最も短い値とする。綴りから値を決められなければ偽。
-        /// ハンドルで指す相手を取る項目は、最小の値では埋めない——番号を書けば綴りには合うが、
-        /// 台帳が預かる相手を指さないので、呼び先まで届かないまま届いたことにしてしまう。この
-        /// 項目の扱いは <paramref name="borrows"/> で分かれる。null なら偽——借りる先を持たない
-        /// 呼び出しでは、渡すものが決まらない。渡してあれば、その項目の道をSDKの型名へ結んで
+        /// その項目の最小の値。組は必ず要る項目だけを埋めた組、配列は要素1つの並び、綴りはその
+        /// 綴りが受け取る最も短い値とする。綴りから値を決められなければ偽。ハンドルで指す相手を
+        /// 取る項目は、最小の値では埋めない。この項目の扱いは <paramref name="borrows"/> で
+        /// 分かれる。null なら偽。渡してあれば、その項目の道をSDKの型名へ結んで
         /// <paramref name="borrows"/> へ置き、<paramref name="value"/> を null のまま真を返す。
         /// 値は、その道へ借りる側が入れる。
         /// </summary>
@@ -2927,8 +2838,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 全件を指すだけで呼べる呼び分けか。対象を選ぶ必須の組が、どれも全件の指定で満たせる
-        /// ものをいう——ハンドルや位置を要る呼び分けは、何を渡すかがここでは決まらない。
+        /// 全件を指すだけで呼べる呼び分けか。対象を選ぶ必須の組が、どれも全件の指定で
+        /// 満たせるものをいう。
         /// </summary>
         private static bool Wholly(SchemaBranch branch)
         {
@@ -2947,8 +2858,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 対象を選ばずに呼べる呼び分け。要る組をどれも持たないものがこれに当たる——ハンドルで
-        /// 対象を指す呼び分けは、何を渡すかがここでは決まらない。
+        /// 対象を選ばずに呼べる呼び分け。要る組をどれも持たないものがこれに当たる。
         /// </summary>
         internal static SchemaBranch Unchosen(ToolSchema schema)
         {
@@ -3007,10 +2917,7 @@ namespace PmxEditorMcp.SignatureDump
                 .ToArray();
         }
 
-        /// <summary>
-        /// ハンドルで指す相手を値に取る項目。番号で書くが、どの番号を書いても台帳が預かる相手を
-        /// 指さないので、借りずに埋めることはできない。
-        /// </summary>
+        /// <summary>ハンドルで指す相手を値に取る項目。借りずに埋めることはできない。</summary>
         private static IDictionary<SchemaItem, string> HandleTargets(
             IDictionary<SchemaItem, string> sdkTypes, ISet<string> handled)
         {
@@ -3123,7 +3030,6 @@ namespace PmxEditorMcp.SignatureDump
                 yield break;
             }
 
-            // 同じ並びを二度用意しない。用意の段はどの検査より先に置くので、出した相手を覚える。
             ISet<string> prepared = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (SchemaBranch branch in schema.Branches)
@@ -3184,11 +3090,6 @@ namespace PmxEditorMcp.SignatureDump
                         Pointing(arguments, member.Name, null),
                         takesNull ? E2eExpectation.Success : E2eExpectation.Refusal,
                         takesNull ? null : ToolEnvelope.InvalidArgument);
-                    // 先頭を指して書くには、指す先の並びと書かれる側の並びの両方に1つでも
-                    // 要る。書かれる側が空だと、全件を指しても1件も触らずに済んでしまい、位置が
-                    // 範囲内かどうかを確かめたことにならない。読み返すのにも書かれる側が要る。
-                    // 用意できない並びでは、その並びを要する検査を組み立てない——通らない検査を
-                    // 出すと、落ちた理由が別の系統として数えられる。
                     IList<string> pointed = Filled(
                         typeName, addersByType, parents, factories, schemas);
                     IList<string> written = Filled(
@@ -3244,8 +3145,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その項目へ書いた値を、モデルが持ち続けるか。持ち続けない項目は読み返して確かめられない
-        /// ——どれがそれに当たるかは呼び先の型からは決まらないので、共通契約の正本が名指しする。
+        /// その項目へ書いた値を、モデルが持ち続けるか。共通契約の正本が名指しする。
         /// </summary>
         private static bool Kept(
             IDictionary<string, ISet<string>> unkept, string tool, string member)
@@ -3298,11 +3198,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 書いた値を読み返す検査。書き換えるツールと同じ型を読むツールへ、全件を指して問う。
-        /// 読む相手が決まらないツールでは null——読み返せないことは、書けたことを疑う理由に
-        /// ならない。
-        /// 読み返す相手に並びの先頭を選ぶのは、関連が無いことを書けても持ち続けられない項目が
-        /// あるからである——頂点の第1ウェイトのボーンは、モデルを整えるときに先頭のボーンへ
-        /// 戻る。
+        /// 読む相手が決まらないツールでは null。読み返す相手には並びの先頭を選ぶ。頂点の
+        /// 第1ウェイトのボーンは、モデルを整えるときに先頭のボーンへ戻る。
         /// </summary>
         private static E2eCase ReadBackCase(
             string rowKey,

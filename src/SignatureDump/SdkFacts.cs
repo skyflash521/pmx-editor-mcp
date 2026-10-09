@@ -6,8 +6,8 @@ using System.Reflection;
 namespace PmxEditorMcp.SignatureDump
 {
     /// <summary>
-    /// 中継の組み立てに要るSDKの事実。1度の読み込みでまとめて取る——読み込むたびに別のアセンブリが
-    /// 立ち上がるので、事実ごとに読み直さない。
+    /// 中継の組み立てに要るSDKの事実。1度の読み込みでまとめて取る。読み込むたびに別のアセンブリが
+    /// 立ち上がる。
     /// </summary>
     public sealed class SdkFacts
     {
