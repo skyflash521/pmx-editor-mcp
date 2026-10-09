@@ -108,6 +108,7 @@ namespace PmxEditorMcp.Bridge
                 {
                     Name = definition.Name,
                     Description = definition.Description,
+                    Destructive = definition.Destructive ? true : null,
                     Meta = declared
                         ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
                         : null,

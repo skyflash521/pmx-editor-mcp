@@ -8,7 +8,7 @@ namespace PmxEditorMcp.Bridge
     internal sealed class GeneratedToolDefinition
     {
         internal GeneratedToolDefinition(
-            string name, string description, string inputSchema, bool returnsImage)
+            string name, string description, string inputSchema, bool returnsImage, bool destructive)
         {
             if (name == null)
             {
@@ -29,6 +29,7 @@ namespace PmxEditorMcp.Bridge
             Description = description;
             InputSchema = inputSchema;
             ReturnsImage = returnsImage;
+            Destructive = destructive;
         }
 
         internal string Name { get; }
@@ -43,5 +44,7 @@ namespace PmxEditorMcp.Bridge
         /// 中身を見られない。
         /// </summary>
         internal bool ReturnsImage { get; }
+
+        internal bool Destructive { get; }
     }
 }

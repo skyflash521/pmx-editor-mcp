@@ -10,11 +10,18 @@ namespace PmxEditorMcp.SignatureDump
     {
         public ToolDefinition(
             string name, string description, string inputSchema, bool returnsImage)
+            : this(name, description, inputSchema, returnsImage, false)
+        {
+        }
+
+        public ToolDefinition(
+            string name, string description, string inputSchema, bool returnsImage, bool destructive)
         {
             Name = name;
             Description = description;
             InputSchema = inputSchema;
             ReturnsImage = returnsImage;
+            Destructive = destructive;
         }
 
         public string Name { get; }
@@ -29,6 +36,8 @@ namespace PmxEditorMcp.SignatureDump
         /// 文字列で返すと、MCPクライアントは中身を見られない。
         /// </summary>
         public bool ReturnsImage { get; }
+
+        public bool Destructive { get; }
     }
 
     /// <summary>
@@ -218,7 +227,8 @@ namespace PmxEditorMcp.SignatureDump
                         heldOnly.Contains(schema.Tool),
                         dangerous.Contains(schema.Tool),
                         suppressing.Contains(schema.Tool)),
-                    drawing.Contains(schema.Tool)));
+                    drawing.Contains(schema.Tool),
+                    dangerous.Contains(schema.Tool)));
             }
 
             return definitions;

@@ -639,13 +639,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 NoDrawingTools);
 
             Assert.Equal(
-                new object[] { true, true, false },
-                definitions.Select(DestructiveOf).ToArray());
-        }
-
-        private static object DestructiveOf(ToolDefinition definition)
-        {
-            return typeof(ToolDefinition).GetProperty("Destructive")?.GetValue(definition);
+                new[] { true, true, false },
+                definitions.Select(definition => definition.Destructive).ToArray());
         }
 
         [Fact]

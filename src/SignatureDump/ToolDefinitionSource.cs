@@ -45,7 +45,9 @@ namespace PmxEditorMcp.SignatureDump
                 text.Append("                    ").Append(CSharpText.Quote(definition.Description)).Append(",\n");
                 text.Append("                    ").Append(CSharpText.Quote(definition.InputSchema)).Append(",\n");
                 text.Append("                    ")
-                    .Append(definition.ReturnsImage ? "true" : "false").Append("),\n");
+                    .Append(definition.ReturnsImage ? "true" : "false").Append(",\n");
+                text.Append("                    ")
+                    .Append(definition.Destructive ? "true" : "false").Append("),\n");
             }
 
             text.Append("            };\n");

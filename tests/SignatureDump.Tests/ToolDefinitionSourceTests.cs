@@ -65,8 +65,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string plain = ToolDefinitionSource.Compose(
                 new[] { new ToolDefinition("one", "受け持つこと", "{}", false) }, "abc123");
 
-            Assert.Contains("\"{}\",\n                    true)", drawn);
-            Assert.Contains("\"{}\",\n                    false)", plain);
+            Assert.Contains("\"{}\",\n                    true,\n", drawn);
+            Assert.Contains("\"{}\",\n                    false,\n", plain);
         }
 
         [Fact]

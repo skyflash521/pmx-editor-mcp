@@ -115,7 +115,11 @@ namespace PmxEditorMcp.SignatureDump
                     ToolDefinitionSource.Compose(
                         definitions
                             .Select(d => new ToolDefinition(
-                                d.Name, d.Description, SchemaCompactor.Compact(d.InputSchema), d.ReturnsImage))
+                                d.Name,
+                                d.Description,
+                                SchemaCompactor.Compact(d.InputSchema),
+                                d.ReturnsImage,
+                                d.Destructive))
                             .ToList(),
                         digest));
             }
