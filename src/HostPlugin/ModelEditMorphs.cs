@@ -430,7 +430,7 @@ namespace PmxEditorMcp
             {
                 foreach (int at in targets.Distinct())
                 {
-                    IPXBone twin = ModelEditBones.Twin(model, model.Bone[at]);
+                    IPXBone twin = MirrorPartners.OfBone(model, model.Bone[at]);
                     if (twin != null)
                     {
                         partners[model.Bone[at]] = twin;

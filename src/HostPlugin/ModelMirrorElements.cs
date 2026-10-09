@@ -183,7 +183,7 @@ namespace PmxEditorMcp
             foreach (T item in items)
             {
                 string name = Name(item);
-                string other = Flipped(name, false);
+                string other = MirrorPartners.Flipped(name, false);
                 T found;
                 if (!string.Equals(name, other, StringComparison.Ordinal)
                     && byName.TryGetValue(other, out found)
@@ -199,7 +199,7 @@ namespace PmxEditorMcp
         private static IPXBone Bone(IPXBone bone)
         {
             IPXBone made = (IPXBone)bone.Clone();
-            made.Name = Flipped(bone.Name, true);
+            made.Name = MirrorPartners.Flipped(bone.Name, true);
             made.Position = Aside(bone.Position);
             made.ToOffset = Aside(bone.ToOffset);
             made.Parent = bone.Parent;
@@ -370,7 +370,7 @@ namespace PmxEditorMcp
         private static IPXBody Body(IPXBody body, IDictionary<IPXBone, IPXBone> bones)
         {
             IPXBody made = (IPXBody)body.Clone();
-            made.Name = Flipped(body.Name, true);
+            made.Name = MirrorPartners.Flipped(body.Name, true);
             made.Position = Aside(body.Position);
             made.Rotation = Turned(body.Rotation);
             made.Bone = Instead(bones, body.Bone, true);
@@ -381,7 +381,7 @@ namespace PmxEditorMcp
         private static IPXJoint Joint(IPXJoint joint, IDictionary<IPXBody, IPXBody> bodies)
         {
             IPXJoint made = (IPXJoint)joint.Clone();
-            made.Name = Flipped(joint.Name, true);
+            made.Name = MirrorPartners.Flipped(joint.Name, true);
             made.Position = Aside(joint.Position);
             made.Rotation = Turned(joint.Rotation);
             Limit(
@@ -435,7 +435,7 @@ namespace PmxEditorMcp
 
             foreach (IPXBone bone in model.Bone)
             {
-                bone.Name = Flipped(bone.Name, false);
+                bone.Name = MirrorPartners.Flipped(bone.Name, false);
                 bone.Position = Aside(bone.Position);
                 bone.ToOffset = Aside(bone.ToOffset);
                 if (bone.IK != null)
@@ -455,7 +455,7 @@ namespace PmxEditorMcp
             changed += Shifted(model);
             foreach (IPXBody body in model.Body)
             {
-                body.Name = Flipped(body.Name, false);
+                body.Name = MirrorPartners.Flipped(body.Name, false);
                 body.Position = Aside(body.Position);
                 body.Rotation = Turned(body.Rotation);
                 changed++;
@@ -463,7 +463,7 @@ namespace PmxEditorMcp
 
             foreach (IPXJoint joint in model.Joint)
             {
-                joint.Name = Flipped(joint.Name, false);
+                joint.Name = MirrorPartners.Flipped(joint.Name, false);
                 joint.Position = Aside(joint.Position);
                 joint.Rotation = Turned(joint.Rotation);
                 Limit(
@@ -513,60 +513,13 @@ namespace PmxEditorMcp
 
         private static V3 Aside(V3 given)
         {
-            return given == null ? null : new V3(-given.X, given.Y, given.Z);
+            return given == null ? null : MirrorPartners.Across(given, ModelEditVertices.AxisX);
         }
 
         private static V3 Turned(V3 given)
         {
             return given == null ? null : new V3(given.X, -given.Y, -given.Z);
         }
-
-        /// <summary>
-        /// 名前の左右を入れ替える。<paramref name="marking"/> が真のとき、左右を持たない名前には
-        /// 写しと分かる印を頭へ足す。
-        /// </summary>
-        private static string Flipped(string name, bool marking)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                return name;
-            }
-
-            char[] letters = name.ToCharArray();
-            int first = 0;
-            int last = letters.Length - 1;
-            while (first <= last && letters[first] == '_')
-            {
-                first++;
-            }
-
-            while (last >= first && letters[last] == '_')
-            {
-                last--;
-            }
-
-            if (first > last)
-            {
-                return marking ? Mark + name : name;
-            }
-
-            if (letters[first] == '左' || letters[first] == '右')
-            {
-                letters[first] = letters[first] == '左' ? '右' : '左';
-            }
-            else if (letters[last] == '左' || letters[last] == '右')
-            {
-                letters[last] = letters[last] == '左' ? '右' : '左';
-            }
-            else
-            {
-                return marking ? Mark + name : name;
-            }
-
-            return new string(letters);
-        }
-
-        private const string Mark = "M-";
 
         private static string Name(object item)
         {

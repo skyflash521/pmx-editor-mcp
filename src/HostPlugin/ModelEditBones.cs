@@ -101,11 +101,6 @@ namespace PmxEditorMcp
         /// <summary>消えたボーンの数を返す項目の名前。</summary>
         public const string RemovedName = "removed";
 
-        // ボーンの名前で左右を表す綴りは、PMXのモデルが従っている慣例である。
-        private const string LeftSide = "左";
-
-        private const string RightSide = "右";
-
         /// <summary>ボーンではなく頂点を指す操作。</summary>
         private static IList<string> Vertices
         {
@@ -459,7 +454,7 @@ namespace PmxEditorMcp
             foreach (int at in chosen.Distinct())
             {
                 IPXBone bone = model.Bone[at];
-                IPXBone twin = Twin(model, bone);
+                IPXBone twin = MirrorPartners.OfBone(model, bone);
                 if (twin == null)
                 {
                     continue;
@@ -852,25 +847,16 @@ namespace PmxEditorMcp
             return found != null && gone.Contains(found) ? null : found;
         }
 
-        internal static IPXBone Twin(IPXPmx model, IPXBone bone)
-        {
-            string turned = Turned(bone.Name);
-
-            return turned == null
-                ? null
-                : model.Bone.FirstOrDefault(
-                    held => string.Equals(held.Name, turned, StringComparison.Ordinal));
-        }
 
         private static bool Mirrored(IPXPmx model, IPXBone bone, string axis)
         {
-            IPXBone twin = Twin(model, bone);
+            IPXBone twin = MirrorPartners.OfBone(model, bone);
             if (twin == null)
             {
                 return false;
             }
 
-            V3 across = Across(twin.Position, axis);
+            V3 across = MirrorPartners.Across(twin.Position, axis);
             if (Vectors.Same(bone.Position, across))
             {
                 return false;
@@ -970,43 +956,12 @@ namespace PmxEditorMcp
                 : Vectors.Toward(bone.ToBone.Position, bone.Position);
         }
 
-        private static V3 Across(V3 given, string axis)
-        {
-            switch (axis)
-            {
-                case ModelEditVertices.AxisX:
-                    return new V3(-given.X, given.Y, given.Z);
-
-                case ModelEditVertices.AxisY:
-                    return new V3(given.X, -given.Y, given.Z);
-
-                default:
-                    return new V3(given.X, given.Y, -given.Z);
-            }
-        }
-
         /// <summary>その向きと平行でない向き。垂直な向きを作る手がかりにする。</summary>
         private static V3 Aside(V3 given)
         {
             return Math.Abs(given.X) < Math.Abs(given.Y)
                 ? new V3(1f, 0f, 0f)
                 : new V3(0f, 1f, 0f);
-        }
-
-        /// <summary>左右を入れ替えた名前。どちらも入っていない名前では空を返す。</summary>
-        private static string Turned(string name)
-        {
-            if (name == null)
-            {
-                return null;
-            }
-
-            if (name.Contains(LeftSide))
-            {
-                return name.Replace(LeftSide, RightSide);
-            }
-
-            return name.Contains(RightSide) ? name.Replace(RightSide, LeftSide) : null;
         }
 
         private const string RootName = "全ての親";

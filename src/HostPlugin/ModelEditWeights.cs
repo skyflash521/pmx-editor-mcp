@@ -88,11 +88,6 @@ namespace PmxEditorMcp
         /// <summary>変えた頂点の数を返す項目の名前。</summary>
         public const string ChangedName = "changed";
 
-        // ボーンの名前で左右を表す綴りは、PMXのモデルが従っている慣例である。
-        private const string LeftSide = "左";
-
-        private const string RightSide = "右";
-
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
         public static IList<string> Operations
         {
@@ -1366,7 +1361,7 @@ namespace PmxEditorMcp
             foreach (IPXVertex vertex in picked)
             {
                 IPXVertex twin;
-                if (!spots.TryGetValue(Spot(Across(vertex.Position, axis)), out twin)
+                if (!spots.TryGetValue(Spot(MirrorPartners.Across(vertex.Position, axis)), out twin)
                     || ReferenceEquals(twin, vertex))
                 {
                     continue;
@@ -1384,25 +1379,10 @@ namespace PmxEditorMcp
                     vertex,
                     VertexWeights.Read(twin)
                         .Select(share => new KeyValuePair<IPXBone, float>(
-                            Opposite(model, share.Key), share.Value))
+                            MirrorPartners.OfBone(model, share.Key) ?? share.Key, share.Value))
                         .ToList());
                 vertex.SDEF = twin.SDEF;
-                VertexWeights.MirrorSdef(vertex, twin, point => Across(point, axis));
-            }
-        }
-
-        private static V3 Across(V3 given, string axis)
-        {
-            switch (axis)
-            {
-                case ModelEditVertices.AxisX:
-                    return new V3(-given.X, given.Y, given.Z);
-
-                case ModelEditVertices.AxisY:
-                    return new V3(given.X, -given.Y, given.Z);
-
-                default:
-                    return new V3(given.X, given.Y, -given.Z);
+                VertexWeights.MirrorSdef(vertex, twin, point => MirrorPartners.Across(point, axis));
             }
         }
 
@@ -1414,32 +1394,6 @@ namespace PmxEditorMcp
                 given.X.ToString("R", CultureInfo.InvariantCulture),
                 given.Y.ToString("R", CultureInfo.InvariantCulture),
                 given.Z.ToString("R", CultureInfo.InvariantCulture));
-        }
-
-        private static IPXBone Opposite(IPXPmx model, IPXBone bone)
-        {
-            string turned = Turned(bone.Name);
-
-            return turned == null
-                ? bone
-                : model.Bone.FirstOrDefault(
-                    other => string.Equals(other.Name, turned, StringComparison.Ordinal)) ?? bone;
-        }
-
-        /// <summary>左右を入れ替えた名前。どちらも入っていない名前では空を返す。</summary>
-        private static string Turned(string name)
-        {
-            if (name == null)
-            {
-                return null;
-            }
-
-            if (name.Contains(LeftSide))
-            {
-                return name.Replace(LeftSide, RightSide);
-            }
-
-            return name.Contains(RightSide) ? name.Replace(RightSide, LeftSide) : null;
         }
     }
 }
