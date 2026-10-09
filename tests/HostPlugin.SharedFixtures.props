@@ -1,0 +1,22 @@
+<Project>
+
+  <!-- 題材と代役は HostPlugin.Tests が持ち、ほかのホストのテストはここから共有する。 -->
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\ComposedEditFixture.cs" Link="Shared\ComposedEditFixture.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\ComposedScreenFixture.cs" Link="Shared\ComposedScreenFixture.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\DialogSightings.cs" Link="Shared\DialogSightings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\DispatchedInvoker.cs" Link="Shared\DispatchedInvoker.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\EventBindingFixture.cs" Link="Shared\EventBindingFixture.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\ExchangeStream.cs" Link="Shared\ExchangeStream.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\FakeTransformView.cs" Link="Shared\FakeTransformView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\ModifierKeyDoubles.cs" Link="Shared\ModifierKeyDoubles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\ModelShape.cs" Link="Shared\ModelShape.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\PmxModelDoubles.cs" Link="Shared\PmxModelDoubles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\ScreenDoubles.cs" Link="Shared\ScreenDoubles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\SdkStubs.cs" Link="Shared\SdkStubs.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\StubClientProcess.cs" Link="Shared\StubClientProcess.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\UiDoubles.cs" Link="Shared\UiDoubles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HostPlugin.Tests\VmdSamples.cs" Link="Shared\VmdSamples.cs" />
+  </ItemGroup>
+
+</Project>

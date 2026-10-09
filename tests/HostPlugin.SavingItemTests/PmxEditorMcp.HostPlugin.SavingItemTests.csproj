@@ -6,30 +6,16 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>PmxEditorMcp.HostPlugin.SavingItemTests</AssemblyName>
     <RootNamespace>PmxEditorMcp.Tests</RootNamespace>
-    <LangVersion>latest</LangVersion>
-    <IsPackable>false</IsPackable>
     <RequiresPmxEditorDir>true</RequiresPmxEditorDir>
+    <PmxEditorSdkCopied>true</PmxEditorSdkCopied>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
-  </ItemGroup>
+  <Import Project="..\..\PmxEditorSdk.props" />
 
   <ItemGroup>
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
-    <Reference Include="PEPlugin">
-      <HintPath>$(PmxEditorDir)\Lib\PEPlugin\PEPlugin.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="SlimDX">
-      <HintPath>$(PmxEditorDir)\Lib\SlimDX\x64\SlimDX.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>
@@ -41,22 +27,6 @@
     <Compile Include="..\HostPlugin.ModalTests\DialogStartFolder.cs" Link="Shared\DialogStartFolder.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="..\HostPlugin.Tests\ComposedEditFixture.cs" Link="Shared\ComposedEditFixture.cs" />
-    <Compile Include="..\HostPlugin.Tests\ComposedScreenFixture.cs" Link="Shared\ComposedScreenFixture.cs" />
-    <Compile Include="..\HostPlugin.Tests\DialogSightings.cs" Link="Shared\DialogSightings.cs" />
-    <Compile Include="..\HostPlugin.Tests\DispatchedInvoker.cs" Link="Shared\DispatchedInvoker.cs" />
-    <Compile Include="..\HostPlugin.Tests\EventBindingFixture.cs" Link="Shared\EventBindingFixture.cs" />
-    <Compile Include="..\HostPlugin.Tests\ExchangeStream.cs" Link="Shared\ExchangeStream.cs" />
-    <Compile Include="..\HostPlugin.Tests\FakeTransformView.cs" Link="Shared\FakeTransformView.cs" />
-    <Compile Include="..\HostPlugin.Tests\ModifierKeyDoubles.cs" Link="Shared\ModifierKeyDoubles.cs" />
-    <Compile Include="..\HostPlugin.Tests\ModelShape.cs" Link="Shared\ModelShape.cs" />
-    <Compile Include="..\HostPlugin.Tests\PmxModelDoubles.cs" Link="Shared\PmxModelDoubles.cs" />
-    <Compile Include="..\HostPlugin.Tests\ScreenDoubles.cs" Link="Shared\ScreenDoubles.cs" />
-    <Compile Include="..\HostPlugin.Tests\SdkStubs.cs" Link="Shared\SdkStubs.cs" />
-    <Compile Include="..\HostPlugin.Tests\StubClientProcess.cs" Link="Shared\StubClientProcess.cs" />
-    <Compile Include="..\HostPlugin.Tests\UiDoubles.cs" Link="Shared\UiDoubles.cs" />
-    <Compile Include="..\HostPlugin.Tests\VmdSamples.cs" Link="Shared\VmdSamples.cs" />
-  </ItemGroup>
+  <Import Project="..\HostPlugin.SharedFixtures.props" />
 
 </Project>

@@ -5,6 +5,15 @@
     <Version>0.0.1</Version>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <!-- 項目の条件は、プロジェクトの本文が決めた対象フレームワークを見てから評価される。 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="all" />
+  </ItemGroup>
+
   <!-- PMXエディタ導入ディレクトリ(PmxEditorDir)は各自の環境ごとに異なるため、
        Git管理外の local.props で定義する。存在しない環境でも読み込み自体は成立させ、
        未定義のままホストをビルドしたときに明示エラーで失敗させる。 -->

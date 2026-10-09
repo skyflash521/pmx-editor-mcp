@@ -8,18 +8,12 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>PmxEditorMcp.HostPlugin.Tests</AssemblyName>
     <RootNamespace>PmxEditorMcp.Tests</RootNamespace>
-    <LangVersion>latest</LangVersion>
-    <IsPackable>false</IsPackable>
     <!-- SDKを読むので、導入ディレクトリの指定が要る。 -->
     <RequiresPmxEditorDir>true</RequiresPmxEditorDir>
+    <PmxEditorSdkCopied>true</PmxEditorSdkCopied>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
-  </ItemGroup>
+  <Import Project="..\..\PmxEditorSdk.props" />
 
   <ItemGroup>
     <!-- 応答の照合で、ホストと同じシリアライザを使ってJSONを読み解くため。 -->
@@ -27,18 +21,6 @@
     <!-- 画像の受け渡しの題材を組み立て、返った画像の形式と大きさを読むため。 -->
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
-    <!-- 接続初期化の題材がSDKのインターフェースを実装するため。参照は推移しないのでここでも指す。
-         テストは配布物と別のプロセスで動くので、読み込めるよう出力へ複製する(出力は配布しない)。 -->
-    <Reference Include="PEPlugin">
-      <HintPath>$(PmxEditorDir)\Lib\PEPlugin\PEPlugin.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <!-- SDKの座標型が内部で参照する描画ライブラリ。エディタのプロセスでは読み込み済みだが、
-         テストのプロセスには無いので出力へ複製する。 -->
-    <Reference Include="SlimDX">
-      <HintPath>$(PmxEditorDir)\Lib\SlimDX\x64\SlimDX.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>
