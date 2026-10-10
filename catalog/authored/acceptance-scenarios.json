@@ -27733,6 +27733,1666 @@
           }
         }
       ]
+    },
+    {
+      "id": 40,
+      "title": "lateralScale の側と中心のずれ",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 6
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "values": [
+              {
+                "position": [
+                  2,
+                  3,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  -1,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  -2,
+                  -2
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0.5,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "lateralScale",
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              0,
+              1,
+              0
+            ],
+            "knots": [
+              {
+                "s": 0,
+                "scale": 2
+              },
+              {
+                "s": 1,
+                "scale": 2
+              }
+            ],
+            "side": "positive"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2,
+                  6,
+                  5
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  2,
+                  -1,
+                  5
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.3.position",
+                "equals": [
+                  1,
+                  4,
+                  0
+                ]
+              },
+              {
+                "path": "items.4.position",
+                "equals": [
+                  3,
+                  -2,
+                  -2
+                ]
+              },
+              {
+                "path": "items.5.position",
+                "equals": [
+                  2,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "values": [
+              {
+                "position": [
+                  2,
+                  3,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  -1,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  -2,
+                  -2
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0.5,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "lateralScale",
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              0,
+              1,
+              0
+            ],
+            "knots": [
+              {
+                "s": 0,
+                "scale": 2
+              },
+              {
+                "s": 1,
+                "scale": 2
+              }
+            ],
+            "side": "negative"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2,
+                  3,
+                  5
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  2,
+                  -2,
+                  5
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.3.position",
+                "equals": [
+                  1,
+                  2,
+                  0
+                ]
+              },
+              {
+                "path": "items.4.position",
+                "equals": [
+                  3,
+                  -4,
+                  -2
+                ]
+              },
+              {
+                "path": "items.5.position",
+                "equals": [
+                  2,
+                  0.5,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "values": [
+              {
+                "position": [
+                  2,
+                  3,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  -1,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  -2,
+                  -2
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0.5,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "lateralScale",
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              0,
+              1,
+              0
+            ],
+            "knots": [
+              {
+                "s": 0,
+                "scale": 2
+              },
+              {
+                "s": 1,
+                "scale": 2
+              }
+            ],
+            "side": "both"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2,
+                  6,
+                  5
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  2,
+                  -2,
+                  5
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.3.position",
+                "equals": [
+                  1,
+                  4,
+                  0
+                ]
+              },
+              {
+                "path": "items.4.position",
+                "equals": [
+                  3,
+                  -4,
+                  -2
+                ]
+              },
+              {
+                "path": "items.5.position",
+                "equals": [
+                  2,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "values": [
+              {
+                "position": [
+                  2,
+                  3,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  -1,
+                  5
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  -2,
+                  -2
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0.5,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "lateralScale",
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              0,
+              1,
+              0
+            ],
+            "knots": [
+              {
+                "s": 0,
+                "scale": 2
+              },
+              {
+                "s": 1,
+                "scale": 2
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 5
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2,
+                  6,
+                  5
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  2,
+                  -2,
+                  5
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.3.position",
+                "equals": [
+                  1,
+                  4,
+                  0
+                ]
+              },
+              {
+                "path": "items.4.position",
+                "equals": [
+                  3,
+                  -4,
+                  -2
+                ]
+              },
+              {
+                "path": "items.5.position",
+                "equals": [
+                  2,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "lateralScale",
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              0,
+              1,
+              0
+            ],
+            "knots": [
+              {
+                "s": 0,
+                "scale": 2
+              },
+              {
+                "s": 1,
+                "scale": 2
+              }
+            ],
+            "side": "left"
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "values": [
+              {
+                "position": [
+                  2,
+                  4,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  2.5,
+                  7
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 4
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "lateralScale",
+            "indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              0,
+              1,
+              0
+            ],
+            "knots": [
+              {
+                "s": 0,
+                "scale": 0.5,
+                "center": 2
+              },
+              {
+                "s": 1,
+                "scale": 0.5,
+                "center": 2
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2,
+                  3,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  2,
+                  1,
+                  0
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  2,
+                  2,
+                  0
+                ]
+              },
+              {
+                "path": "items.3.position",
+                "equals": [
+                  2,
+                  2.25,
+                  7
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 2
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 6
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  3,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  3,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  4,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  3,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  5,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  4,
+                  9
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 8
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "lateralScale",
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              0,
+              1,
+              0
+            ],
+            "knots": [
+              {
+                "s": 0.25,
+                "scale": 2,
+                "center": 1
+              },
+              {
+                "s": 0.75,
+                "scale": 4,
+                "center": 3
+              }
+            ]
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  5,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  1,
+                  5,
+                  0
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  2,
+                  8,
+                  0
+                ]
+              },
+              {
+                "path": "items.3.position",
+                "equals": [
+                  2,
+                  -4,
+                  0
+                ]
+              },
+              {
+                "path": "items.4.position",
+                "equals": [
+                  2,
+                  2,
+                  0
+                ]
+              },
+              {
+                "path": "items.5.position",
+                "equals": [
+                  3,
+                  3,
+                  0
+                ]
+              },
+              {
+                "path": "items.6.position",
+                "equals": [
+                  4,
+                  11,
+                  0
+                ]
+              },
+              {
+                "path": "items.7.position",
+                "equals": [
+                  2,
+                  8,
+                  9
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  3,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  3,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  4,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  3,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  5,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  4,
+                  9
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 8
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "lateralScale",
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              0,
+              1,
+              0
+            ],
+            "knots": [
+              {
+                "s": 0.25,
+                "scale": 2,
+                "center": 1
+              },
+              {
+                "s": 0.75,
+                "scale": 4,
+                "center": 3
+              }
+            ],
+            "side": "positive"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  5,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  1,
+                  5,
+                  0
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  2,
+                  8,
+                  0
+                ]
+              },
+              {
+                "path": "items.3.position",
+                "equals": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "path": "items.4.position",
+                "equals": [
+                  2,
+                  2,
+                  0
+                ]
+              },
+              {
+                "path": "items.5.position",
+                "equals": [
+                  3,
+                  3,
+                  0
+                ]
+              },
+              {
+                "path": "items.6.position",
+                "equals": [
+                  4,
+                  11,
+                  0
+                ]
+              },
+              {
+                "path": "items.7.position",
+                "equals": [
+                  2,
+                  8,
+                  9
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  3,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  1,
+                  3,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  4,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  3,
+                  3,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  5,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  4,
+                  9
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 8
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "lateralScale",
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              0,
+              1,
+              0
+            ],
+            "knots": [
+              {
+                "s": 0.25,
+                "scale": 2,
+                "center": 1
+              },
+              {
+                "s": 0.75,
+                "scale": 4,
+                "center": 3
+              }
+            ],
+            "side": "negative"
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "fields": [
+              "position"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  0,
+                  3,
+                  0
+                ]
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  1,
+                  3,
+                  0
+                ]
+              },
+              {
+                "path": "items.2.position",
+                "equals": [
+                  2,
+                  4,
+                  0
+                ]
+              },
+              {
+                "path": "items.3.position",
+                "equals": [
+                  2,
+                  -4,
+                  0
+                ]
+              },
+              {
+                "path": "items.4.position",
+                "equals": [
+                  2,
+                  2,
+                  0
+                ]
+              },
+              {
+                "path": "items.5.position",
+                "equals": [
+                  3,
+                  3,
+                  0
+                ]
+              },
+              {
+                "path": "items.6.position",
+                "equals": [
+                  4,
+                  5,
+                  0
+                ]
+              },
+              {
+                "path": "items.7.position",
+                "equals": [
+                  2,
+                  4,
+                  9
+                ]
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }
