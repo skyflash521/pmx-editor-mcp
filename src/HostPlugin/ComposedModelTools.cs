@@ -46,6 +46,7 @@ namespace PmxEditorMcp
             ModelFindBoneWeights.AddTo(methods, edit);
             ModelFindSurfaceDistances.AddTo(methods, edit);
             ModelFindSurfaceSection.AddTo(methods, edit);
+            ModelFindSurfaceSections.AddTo(methods, edit);
             ModelFindSurfaceIntersections.AddTo(methods, edit);
             ModelCompareShape.AddTo(methods, edit);
             ModelFindParts.AddTo(methods, edit);

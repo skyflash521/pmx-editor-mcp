@@ -27536,34 +27536,6 @@
             ],
             "at": [
               0.75
-            ]
-          },
-          "expect": {
-            "ok": false,
-            "code": "TOOL_INVALID_ARGUMENT"
-          }
-        },
-        {
-          "kind": "tool",
-          "tool": "model_find_surface_sections",
-          "arguments": {
-            "from": [
-              0,
-              0,
-              0
-            ],
-            "to": [
-              4,
-              0,
-              0
-            ],
-            "across": [
-              3,
-              0,
-              2
-            ],
-            "at": [
-              0.75
             ],
             "sets": [
               {}

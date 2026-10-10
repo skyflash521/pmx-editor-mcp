@@ -8668,6 +8668,146 @@
       }
     },
     {
+      "tool": "model_find_surface_sections",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "from",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "to",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "across",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "at",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "shape": "number"
+              }
+            },
+            {
+              "name": "sets",
+              "origin": "hostInput",
+              "required": true,
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "indices",
+                    "origin": "hostInput",
+                    "required": false,
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number",
+                      "bounds": {
+                        "minimum": 0
+                      }
+                    }
+                  },
+                  {
+                    "name": "materialIndices",
+                    "origin": "hostInput",
+                    "required": false,
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number",
+                      "bounds": {
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "sections",
+            "origin": "hostOutput",
+            "element": {
+              "origin": "hostOutput",
+              "members": [
+                {
+                  "name": "set",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "s",
+                  "origin": "hostOutput",
+                  "shape": "number"
+                },
+                {
+                  "name": "lines",
+                  "origin": "hostOutput",
+                  "element": {
+                    "origin": "hostOutput",
+                    "members": [
+                      {
+                        "name": "closed",
+                        "origin": "hostOutput",
+                        "shape": "boolean"
+                      },
+                      {
+                        "name": "length",
+                        "origin": "hostOutput",
+                        "shape": "number"
+                      },
+                      {
+                        "name": "points",
+                        "origin": "hostOutput",
+                        "element": {
+                          "origin": "hostOutput",
+                          "element": {
+                            "origin": "hostOutput",
+                            "shape": "number"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_find_vertex_bounds",
       "branches": [
         {

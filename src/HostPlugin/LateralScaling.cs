@@ -6,8 +6,6 @@ namespace PmxEditorMcp
 {
     internal sealed class LateralScaling
     {
-        private const double Tiny = 1e-9;
-
         private readonly Vec _from;
 
         private readonly Vec _axis;
@@ -44,27 +42,13 @@ namespace PmxEditorMcp
             out string refused)
         {
             made = null;
-            refused = null;
-            Vec axis = to - from;
-            double length = axis.Length;
-            if (!(length > 0d))
+            AxisFrame frame;
+            if (!AxisFrame.TryCreate(from, to, across, out frame, out refused))
             {
-                refused = "from と to は、異なる点でなければならない。";
-
                 return false;
             }
 
-            Vec unit = axis * (1d / length);
-            Vec perpendicular = across - (unit * across.Dot(unit));
-            double width = perpendicular.Length;
-            if (!(width > Tiny * across.Length))
-            {
-                refused = "across は、from から to への軸と平行でない向きでなければならない。";
-
-                return false;
-            }
-
-            made = new LateralScaling(from, axis, perpendicular * (1d / width), knots);
+            made = new LateralScaling(frame.From, frame.Axis, frame.Across, knots);
 
             return true;
         }

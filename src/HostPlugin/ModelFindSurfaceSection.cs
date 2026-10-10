@@ -320,75 +320,113 @@ namespace PmxEditorMcp
 
         private static List<Line> Section(IPXPmx model, List<int> materials, V3 origin, V3 normal)
         {
+            return Section(
+                Triangles(materials.Distinct().SelectMany(m => model.Material[m].Faces)), origin, normal);
+        }
+
+        internal static IEnumerable<V3[]> Triangles(IEnumerable<IPXFace> faces)
+        {
+            foreach (IPXFace face in faces)
+            {
+                IPXVertex[] corners = ViewSelection.Corners(face);
+                if (corners.Length == 3 && corners.All(c => c != null))
+                {
+                    yield return corners.Select(c => c.Position).ToArray();
+                }
+            }
+        }
+
+        internal static List<Line> Section(IEnumerable<V3[]> triangles, V3 origin, V3 normal)
+        {
             Dictionary<Spot, int> welded = new Dictionary<Spot, int>();
             Graph graph = new Graph();
-            foreach (int material in materials.Distinct())
+            foreach (V3[] corners in triangles)
             {
-                foreach (IPXFace face in model.Material[material].Faces)
+                if (Clear(corners, origin, normal))
                 {
-                    IPXVertex[] corners = ViewSelection.Corners(face);
-                    if (corners.Length != 3 || corners.Any(c => c == null))
+                    continue;
+                }
+
+                Vec[] spots = corners.Select(c => Vec.Of(c)).ToArray();
+                Vec span = (spots[1] - spots[0]).Cross(spots[2] - spots[0]);
+                double[] sides = corners.Select(c => Side(c, origin, normal)).ToArray();
+                if (span.Dot(span) == 0 || sides.All(side => side == 0))
+                {
+                    continue;
+                }
+
+                int[] ids = corners.Select(c => Weld(welded, c)).ToArray();
+                List<long> cut = new List<long>();
+                for (int at = 0; at < 3; at++)
+                {
+                    int next = (at + 1) % 3;
+                    if (sides[at] == 0 && sides[next] == 0)
+                    {
+                        graph.Link(
+                            graph.Node(Graph.OnVertex(ids[at]), spots[at]),
+                            graph.Node(Graph.OnVertex(ids[next]), spots[next]));
+
+                        continue;
+                    }
+
+                    if ((sides[at] >= 0) == (sides[next] >= 0))
                     {
                         continue;
                     }
 
-                    Vec[] spots = corners.Select(c => Vec.Of(c.Position)).ToArray();
-                    Vec span = (spots[1] - spots[0]).Cross(spots[2] - spots[0]);
-                    double[] sides = corners.Select(c => Side(c.Position, origin, normal)).ToArray();
-                    if (span.Dot(span) == 0 || sides.All(side => side == 0))
+                    long node;
+                    if (sides[at] == 0 || sides[next] == 0)
                     {
-                        continue;
+                        int on = sides[at] == 0 ? at : next;
+                        node = graph.Node(Graph.OnVertex(ids[on]), spots[on]);
+                    }
+                    else
+                    {
+                        int low = ids[at] < ids[next] ? at : next;
+                        int high = low == at ? next : at;
+                        double share = sides[low] / (sides[low] - sides[high]);
+                        node = graph.Node(
+                            Graph.OnEdge(ids[low], ids[high]),
+                            spots[low] + ((spots[high] - spots[low]) * share));
                     }
 
-                    int[] ids = corners.Select(c => Weld(welded, c.Position)).ToArray();
-                    List<long> cut = new List<long>();
-                    for (int at = 0; at < 3; at++)
+                    if (!cut.Contains(node))
                     {
-                        int next = (at + 1) % 3;
-                        if (sides[at] == 0 && sides[next] == 0)
-                        {
-                            graph.Link(
-                                graph.Node(Graph.OnVertex(ids[at]), spots[at]),
-                                graph.Node(Graph.OnVertex(ids[next]), spots[next]));
-
-                            continue;
-                        }
-
-                        if ((sides[at] >= 0) == (sides[next] >= 0))
-                        {
-                            continue;
-                        }
-
-                        long node;
-                        if (sides[at] == 0 || sides[next] == 0)
-                        {
-                            int on = sides[at] == 0 ? at : next;
-                            node = graph.Node(Graph.OnVertex(ids[on]), spots[on]);
-                        }
-                        else
-                        {
-                            int low = ids[at] < ids[next] ? at : next;
-                            int high = low == at ? next : at;
-                            double share = sides[low] / (sides[low] - sides[high]);
-                            node = graph.Node(
-                                Graph.OnEdge(ids[low], ids[high]),
-                                spots[low] + ((spots[high] - spots[low]) * share));
-                        }
-
-                        if (!cut.Contains(node))
-                        {
-                            cut.Add(node);
-                        }
+                        cut.Add(node);
                     }
+                }
 
-                    if (cut.Count == 2)
-                    {
-                        graph.Link(cut[0], cut[1]);
-                    }
+                if (cut.Count == 2)
+                {
+                    graph.Link(cut[0], cut[1]);
                 }
             }
 
             return graph.Lines();
+        }
+
+        private static bool Clear(V3[] corners, V3 origin, V3 normal)
+        {
+            int positive = 0;
+            int negative = 0;
+            foreach (V3 corner in corners)
+            {
+                double x = ((double)corner.X - origin.X) * normal.X;
+                double y = ((double)corner.Y - origin.Y) * normal.Y;
+                double z = ((double)corner.Z - origin.Z) * normal.Z;
+                double tolerance = 1e-9 * (Math.Abs(x) + Math.Abs(y) + Math.Abs(z));
+                double side = x + y + z;
+                if (side > tolerance)
+                {
+                    positive++;
+                }
+                else if (side < -tolerance)
+                {
+                    negative++;
+                }
+            }
+
+            return positive == corners.Length || negative == corners.Length;
         }
 
         /// <summary>
@@ -498,7 +536,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        private sealed class Graph
+        internal sealed class Graph
         {
             private readonly Dictionary<long, Vec> _points = new Dictionary<long, Vec>();
 
@@ -607,7 +645,7 @@ namespace PmxEditorMcp
             }
         }
 
-        private struct Snap
+        internal struct Snap
         {
             public Snap(double arc, double gap)
             {
@@ -620,7 +658,7 @@ namespace PmxEditorMcp
             public double Gap { get; }
         }
 
-        private sealed class Line
+        internal sealed class Line
         {
             private readonly double[] _arcs;
 
