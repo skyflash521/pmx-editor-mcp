@@ -63,6 +63,16 @@ namespace PmxEditorMcp
 
         public const string KnotScaleName = "scale";
 
+        public const string KnotCenterName = "center";
+
+        public const string SideName = "side";
+
+        public const string BothSide = "both";
+
+        public const string PositiveSide = "positive";
+
+        public const string NegativeSide = "negative";
+
         public const string ModeName = "mode";
 
         public const string RigidMode = "rigid";
@@ -120,6 +130,7 @@ namespace PmxEditorMcp
             new KeyValuePair<string, string[]>(ToName, new[] { LateralScale }),
             new KeyValuePair<string, string[]>(AcrossName, new[] { LateralScale }),
             new KeyValuePair<string, string[]>(KnotsName, new[] { LateralScale }),
+            new KeyValuePair<string, string[]>(SideName, new[] { LateralScale }),
         };
 
         /// <summary>受け取れる操作。スキーマが並べる順。</summary>
@@ -131,6 +142,11 @@ namespace PmxEditorMcp
         public static IList<string> Modes
         {
             get { return new[] { RigidMode, InterpolateMode }; }
+        }
+
+        public static IList<string> Sides
+        {
+            get { return new[] { BothSide, PositiveSide, NegativeSide }; }
         }
 
         /// <summary>受け取れる軸。スキーマが並べる順。</summary>
@@ -178,6 +194,7 @@ namespace PmxEditorMcp
                 ToName,
                 AcrossName,
                 KnotsName,
+                SideName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -207,6 +224,7 @@ namespace PmxEditorMcp
             int fixedEnds = 0;
             string axis;
             string mode;
+            string side = BothSide;
             if (!ComposedInput.TryFloat(
                     context,
                     ThresholdName,
@@ -254,7 +272,17 @@ namespace PmxEditorMcp
                     Modes,
                     out mode,
                     out code,
-                    out message))
+                    out message)
+                || ((context.Params.ContainsKey(SideName) || !string.Equals(operation, LateralScale, StringComparison.Ordinal))
+                    && !ComposedInput.TryChoice(
+                        context,
+                        SideName,
+                        operation,
+                        new[] { LateralScale },
+                        Sides,
+                        out side,
+                        out code,
+                        out message)))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -297,7 +325,7 @@ namespace PmxEditorMcp
 
             if (string.Equals(operation, LateralScale, StringComparison.Ordinal))
             {
-                return ScaledAcross(context, model, chosen);
+                return ScaledAcross(context, model, chosen, side);
             }
 
             if (string.Equals(operation, ProjectOntoSurface, StringComparison.Ordinal))
@@ -839,12 +867,13 @@ namespace PmxEditorMcp
         private static ComposedEditResult ScaledAcross(
             McpMethodContext context,
             IPXPmx model,
-            IList<int> chosen)
+            IList<int> chosen,
+            string side)
         {
             V3 from;
             V3 to;
             V3 across;
-            IList<KeyValuePair<double, double>> knots;
+            IList<LateralScaling.Knot> knots;
             LateralScaling scaling;
             string code;
             string message;
@@ -853,7 +882,14 @@ namespace PmxEditorMcp
                 || !ComposedInput.TrySpot(context, AcrossName, out across, out code, out message)
                 || !TryKnots(context, out knots, out message)
                 || !LateralScaling.TryCreate(
-                    Vec.Of(from), Vec.Of(to), Vec.Of(across), knots, out scaling, out message))
+                    Vec.Of(from),
+                    Vec.Of(to),
+                    Vec.Of(across),
+                    knots,
+                    string.Equals(side, PositiveSide, StringComparison.Ordinal) ? 1
+                        : string.Equals(side, NegativeSide, StringComparison.Ordinal) ? -1 : 0,
+                    out scaling,
+                    out message))
             {
                 return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, message);
             }
@@ -889,7 +925,7 @@ namespace PmxEditorMcp
 
         private static bool TryKnots(
             McpMethodContext context,
-            out IList<KeyValuePair<double, double>> knots,
+            out IList<LateralScaling.Knot> knots,
             out string message)
         {
             knots = null;
@@ -903,25 +939,35 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            List<KeyValuePair<double, double>> made = new List<KeyValuePair<double, double>>();
+            List<LateralScaling.Knot> made = new List<LateralScaling.Knot>();
             foreach (object item in items)
             {
                 IDictionary<string, object> held = item as IDictionary<string, object>;
                 object position;
                 object scale;
+                object middle;
                 float along;
                 float by;
+                float center = 0f;
                 if (held == null
                     || !held.TryGetValue(KnotPositionName, out position)
                     || !held.TryGetValue(KnotScaleName, out scale)
                     || !ValueInput.TrySingle(position, out along)
                     || !ValueInput.TrySingle(scale, out by)
-                    || (made.Count > 0 && !(along > made[made.Count - 1].Key)))
+                    || (made.Count > 0 && !(along > made[made.Count - 1].Position)))
                 {
                     return false;
                 }
 
-                made.Add(new KeyValuePair<double, double>(along, by));
+                if (held.TryGetValue(KnotCenterName, out middle)
+                    && !ValueInput.TrySingle(middle, out center))
+                {
+                    message = KnotsName + " の " + KnotCenterName + " は、有限の数(省略は0)でなければならない。";
+
+                    return false;
+                }
+
+                made.Add(new LateralScaling.Knot(along, by, center));
             }
 
             message = null;

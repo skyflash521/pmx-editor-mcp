@@ -20,6 +20,8 @@ namespace PmxEditorMcp.Tests
 
         private const string Changed = "changed";
 
+        private const string Side = "side";
+
         private const int Digits = 4;
 
         private const float AxisLength = 10f;
@@ -320,6 +322,176 @@ namespace PmxEditorMcp.Tests
             AssertUnchanged(before);
         }
 
+        [Theory]
+        [InlineData("positive", 0.75, -1.5)]
+        [InlineData("negative", 1.5, -0.75)]
+        [InlineData("both", 0.75, -0.75)]
+        public void ASideScalesOnlyTheVerticesOnThatSideOfTheCenter(string side, double positive, double negative)
+        {
+            Place(MiddleS);
+
+            ComposedEditFixture.Value(Run(With(Valid(2), Side, side)));
+
+            V3[] after = Positions();
+            Assert.Equal(positive, after[0].Y, Digits);
+            Assert.Equal(negative, after[1].Y, Digits);
+        }
+
+        [Fact]
+        public void OmittingTheSideIsTheSameAsBoth()
+        {
+            Place(FirstS, MiddleS, LastS);
+            _fixture.Model.Vertex.Add(new FakeVertex(AxisLength * (float)MiddleS, 0f, OtherOffset));
+            ComposedEditFixture.Value(Run(Valid(7)));
+            V3[] omitted = Positions();
+            _fixture.Model.Vertex.Clear();
+            Place(FirstS, MiddleS, LastS);
+            _fixture.Model.Vertex.Add(new FakeVertex(AxisLength * (float)MiddleS, 0f, OtherOffset));
+
+            ComposedEditFixture.Value(Run(With(Valid(7), Side, "both")));
+
+            AssertUnchanged(omitted);
+        }
+
+        [Theory]
+        [InlineData("positive")]
+        [InlineData("negative")]
+        public void AVertexExactlyOnTheCenterIsNotMovedByASide(string side)
+        {
+            _fixture.Model.Vertex.Add(new FakeVertex(AxisLength * (float)MiddleS, 1f, OtherOffset));
+
+            ComposedEditFixture.Value(Run(With(
+                Full(1, AxisFrom, AxisTo, AcrossY, new object[] { Knot(MiddleS, MiddleScale, 1.0) }), Side, side)));
+
+            Assert.Equal(1f, _fixture.Model.Vertex[0].Position.Y);
+        }
+
+        [Fact]
+        public void AConstantCenterIsWhereTheWidthShrinksTo()
+        {
+            Place(MiddleS);
+
+            ComposedEditFixture.Value(Run(With(
+                Valid(2),
+                Knots,
+                new object[] { Knot(FirstS, FirstScale, 1.0), Knot(LastS, FirstScale, 1.0) })));
+
+            V3[] after = Positions();
+            Assert.Equal(1.0 + (AcrossOffset - 1.0) * FirstScale, after[0].Y, Digits);
+            Assert.Equal(1.0 + (-AcrossOffset - 1.0) * FirstScale, after[1].Y, Digits);
+        }
+
+        [Theory]
+        [InlineData(0.35)]
+        [InlineData(0.5)]
+        [InlineData(0.65)]
+        public void TheCenterIsInterpolatedLikeTheScaleAndAnOmittedCenterIsZero(double s)
+        {
+            Place(s);
+            double share = (s - FirstS) / (LastS - FirstS);
+            double eased = share * share * (3.0 - 2.0 * share);
+            double center = 3.0 * eased;
+            double scale = FirstScale + (MiddleScale - FirstScale) * eased;
+
+            ComposedEditFixture.Value(Run(With(
+                Valid(2),
+                Knots,
+                new object[] { Knot(FirstS, FirstScale), Knot(LastS, MiddleScale, 3.0) })));
+
+            V3[] after = Positions();
+            Assert.Equal(center + (AcrossOffset - center) * scale, after[0].Y, Digits);
+            Assert.Equal(center + (-AcrossOffset - center) * scale, after[1].Y, Digits);
+        }
+
+        [Theory]
+        [InlineData(-0.3, 0.0)]
+        [InlineData(1.4, 3.0)]
+        public void BeyondTheEndsTheCenterOfTheNearerEndKnotHolds(double s, double center)
+        {
+            Place(s);
+
+            ComposedEditFixture.Value(Run(With(
+                Valid(2),
+                Knots,
+                new object[] { Knot(FirstS, FirstScale), Knot(LastS, FirstScale, 3.0) })));
+
+            Assert.Equal(center + (AcrossOffset - center) * FirstScale, Positions()[0].Y, Digits);
+        }
+
+        [Theory]
+        [InlineData("left")]
+        [InlineData("")]
+        [InlineData(1)]
+        [InlineData(null)]
+        public void ASideThatIsNotOneOfTheChoicesIsRefused(object side)
+        {
+            V3[] before = Accepted();
+
+            IDictionary<string, object> envelope = Run(With(Valid(), Side, side));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Contains(Side, ComposedEditFixture.Message(envelope));
+            AssertUnchanged(before);
+        }
+
+        [Fact]
+        public void TheSideIsPassedOnlyToScalingLaterally()
+        {
+            V3[] before = Accepted();
+
+            IDictionary<string, object> envelope = _fixture.Call(
+                ModelEditVertices.ToolName,
+                ComposedEditFixture.Arguments(
+                    ComposedEditFixture.Given("operation", ModelEditVertices.Align),
+                    ComposedEditFixture.Given("indices", new object[] { 0 }),
+                    ComposedEditFixture.Given("axis", "y"),
+                    ComposedEditFixture.Given(Side, "positive")));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Contains(Side, ComposedEditFixture.Message(envelope));
+            AssertUnchanged(before);
+        }
+
+        [Theory]
+        [InlineData("wide")]
+        [InlineData(double.NaN)]
+        [InlineData(double.PositiveInfinity)]
+        public void AKnotCenterThatIsNotAFiniteNumberIsRefused(object center)
+        {
+            V3[] before = Accepted();
+
+            IDictionary<string, object> envelope = Run(With(
+                Valid(), Knots, new object[] { Knot(MiddleS, MiddleScale, center) }));
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
+            Assert.Equal(
+                "knots の center は、有限の数(省略は0)でなければならない。",
+                ComposedEditFixture.Message(envelope));
+            AssertUnchanged(before);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        public void TheRefusalOfKnotsWithoutACenterKeepsItsWording(int variant)
+        {
+            V3[] before = Accepted();
+            object[] wrong =
+            {
+                new object[0],
+                new object[] { Knot(0.5, "wide") },
+                new object[] { Knot(LastS, LastScale), Knot(FirstS, FirstScale) },
+            };
+
+            IDictionary<string, object> envelope = Run(With(Valid(), Knots, wrong[variant]));
+
+            Assert.Equal(
+                "knots は、s(位置)の昇順に、scale(有限の数の倍率)との組を1つ以上並べたものでなければならない。",
+                ComposedEditFixture.Message(envelope));
+            AssertUnchanged(before);
+        }
+
         private static object[] Table()
         {
             return new object[]
@@ -333,6 +505,11 @@ namespace PmxEditorMcp.Tests
         private static object Knot(object s, object scale)
         {
             return new Dictionary<string, object> { { "s", s }, { "scale", scale } };
+        }
+
+        private static object Knot(object s, object scale, object center)
+        {
+            return new Dictionary<string, object> { { "s", s }, { "scale", scale }, { "center", center } };
         }
 
         private static object Point(V3 given)

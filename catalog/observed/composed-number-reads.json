@@ -98,6 +98,7 @@
     {"tool": "model_edit_vertices", "input": "across[]", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ModelEditVertices.cs が ComposedInput.TrySpot で単精度の有限の数として読む。"},
     {"tool": "model_edit_vertices", "input": "direction[]", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ModelEditVertices.cs が ComposedInput.TrySpot で単精度の有限の数として読む。"},
     {"tool": "model_edit_vertices", "input": "knots[].s", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ModelEditVertices.cs の TryKnots が単精度の有限の数として読む。"},
+    {"tool": "model_edit_vertices", "input": "knots[].center", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ModelEditVertices.cs の TryKnots が単精度の有限の数として読む。"},
     {"tool": "model_edit_vertices", "input": "knots[].scale", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ModelEditVertices.cs の TryKnots が単精度の有限の数として読む。"},
     {"tool": "model_edit_vertices", "input": "layerTolerance", "reads": "real", "least": 0, "most": 3.4028234663852886e38, "basis": "ModelEditVertices.cs が ComposedInput.TryFloat で0以上の単精度の有限の数として読む。"},
     {"tool": "model_edit_vertices", "input": "offsets[].move[]", "reads": "real", "least": -3.4028234663852886e38, "most": 3.4028234663852886e38, "basis": "ModelEditVertices.cs の TryOffsets が単精度の有限の数として読む。"},

@@ -6694,9 +6694,21 @@
                     "origin": "hostInput",
                     "shape": "number",
                     "required": true
+                  },
+                  {
+                    "name": "center",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": false
                   }
                 ]
               }
+            },
+            {
+              "name": "side",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [
