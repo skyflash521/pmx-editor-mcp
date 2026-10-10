@@ -14401,6 +14401,143 @@
       }
     },
     {
+      "tool": "model_pose_vertices",
+      "branches": [
+        {
+          "branch": "only",
+          "inputs": [
+            {
+              "name": "pmxHandle",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "suppressUndo",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
+            },
+            {
+              "name": "indices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "range",
+              "origin": "hostInput",
+              "members": [
+                {
+                  "name": "start",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 0
+                  }
+                },
+                {
+                  "name": "count",
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "required": true,
+                  "bounds": {
+                    "minimum": 1
+                  }
+                }
+              ]
+            },
+            {
+              "name": "all",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "selected",
+              "origin": "hostInput",
+              "shape": "boolean"
+            },
+            {
+              "name": "materialIndices",
+              "origin": "hostInput",
+              "element": {
+                "origin": "hostInput",
+                "shape": "number",
+                "bounds": {
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "name": "bones",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "members": [
+                  {
+                    "name": "index",
+                    "origin": "hostInput",
+                    "shape": "number",
+                    "required": true,
+                    "bounds": {
+                      "minimum": 0
+                    }
+                  },
+                  {
+                    "name": "rotation",
+                    "origin": "hostInput",
+                    "required": false,
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    }
+                  },
+                  {
+                    "name": "translation",
+                    "origin": "hostInput",
+                    "required": false,
+                    "element": {
+                      "origin": "hostInput",
+                      "shape": "number"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "choices": [
+            {
+              "names": [
+                "all",
+                "indices",
+                "materialIndices",
+                "range",
+                "selected"
+              ],
+              "required": false
+            }
+          ]
+        }
+      ],
+      "output": {
+        "origin": "hostOutput",
+        "members": [
+          {
+            "name": "updated",
+            "origin": "hostOutput",
+            "shape": "number"
+          }
+        ]
+      }
+    },
+    {
       "tool": "model_remove_bodies",
       "branches": [
         {
