@@ -124,10 +124,12 @@
             "properties": {
               "path": { "type": "string", "minLength": 1 },
               "equals": true,
+              "within": { "type": "number", "exclusiveMinimum": 0 },
               "absent": { "const": true },
               "present": { "const": true }
             },
             "required": ["path"],
+            "dependentRequired": { "within": ["equals"] },
             "oneOf": [
               { "required": ["equals"] },
               { "required": ["absent"] },

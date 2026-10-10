@@ -359,13 +359,17 @@ function select(value, dotted) {
 }
 
 /** 値が同じか。並びと組は中身まで見る。 */
-function same(left, right) {
+function same(left, right, within) {
     if (Array.isArray(left) || Array.isArray(right)) {
         if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
             return false;
         }
 
-        return left.every((item, at) => same(item, right[at]));
+        return left.every((item, at) => same(item, right[at], within));
+    }
+
+    if (within !== undefined && typeof left === "number" && typeof right === "number") {
+        return Math.abs(left - right) <= within;
     }
 
     if (left === null || right === null || typeof left !== "object" || typeof right !== "object") {
@@ -375,7 +379,7 @@ function same(left, right) {
     const names = Object.keys(left);
 
     return names.length === Object.keys(right).length
-        && names.every((name) => same(left[name], right[name]));
+        && names.every((name) => same(left[name], right[name], within));
 }
 
 /** 写した画像の大きさ。PNGでなければ null。 */
@@ -580,7 +584,7 @@ function judge(expected, response, remembered) {
             }
 
             const compared = fill(wanted.equals, remembered);
-            if (!same(taken, compared)) {
+            if (!same(taken, compared, wanted.within)) {
                 return wanted.path + " が " + JSON.stringify(compared) + " ではありません: "
                     + JSON.stringify(taken);
             }
