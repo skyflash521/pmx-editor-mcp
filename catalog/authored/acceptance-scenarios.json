@@ -25408,6 +25408,2359 @@
           }
         }
       ]
+    },
+    {
+      "id": 37,
+      "title": "箱と斜めの板を軸に直交する平面で切った切り口",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 12
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 12
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "material",
+            "operation": "new",
+            "count": 2
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  0,
+                  -1
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  0,
+                  -1
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  2,
+                  -1
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  2,
+                  -1
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  0,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  0,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  2,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  2,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  0,
+                  -1
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  0,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  4,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  4,
+                  -1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 12
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F0",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F1",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F2",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F3",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F4",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F5",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F6",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F7",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F8",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F9",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F10",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM0F11",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM1F0",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "aM1F1",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F0"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 2,
+              "vertex3": 1
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F1"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 3,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F2"
+              }
+            ],
+            "value": {
+              "vertex1": 4,
+              "vertex2": 5,
+              "vertex3": 6
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F3"
+              }
+            ],
+            "value": {
+              "vertex1": 4,
+              "vertex2": 6,
+              "vertex3": 7
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F4"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 1,
+              "vertex3": 5
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F5"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 5,
+              "vertex3": 4
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F6"
+              }
+            ],
+            "value": {
+              "vertex1": 3,
+              "vertex2": 7,
+              "vertex3": 6
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F7"
+              }
+            ],
+            "value": {
+              "vertex1": 3,
+              "vertex2": 6,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F8"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 4,
+              "vertex3": 7
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F9"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 7,
+              "vertex3": 3
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F10"
+              }
+            ],
+            "value": {
+              "vertex1": 1,
+              "vertex2": 2,
+              "vertex3": 6
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM0F11"
+              }
+            ],
+            "value": {
+              "vertex1": 1,
+              "vertex2": 6,
+              "vertex3": 5
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM1F0"
+              }
+            ],
+            "value": {
+              "vertex1": 8,
+              "vertex2": 9,
+              "vertex3": 10
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "aM1F1"
+              }
+            ],
+            "value": {
+              "vertex1": 8,
+              "vertex2": 10,
+              "vertex3": 11
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "aM0F0"
+                  },
+                  {
+                    "$from": "aM0F1"
+                  },
+                  {
+                    "$from": "aM0F2"
+                  },
+                  {
+                    "$from": "aM0F3"
+                  },
+                  {
+                    "$from": "aM0F4"
+                  },
+                  {
+                    "$from": "aM0F5"
+                  },
+                  {
+                    "$from": "aM0F6"
+                  },
+                  {
+                    "$from": "aM0F7"
+                  },
+                  {
+                    "$from": "aM0F8"
+                  },
+                  {
+                    "$from": "aM0F9"
+                  },
+                  {
+                    "$from": "aM0F10"
+                  },
+                  {
+                    "$from": "aM0F11"
+                  }
+                ]
+              },
+              {
+                "parentIndex": 1,
+                "handles": [
+                  {
+                    "$from": "aM1F0"
+                  },
+                  {
+                    "$from": "aM1F1"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 14
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [
+              0.25,
+              0.5,
+              0.75
+            ],
+            "sets": [
+              {
+                "materialIndices": [
+                  0
+                ]
+              },
+              {
+                "materialIndices": [
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "sections.0.set",
+                "equals": 0
+              },
+              {
+                "path": "sections.0.s",
+                "equals": 0.25
+              },
+              {
+                "path": "sections.0.lines.0.closed",
+                "equals": true
+              },
+              {
+                "path": "sections.0.lines.0.length",
+                "equals": 8
+              },
+              {
+                "path": "sections.0.lines.1",
+                "absent": true
+              },
+              {
+                "path": "sections.1.set",
+                "equals": 0
+              },
+              {
+                "path": "sections.1.s",
+                "equals": 0.5
+              },
+              {
+                "path": "sections.1.lines.0.closed",
+                "equals": true
+              },
+              {
+                "path": "sections.1.lines.0.length",
+                "equals": 8
+              },
+              {
+                "path": "sections.1.lines.1",
+                "absent": true
+              },
+              {
+                "path": "sections.2.set",
+                "equals": 0
+              },
+              {
+                "path": "sections.2.s",
+                "equals": 0.75
+              },
+              {
+                "path": "sections.2.lines.0.closed",
+                "equals": true
+              },
+              {
+                "path": "sections.2.lines.0.length",
+                "equals": 8
+              },
+              {
+                "path": "sections.3.set",
+                "equals": 1
+              },
+              {
+                "path": "sections.3.s",
+                "equals": 0.25
+              },
+              {
+                "path": "sections.3.lines.0.closed",
+                "equals": false
+              },
+              {
+                "path": "sections.3.lines.0.length",
+                "equals": 2
+              },
+              {
+                "path": "sections.3.lines.0.points",
+                "equals": [
+                  [
+                    -1,
+                    1
+                  ],
+                  [
+                    -0.5,
+                    1
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              },
+              {
+                "path": "sections.3.lines.1",
+                "absent": true
+              },
+              {
+                "path": "sections.4.set",
+                "equals": 1
+              },
+              {
+                "path": "sections.4.s",
+                "equals": 0.5
+              },
+              {
+                "path": "sections.4.lines.0.points",
+                "equals": [
+                  [
+                    -1,
+                    2
+                  ],
+                  [
+                    0,
+                    2
+                  ],
+                  [
+                    1,
+                    2
+                  ]
+                ]
+              },
+              {
+                "path": "sections.5.set",
+                "equals": 1
+              },
+              {
+                "path": "sections.5.s",
+                "equals": 0.75
+              },
+              {
+                "path": "sections.5.lines.0.points",
+                "equals": [
+                  [
+                    -1,
+                    3
+                  ],
+                  [
+                    0.5,
+                    3
+                  ],
+                  [
+                    1,
+                    3
+                  ]
+                ]
+              },
+              {
+                "path": "sections.6",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [
+              1.5,
+              -0.25,
+              0.5
+            ],
+            "sets": [
+              {
+                "materialIndices": [
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "sections.0.s",
+                "equals": 1.5
+              },
+              {
+                "path": "sections.0.lines.0",
+                "absent": true
+              },
+              {
+                "path": "sections.1.s",
+                "equals": -0.25
+              },
+              {
+                "path": "sections.1.lines.0",
+                "absent": true
+              },
+              {
+                "path": "sections.2.s",
+                "equals": 0.5
+              },
+              {
+                "path": "sections.2.lines.0.points",
+                "equals": [
+                  [
+                    -1,
+                    2
+                  ],
+                  [
+                    0,
+                    2
+                  ],
+                  [
+                    1,
+                    2
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [
+              0.5
+            ],
+            "sets": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              },
+              {
+                "indices": [
+                  8,
+                  9,
+                  10
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "sections.0.lines.0.closed",
+                "equals": true
+              },
+              {
+                "path": "sections.0.lines.0.length",
+                "equals": 8
+              },
+              {
+                "path": "sections.1.lines.0.points",
+                "equals": [
+                  [
+                    0,
+                    2
+                  ],
+                  [
+                    1,
+                    2
+                  ]
+                ]
+              },
+              {
+                "path": "sections.1.lines.0.length",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              -2
+            ],
+            "at": [
+              0.5
+            ],
+            "sets": [
+              {
+                "materialIndices": [
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "sections.0.lines.0.points",
+                "equals": [
+                  [
+                    -1,
+                    -2
+                  ],
+                  [
+                    0,
+                    -2
+                  ],
+                  [
+                    1,
+                    -2
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "title": "at を省かず測る集まりの頂点の軸の位置ごとに切る",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 6
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "material",
+            "operation": "new",
+            "count": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  0,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  -1,
+                  -1
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  -1,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  1,
+                  1
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  1,
+                  -1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 6
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "bM0F0",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "bM0F1",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "bM0F2",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "bM0F3",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "bM0F4",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "bM0F5",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "bM0F6",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "bM0F7",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "bM0F0"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 2,
+              "vertex3": 3
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "bM0F1"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 3,
+              "vertex3": 4
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "bM0F2"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 4,
+              "vertex3": 5
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "bM0F3"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 5,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "bM0F4"
+              }
+            ],
+            "value": {
+              "vertex1": 1,
+              "vertex2": 3,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "bM0F5"
+              }
+            ],
+            "value": {
+              "vertex1": 1,
+              "vertex2": 4,
+              "vertex3": 3
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "bM0F6"
+              }
+            ],
+            "value": {
+              "vertex1": 1,
+              "vertex2": 5,
+              "vertex3": 4
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "bM0F7"
+              }
+            ],
+            "value": {
+              "vertex1": 1,
+              "vertex2": 2,
+              "vertex3": 5
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "bM0F0"
+                  },
+                  {
+                    "$from": "bM0F1"
+                  },
+                  {
+                    "$from": "bM0F2"
+                  },
+                  {
+                    "$from": "bM0F3"
+                  },
+                  {
+                    "$from": "bM0F4"
+                  },
+                  {
+                    "$from": "bM0F5"
+                  },
+                  {
+                    "$from": "bM0F6"
+                  },
+                  {
+                    "$from": "bM0F7"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 8
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "sets": [
+              {
+                "materialIndices": [
+                  0
+                ]
+              },
+              {
+                "indices": [
+                  0,
+                  2,
+                  3,
+                  4,
+                  5
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "sections.0.set",
+                "equals": 0
+              },
+              {
+                "path": "sections.0.s",
+                "equals": 0
+              },
+              {
+                "path": "sections.0.lines.0",
+                "absent": true
+              },
+              {
+                "path": "sections.1.set",
+                "equals": 0
+              },
+              {
+                "path": "sections.1.s",
+                "equals": 0.5
+              },
+              {
+                "path": "sections.1.lines.0.closed",
+                "equals": true
+              },
+              {
+                "path": "sections.1.lines.0.length",
+                "equals": 8
+              },
+              {
+                "path": "sections.1.lines.0.points",
+                "equals": [
+                  [
+                    -1,
+                    -1
+                  ],
+                  [
+                    1,
+                    -1
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    -1,
+                    1
+                  ]
+                ]
+              },
+              {
+                "path": "sections.1.lines.1",
+                "absent": true
+              },
+              {
+                "path": "sections.2.set",
+                "equals": 0
+              },
+              {
+                "path": "sections.2.s",
+                "equals": 1
+              },
+              {
+                "path": "sections.2.lines.0",
+                "absent": true
+              },
+              {
+                "path": "sections.3.set",
+                "equals": 1
+              },
+              {
+                "path": "sections.3.s",
+                "equals": 0
+              },
+              {
+                "path": "sections.3.lines.0",
+                "absent": true
+              },
+              {
+                "path": "sections.4.set",
+                "equals": 1
+              },
+              {
+                "path": "sections.4.s",
+                "equals": 0.5
+              },
+              {
+                "path": "sections.4.lines.0.closed",
+                "equals": true
+              },
+              {
+                "path": "sections.4.lines.0.points",
+                "equals": [
+                  [
+                    -1,
+                    -1
+                  ],
+                  [
+                    1,
+                    -1
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    -1,
+                    1
+                  ]
+                ]
+              },
+              {
+                "path": "sections.5",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [
+              0.5
+            ],
+            "sets": [
+              {
+                "materialIndices": [
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "sections.0.s",
+                "equals": 0.5
+              },
+              {
+                "path": "sections.0.lines.0.points",
+                "equals": [
+                  [
+                    -1,
+                    -1
+                  ],
+                  [
+                    1,
+                    -1
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    -1,
+                    1
+                  ]
+                ]
+              },
+              {
+                "path": "sections.1",
+                "absent": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "title": "集まりが空・軸が退化した入力を断る",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "vertex",
+            "operation": "new",
+            "count": 3
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "material",
+            "operation": "new",
+            "count": 1
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 0
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_vertices",
+          "arguments": {
+            "indices": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              {
+                "position": [
+                  0,
+                  0,
+                  -1
+                ]
+              },
+              {
+                "position": [
+                  4,
+                  0,
+                  -1
+                ]
+              },
+              {
+                "position": [
+                  2,
+                  2,
+                  1
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 3
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_face",
+          "arguments": {},
+          "expect": {
+            "ok": true
+          },
+          "record": {
+            "name": "cM0F0",
+            "path": "0",
+            "shape": "number"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_faces",
+          "arguments": {
+            "handles": [
+              {
+                "$from": "cM0F0"
+              }
+            ],
+            "value": {
+              "vertex1": 0,
+              "vertex2": 1,
+              "vertex3": 2
+            }
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_add_faces",
+          "arguments": {
+            "assignments": [
+              {
+                "parentIndex": 0,
+                "handles": [
+                  {
+                    "$from": "cM0F0"
+                  }
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "added",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [
+              0.75
+            ],
+            "sets": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "sections.0.lines.0.closed",
+                "equals": false
+              },
+              {
+                "path": "sections.1",
+                "absent": true
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [
+              0.75
+            ],
+            "sets": []
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [
+              0.75
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [
+              0.75
+            ],
+            "sets": [
+              {}
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [
+              0.75
+            ],
+            "sets": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ],
+                "materialIndices": [
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [],
+            "sets": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              1,
+              0,
+              0
+            ],
+            "to": [
+              1,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [
+              0.75
+            ],
+            "sets": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              2,
+              0,
+              0
+            ],
+            "at": [
+              0.75
+            ],
+            "sets": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              0,
+              0,
+              0
+            ],
+            "at": [
+              0.75
+            ],
+            "sets": [
+              {
+                "indices": [
+                  0,
+                  1,
+                  2
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        }
+      ]
     }
   ]
 }
