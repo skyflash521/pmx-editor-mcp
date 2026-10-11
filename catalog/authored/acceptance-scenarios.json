@@ -27536,6 +27536,34 @@
             ],
             "at": [
               0.75
+            ]
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_find_surface_sections",
+          "arguments": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              3,
+              0,
+              2
+            ],
+            "at": [
+              0.75
             ],
             "sets": [
               {}
@@ -28515,6 +28543,51 @@
                 ]
               }
             ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_edit_vertices",
+          "arguments": {
+            "operation": "lateralScale",
+            "indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              4,
+              0,
+              0
+            ],
+            "across": [
+              0,
+              1,
+              0
+            ],
+            "knots": [
+              {
+                "s": 0,
+                "scale": 2
+              },
+              {
+                "s": 1,
+                "scale": 2
+              }
+            ],
+            "side": "left"
+          },
+          "expect": {
+            "ok": false,
+            "code": "TOOL_INVALID_ARGUMENT"
           }
         },
         {

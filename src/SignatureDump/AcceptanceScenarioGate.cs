@@ -228,6 +228,17 @@ namespace PmxEditorMcp.SignatureDump
                 && expect["ok"].GetValue<bool>();
         }
 
+        private static bool RefusesArguments(JsonNode step)
+        {
+            JsonNode expect = step["expect"];
+
+            return expect != null
+                && expect["ok"] != null
+                && !expect["ok"].GetValue<bool>()
+                && expect["code"] != null
+                && expect["code"].GetValue<string>() == "TOOL_INVALID_ARGUMENT";
+        }
+
         /// <summary>その定義が並べる段。</summary>
         private static IEnumerable<JsonNode> Steps(JsonNode defined)
         {
@@ -317,13 +328,18 @@ namespace PmxEditorMcp.SignatureDump
 
             JsonNode arguments = step["arguments"];
             References(arguments, where, recorded, NumberShape, NumbersShape);
-            EvaluationResults evaluated = schema.Evaluate(
-                Element(Substitute(arguments, recorded)),
-                new EvaluationOptions { OutputFormat = OutputFormat.List });
-            if (!evaluated.IsValid)
+
+            if (!RefusesArguments(step))
             {
-                throw Broken(
-                    where + " の引数が " + tool + " の入力スキーマを満たさない。" + Describe(evaluated));
+                EvaluationResults evaluated = schema.Evaluate(
+                    Element(Substitute(arguments, recorded)),
+                    new EvaluationOptions { OutputFormat = OutputFormat.List });
+                if (!evaluated.IsValid)
+                {
+                    throw Broken(
+                        where + " の引数が " + tool + " の入力スキーマを満たさない。"
+                            + Describe(evaluated));
+                }
             }
 
             Expect(step["expect"], where, recorded);

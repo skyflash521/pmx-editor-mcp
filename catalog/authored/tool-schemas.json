@@ -14477,7 +14477,7 @@
             {
               "name": "bones",
               "origin": "hostInput",
-              "required": false,
+              "required": true,
               "element": {
                 "origin": "hostInput",
                 "members": [
@@ -14521,7 +14521,7 @@
                 "range",
                 "selected"
               ],
-              "required": false
+              "required": true
             }
           ]
         }

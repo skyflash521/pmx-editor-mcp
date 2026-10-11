@@ -207,6 +207,36 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("find_tool", error.Message, StringComparison.Ordinal);
         }
 
+        [Fact]
+        public void ARefusalStepWithAnotherCodeMustStillSatisfyTheSchema()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(Scenario(Refusal(Listing, @"{}", "TOOL_INDEX_OUT_OF_RANGE"))));
+
+            Assert.Contains(Listing, error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnInvalidArgumentRefusalStepIsAcceptedEvenWhenTheSchemaRefusesItsArguments()
+        {
+            Require(Scenario(Refusal(Listing, @"{""limit"":0}", "TOOL_INVALID_ARGUMENT")));
+        }
+
+        [Fact]
+        public void AnInvalidArgumentRefusalStepStillNeedsARegisteredTool()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Require(Scenario(Refusal("model_list_wings", @"{}", "TOOL_INVALID_ARGUMENT"))));
+
+            Assert.Contains("model_list_wings", error.Message, StringComparison.Ordinal);
+        }
+
+        private static string Refusal(string tool, string arguments, string code)
+        {
+            return @"{""kind"":""tool"",""tool"":""" + tool + @""",""arguments"":" + arguments
+                + @",""expect"":{""ok"":false,""code"":""" + code + @"""}}";
+        }
+
         private static void Require(string scenarios)
         {
             AcceptanceScenarioGate.Require(
