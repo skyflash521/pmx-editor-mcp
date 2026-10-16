@@ -196,7 +196,7 @@ namespace PmxEditorMcp.Tests
             }
 
             Assert.Empty(failures);
-            string[] lines = File.ReadAllLines(log.FilePath, Encoding.UTF8);
+            string[] lines = LogText.Lines(log.FilePath);
             Assert.Equal(ThreadCount * LinesPerThread, lines.Length);
 
             HashSet<string> written = new HashSet<string>();

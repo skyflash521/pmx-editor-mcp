@@ -169,7 +169,7 @@ namespace PmxEditorMcp.Tests
             Assert.False(string.IsNullOrEmpty(reason));
             Assert.Equal(HostStatus.NotStartedInvalidBudget, host.Status);
             Assert.False(IsListening(_pipeName));
-            Assert.Contains(host.Budget.InvalidReason, File.ReadAllText(host.LogFilePath, Encoding.UTF8));
+            Assert.Contains(host.Budget.InvalidReason, LogText.Read(host.LogFilePath));
 
             // 環境変数を読み直しても同じ結果になるため、この状態からの開始は受け付けない。
             Assert.False(host.TryStart(out reason));
@@ -389,7 +389,7 @@ namespace PmxEditorMcp.Tests
 
                 Assert.True(WaitUntil(() => host.Status == HostStatus.Stopped));
                 Assert.False(IsListening(_pipeName));
-                Assert.DoesNotContain("待受で例外が起きた", File.ReadAllText(host.LogFilePath, Encoding.UTF8));
+                Assert.DoesNotContain("待受で例外が起きた", LogText.Read(host.LogFilePath));
             }
         }
 
@@ -632,7 +632,7 @@ namespace PmxEditorMcp.Tests
                 host.Stop();
                 Assert.True(WaitUntil(() => host.Status == HostStatus.Stopped));
 
-                string log = File.ReadAllText(host.LogFilePath, Encoding.UTF8);
+                string log = LogText.Read(host.LogFilePath);
                 int occurrences = 0;
                 int index = log.IndexOf("待受の準備に失敗した", StringComparison.Ordinal);
                 while (index >= 0)

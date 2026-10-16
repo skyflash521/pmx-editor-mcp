@@ -507,7 +507,7 @@ namespace PmxEditorMcp.Tests
         private string[] Lines()
         {
             return File.Exists(_log.FilePath)
-                ? File.ReadAllLines(_log.FilePath).Where(l => l.Length != 0).ToArray()
+                ? LogText.Lines(_log.FilePath).Where(l => l.Length != 0).ToArray()
                 : new string[0];
         }
     }

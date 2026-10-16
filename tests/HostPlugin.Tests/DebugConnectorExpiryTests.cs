@@ -133,7 +133,7 @@ namespace PmxEditorMcp.Tests
         private string[] Lines()
         {
             return File.Exists(_log.FilePath)
-                ? File.ReadAllLines(_log.FilePath)
+                ? LogText.Lines(_log.FilePath)
                 : new string[0];
         }
     }
