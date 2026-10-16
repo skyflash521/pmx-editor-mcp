@@ -25,6 +25,8 @@ namespace PmxEditorMcp
 
         public const string BodyAtVertices = "bodyAtVertices";
 
+        public const string SplitBodies = "splitBodies";
+
         public const string ShapeName = "shape";
 
         public const string Sphere = "sphere";
@@ -42,7 +44,7 @@ namespace PmxEditorMcp
         {
             get
             {
-                return new[] { BodyFollowBone, BodyPhysics, Joint, BodyAndJoint, BodyAtVertices };
+                return new[] { BodyFollowBone, BodyPhysics, Joint, BodyAndJoint, BodyAtVertices, SplitBodies };
             }
         }
 
@@ -130,6 +132,9 @@ namespace PmxEditorMcp
 
                 case BodyAtVertices:
                     return Wrapped(model, made, chosen.Select(at => model.Vertex[at]).ToList(), shape);
+
+                case SplitBodies:
+                    return Split(model, made, chosen.Select(at => model.Bone[at]).ToList());
 
                 default:
                     return Attached(
@@ -246,6 +251,154 @@ namespace PmxEditorMcp
             model.Body.Add(body);
 
             return Answer(new[] { model.Body.Count - 1 }, new int[0]);
+        }
+
+        private static ComposedEditResult Split(
+            IPXPmx model, IPXPmxBuilder builder, IList<IPXBone> picked)
+        {
+            Dictionary<IPXBody, IPXBody> halves =
+                new Dictionary<IPXBody, IPXBody>(ReferenceComparer<IPXBody>.Instance);
+            Dictionary<IPXBody, V3> was = new Dictionary<IPXBody, V3>(ReferenceComparer<IPXBody>.Instance);
+            foreach (IPXBone middle in picked.Distinct(ReferenceComparer<IPXBone>.Instance))
+            {
+                IPXBone root = middle.Parent;
+                if (root == null)
+                {
+                    continue;
+                }
+
+                V3 tip = middle.ToBone != null
+                    ? middle.ToBone.Position
+                    : Vectors.Add(middle.Position, middle.ToOffset);
+                V3 along = Vectors.Toward(tip, root.Position);
+                float whole = Vectors.Dot(Vectors.Apart(tip, root.Position, 1f), along);
+                float first = Vectors.Dot(Vectors.Apart(middle.Position, root.Position, 1f), along);
+                if (!(first > 0f) || !(first < whole))
+                {
+                    continue;
+                }
+
+                float ratio = first / whole;
+                foreach (IPXBody body in model.Body
+                    .Where(held => ReferenceEquals(held.Bone, root) && !halves.ContainsKey(held))
+                    .ToList())
+                {
+                    V3 offset = Vectors.Apart(body.Position, root.Position, 1f);
+                    float at = Vectors.Dot(offset, along);
+                    V3 aside = Vectors.Add(root.Position, Vectors.Add(offset, Vectors.Scale(along, -at)));
+                    IPXBody half = (IPXBody)body.Clone();
+                    half.Name = middle.Name;
+                    half.Bone = middle;
+                    half.Position = Vectors.Add(aside, Vectors.Scale(along, first + (at * (1f - ratio))));
+                    half.BoxSize = Shortened(body, along, 1f - ratio);
+                    was[body] = Vectors.Copied(body.Position);
+                    body.Position = Vectors.Add(aside, Vectors.Scale(along, at * ratio));
+                    body.BoxSize = Shortened(body, along, ratio);
+                    model.Body.Insert(model.Body.IndexOf(body) + 1, half);
+                    halves[body] = half;
+                }
+            }
+
+            List<IPXJoint> added = new List<IPXJoint>();
+            foreach (IPXJoint joint in model.Joint.ToList())
+            {
+                IPXBody first = joint.BodyA;
+                IPXBody second = joint.BodyB;
+                bool firstSplit = first != null && halves.ContainsKey(first);
+                bool secondSplit = second != null && halves.ContainsKey(second);
+                if (firstSplit && secondSplit && !Below(second, first.Bone) && !Below(first, second.Bone))
+                {
+                    V3 shift = Vectors.Apart(joint.Position, Vectors.Between(was[first], was[second]), 1f);
+                    IPXJoint copy = (IPXJoint)joint.Clone();
+                    copy.BodyA = halves[first];
+                    copy.BodyB = halves[second];
+                    copy.Position = Vectors.Add(Vectors.Between(copy.BodyA.Position, copy.BodyB.Position), shift);
+                    joint.Position = Vectors.Add(Vectors.Between(first.Position, second.Position), shift);
+                    added.Add(copy);
+                    continue;
+                }
+
+                if (firstSplit && Below(second, first.Bone))
+                {
+                    joint.BodyA = halves[first];
+                }
+
+                if (secondSplit && Below(first, second.Bone))
+                {
+                    joint.BodyB = halves[second];
+                }
+            }
+
+            foreach (KeyValuePair<IPXBody, IPXBody> split in halves)
+            {
+                IPXJoint template = model.Joint.FirstOrDefault(joint =>
+                    (ReferenceEquals(joint.BodyB, split.Key) && Below(split.Key, joint.BodyA == null ? null : joint.BodyA.Bone))
+                    || (ReferenceEquals(joint.BodyA, split.Key) && Below(split.Key, joint.BodyB == null ? null : joint.BodyB.Bone)));
+                IPXJoint seam = template == null
+                    ? Tie(builder, split.Key, split.Value)
+                    : (IPXJoint)template.Clone();
+                bool reversed = template != null && ReferenceEquals(template.BodyA, split.Key);
+                seam.Name = split.Value.Name;
+                seam.BodyA = reversed ? split.Value : split.Key;
+                seam.BodyB = reversed ? split.Key : split.Value;
+                seam.Position = Vectors.Copied(split.Value.Bone.Position);
+                added.Add(seam);
+            }
+
+            foreach (IPXJoint joint in added)
+            {
+                model.Joint.Add(joint);
+            }
+
+            return Answer(
+                halves.Values.Select(half => model.Body.IndexOf(half)).ToList(),
+                added.Select(joint => model.Joint.IndexOf(joint)).ToList());
+        }
+
+        private static bool Below(IPXBody body, IPXBone root)
+        {
+            if (body == null || root == null || ReferenceEquals(body.Bone, root))
+            {
+                return false;
+            }
+
+            HashSet<IPXBone> met = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
+            for (IPXBone bone = body.Bone; bone != null && met.Add(bone); bone = bone.Parent)
+            {
+                if (ReferenceEquals(bone, root))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static V3 Shortened(IPXBody body, V3 along, float ratio)
+        {
+            V3 size = Vectors.Copied(body.BoxSize);
+            if (body.BoxKind == BodyBoxKind.Sphere)
+            {
+                return size;
+            }
+
+            RowMatrix frame = RowMatrix.YawPitchRoll(body.Rotation.Y, body.Rotation.X, body.Rotation.Z);
+            float[] lined = new[]
+            {
+                Math.Abs(Vectors.Dot(frame.Transform(new V3(1f, 0f, 0f)), along)),
+                Math.Abs(Vectors.Dot(frame.Transform(new V3(0f, 1f, 0f)), along)),
+                Math.Abs(Vectors.Dot(frame.Transform(new V3(0f, 0f, 1f)), along)),
+            };
+            int axis = Array.IndexOf(lined, lined.Max());
+            if (body.BoxKind == BodyBoxKind.Capsule && axis != 1)
+            {
+                return size;
+            }
+
+            return new V3(
+                axis == 0 ? size.X * ratio : size.X,
+                axis == 1 ? size.Y * ratio : size.Y,
+                axis == 2 ? size.Z * ratio : size.Z);
         }
 
         /// <summary>そのボーンを指している剛体のうち先頭。無ければ空。</summary>

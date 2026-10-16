@@ -347,7 +347,7 @@
     {
       "tool": "model_create_physics",
       "branching": false,
-      "duty": "指したボーンや頂点から、剛体とJointを作る。対象は indices・range・all・selected のどれか1つで指し、joint は剛体を、bodyAtVertices は頂点を、それ以外はボーンを指す。joint 以外は shape を渡す。bodyFollowBone はボーンに追従する剛体を、bodyPhysics は物理で動く剛体を、ボーンごとに足す。joint は指した剛体を並びの順に、隣り合う組へJointで繋ぐ。bodyAndJoint は物理で動く剛体と、親のボーンを指す剛体へ繋ぐJointを足す。bodyAtVertices は指した頂点を包む大きさの剛体を1つ足す。その大きさは形ごとに読み分けられ、球は半径、箱は各軸の半幅、カプセルは半径と中心線の長さになる。その大きさが単精度で持てる範囲を超えるときは、剛体を足さずに断る。addedBodies と addedJoints に足した位置を返す。"
+      "duty": "指したボーンや頂点から、剛体とJointを作る。対象は indices・range・all・selected のどれか1つで指し、joint は剛体を、bodyAtVertices は頂点を、それ以外はボーンを指す。joint と splitBodies 以外は shape を渡す。bodyFollowBone はボーンに追従する剛体を、bodyPhysics は物理で動く剛体を、ボーンごとに足す。joint は指した剛体を並びの順に、隣り合う組へJointで繋ぐ。bodyAndJoint は物理で動く剛体と、親のボーンを指す剛体へ繋ぐJointを足す。bodyAtVertices は指した頂点を包む大きさの剛体を1つ足す。その大きさは形ごとに読み分けられ、球は半径、箱は各軸の半幅、カプセルは半径と中心線の長さになる。その大きさが単精度で持てる範囲を超えるときは、剛体を足さずに断る。splitBodies は model_edit_bones の addMiddle で足したような、親と表示先の間にあるボーンを指し、親に付く剛体を親からそのボーンまでと、そのボーンから表示先までの2つに割る。後半は複製してそのボーンへ付け、区間に沿う位置と大きさの成分を区間の長さの比で縮める。前後は、親側の剛体へ繋ぐJointを写したJoint(無ければ新しいJoint)でそのボーンの位置に繋ぐ。先の区間の剛体へのJointは後半へ付け替え、両側の剛体とも割れる横のJointは後半どうしにも写す。addedBodies と addedJoints に足した位置を返す。"
     },
     {
       "tool": "model_delete_elements",

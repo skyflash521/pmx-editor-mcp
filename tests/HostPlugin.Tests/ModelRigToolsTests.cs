@@ -761,6 +761,148 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void BodiesOnASplitSegmentAreHalvedAndTheJointsFollowTheHalves()
+        {
+            IList<IPXBone> bones = Bones("上", "左", "左-中", "左先", "右", "右-中", "右先");
+            float[] xs = { 0f, 0f, 0f, 0f, 3f, 3f, 3f };
+            float[] ys = { 2f, 0f, -2f, -4f, 0f, -2f, -4f };
+            for (int at = 0; at < xs.Length; at++)
+            {
+                ((FakeBone)NowAll(bones)[at]).Position = new V3(xs[at], ys[at], 0f);
+            }
+
+            foreach (int at in new[] { 1, 4 })
+            {
+                NowAll(bones)[at].Parent = NowAll(bones)[0];
+                NowAll(bones)[at + 1].Parent = NowAll(bones)[at];
+                NowAll(bones)[at + 2].Parent = NowAll(bones)[at + 1];
+                NowAll(bones)[at].ToBone = NowAll(bones)[at + 1];
+                NowAll(bones)[at + 1].ToBone = NowAll(bones)[at + 2];
+            }
+
+            FakeBody top = new FakeBody("上") { Bone = NowAll(bones)[0] };
+            FakeBody left = new FakeBody("左")
+            {
+                Bone = NowAll(bones)[1],
+                BoxKind = BodyBoxKind.Capsule,
+                BoxSize = new V3(0.5f, 4f, 0f),
+                Position = new V3(0f, -2f, 0f),
+                Mass = 2f,
+            };
+            FakeBody below = new FakeBody("左先") { Bone = NowAll(bones)[3], Position = new V3(0f, -5f, 0f) };
+            FakeBody right = new FakeBody("右")
+            {
+                Bone = NowAll(bones)[4],
+                BoxKind = BodyBoxKind.Box,
+                BoxSize = new V3(0.5f, 2f, 0.5f),
+                Position = new V3(3f, -2f, 0f),
+            };
+            foreach (FakeBody body in new[] { top, left, below, right })
+            {
+                _fixture.Model.Body.Add(body);
+            }
+
+            FakeJoint hanging = new FakeJoint("上-左")
+            {
+                BodyA = top,
+                BodyB = left,
+                SpringConst_Rotate = new V3(1f, 1f, 1f),
+            };
+            FakeJoint onward = new FakeJoint("左-左先")
+            {
+                BodyA = left,
+                BodyB = below,
+                Position = new V3(0f, -4f, 0f),
+            };
+            FakeJoint across = new FakeJoint("左-右")
+            {
+                BodyA = left,
+                BodyB = right,
+                Position = new V3(1.5f, -2f, 0f),
+            };
+            foreach (FakeJoint joint in new[] { hanging, onward, across })
+            {
+                _fixture.Model.Joint.Add(joint);
+            }
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Physics(
+                Operation(ModelCreatePhysics.SplitBodies),
+                ComposedEditFixture.Given("indices", new object[] { 2, 5 })));
+
+            IPXBody nowLeft = On(NowAll(bones)[1]);
+            IPXBody leftHalf = On(NowAll(bones)[2]);
+            IPXBody nowBelow = On(NowAll(bones)[3]);
+            IPXBody nowRight = On(NowAll(bones)[4]);
+            IPXBody rightHalf = On(NowAll(bones)[5]);
+            Near(-1.0, nowLeft.Position.Y);
+            Near(2.0, nowLeft.BoxSize.Y);
+            Near(-3.0, leftHalf.Position.Y);
+            Near(2.0, leftHalf.BoxSize.Y);
+            Near(0.5, leftHalf.BoxSize.X);
+            Assert.Equal(2f, leftHalf.Mass);
+            Near(-1.0, nowRight.Position.Y);
+            Near(1.0, nowRight.BoxSize.Y);
+            Near(-3.0, rightHalf.Position.Y);
+            Near(0.5, rightHalf.BoxSize.Z);
+            IPXJoint nowOnward = Joined(nowBelow);
+            Assert.Same(leftHalf, nowOnward.BodyA);
+            IPXJoint nowAcross = _fixture.Model.Joint.Single(
+                joint => ReferenceEquals(joint.BodyA, nowLeft) && ReferenceEquals(joint.BodyB, nowRight));
+            Near(-1.0, nowAcross.Position.Y);
+            IPXJoint seam = _fixture.Model.Joint.Single(
+                joint => ReferenceEquals(joint.BodyA, nowLeft) && ReferenceEquals(joint.BodyB, leftHalf));
+            Near(-2.0, seam.Position.Y);
+            Near(1.0, seam.SpringConst_Rotate.X);
+            Assert.Single(
+                _fixture.Model.Joint,
+                joint => ReferenceEquals(joint.BodyA, nowRight) && ReferenceEquals(joint.BodyB, rightHalf));
+            IPXJoint copied = _fixture.Model.Joint.Single(
+                joint => ReferenceEquals(joint.BodyA, leftHalf) && ReferenceEquals(joint.BodyB, rightHalf));
+            Near(-3.0, copied.Position.Y);
+            Near(1.5, copied.Position.X);
+            Assert.Equal(2, ((object[])value[ModelCreatePhysics.AddedBodiesName]).Length);
+            Assert.Equal(3, ((object[])value[ModelCreatePhysics.AddedJointsName]).Length);
+        }
+
+        [Fact]
+        public void TheSeamKeepsTheChildSideOfAJointThatHoldsTheChildFirst()
+        {
+            IList<IPXBone> bones = Bones("上", "左", "左-中", "左先");
+            float[] ys = { 2f, 0f, -2f, -4f };
+            for (int at = 0; at < ys.Length; at++)
+            {
+                ((FakeBone)NowAll(bones)[at]).Position = new V3(0f, ys[at], 0f);
+            }
+
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            NowAll(bones)[2].Parent = NowAll(bones)[1];
+            NowAll(bones)[3].Parent = NowAll(bones)[2];
+            NowAll(bones)[1].ToBone = NowAll(bones)[2];
+            NowAll(bones)[2].ToBone = NowAll(bones)[3];
+            FakeBody top = new FakeBody("上") { Bone = NowAll(bones)[0] };
+            FakeBody left = new FakeBody("左") { Bone = NowAll(bones)[1], Position = new V3(0f, -2f, 0f) };
+            _fixture.Model.Body.Add(top);
+            _fixture.Model.Body.Add(left);
+            _fixture.Model.Joint.Add(new FakeJoint("左-上")
+            {
+                BodyA = left,
+                BodyB = top,
+                Limit_AngleLow = new V3(0f, 0f, 0f),
+                Limit_AngleHigh = new V3(1f, 0f, 0f),
+            });
+
+            Physics(
+                Operation(ModelCreatePhysics.SplitBodies),
+                ComposedEditFixture.Given("indices", new object[] { 2 }));
+
+            IPXBody nowLeft = On(NowAll(bones)[1]);
+            IPXBody leftHalf = On(NowAll(bones)[2]);
+            IPXJoint seam = _fixture.Model.Joint.Single(
+                joint => ReferenceEquals(joint.BodyA, leftHalf) && ReferenceEquals(joint.BodyB, nowLeft));
+            Near(1.0, seam.Limit_AngleHigh.X);
+        }
+
+        [Fact]
         public void OneBodyIsAddedAroundAllThePickedVertices()
         {
             Vertex(-1f, 0f, 0f);
@@ -976,6 +1118,16 @@ namespace PmxEditorMcp.Tests
         private IPXBone Named(string name)
         {
             return _fixture.Model.Bone.Single(bone => Now(bone).Name == name);
+        }
+
+        private IPXBody On(IPXBone bone)
+        {
+            return _fixture.Model.Body.Single(body => ReferenceEquals(body.Bone, bone));
+        }
+
+        private IPXJoint Joined(IPXBody body)
+        {
+            return _fixture.Model.Joint.Single(joint => ReferenceEquals(joint.BodyB, body));
         }
 
         private IList<IPXBody> Bodies(params string[] names)
