@@ -1,6 +1,24 @@
 # pmx-editor-mcp
 
-PMXエディタをMCP経由で操作可能にするプラグイン。実体は2つのプロセスに分かれる。
+PMXエディタをMCP経由で操作可能にするプラグイン。
+
+## 導入手順
+
+1. 配布用のzipをダウンロードして展開する。
+
+   リポジトリのページの右側にある「Releases」を開く。
+
+   ![リポジトリのページのReleases](docs/images/github-repository-sidebar.png)
+
+   リリースの「Assets」から `pmx-editor-mcp-<バージョン>.zip` をダウンロードし、任意の場所へ展開する。
+
+   ![リリースのAssetsにあるzip](docs/images/github-release-assets.png)
+
+2. AIエージェントに、展開したフォルダの `INSTALL.md` を読ませてインストールさせる。
+
+## 開発環境
+
+実体は2つのプロセスに分かれる。
 
 | プロセス | 役割 |
 |---|---|
@@ -14,8 +32,6 @@ PMXエディタをMCP経由で操作可能にするプラグイン。実体は2�
 | 製品の要求 | [docs/conventions/requirements.md](docs/conventions/requirements.md) |
 | 規約 | [docs/conventions/](docs/conventions/) |
 | 検査と生成が読むデータ | [catalog/](catalog/) |
-
-## 開発環境
 
 ### 必要なもの
 
