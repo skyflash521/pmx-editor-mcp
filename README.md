@@ -69,7 +69,7 @@ pwsh -File scripts/publish-bridge.ps1 -Destination <発行先>
 claude mcp add -s user pmx-editor-mcp -- "<発行先の PmxEditorMcp.Bridge.exe の絶対パス>"
 ```
 
-登録を解くのは `claude mcp remove pmx-editor-mcp`。
+登録の解除は `claude mcp remove pmx-editor-mcp`。
 
 Claude Code のセッションの中では、ホストの配置とエディタの起動は `local.props` の導入先を
 そのまま使わず、`%LOCALAPPDATA%\pmx-editor-mcp-dev-editors\<セッション>` へ複製した導入先で行う。最後に使ってから7日以上たち、そこからエディタが動いていない複製は、
