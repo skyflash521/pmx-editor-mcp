@@ -575,9 +575,19 @@ namespace PmxEditorMcp
                 made.IsRotation = true;
                 made.Position = Spot(bone, operation);
                 TakeTurn(made, bone);
+                if (string.Equals(operation, AddMiddle, StringComparison.Ordinal) && bone.Parent != null)
+                {
+                    Between(made, bone);
+                }
+
+                if (string.Equals(operation, AddMultiStageParent, StringComparison.Ordinal))
+                {
+                    Over(model, made, bone);
+                }
+
                 if (string.Equals(operation, AddMultiStageChild, StringComparison.Ordinal))
                 {
-                    made.Parent = bone;
+                    Under(model, made, bone);
                     model.Bone.Insert(model.Bone.IndexOf(bone) + 1, made);
                 }
                 else
@@ -604,6 +614,54 @@ namespace PmxEditorMcp
             }
 
             return Answer(added, added.Count, 0);
+        }
+
+        private static void Between(IPXBone made, IPXBone bone)
+        {
+            IPXBone above = bone.Parent;
+            made.Name = above.Name + MiddleJoint + bone.Name;
+            made.ToBone = bone;
+            Flagged(made, bone.Visible ? bone : above);
+            if (ReferenceEquals(above.ToBone, bone))
+            {
+                above.ToBone = made;
+            }
+        }
+
+        private static void Over(IPXPmx model, IPXBone made, IPXBone bone)
+        {
+            Flagged(made, bone);
+            foreach (IPXBone held in model.Bone.Where(held => ReferenceEquals(held.ToBone, bone)))
+            {
+                held.ToBone = made;
+            }
+
+            made.ToBone = bone;
+        }
+
+        private static void Under(IPXPmx model, IPXBone made, IPXBone bone)
+        {
+            Flagged(made, bone);
+            foreach (IPXBone held in model.Bone.Where(held => ReferenceEquals(held.Parent, bone)).ToList())
+            {
+                held.Parent = made;
+            }
+
+            made.Parent = bone;
+            made.ToBone = bone.ToBone;
+            made.ToOffset = Vectors.Copied(bone.ToOffset);
+            if (bone.ToBone != null)
+            {
+                bone.ToBone = made;
+            }
+        }
+
+        private static void Flagged(IPXBone made, IPXBone source)
+        {
+            made.Visible = source.Visible;
+            made.Controllable = source.Controllable;
+            made.IsRotation = source.IsRotation;
+            made.IsTranslation = source.IsTranslation;
         }
 
         private static void TakeTurn(IPXBone made, IPXBone bone)
@@ -968,6 +1026,8 @@ namespace PmxEditorMcp
         private const string ChildTail = "子";
 
         private const string MiddleTail = "中間";
+
+        private const string MiddleJoint = "-";
 
         private const string AppendTail = "付与親";
 

@@ -251,6 +251,105 @@ namespace PmxEditorMcp.Tests
             Near(2.0, made.Position.Y);
         }
 
+        [Fact]
+        public void AStageParentTakesOverTheDisplayTargetsThatPointedAtThePickedBone()
+        {
+            IList<IPXBone> bones = Bones("親", "腕", "別");
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            NowAll(bones)[0].ToBone = NowAll(bones)[1];
+            NowAll(bones)[2].ToBone = NowAll(bones)[1];
+            NowAll(bones)[1].Visible = false;
+            NowAll(bones)[1].IsTranslation = true;
+
+            Bone(
+                Operation(ModelEditBones.AddMultiStageParent),
+                ComposedEditFixture.Given("indices", new object[] { 1 }));
+
+            IPXBone made = Named("腕").Parent;
+            Assert.Same(made, Named("親").ToBone);
+            Assert.Same(made, Named("別").ToBone);
+            Assert.Same(Named("腕"), made.ToBone);
+            Assert.False(made.Visible);
+            Assert.True(made.IsTranslation);
+        }
+
+        [Fact]
+        public void AStageChildTakesOverTheChildrenAndTheDisplayTargetOfThePickedBone()
+        {
+            IList<IPXBone> bones = Bones("腕", "手");
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            NowAll(bones)[0].ToBone = NowAll(bones)[1];
+
+            Bone(
+                Operation(ModelEditBones.AddMultiStageChild),
+                ComposedEditFixture.Given("indices", new object[] { 0 }));
+
+            IPXBone made = Named("手").Parent;
+            Assert.NotSame(Named("腕"), made);
+            Assert.Same(Named("腕"), made.Parent);
+            Assert.Same(made, Named("腕").ToBone);
+            Assert.Same(Named("手"), made.ToBone);
+        }
+
+        [Fact]
+        public void TheMiddleBoneIsLinkedIntoTheDisplayTargetsOfTheSplitSegment()
+        {
+            IList<IPXBone> bones = Bones("親", "子");
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            NowAll(bones)[0].ToBone = NowAll(bones)[1];
+
+            Bone(
+                Operation(ModelEditBones.AddMiddle),
+                ComposedEditFixture.Given("indices", new object[] { 1 }));
+
+            IPXBone made = Named("子").Parent;
+            Assert.Same(made, Named("親").ToBone);
+            Assert.Same(Named("子"), made.ToBone);
+            Assert.Equal("親-子", made.Name);
+        }
+
+        [Fact]
+        public void TheMiddleBoneLeavesADisplayTargetThatPointsElsewhere()
+        {
+            IList<IPXBone> bones = Bones("親", "子", "別");
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            NowAll(bones)[0].ToBone = NowAll(bones)[2];
+
+            Bone(
+                Operation(ModelEditBones.AddMiddle),
+                ComposedEditFixture.Given("indices", new object[] { 1 }));
+
+            Assert.Same(Named("別"), Named("親").ToBone);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void TheMiddleBoneTakesTheFlagsOfTheChildOrOfTheParentWhenTheChildIsHidden(bool shown)
+        {
+            IList<IPXBone> bones = Bones("親", "子");
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            NowAll(bones)[0].Visible = false;
+            NowAll(bones)[0].Controllable = true;
+            NowAll(bones)[0].IsRotation = false;
+            NowAll(bones)[0].IsTranslation = true;
+            NowAll(bones)[1].Visible = shown;
+            NowAll(bones)[1].Controllable = false;
+            NowAll(bones)[1].IsRotation = true;
+            NowAll(bones)[1].IsTranslation = false;
+
+            Bone(
+                Operation(ModelEditBones.AddMiddle),
+                ComposedEditFixture.Given("indices", new object[] { 1 }));
+
+            IPXBone made = Named("子").Parent;
+            IPXBone source = shown ? Named("子") : Named("親");
+            Assert.Equal(source.Visible, made.Visible);
+            Assert.Equal(source.Controllable, made.Controllable);
+            Assert.Equal(source.IsRotation, made.IsRotation);
+            Assert.Equal(source.IsTranslation, made.IsTranslation);
+        }
+
         [Theory]
         [InlineData(ModelEditBones.AddMultiStageParent)]
         [InlineData(ModelEditBones.AddMultiStageChild)]
