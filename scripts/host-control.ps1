@@ -23,7 +23,7 @@ param(
     #          そのビューを開いてからプロセスIDを返す。待受が現れないときは、起こしたエディタを
     #          こちらで閉じてから失敗する
     #   close  指定したエディタを通常の手順で終了し、終了と待受の消失を待つ
-    #   status プラグインメニューの稼働状態を表示させ、本文を読んで閉じる
+    #   status プラグインメニューの稼働状態を表示させ、本文を読んで閉じる。続けてホストのログの所在を返す
     #   stop   稼働中のホストを、メニューを通さずに停止し、待受が消えるまで待つ
     #   start  停止済みのホストを、メニューを通さずに開始し、待受が現れるまで待つ
     #   acl    指定したエディタの待受のパイプに掛かっている権限の規則を表示する
@@ -1687,6 +1687,7 @@ switch ($Action) {
         finally {
             Close-StatusDialogSafely -Dialog $dialog
         }
+        "ログ: " + (Join-Path $env:TEMP "pmx-editor-mcp-host-$ProcessId.log")
     }
     "stop" {
         Assert-ProcessId

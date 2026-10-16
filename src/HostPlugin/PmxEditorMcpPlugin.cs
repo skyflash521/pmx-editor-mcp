@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Windows.Forms;
 using PEPlugin;
 using PEPlugin.Form;
@@ -513,11 +512,7 @@ namespace PmxEditorMcp
             HostStatus status = host.Status;
             string text = "状態: " + DescribeStatus(status) + Environment.NewLine
                 + "パイプ名: " + host.PipeName + Environment.NewLine
-                + "接続: " + (host.IsClientConnected ? "接続中" : "接続なし") + Environment.NewLine
-                + "応答サイズ予算: " + (host.Budget.IsValid
-                    ? host.Budget.Chars.ToString(CultureInfo.InvariantCulture) + " 文字"
-                    : "受理できない値") + Environment.NewLine
-                + "ログ: " + host.LogFilePath;
+                + "接続: " + (host.IsClientConnected ? "接続中" : "接続なし");
 
             string blockReason = DescribeStartBlock(host, status);
             if (blockReason != null)
