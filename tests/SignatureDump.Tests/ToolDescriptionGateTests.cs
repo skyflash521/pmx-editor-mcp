@@ -38,9 +38,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             ToolDescriptionMaterial material = Material("model_list_vertices", "model", "list", "vertices");
             Dictionary<string, ToolDescription> descriptions = Composed(material);
-            descriptions[material.Tool] = new ToolDescription(new string('注', 1000), null);
+            descriptions[material.Tool] = new ToolDescription(new string('注', ToolDescriptionRule.LimitChars + 1), null);
 
-            Rejects("上限のバイト数を超える", new[] { material }, descriptions);
+            Rejects("上限の文字数を超える", new[] { material }, descriptions);
         }
 
         [Fact]
@@ -153,13 +153,13 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Dictionary<string, ToolDescription> descriptions = Composed(material);
             descriptions.Add(
                 "session_release_handle",
-                new ToolDescription(new string('あ', ToolDescriptionRule.LimitBytes), null));
+                new ToolDescription(new string('あ', ToolDescriptionRule.LimitChars + 1), null));
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => ToolDescriptionGate.Require(
                     new[] { material }, descriptions, new[] { "session_release_handle" }));
 
-            Assert.Contains("上限のバイト数を超える", error.Message, StringComparison.Ordinal);
+            Assert.Contains("上限の文字数を超える", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]

@@ -64,18 +64,17 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>説明文がUTF-8で上限のバイト数に収まることを求める。</summary>
         private static void RequireLimit(IDictionary<string, ToolDescription> descriptions)
         {
             foreach (KeyValuePair<string, ToolDescription> description in descriptions
                 .OrderBy(d => d.Key, StringComparer.Ordinal))
             {
-                int bytes = Encoding.UTF8.GetByteCount(description.Value.Text);
-                if (bytes > ToolDescriptionRule.LimitBytes)
+                int length = description.Value.Text.Length;
+                if (length > ToolDescriptionRule.LimitChars)
                 {
                     throw new InvalidOperationException(
-                        "説明文が上限のバイト数を超える: " + description.Key
-                            + "(" + bytes + "バイト)");
+                        "説明文が上限の文字数を超える: " + description.Key
+                            + "(" + length + "文字)");
                 }
             }
         }

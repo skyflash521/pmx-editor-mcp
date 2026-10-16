@@ -131,8 +131,8 @@ namespace PmxEditorMcp.SignatureDump
 
     public static class ToolDescriptionRule
     {
-        /// <summary>説明文の上限。UTF-8のバイト数で数える。</summary>
-        public const int LimitBytes = 2000;
+        /// <summary>説明文の上限。UTF-16の単位の数で数える。</summary>
+        public const int LimitChars = 2048;
 
         private const string TargetLabel = "対象 ";
 
@@ -169,7 +169,7 @@ namespace PmxEditorMcp.SignatureDump
             }
 
             string full = WithTerms(head, material.IndexTerms, t => t.Name + "(" + t.JapaneseName + ")");
-            if (Bytes(full) <= LimitBytes)
+            if (full.Length <= LimitChars)
             {
                 return new ToolDescription(full, null);
             }
@@ -239,7 +239,7 @@ namespace PmxEditorMcp.SignatureDump
             {
                 kept.Add(terms[index]);
                 string candidate = WithTerms(head, kept, t => t.JapaneseName);
-                if (Bytes(candidate) > LimitBytes)
+                if (candidate.Length > LimitChars)
                 {
                     kept.RemoveAt(kept.Count - 1);
                     break;
@@ -257,9 +257,5 @@ namespace PmxEditorMcp.SignatureDump
             return new ToolDescription(text, dropped);
         }
 
-        private static int Bytes(string text)
-        {
-            return Encoding.UTF8.GetByteCount(text);
-        }
     }
 }

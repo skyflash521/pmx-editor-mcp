@@ -97,12 +97,12 @@ namespace PmxEditorMcp.SignatureDump
 
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "照合した: ツール {0} 件・索引語 {1} 件・最大 {2} バイト",
+                "照合した: ツール {0} 件・索引語 {1} 件・最大 {2} 文字",
                 descriptions.Count,
                 materials.Sum(m => m.IndexTerms.Count),
                 descriptions.Count == 0
                     ? 0
-                    : descriptions.Values.Max(d => Encoding.UTF8.GetByteCount(d.Text))));
+                    : descriptions.Values.Max(d => d.Text.Length)));
 
             return ExitCodes.Success;
         }

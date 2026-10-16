@@ -55,22 +55,22 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void TermsThatDoNotFitWithTheirNamesFallBackToTheJapaneseNamesAlone()
         {
             ToolDescription description = ToolDescriptionRule
-                .Compose(Material(null, null, Terms(90, new string('名', 5))));
+                .Compose(Material(null, null, Terms(180, new string('名', 5))));
 
             Assert.DoesNotContain("(", description.Text, StringComparison.Ordinal);
             Assert.Contains(new string('名', 5) + "0", description.Text, StringComparison.Ordinal);
             Assert.Empty(description.Dropped);
-            Assert.True(Bytes(description.Text) <= ToolDescriptionRule.LimitBytes);
+            Assert.True(description.Text.Length <= ToolDescriptionRule.LimitChars);
         }
 
         [Fact]
         public void TermsThatDoNotFitEvenAsJapaneseNamesAreKeptFromTheFrontAndTheRestReported()
         {
-            IList<IndexTerm> terms = Terms(200, new string('名', 5));
+            IList<IndexTerm> terms = Terms(400, new string('名', 5));
 
             ToolDescription description = ToolDescriptionRule.Compose(Material(null, null, terms));
 
-            Assert.True(Bytes(description.Text) <= ToolDescriptionRule.LimitBytes);
+            Assert.True(description.Text.Length <= ToolDescriptionRule.LimitChars);
             Assert.NotEmpty(description.Dropped);
             Assert.Equal(
                 terms.Skip(terms.Count - description.Dropped.Count).Select(t => t.Name).ToArray(),
@@ -84,7 +84,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ATermThatDoesNotFitStopsTheListEvenIfALaterOneWould()
         {
             List<IndexTerm> terms = new List<IndexTerm>(Terms(30, new string('名', 5)));
-            terms.Add(new IndexTerm("長い項目", new string('名', 500)));
+            terms.Add(new IndexTerm("長い項目", new string('名', ToolDescriptionRule.LimitChars)));
             terms.Add(new IndexTerm("短い項目", "名"));
 
             ToolDescription description = ToolDescriptionRule.Compose(Material(null, null, terms));
@@ -99,7 +99,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             IList<IndexTerm> terms = Terms(3, "名");
 
             ToolDescription description = ToolDescriptionRule
-                .Compose(Material(new string('注', 1000), null, terms));
+                .Compose(Material(new string('注', ToolDescriptionRule.LimitChars + 1), null, terms));
 
             Assert.DoesNotContain("索引語", description.Text, StringComparison.Ordinal);
             Assert.Equal(terms.Select(t => t.Name).ToArray(), description.Dropped.ToArray());
@@ -189,9 +189,5 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return terms;
         }
 
-        private static int Bytes(string text)
-        {
-            return Encoding.UTF8.GetByteCount(text);
-        }
     }
 }

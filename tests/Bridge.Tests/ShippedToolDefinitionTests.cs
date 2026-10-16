@@ -200,15 +200,15 @@ namespace PmxEditorMcp.Bridge.Tests
             List<string> over = new List<string>();
             foreach (KeyValuePair<string, string> tool in ShippedDescriptions(true))
             {
-                int bytes = Encoding.UTF8.GetByteCount(tool.Value);
-                if (bytes > ToolDescriptionRule.LimitBytes)
+                int length = tool.Value.Length;
+                if (length > ToolDescriptionRule.LimitChars)
                 {
-                    over.Add(tool.Key + "(" + bytes + "バイト)");
+                    over.Add(tool.Key + "(" + length + "文字)");
                 }
             }
 
             Assert.True(
-                over.Count == 0, "説明文が上限のバイト数を超える: " + string.Join("・", over));
+                over.Count == 0, "説明文が上限の文字数を超える: " + string.Join("・", over));
         }
 
         [Fact]
