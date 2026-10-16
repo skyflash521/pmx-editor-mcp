@@ -27,6 +27,8 @@ namespace PmxEditorMcp
 
         public const string ReplaceBone = "replaceBone";
 
+        public const string SplitTowardTip = "splitTowardTip";
+
         public const string FromSurface = "fromSurface";
 
         public const string SmoothSpatial = "smoothSpatial";
@@ -92,6 +94,7 @@ namespace PmxEditorMcp
                     Normalize,
                     RepairMissingBone,
                     ReplaceBone,
+                    SplitTowardTip,
                     FromSurface,
                     SmoothSpatial,
                     AverageNear,
@@ -278,6 +281,10 @@ namespace PmxEditorMcp
 
                 case ReplaceBone:
                     Replaced(picked, model.Bone[fromBone], model.Bone[toBone]);
+                    break;
+
+                case SplitTowardTip:
+                    Split(picked);
                     break;
 
                 case FromSurface:
@@ -1069,6 +1076,56 @@ namespace PmxEditorMcp
                             ? new KeyValuePair<IPXBone, float>(to, share.Value)
                             : share)));
             }
+        }
+
+        private static void Split(IEnumerable<IPXVertex> picked)
+        {
+            foreach (IPXVertex vertex in picked)
+            {
+                IList<KeyValuePair<IPXBone, float>> shares = VertexWeights.Read(vertex);
+                if (shares.All(share => ReferenceEquals(Toward(vertex, share.Key), share.Key)))
+                {
+                    continue;
+                }
+
+                if (!vertex.SDEF)
+                {
+                    VertexWeights.Write(
+                        vertex,
+                        VertexWeights.Settled(shares.Select(share =>
+                            new KeyValuePair<IPXBone, float>(Toward(vertex, share.Key), share.Value))));
+                    continue;
+                }
+
+                IPXBone first = Toward(vertex, vertex.Bone1);
+                IPXBone second = Toward(vertex, vertex.Bone2);
+                vertex.Bone1 = first;
+                vertex.Bone2 = second;
+                if (first == null || !ReferenceEquals(first, second))
+                {
+                    continue;
+                }
+
+                vertex.Weight1 += vertex.Weight2;
+                vertex.Bone2 = null;
+                vertex.Weight2 = 0f;
+                vertex.SDEF = false;
+            }
+        }
+
+        private static IPXBone Toward(IPXVertex vertex, IPXBone bone)
+        {
+            if (bone == null || bone.ToBone == null || !ReferenceEquals(bone.ToBone.Parent, bone))
+            {
+                return bone;
+            }
+
+            IPXBone child = bone.ToBone;
+
+            return Vectors.DistanceToSegment(vertex.Position, child.Position, Tip(child))
+                < Vectors.DistanceToSegment(vertex.Position, bone.Position, child.Position)
+                ? child
+                : bone;
         }
 
         private static void ReplacedInSlots(IPXVertex vertex, IPXBone from, IPXBone to)

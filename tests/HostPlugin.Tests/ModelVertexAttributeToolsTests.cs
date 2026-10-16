@@ -541,6 +541,62 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void SplittingTowardTheTipMovesTheShareToTheChildOnlyWhereItsSegmentIsNearer()
+        {
+            IList<IPXBone> bones = Bones("親", "中", "子", "他");
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(0f, -2f, 0f);
+            ((FakeBone)NowAll(bones)[2]).Position = new V3(0f, -4f, 0f);
+            ((FakeBone)NowAll(bones)[3]).Position = new V3(5f, 0f, 0f);
+            NowAll(bones)[1].Parent = NowAll(bones)[0];
+            NowAll(bones)[2].Parent = NowAll(bones)[1];
+            NowAll(bones)[0].ToBone = NowAll(bones)[1];
+            NowAll(bones)[1].ToBone = NowAll(bones)[2];
+            FakeVertex near = Vertex(0f, -0.5f, 0f);
+            Now(near).Bone1 = NowAll(bones)[0];
+            Now(near).Weight1 = 0.6f;
+            Now(near).Bone2 = NowAll(bones)[3];
+            Now(near).Weight2 = 0.4f;
+            FakeVertex far = Vertex(0f, -3f, 0f);
+            Now(far).Bone1 = NowAll(bones)[0];
+            Now(far).Weight1 = 0.6f;
+            Now(far).Bone2 = NowAll(bones)[3];
+            Now(far).Weight2 = 0.4f;
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Weights(
+                Operation(ModelEditWeights.SplitTowardTip),
+                ComposedEditFixture.Given("all", true)));
+
+            Near(0.6, Share(near, NowAll(bones)[0]));
+            Near(0.4, Share(near, NowAll(bones)[3]));
+            Near(0.0, Share(far, NowAll(bones)[0]));
+            Near(0.6, Share(far, NowAll(bones)[1]));
+            Near(0.4, Share(far, NowAll(bones)[3]));
+            Assert.Equal(1, value[ModelEditWeights.ChangedName]);
+        }
+
+        [Fact]
+        public void SplittingTowardTheTipLeavesABoneWhoseDisplayTargetIsNotItsChild()
+        {
+            IList<IPXBone> bones = Bones("親", "子", "他");
+            ((FakeBone)NowAll(bones)[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBone)NowAll(bones)[1]).Position = new V3(0f, -2f, 0f);
+            ((FakeBone)NowAll(bones)[2]).Position = new V3(0f, -4f, 0f);
+            NowAll(bones)[1].Parent = NowAll(bones)[2];
+            NowAll(bones)[1].ToBone = NowAll(bones)[2];
+            NowAll(bones)[0].ToBone = NowAll(bones)[1];
+            FakeVertex vertex = Vertex(0f, -3.5f, 0f);
+            Weigh(vertex, NowAll(bones)[0], 1f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Weights(
+                Operation(ModelEditWeights.SplitTowardTip),
+                ComposedEditFixture.Given("all", true)));
+
+            Near(1.0, Share(vertex, NowAll(bones)[0]));
+            Assert.Equal(0, value[ModelEditWeights.ChangedName]);
+        }
+
+        [Fact]
         public void ReplacingTheBoneMovesItsShareToTheOtherBoneOnlyOnThePickedVerticesHoldingIt()
         {
             IList<IPXBone> bones = Bones("元", "先", "他");
