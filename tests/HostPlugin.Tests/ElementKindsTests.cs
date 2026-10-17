@@ -1,0 +1,468 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using PEPlugin.Pmx;
+using PEPlugin.SDX;
+using Xunit;
+
+namespace PmxEditorMcp.Tests
+{
+    /// <summary>組み立てたツールが kind で受け取る要素の種類の表。</summary>
+    public class ElementKindsTests
+    {
+
+        public static IEnumerable<object[]> KindTools()
+        {
+            yield return new object[] { ModelDeleteElements.ToolName };
+            yield return new object[] { ModelInsertElements.ToolName };
+            yield return new object[] { ModelReorderElements.ToolName };
+        }
+
+        public static IEnumerable<object[]> ContractNames()
+        {
+            return Offered(ModelDeleteElements.ToolName).Select(name => new object[] { name });
+        }
+
+        [Theory]
+        [MemberData(nameof(ContractNames))]
+        public void EveryNameTheSchemaOffersResolves(string name)
+        {
+            Assert.Contains(name, ElementKinds.Names);
+            Assert.Equal(name, Resolved(name).Name);
+        }
+
+        [Theory]
+        [MemberData(nameof(KindTools))]
+        public void TheNamesAreTheOnesTheSchemaOffersAndNoOther(string tool)
+        {
+            Assert.Equal(Offered(tool), ElementKinds.Names.ToArray());
+        }
+
+        [Fact]
+        public void ANameTheTableDoesNotKnowIsRefusedWithTheNamesItDoes()
+        {
+            ElementKind kind;
+            string message;
+
+            Assert.False(ElementKinds.TryResolve("知らない種類", out kind, out message));
+            Assert.Null(kind);
+            Assert.Contains(ElementKinds.Vertex, message);
+        }
+
+        [Fact]
+        public void AKindThatIsNotTextIsRefused()
+        {
+            ElementKind kind;
+            string message;
+
+            Assert.False(ElementKinds.TryResolve(1, out kind, out message));
+            Assert.NotNull(message);
+        }
+
+        [Theory]
+        [InlineData(ElementKinds.Vertex)]
+        [InlineData(ElementKinds.Material)]
+        [InlineData(ElementKinds.Bone)]
+        [InlineData(ElementKinds.Morph)]
+        [InlineData(ElementKinds.Node)]
+        [InlineData(ElementKinds.Body)]
+        [InlineData(ElementKinds.Joint)]
+        [InlineData(ElementKinds.SoftBody)]
+        public void TheKindsPmxItselfLinesUpHaveNoOwner(string name)
+        {
+            Assert.Null(Resolved(name).Owner);
+        }
+
+        [Theory]
+        [InlineData(ElementKinds.Face, ElementKinds.Material)]
+        [InlineData(ElementKinds.IkLink, ElementKinds.Bone)]
+        [InlineData(ElementKinds.MorphOffset, ElementKinds.Morph)]
+        [InlineData(ElementKinds.NodeItem, ElementKinds.Node)]
+        [InlineData(ElementKinds.SoftBodyAnchor, ElementKinds.SoftBody)]
+        public void TheKindsAnElementLinesUpNameTheirOwner(string name, string owner)
+        {
+            Assert.Equal(owner, Resolved(name).Owner.Name);
+        }
+
+        [Fact]
+        public void TheOwnerOfAKindPmxLinesUpIsPmxItself()
+        {
+            FakePmx pmx = new FakePmx();
+
+            IList<object> owners = ElementKinds.Owners(pmx, Resolved(ElementKinds.Vertex));
+
+            Assert.Same(pmx, Assert.Single(owners));
+        }
+
+        [Fact]
+        public void TheOwnersOfFacesAreTheMaterialsInTheirOrder()
+        {
+            FakePmx pmx = new FakePmx();
+            FakeMaterial first = new FakeMaterial("一");
+            FakeMaterial second = new FakeMaterial("二");
+            pmx.Material.Add(first);
+            pmx.Material.Add(second);
+
+            IList<object> owners = ElementKinds.Owners(pmx, Resolved(ElementKinds.Face));
+
+            Assert.Equal(new object[] { first, second }, owners.ToArray());
+        }
+
+        [Fact]
+        public void TheItemsOfAKindPmxLinesUpAreThatList()
+        {
+            FakePmx pmx = new FakePmx();
+            FakeBone bone = new FakeBone("センター");
+            pmx.Bone.Add(bone);
+
+            Assert.Same(bone, Assert.Single(Resolved(ElementKinds.Bone).Items(pmx)));
+        }
+
+        [Fact]
+        public void TheItemsOfFacesComeFromTheMaterialThatOwnsThem()
+        {
+            FakeMaterial material = new FakeMaterial();
+            FakeFace face = new FakeFace();
+            material.Faces.Add(face);
+
+            Assert.Same(face, Assert.Single(Resolved(ElementKinds.Face).Items(material)));
+        }
+
+        [Fact]
+        public void TheItemsOfIkLinksComeFromTheIkOfTheBoneThatOwnsThem()
+        {
+            FakeBone bone = new FakeBone();
+            FakeIkLink link = new FakeIkLink();
+            bone.IK.Links.Add(link);
+
+            Assert.Same(link, Assert.Single(Resolved(ElementKinds.IkLink).Items(bone)));
+        }
+
+        [Fact]
+        public void ReplacingPutsTheItemsBackInTheOrderTheyWereGiven()
+        {
+            FakePmx pmx = new FakePmx();
+            FakeBone first = new FakeBone("一");
+            FakeBone second = new FakeBone("二");
+            pmx.Bone.Add(first);
+            pmx.Bone.Add(second);
+
+            Resolved(ElementKinds.Bone).Replace(pmx, new object[] { second, first });
+
+            Assert.Equal(new IPXBone[] { second, first }, pmx.Bone.ToArray());
+        }
+
+        [Fact]
+        public void ReplacingLeavesTheSameObjectsInPlaceRatherThanCopies()
+        {
+            FakeMaterial material = new FakeMaterial();
+            FakeFace face = new FakeFace();
+            material.Faces.Add(face);
+
+            Resolved(ElementKinds.Face).Replace(material, new object[] { face });
+
+            Assert.Same(face, material.Faces[0]);
+        }
+
+        [Fact]
+        public void CreatingMakesAnElementOfThatKind()
+        {
+            FakePmx pmx = new FakePmx();
+
+            object made = Resolved(ElementKinds.Bone).Create(new FakeBuilder(), pmx);
+
+            Assert.IsAssignableFrom<IPXBone>(made);
+        }
+
+        [Theory]
+        [InlineData(ElementKinds.Face)]
+        [InlineData(ElementKinds.IkLink)]
+        [InlineData(ElementKinds.MorphOffset)]
+        [InlineData(ElementKinds.NodeItem)]
+        [InlineData(ElementKinds.SoftBodyAnchor)]
+        public void TheKindsThatMustPointAtSomethingElseCannotBeMade(string name)
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(name);
+
+            Assert.Null(kind.Create(new FakeBuilder(), ElementKinds.Owners(pmx, kind)[0]));
+        }
+
+        /// <summary>
+        /// SDKの要素の複製は、ベクトルを別のオブジェクトにして値を写す。複製のベクトルを変えても
+        /// 元は変わらない。
+        /// </summary>
+        [Fact]
+        public void CloningMakesAnotherObjectThatCarriesTheSameValues()
+        {
+            FakeBone bone = new FakeBone("センター") { Position = new V3(1f, 2f, 3f) };
+
+            IPXBone made = (IPXBone)Resolved(ElementKinds.Bone).CloneOf(bone);
+
+            Assert.NotSame(bone, made);
+            Assert.Equal("センター", made.Name);
+            Assert.NotSame(bone.Position, made.Position);
+            Assert.Equal(2f, made.Position.Y);
+            made.Position.Y = 9f;
+            Assert.Equal(2f, bone.Position.Y);
+        }
+
+        [Theory]
+        [InlineData(ElementKinds.Vertex)]
+        [InlineData(ElementKinds.Face)]
+        [InlineData(ElementKinds.Material)]
+        [InlineData(ElementKinds.Bone)]
+        [InlineData(ElementKinds.IkLink)]
+        [InlineData(ElementKinds.Morph)]
+        [InlineData(ElementKinds.MorphOffset)]
+        [InlineData(ElementKinds.NodeItem)]
+        [InlineData(ElementKinds.Body)]
+        [InlineData(ElementKinds.Joint)]
+        [InlineData(ElementKinds.SoftBody)]
+        [InlineData(ElementKinds.SoftBodyAnchor)]
+        public void EveryKindReadsItsOwnListAndPutsItBackInTheGivenOrder(string name)
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(name);
+            object owner = ElementKinds.Owners(pmx, kind)[0];
+
+            IList<object> items = kind.Items(owner);
+            Assert.Equal(2, items.Count);
+            kind.Replace(owner, new[] { items[1], items[0] });
+
+            IList<object> after = kind.Items(owner);
+            Assert.Same(items[1], after[0]);
+            Assert.Same(items[0], after[1]);
+        }
+
+        [Fact]
+        public void TheFramesStartWithTheRootAndTheExpressionFrameTheModelHoldsApart()
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(ElementKinds.Node);
+
+            IList<object> items = kind.Items(pmx);
+
+            Assert.Equal(4, items.Count);
+            Assert.Same(pmx.RootNode, items[0]);
+            Assert.Same(pmx.ExpressionNode, items[1]);
+            Assert.Same(pmx.Node[0], items[2]);
+            Assert.Same(pmx.Node[1], items[3]);
+        }
+
+        [Fact]
+        public void PuttingTheFramesBackKeepsTheTwoTheModelHoldsApartOutOfItsOwnList()
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(ElementKinds.Node);
+            IList<object> items = kind.Items(pmx);
+
+            kind.Replace(pmx, new[] { items[0], items[1], items[3], items[2] });
+
+            Assert.Equal(2, pmx.Node.Count);
+            Assert.Same(items[3], pmx.Node[0]);
+            Assert.Same(items[2], pmx.Node[1]);
+        }
+
+        [Fact]
+        public void TheTwoAFrameListAlsoHoldsAreNotCountedTwice()
+        {
+            FakePmx pmx = Filled();
+            pmx.Node.Insert(0, pmx.RootNode);
+            pmx.Node.Insert(1, pmx.ExpressionNode);
+            ElementKind kind = Resolved(ElementKinds.Node);
+
+            IList<object> items = kind.Items(pmx);
+
+            Assert.Equal(4, items.Count);
+            Assert.Same(pmx.RootNode, items[0]);
+            Assert.Same(pmx.ExpressionNode, items[1]);
+            Assert.Same(pmx.Node[2], items[2]);
+            Assert.Same(pmx.Node[3], items[3]);
+        }
+
+        [Fact]
+        public void PuttingTheFramesBackKeepsTheTwoInTheFrameListThatHoldsThem()
+        {
+            FakePmx pmx = Filled();
+            pmx.Node.Insert(0, pmx.RootNode);
+            pmx.Node.Insert(1, pmx.ExpressionNode);
+            ElementKind kind = Resolved(ElementKinds.Node);
+            IList<object> items = kind.Items(pmx);
+
+            kind.Replace(pmx, new[] { items[0], items[1], items[3], items[2] });
+
+            Assert.Equal(4, pmx.Node.Count);
+            Assert.Same(pmx.RootNode, pmx.Node[0]);
+            Assert.Same(pmx.ExpressionNode, pmx.Node[1]);
+            Assert.Same(items[3], pmx.Node[2]);
+            Assert.Same(items[2], pmx.Node[3]);
+        }
+
+        [Fact]
+        public void PuttingTheFramesBackWithoutTheTwoTheModelHoldsApartIsRefused()
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(ElementKinds.Node);
+            IList<object> items = kind.Items(pmx);
+
+            Assert.Throws<ArgumentException>(
+                () => kind.Replace(pmx, new[] { items[1], items[2], items[3] }));
+            Assert.Equal(2, pmx.Node.Count);
+        }
+
+        [Fact]
+        public void PuttingTheFramesBackWithTheTwoOutOfTheirPlaceIsRefused()
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(ElementKinds.Node);
+            IList<object> items = kind.Items(pmx);
+
+            Assert.Throws<ArgumentException>(
+                () => kind.Replace(pmx, new[] { items[1], items[0], items[2], items[3] }));
+            Assert.Equal(2, pmx.Node.Count);
+        }
+
+        [Theory]
+        [InlineData(ElementKinds.Vertex, typeof(IPXVertex))]
+        [InlineData(ElementKinds.Material, typeof(IPXMaterial))]
+        [InlineData(ElementKinds.Bone, typeof(IPXBone))]
+        [InlineData(ElementKinds.Morph, typeof(IPXMorph))]
+        [InlineData(ElementKinds.Node, typeof(IPXNode))]
+        [InlineData(ElementKinds.Body, typeof(IPXBody))]
+        [InlineData(ElementKinds.Joint, typeof(IPXJoint))]
+        [InlineData(ElementKinds.SoftBody, typeof(IPXSoftBody))]
+        public void ThePmxOwnedKindsMakeAndCloneTheShapeTheirListHolds(string name, Type shape)
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(name);
+            object owner = ElementKinds.Owners(pmx, kind)[0];
+
+            Assert.IsAssignableFrom(shape, kind.Create(new FakeBuilder(), owner));
+            Assert.IsAssignableFrom(shape, kind.CloneOf(kind.Items(owner)[0]));
+        }
+
+        [Theory]
+        [InlineData(ElementKinds.Face, typeof(IPXFace))]
+        [InlineData(ElementKinds.IkLink, typeof(IPXIKLink))]
+        [InlineData(ElementKinds.MorphOffset, typeof(IPXVertexMorphOffset))]
+        [InlineData(ElementKinds.NodeItem, typeof(IPXBoneNodeItem))]
+        [InlineData(ElementKinds.SoftBodyAnchor, typeof(IPXSoftBodyAnchor))]
+        public void TheKindsThatAParentHoldsCloneTheShapeTheirListHolds(string name, Type shape)
+        {
+            FakePmx pmx = Filled();
+            ElementKind kind = Resolved(name);
+            object owner = ElementKinds.Owners(pmx, kind)[0];
+
+            Assert.IsAssignableFrom(shape, kind.CloneOf(kind.Items(owner)[0]));
+        }
+
+        [Fact]
+        public void CloningABoneCarriesItsIkAndKeepsPointingAtTheSameBones()
+        {
+            FakeBone target = new FakeBone("先");
+            FakeBone bone = new FakeBone("IK") { IsIK = true, Parent = target };
+            bone.IK.Target = target;
+            bone.IK.LoopCount = 8;
+            bone.IK.Links.Add(new FakeIkLink(target));
+
+            IPXBone made = (IPXBone)Resolved(ElementKinds.Bone).CloneOf(bone);
+
+            Assert.NotSame(bone, made);
+            Assert.True(made.IsIK);
+            Assert.NotSame(bone.IK, made.IK);
+            Assert.Same(target, made.IK.Target);
+            Assert.Equal(8, made.IK.LoopCount);
+            IPXIKLink link = Assert.Single(made.IK.Links);
+            Assert.NotSame(bone.IK.Links[0], link);
+            Assert.Same(target, link.Bone);
+            Assert.Same(target, made.Parent);
+            made.IK.Links.Clear();
+            Assert.Single(bone.IK.Links);
+        }
+
+        /// <summary>13種類の要素をそれぞれ2つずつ持つ題材。並びの入れ替えを見分けられる数にする。</summary>
+        private static FakePmx Filled()
+        {
+            FakePmx pmx = new FakePmx();
+            FakeVertex firstVertex = new FakeVertex();
+            FakeVertex secondVertex = new FakeVertex(1f, 0f, 0f);
+            pmx.Vertex.Add(firstVertex);
+            pmx.Vertex.Add(secondVertex);
+            FakeBone firstBone = new FakeBone("ボーン一") { IsIK = true };
+            FakeBone secondBone = new FakeBone("ボーン二");
+            firstBone.IK.Links.Add(new FakeIkLink(firstBone));
+            firstBone.IK.Links.Add(new FakeIkLink(secondBone));
+            pmx.Bone.Add(firstBone);
+            pmx.Bone.Add(secondBone);
+            pmx.RootNode.Items.Add(new FakeBoneNodeItem(firstBone));
+            pmx.RootNode.Items.Add(new FakeBoneNodeItem(secondBone));
+            pmx.ExpressionNode.Items.Add(
+                new FakeMorphNodeItem(new FakeMorph("表情一", MorphKind.Vertex)));
+            pmx.ExpressionNode.Items.Add(
+                new FakeMorphNodeItem(new FakeMorph("表情二", MorphKind.Vertex)));
+            for (int at = 0; at < 2; at++)
+            {
+                FakeMaterial material = new FakeMaterial("材質" + at);
+                material.Faces.Add(new FakeFace(firstVertex, secondVertex, firstVertex));
+                material.Faces.Add(new FakeFace(secondVertex, firstVertex, secondVertex));
+                pmx.Material.Add(material);
+                FakeMorph morph = new FakeMorph("モーフ" + at, MorphKind.Vertex);
+                morph.Offsets.Add(new FakeVertexMorphOffset(firstVertex));
+                morph.Offsets.Add(new FakeVertexMorphOffset(secondVertex));
+                pmx.Morph.Add(morph);
+                FakeNode node = new FakeNode("表示枠" + at);
+                node.Items.Add(new FakeBoneNodeItem(firstBone));
+                node.Items.Add(new FakeBoneNodeItem(secondBone));
+                pmx.Node.Add(node);
+                FakeBody body = new FakeBody("剛体" + at) { Bone = firstBone };
+                pmx.Body.Add(body);
+                pmx.Joint.Add(new FakeJoint("Joint" + at) { BodyA = body, BodyB = body });
+                FakeSoftBody soft = new FakeSoftBody("SoftBody" + at) { Material = material };
+                soft.Anchors.Add(new FakeSoftBodyAnchor(body, firstVertex));
+                soft.Anchors.Add(new FakeSoftBodyAnchor(body, secondVertex));
+                pmx.SoftBody.Add(soft);
+            }
+
+            return pmx;
+        }
+
+        private static string[] Offered(string tool)
+        {
+            IDictionary<string, object> reads = (IDictionary<string, object>)
+                new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue }
+                    .DeserializeObject(System.IO.File.ReadAllText(Reads(), System.Text.Encoding.UTF8));
+
+            return ((object[])reads["inputs"])
+                .Cast<IDictionary<string, object>>()
+                .Where(entry => Equals(entry["tool"], tool) && Equals(entry["input"], ElementKinds.KindName))
+                .SelectMany(entry => ((object[])entry["choices"]).Cast<string>())
+                .ToArray();
+        }
+
+        private static string Reads()
+        {
+            for (System.IO.DirectoryInfo at = new System.IO.DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+                at != null;
+                at = at.Parent)
+            {
+                string path = System.IO.Path.Combine(at.FullName, "catalog", "observed", "composed-text-reads.json");
+                if (System.IO.File.Exists(path))
+                {
+                    return path;
+                }
+            }
+
+            throw new InvalidOperationException("composed-text-reads.json が見つからない。");
+        }
+
+        private static ElementKind Resolved(string name)
+        {
+            ElementKind kind;
+            string message;
+            Assert.True(ElementKinds.TryResolve(name, out kind, out message), message);
+
+            return kind;
+        }
+    }
+}

@@ -1,0 +1,288 @@
+using System;
+using System.Collections.Generic;
+using System.Web.Script.Serialization;
+
+namespace PmxEditorMcp
+{
+    /// <summary>組み込んだ画面の構造の台帳を引く。</summary>
+    internal static class UiStructureCatalog
+    {
+        internal const string EditorVersionName = "editorVersion";
+
+        internal const string MainFormName = "mainForm";
+
+        internal const string WindowsName = "windows";
+
+        internal const string FormName = "form";
+
+        internal const string AssemblyName = "assembly";
+
+        internal const string TitleName = "title";
+
+        internal const string RootName = "root";
+
+        internal const string OpenedByName = "openedBy";
+
+        internal const string MessagesName = "messages";
+
+        internal const string PathName = "path";
+
+        internal const string TypeName = "type";
+
+        internal const string NameName = "name";
+
+        internal const string TextName = "text";
+
+        internal const string ToolTipName = "toolTip";
+
+        internal const string ShortcutName = "shortcut";
+
+        internal const string ChildrenName = "children";
+
+        internal const string DangerName = "danger";
+
+        internal const string ClipboardName = "clipboard";
+
+        internal const string ClipboardDanger = "clipboard";
+
+        internal const string ModalName = "modal";
+
+        internal const string ModalDanger = "modal";
+
+        internal const string OpensName = "opens";
+
+        private const string ContextMenuType = "ContextMenuStrip";
+
+        private static readonly HashSet<string> PressableTypes = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "ToolStripMenuItem", "ToolStripButton", "Button", "CheckBox",
+        };
+
+        private static readonly object Gate = new object();
+
+        private static IDictionary<string, object> _read;
+
+        internal static IDictionary<string, object> Read()
+        {
+            lock (Gate)
+            {
+                if (_read == null)
+                {
+                    JavaScriptSerializer serializer = new JavaScriptSerializer();
+                    serializer.MaxJsonLength = int.MaxValue;
+                    _read = (IDictionary<string, object>)serializer.DeserializeObject(
+                        string.Concat(GeneratedUiStructure.Chunks));
+                }
+
+                return _read;
+            }
+        }
+
+        internal static string EditorVersion
+        {
+            get { return Text(Read(), EditorVersionName); }
+        }
+
+        internal static string MainForm
+        {
+            get { return Text(Read(), MainFormName); }
+        }
+
+        /// <summary>ウィンドウの並び。台帳に並んだ順で返す。</summary>
+        internal static IList<IDictionary<string, object>> Windows()
+        {
+            List<IDictionary<string, object>> windows = new List<IDictionary<string, object>>();
+            foreach (object one in Array(Read(), WindowsName))
+            {
+                windows.Add((IDictionary<string, object>)one);
+            }
+
+            return windows;
+        }
+
+        /// <summary>型の完全名で引く。完全一致だけを返す。</summary>
+        internal static IDictionary<string, object> Window(string named)
+        {
+            foreach (IDictionary<string, object> window in Windows())
+            {
+                if (string.Equals(Text(window, FormName), named, StringComparison.Ordinal))
+                {
+                    return window;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>タイトルが完全に一致するウィンドウ。同じタイトルのウィンドウは複数ある。</summary>
+        internal static IList<IDictionary<string, object>> ByTitle(string named)
+        {
+            List<IDictionary<string, object>> found = new List<IDictionary<string, object>>();
+            foreach (IDictionary<string, object> window in Windows())
+            {
+                if (string.Equals(Text(window, TitleName), named, StringComparison.Ordinal))
+                {
+                    found.Add(window);
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>名前かタイトルに部分一致するウィンドウ。</summary>
+        internal static IList<IDictionary<string, object>> Similar(string named)
+        {
+            List<IDictionary<string, object>> found = new List<IDictionary<string, object>>();
+            foreach (IDictionary<string, object> window in Windows())
+            {
+                if (SignatureDump.TextMatch.Contains(Text(window, FormName), named)
+                    || SignatureDump.TextMatch.Contains(Text(window, TitleName), named))
+                {
+                    found.Add(window);
+                }
+            }
+
+            return found;
+        }
+
+        internal static string Text(IDictionary<string, object> held, string name)
+        {
+            object given;
+
+            return held != null && held.TryGetValue(name, out given) ? given as string : null;
+        }
+
+        internal static object[] Array(IDictionary<string, object> held, string name)
+        {
+            object given;
+            if (held == null || !held.TryGetValue(name, out given))
+            {
+                return new object[0];
+            }
+
+            return given as object[] ?? new object[0];
+        }
+
+        internal static IDictionary<string, object> Node(IDictionary<string, object> held, string name)
+        {
+            object given;
+
+            return held != null && held.TryGetValue(name, out given)
+                ? given as IDictionary<string, object>
+                : null;
+        }
+
+        internal static IList<IDictionary<string, object>> Children(IDictionary<string, object> node)
+        {
+            List<IDictionary<string, object>> children = new List<IDictionary<string, object>>();
+            foreach (object one in Array(node, ChildrenName))
+            {
+                children.Add((IDictionary<string, object>)one);
+            }
+
+            return children;
+        }
+
+        internal static bool UsesClipboard(IDictionary<string, object> node)
+        {
+            object given;
+
+            return node != null && node.TryGetValue(ClipboardName, out given) && given is bool && (bool)given;
+        }
+
+        internal static bool Pressable(IDictionary<string, object> node)
+        {
+            return PressableTypes.Contains(Text(node, TypeName) ?? string.Empty);
+        }
+
+        internal static bool ContextMenu(IDictionary<string, object> node)
+        {
+            return string.Equals(Text(node, TypeName), ContextMenuType, StringComparison.Ordinal);
+        }
+
+        /// <summary>型の完全名のウィンドウを、エディタが人の応答を待つ表示として開くか。</summary>
+        internal static bool Modal(string form)
+        {
+            object given;
+            IDictionary<string, object> window = Window(form);
+
+            return window != null && window.TryGetValue(ModalName, out given) && given is bool && (bool)given;
+        }
+
+        /// <summary>その節が開くウィンドウのうち、人の応答を待つ表示として開くものの型の完全名。無ければ null。</summary>
+        internal static string ModalOpened(IDictionary<string, object> node)
+        {
+            foreach (string opened in Texts(node, OpensName))
+            {
+                if (Modal(opened))
+                {
+                    return opened;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>window はウィンドウの型の完全名、path はウィンドウの根から節までの名前の並び。</summary>
+        internal static bool Walkable(string window, IList<string> path)
+        {
+            IDictionary<string, object> at = Node(Window(window), RootName);
+            foreach (string step in path)
+            {
+                at = Child(at, step);
+                if (at == null || ContextMenu(at))
+                {
+                    return false;
+                }
+            }
+
+            return Pressable(at)
+                && Text(at, DangerName) == null
+                && !UsesClipboard(at)
+                && ModalOpened(at) == null;
+        }
+
+        internal static bool OpensOnly(string opener, IList<string> path, string named)
+        {
+            if (!Walkable(opener, path))
+            {
+                return false;
+            }
+
+            IDictionary<string, object> at = Node(Window(opener), RootName);
+            foreach (string step in path)
+            {
+                at = Child(at, step);
+            }
+
+            IList<string> opens = Texts(at, OpensName);
+
+            return opens.Count == 1 && string.Equals(opens[0], named, StringComparison.Ordinal);
+        }
+
+        /// <summary>台帳の節の、その名前の子。無ければ null。</summary>
+        internal static IDictionary<string, object> Child(IDictionary<string, object> node, string name)
+        {
+            foreach (IDictionary<string, object> child in Children(node))
+            {
+                if (string.Equals(Text(child, NameName), name, StringComparison.Ordinal))
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
+        internal static IList<string> Texts(IDictionary<string, object> held, string name)
+        {
+            List<string> texts = new List<string>();
+            foreach (object one in Array(held, name))
+            {
+                texts.Add(one as string);
+            }
+
+            return texts;
+        }
+    }
+}

@@ -1,0 +1,308 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace PmxEditorMcp.SignatureDump
+{
+    public static class ToolUsageNoteRule
+    {
+        private const string AllName = "all";
+
+        private const string ParentAllName = "parentAll";
+
+        private const string RangeName = "range";
+
+        private const string IndicesName = "indices";
+
+        private const string ParentIndicesName = "parentIndices";
+
+        private const string ParentRangeName = "parentRange";
+
+        private const string ParentHandlesName = "parentHandles";
+
+        private const string ModelIndicesName = "modelIndices";
+
+        private const string SelectedName = "selected";
+
+        private const string TotalName = "total";
+
+        private const string ItemsName = "items";
+
+        private const string CountName = "count";
+
+        private const string TotalCountsPointed = TotalName + " は指した要素の数を返す。";
+
+        private const string ToTheEnd =
+            "端まで読むなら " + AllName + " に真を渡し、nextOffset が返らなくなるまで"
+                + " offset へ渡し直す。";
+
+        private const string RunsName = "runs";
+
+        private const string JoinsRuns =
+            RunsName + " に真を渡すと、連続した番号を start と count の組にまとめて " + ItemsName
+                + " の代わりに itemRuns に返し、" + TotalName + "・offset・limit・nextOffset はその組の数で数える。";
+
+        private const string WithParent =
+            AllName + " だけを渡せばすべての親の下を並べ、親だけを指せばその親の下の要素をすべて並べる。";
+
+        private const string OneAtATime = "書き込む項目は1回の呼び出しで1つだけ渡す。";
+
+        private const string ReadsBack = "設定した後に読み返した位置の数を " + SelectedName + " に返す。";
+
+        private const string NameContainsName = "nameContains";
+
+        private const string NarrowsByName =
+            NameContainsName + " に並べた文字列のどれかを name に含む要素だけが残る。"
+                + "大文字小文字は区別し、" + TotalName + " は絞り込む前の件数のままになる。";
+
+        private const string NameNarrowsTheWholeList =
+            "対象を指さずに " + NameContainsName + " を渡すと全件から絞り込む。";
+
+        private const string RangeIsNotClamped =
+            RangeName + " は端で詰めず、リストの件数を超えると断る。";
+
+        private const string TakesTheScreenSelection =
+            SelectedName + " に真を渡すと、画面がいま選んでいるものを対象にする。";
+
+        private const string CountsInEachParent =
+            IndicesName + "・" + RangeName + " の位置は、指した親のそれぞれの中で数える。";
+
+        private const string CountsOverTheWholeModel =
+            ModelIndicesName + " は、すべての親の下を並べた列の中の位置で指し、面ではモデル全体で数えた通し番号になる。"
+                + "親の指し方とは一緒に渡さない。";
+
+        private const string ValueName = "value";
+
+        private const string ValuesName = "values";
+
+        private const string ArgsName = "args";
+
+        private const string ArgsListName = "argsList";
+
+        private const string PairsValues =
+            ValuesName + " は指した対象の並びの順に1件ずつ当て、件数は対象の数とそろえる。"
+                + ValueName + " は指した対象の全部へ同じ値を当てる。";
+
+        private const string PairsArgs =
+            ArgsListName + " は指した対象の並びの順に1件ずつ当て、件数は対象の数とそろえる。"
+                + ArgsName + " は指した対象の全部へ同じ引数を当てる。";
+
+        private const string ViewName = "view";
+
+        private const string ChoosesTheView =
+            ViewName + " に pmxView・transformView・subView を渡すと、それぞれ PMXView・TransformView・SubView の"
+                + "表示設定を相手にする。渡さなければ PMXView の表示設定を相手にする。";
+
+        private const string PmxHandleName = "pmxHandle";
+
+        private const string HandlesName = "handles";
+
+        private const string PmxName = "pmx";
+
+        private const string ChoosesTheModel =
+            PmxHandleName + " にPMXのハンドルを渡すと、そのPMXを使う。渡さなければ編集中のモデルを使う。";
+
+        private const string MakesNew =
+            "呼ぶたびに新しく作る。返るのは作ったもののハンドルの番号で、要らなくなったら"
+                + " session_release_handle へ渡す。リストへ加えたハンドルは、加えた時点で手放される。";
+
+        /// <summary>
+        /// そのツールの呼び方を、スキーマ正本から引いて組み立てる。対象の指し方は書かない。
+        /// 正本に無いツールでは null。
+        /// </summary>
+        public static string Of(string tool, ToolSchemaTable schemas)
+        {
+            if (tool == null)
+            {
+                throw new ArgumentNullException(nameof(tool));
+            }
+
+            if (schemas == null)
+            {
+                throw new ArgumentNullException(nameof(schemas));
+            }
+
+            ToolSchema schema = schemas.Tools.FirstOrDefault(
+                t => string.Equals(t.Tool, tool, StringComparison.Ordinal));
+
+            return schema == null ? null : ComposeNote(schema, false, true);
+        }
+
+        /// <summary>そのツールの呼び方。対象の指し方も書く。書くことが無ければ null。</summary>
+        public static string Compose(ToolSchema schema, bool listedUnderParents = true)
+        {
+            return ComposeNote(schema, true, listedUnderParents);
+        }
+
+        private static string ComposeNote(ToolSchema schema, bool pointing, bool listedUnderParents)
+        {
+            if (schema == null)
+            {
+                throw new ArgumentNullException(nameof(schema));
+            }
+
+            StringBuilder built = new StringBuilder();
+            if (IsListing(schema) && Takes(schema, AllName))
+            {
+                built.Append(TotalCountsPointed);
+                built.Append(ToTheEnd);
+                if (Takes(schema, ParentAllName))
+                {
+                    built.Append(WithParent);
+                }
+            }
+
+            if (IsListing(schema) && Takes(schema, RunsName))
+            {
+                built.Append(JoinsRuns);
+            }
+
+            if (OnlyOneOfAll(schema))
+            {
+                built.Append(OneAtATime);
+            }
+
+            if (AnswersOnlySelected(schema))
+            {
+                built.Append(ReadsBack);
+            }
+
+            if (Takes(schema, NameContainsName))
+            {
+                built.Append(NarrowsByName);
+            }
+
+            if (schema.Branches.Any(
+                b => b.Choices.Any(c => c.Required)
+                    && b.Inputs.Any(
+                        i => !i.Injected
+                            && string.Equals(i.Name, NameContainsName, StringComparison.Ordinal))))
+            {
+                built.Append(NameNarrowsTheWholeList);
+            }
+
+            if (Takes(schema, RangeName))
+            {
+                built.Append(RangeIsNotClamped);
+            }
+
+            if (pointing && Takes(schema, SelectedName))
+            {
+                built.Append(TakesTheScreenSelection);
+            }
+
+            if (pointing
+                && listedUnderParents
+                && (Takes(schema, ParentIndicesName)
+                    || Takes(schema, ParentRangeName)
+                    || Takes(schema, ParentHandlesName))
+                && (Takes(schema, IndicesName) || Takes(schema, RangeName)))
+            {
+                built.Append(CountsInEachParent);
+            }
+
+            if (pointing && Takes(schema, ModelIndicesName))
+            {
+                built.Append(CountsOverTheWholeModel);
+            }
+
+            if (Takes(schema, ValuesName))
+            {
+                built.Append(PairsValues);
+            }
+
+            if (Takes(schema, ArgsListName))
+            {
+                built.Append(PairsArgs);
+            }
+
+            if (Takes(schema, ViewName))
+            {
+                built.Append(ChoosesTheView);
+            }
+
+            if (TakesAModelForHeldThings(schema))
+            {
+                built.Append(ChoosesTheModel);
+            }
+
+            if (Issues(schema))
+            {
+                built.Append(MakesNew);
+            }
+
+            foreach (SchemaItem item in schema.AllItems
+                .Where(i => !i.Injected && !string.IsNullOrEmpty(i.NullMeaning))
+                .GroupBy(i => new { i.Name, i.NullMeaning })
+                .Select(g => g.First()))
+            {
+                built.Append(item.Name + " に null を渡すと" + item.NullMeaning + "。");
+            }
+
+            return built.Length == 0 ? null : built.ToString();
+        }
+
+        private static bool Takes(ToolSchema schema, string name)
+        {
+            return schema.Branches.Any(
+                b => b.Inputs.Any(
+                    i => !i.Injected && string.Equals(i.Name, name, StringComparison.Ordinal)));
+        }
+
+        private static bool TakesAModelForHeldThings(ToolSchema schema)
+        {
+            return Takes(schema, HandlesName)
+                && Takes(schema, PmxHandleName)
+                && schema.Branches.Any(
+                    b => b.Inputs.Any(
+                        i => i.Injected && string.Equals(i.Name, PmxName, StringComparison.Ordinal)));
+        }
+
+        /// <summary>渡せる入力のすべてを、ちょうど1つを選ぶ組が占める分岐を持つか。</summary>
+        private static bool OnlyOneOfAll(ToolSchema schema)
+        {
+            return schema.Branches.Any(
+                b =>
+                {
+                    List<string> inputs = b.Inputs.Where(i => !i.Injected).Select(i => i.Name).ToList();
+
+                    return inputs.Count > 1
+                        && b.Choices.Any(
+                            c => c.Required
+                                && c.Names.Count == inputs.Count
+                                && inputs.All(n => c.Names.Contains(n)));
+                });
+        }
+
+        private static bool AnswersOnlySelected(ToolSchema schema)
+        {
+            IList<SchemaItem> members = schema.Output == null ? null : schema.Output.Members;
+
+            return members != null
+                && members.Count == 1
+                && string.Equals(members[0].Name, SelectedName, StringComparison.Ordinal);
+        }
+
+        private static bool Issues(ToolSchema schema)
+        {
+            SchemaItem output = schema.Output;
+
+            return Takes(schema, CountName)
+                && output != null
+                && output.Element != null
+                && (output.Members == null || output.Members.Count == 0);
+        }
+
+        private static bool IsListing(ToolSchema schema)
+        {
+            IList<SchemaItem> members = schema.Output == null ? null : schema.Output.Members;
+
+            return members != null
+                && members.Any(m => string.Equals(m.Name, TotalName, StringComparison.Ordinal))
+                && members.Any(
+                    m => string.Equals(m.Name, ItemsName, StringComparison.Ordinal)
+                        && m.Element != null);
+        }
+    }
+}

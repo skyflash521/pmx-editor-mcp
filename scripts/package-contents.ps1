@@ -1,0 +1,83 @@
+# 組み立てた配布パッケージの中身を確かめる。
+# 並べたものが過不足なく在ること、再配布を禁じられている物が混じっていないこと、写しが元と
+# バイトで一致すること、実行ファイルが名乗るバージョンが渡されたバージョンと合うことを見る。
+[CmdletBinding()]
+param(
+    # 確かめる中身の置き場。
+    [Parameter(Mandatory = $true, ParameterSetName = 'Check')]
+    [string]$Staged,
+
+    # 実行ファイルが名乗るはずのバージョン。
+    [Parameter(Mandatory = $true, ParameterSetName = 'Check')]
+    [string]$Version,
+
+    # 確かめずに、突き合わせる表を書き出す。違え方の形はこれから導く。
+    [Parameter(Mandatory = $true, ParameterSetName = 'List')]
+    [switch]$List
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+# 在るはずのものの名前。
+$Expected = @("PmxEditorMcp.dll", "PmxEditorMcp.Bridge.exe", "INSTALL.md", "LICENSE.txt",
+    "ThirdPartyNotices.txt")
+
+# 再配布を禁じられている物。PMXエディタ配布物の利用規約が、パッケージ内データの再配布を禁じる。
+$Forbidden = @("PEPlugin.dll", "SlimDX.dll")
+
+# バージョンを名乗るはずの実行ファイル。
+$Versioned = @("PmxEditorMcp.dll", "PmxEditorMcp.Bridge.exe")
+
+# 配布物へ入る写しと、その原本。写した先が1バイトも違わないことを見る。
+$Copies = [ordered]@{
+    "LICENSE.txt" = "LICENSE"
+    "INSTALL.md" = "docs/package/INSTALL.md"
+}
+
+$repository = Split-Path -Parent $PSScriptRoot
+
+if ($List) {
+    [pscustomobject]@{
+        contents = $Expected
+        copies = @($Copies.Keys)
+        forbidden = $Forbidden
+    } | ConvertTo-Json -Compress
+
+    return
+}
+
+$found = @(Get-ChildItem -Path $Staged -Recurse -File | ForEach-Object { $_.Name } | Sort-Object)
+
+foreach ($name in $Forbidden) {
+    if ($found -contains $name) { throw "PACKAGE_FORBIDDEN: 再配布できない物が混じっている: $name" }
+}
+
+$wanted = @($Expected | Sort-Object)
+if (($found -join "/") -ne ($wanted -join "/")) {
+    throw ("PACKAGE_CONTENTS: 内容物が違う。求めるもの: $($wanted -join '・')" +
+        " / 在るもの: $($found -join '・')")
+}
+
+foreach ($name in $Copies.Keys) {
+    $origin = Join-Path $repository $Copies[$name]
+    $copied = Join-Path $Staged $name
+    if ((Get-FileHash $copied).Hash -ne (Get-FileHash $origin).Hash) {
+        throw "PACKAGE_COPY: $name が $($Copies[$name]) と一致しない。"
+    }
+}
+
+# 名乗るバージョンは4つ組で、与えられたバージョンは3つ組で書く。
+$wanted = [version]$Version
+foreach ($name in $Versioned) {
+    $said = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $Staged $name)).FileVersion
+    $told = $null
+    $parsed = [version]::TryParse($said, [ref]$told)
+    $same = $parsed -and $told.Major -eq $wanted.Major -and $told.Minor -eq $wanted.Minor `
+        -and $told.Build -eq $wanted.Build
+    if (-not $same) {
+        throw "PACKAGE_VERSION: $name が名乗るバージョンが $Version と合わない: $said"
+    }
+}
+
+Write-Host ("内容物を確かめた: " + ($found -join "・"))

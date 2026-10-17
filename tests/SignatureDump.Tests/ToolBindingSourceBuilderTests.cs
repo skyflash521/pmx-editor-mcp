@@ -1,0 +1,1608 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Xunit;
+
+namespace PmxEditorMcp.SignatureDump.Tests
+{
+    /// <summary>ツールの名前から呼ぶ行へ結び付ける表。</summary>
+    public sealed class ToolBindingSourceBuilderTests
+    {
+        private const string Form = "PEPlugin.Form.IPEFormConnector";
+
+        private const string BendTool = "session_bend";
+
+        private const string TurnTool = "session_turn";
+
+        private const int DefinitionValueChars = 98000;
+
+        private const int DefinitionRequestBytes = 8000000;
+
+        private const int DefinitionTokenLimit = 200000;
+
+        private const string Held = "PXCPlugin.UIModel.IPXUIModel";
+
+        private const string CPluginConnector = "PXCPlugin.IPXCPluginConnector";
+
+        private const string GetTool = "session_get_form_connector";
+
+        private const string UpdateTool = "session_update_form_connector";
+
+        private const string Connector = "PEPlugin.Pmx.IPXPmxConnector";
+
+        private const string StateReadKey = Connector + ".GetCurrentState()";
+
+        private const string CommitKey = Connector + ".Update(PEPlugin.Pmx.IPXPmx)";
+
+        private const string PartialCommitKey =
+            Connector + ".Update(PEPlugin.Pmx.IPXPmx,PEPlugin.Pmx.PmxUpdateObject,System.Int32)";
+
+        private const string StopUndoKey = Connector + ".LockUndo()";
+
+        private const string ResumeUndoKey = Connector + ".UnlockUndo()";
+
+        private const string Bridge = "PXCPlugin.PXCBridge";
+
+        private const string BridgeConnector = "PXCPlugin.IPXCPluginConnector";
+
+        private const string BridgeReadKey = Bridge + ".GetCurrentPmx(" + BridgeConnector + ")";
+
+        private const string BridgeCommitKey =
+            Bridge + ".UpdatePmx(" + BridgeConnector + ",PEPlugin.Pmx.IPXPmx,System.Boolean)";
+
+        private const string Pmx = "PEPlugin.Pmx.IPXPmx";
+
+        private const string ListKey = Pmx + ".Vertex()";
+
+        private const string Vertex = "PEPlugin.Pmx.IPXVertex";
+
+        private const string Leaf = "PEPlugin.Pmx.IPXLeaf";
+
+        private const string Kept = "PEPlugin.Vme.IPEVmeKept";
+
+        private const string KeptLeaf = "PEPlugin.Vme.IPEVmeKeptLeaf";
+
+        private const string KeptListKey = Pmx + ".Kept()";
+
+        private const string Weight = "PEPlugin.Pmx.IPXWeight";
+
+        private const string Info = "Sdk.Info";
+
+        private const string Option = "Sdk.Option";
+
+        private const string WeightKey = Vertex + ".Weight()";
+
+        private const string HeadKey = Pmx + ".Head()";
+
+        [Fact]
+        public void ACallCarriesTheRowTheReceiverAndTheArgumentTypes()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_open_pmx_file", Method("OpenPMXFile", "System.Boolean", "path")));
+
+            Assert.Contains(
+                "GeneratedRows.Add(calls, unresolved, \"session_open_pmx_file\", () => new ToolCall[] { new ToolCall(\"" + Form
+                    + ".OpenPMXFile(System.String)\", new ToolReceiver(ToolReceiverKind.Connection,"
+                    + " \"" + Form + "\", EditKind.DirectChange), ToolAccess.Whole(),"
+                    + " DangerKind.None, new ToolArgument[] { new ToolArgument(\"path\","
+                    + " typeof(global::System.String)) }, new ToolArgument[] {  },"
+                    + " typeof(global::System.Boolean)) });",
+                source.Text);
+        }
+
+        [Fact]
+        public void AnAwkwardTextIsWrittenAsALiteralThatCompilesBackToItself()
+        {
+            ToolBindingSource source = Build(
+                Dispatched(
+                    "session_open_pmx_file",
+                    Method("OpenPMXFile", "System.Boolean", CompiledLiteral.Awkward)));
+
+            Assert.Equal(
+                CompiledLiteral.Awkward,
+                CompiledLiteral.Between(
+                    source.Text, "new ToolArgument(", ", typeof(global::System.String))"));
+        }
+
+        [Theory]
+        [InlineData("System.Int32[]")]
+        [InlineData("System.Boolean[]")]
+        [InlineData("System.String[]")]
+        public void ACallThatReturnsAWholeListIsPaged(string valueType)
+        {
+            ToolBindingSource source = Build(
+                Dispatched("view_get_selected_indices", Method("GetSelectedIndices", valueType)));
+
+            Assert.Contains(", paged: true) });", source.Text);
+        }
+
+        [Fact]
+        public void ACallThatTakesSomethingIsAlsoPagedWhenItReturnsAList()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("view_get_indices", Method("GetIndices", "System.Int32[]", "name")));
+
+            Assert.Contains(", paged: true) });", source.Text);
+        }
+
+        [Fact]
+        public void ACallThatReturnsBytesIsNotPaged()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_get_buffer", Method("GetBuffer", "System.Byte[]")));
+
+            Assert.DoesNotContain("paged", source.Text);
+        }
+
+        [Fact]
+        public void ACallThatReturnsOneValueIsNotPaged()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_get_count", Method("GetCount", "System.Int32")));
+
+            Assert.DoesNotContain("paged", source.Text);
+        }
+
+        [Fact]
+        public void ACallThatReturnsNothingCarriesNoResultType()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_undo", Method("Undo", "System.Void")));
+
+            Assert.Contains(
+                "new ToolArgument[] {  }, new ToolArgument[] {  }, null) });", source.Text);
+        }
+
+        [Fact]
+        public void AStaticMemberTakesNoReceiver()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                "Sdk.Bridge.Ping()",
+                "Sdk.Bridge",
+                MemberKind.Method,
+                "Ping",
+                true,
+                0,
+                new ParameterRecord[0],
+                "System.Void",
+                false,
+                false,
+                OperationDirection.Write);
+
+            ToolBindingSource source = Build(Dispatched("model_ping", signature));
+
+            Assert.Contains(
+                "new ToolCall(\"Sdk.Bridge.Ping()\","
+                    + " new ToolReceiver(ToolReceiverKind.Connection, null, EditKind.DirectChange),"
+                    + " ToolAccess.Whole(), DangerKind.None,",
+                source.Text);
+        }
+
+        [Fact]
+        public void ACallOnAHandleTargetTakesItsReceiverFromAHandle()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("view_do_it_held_thing", HeldMethod("DoIt", "System.Void")));
+
+            Assert.Contains(
+                "new ToolReceiver(ToolReceiverKind.Handle, \"" + Held + "\","
+                    + " EditKind.DirectChange, false, item => item is global::" + Held + ")",
+                source.Text);
+        }
+
+        [Fact]
+        public void ACallOnAConnectorDoesNotTakeItsReceiverFromAHandle()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_do_it", Method("DoIt", "System.Void")));
+
+            Assert.DoesNotContain("ToolReceiverKind.Handle", source.Text);
+        }
+
+        [Fact]
+        public void AnArgumentOfAHandleTargetIsTakenAsAHandle()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_take_it", Taking("TakeIt", "System.Void", Held)));
+
+            Assert.Contains(
+                "new ToolArgument(\"one\", typeof(global::" + Held + "), false, null, false,"
+                    + " typeof(global::" + Held + "), null, null,"
+                    + " item => item is global::" + Held + ")",
+                source.Text);
+        }
+
+        [Fact]
+        public void AnIssuingCallCarriesTheRowThatLetsTheIssuedThingGo()
+        {
+            ToolBindingSource source = Build(
+                Issuing("session_make_it", Method("MakeIt", Held)),
+                Released(HeldMethod("Drop", "System.Void")));
+
+            Assert.Contains(
+                "typeof(global::" + Held + "), typeof(global::" + Held + "), null, \""
+                    + Held + ".Drop()\", false, false, true)",
+                source.Text);
+        }
+
+        [Fact]
+        public void ACallThatIssuesThingsInARowCarriesTheElementTypeAndTheMarkOfThat()
+        {
+            ToolBindingSource source = Build(
+                Issuing("session_make_them", Method("MakeThem", Held + "[]")),
+                Released(HeldMethod("Drop", "System.Void")));
+
+            Assert.Contains(
+                "typeof(global::" + Held + "[]), typeof(global::" + Held + "), null, \""
+                    + Held + ".Drop()\", false, true, true)",
+                source.Text);
+            Assert.DoesNotContain("paged", source.Text);
+        }
+
+        [Fact]
+        public void EveryCallOfAToolThatIssuesThingsInARowAlsoRespondsInARow()
+        {
+            ToolBindingSource source = Build(
+                Issuing("session_make_them", Method("MakeThem", Held + "[]", "one")),
+                Issuing("session_make_them", Method("MakeThem", Held)),
+                Released(HeldMethod("Drop", "System.Void")));
+
+            Assert.Contains(
+                "typeof(global::" + Held + "), typeof(global::" + Held + "), null, \""
+                    + Held + ".Drop()\", false, false, true)",
+                source.Text);
+        }
+
+        [Fact]
+        public void ACallThatIssuesAThingWithNoWayToLetItGoCarriesNoSuchRow()
+        {
+            ToolBindingSource source = Build(
+                Issuing("session_make_it", Method("MakeIt", Held)));
+
+            Assert.Contains(
+                "typeof(global::" + Held + "), typeof(global::" + Held
+                    + "), null, null, false, false, true)",
+                source.Text);
+        }
+
+        [Fact]
+        public void AThingLetGoByItsOwnerCarriesTheRowAndTheMarkOfThatForm()
+        {
+            ToolBindingSource source = Build(
+                Issuing("session_make_it", Method("MakeIt", Held)),
+                Released(Taking("LetGo", "System.Void", Held)));
+
+            Assert.Contains(
+                "typeof(global::" + Held + "), typeof(global::" + Held + "), null, \""
+                    + Form + ".LetGo(" + Held + ")\", true, false, true)",
+                source.Text);
+        }
+
+        [Fact]
+        public void AThingWhoseWayToLetItGoCannotBeReachedIsRefused()
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(
+                () => Build(
+                    Issuing("session_make_it", HeldMethod("MakeIt", Held)),
+                    Released(Taking("LetGo", "System.Void", Held))));
+
+            Assert.Contains("手放す手順を呼べない形", thrown.Message);
+        }
+
+        [Fact]
+        public void TheConnectorArgumentIsPutInByTheHost()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_take_it", Taking("TakeIt", "System.Void", CPluginConnector)));
+
+            Assert.Contains(
+                "new ToolArgument(\"one\", typeof(global::" + CPluginConnector + "), true, null, true)",
+                source.Text);
+        }
+
+        [Theory]
+        [InlineData("Close", "System.Void", "DangerKind.Shutdown")]
+        [InlineData("InitializePMX", "System.Void", "DangerKind.Reset")]
+        [InlineData("SavePMXFile", "System.Void", "DangerKind.Overwrite")]
+        public void TheDangerOfTheMemberComesOutWithTheCall(
+            string member, string valueType, string danger)
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_" + member.ToLowerInvariant(), Method(member, valueType)));
+
+            Assert.Contains(danger, source.Text);
+        }
+
+        [Fact]
+        public void TheDangerousToolsTakeNamesOfTheirOwnAndTheSafeOnesDoNot()
+        {
+            ToolBindingSource source = Derived(
+                Schemas(),
+                Dispatched(null, Method("Close", "System.Void")),
+                Dispatched(null, Method("InitializePMX", "System.Void")),
+                Dispatched(null, Method("SavePMXFile", "System.Void", "path")),
+                Dispatched(null, Method("Undo", "System.Void")));
+
+            Assert.Equal(4, source.Calls.Count);
+            Assert.Equal(4, source.Calls.Distinct(StringComparer.Ordinal).Count());
+            IDictionary<string, string[]> dangers = source.Calls.ToDictionary(
+                t => t, t => DangersOf(source.Text, t), StringComparer.Ordinal);
+            Assert.All(dangers, d => Assert.Single(d.Value.Distinct(StringComparer.Ordinal)));
+            Assert.Equal(
+                new[] { "DangerKind.None", "DangerKind.Overwrite", "DangerKind.Reset", "DangerKind.Shutdown" },
+                dangers.Values.Select(d => d[0]).OrderBy(d => d, StringComparer.Ordinal).ToArray());
+        }
+
+        private static string[] DangersOf(string text, string tool)
+        {
+            string head = "GeneratedRows.Add(calls, unresolved, \"" + tool + "\", () => ";
+            int from = text.IndexOf(head, StringComparison.Ordinal);
+            Assert.True(from >= 0, "ツールの呼び出しが組み立て文に無い: " + tool);
+            int end = text.IndexOf('\n', from);
+            string line = text.Substring(from, end - from);
+
+            return System.Text.RegularExpressions.Regex.Matches(line, "DangerKind\\.[A-Za-z]+")
+                .Cast<System.Text.RegularExpressions.Match>()
+                .Select(m => m.Value)
+                .ToArray();
+        }
+
+        [Fact]
+        public void AReadableItemGoesToTheGettingToolAndAWritableOneAlsoToTheUpdatingTool()
+        {
+            ToolBindingSource source = Build(
+                Embedded(Property("UndoCount", "System.Int32", true, false), GetTool),
+                Embedded(
+                    Property("PmxFormActivate", "System.Boolean", true, true), GetTool, UpdateTool));
+
+            Assert.Equal(new[] { GetTool, UpdateTool }, source.Aggregations.ToArray());
+            Assert.Contains(
+                "GeneratedRows.Add(aggregations, unresolved, \"" + GetTool + "\", () => new ToolFields(false, false,"
+                    + " new ToolReceiver(ToolReceiverKind.Connection, \"" + Form
+                    + "\", EditKind.Read), ToolAccess.Whole(), new ToolFieldSet[]",
+                source.Text);
+            Assert.Contains(
+                "GeneratedRows.Add(aggregations, unresolved, \"" + UpdateTool + "\", () => new ToolFields(true, false,"
+                    + " new ToolReceiver(ToolReceiverKind.Connection, \"" + Form
+                    + "\", EditKind.ViewSession), ToolAccess.Whole(), new ToolFieldSet[]",
+                source.Text);
+            Assert.Contains(
+                "new ToolField(\"undoCount\", \"" + Form
+                    + ".UndoCount()\", typeof(global::System.Int32)),",
+                source.Text);
+            Assert.Equal(1, Occurrences(source.Text, "\"undoCount\""));
+            Assert.Equal(2, Occurrences(source.Text, "\"pmxFormActivate\""));
+        }
+
+        [Fact]
+        public void AnItemThatCannotBeWrittenIsRefusedInTheUpdatingTool()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Build(Embedded(Property("UndoCount", "System.Int32", true, false), UpdateTool)));
+
+            Assert.StartsWith("書き込めない項目が更新へ持ち込まれている:", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnItemThatCannotBeReadIsRefusedInTheGettingTool()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Build(Embedded(Property("Hidden", "System.Int32", false, true), GetTool)));
+
+            Assert.StartsWith("読み取れない項目が取得へ持ち込まれている:", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnItemEmbeddedInAnotherToolIsNotCollectedHere()
+        {
+            ToolBindingSource source = Build(
+                Embedded(Property("UndoCount", "System.Int32", true, false), "view.click"));
+
+            Assert.Empty(source.Aggregations);
+        }
+
+        [Fact]
+        public void AnOwningListBringsTheAddingAndRemovingToolsOfItsElement()
+        {
+            ToolBindingSource source = Build(Collection());
+
+            Assert.Equal(
+                new[] { "model_add_vertices", "model_remove_vertices" }, source.Elements.ToArray());
+            Assert.Contains(
+                "GeneratedRows.Add(elements, unresolved, \"model_add_vertices\", () => new ToolElements(ToolElementKind.Add,"
+                    + " new ToolReceiver(ToolReceiverKind.Pmx, null, EditKind.DuplicateEdit),"
+                    + " new ToolAccess(ToolAccessKind.Element, \"" + ListKey
+                    + "\", new ToolHop[] {  }, true, typeof(global::" + Vertex
+                    + "), item => item is global::" + Vertex + ", \"vertex\", null, null)));",
+                source.Text);
+            Assert.Contains(
+                "GeneratedRows.Add(elements, unresolved, \"model_remove_vertices\", () => new ToolElements(ToolElementKind.Remove,", source.Text);
+        }
+
+        /// <summary>
+        /// 指すだけのツールが立つのは、親をハンドルで指せる道だけである。PMXが直に持つリストは
+        /// 位置でしか辿れず、辿った相手は複製なので、その中の要素を預けても書き換えが元のモデルへ
+        /// 届かない。
+        /// </summary>
+        [Fact]
+        public void AListUnderAHandledOwnerAlsoBringsTheHoldingToolOfItsElement()
+        {
+            ToolBindingSource source = Build(Collection(), Weights());
+
+            Assert.Equal(
+                new[]
+                {
+                    "model_add_vertices",
+                    "model_add_weights",
+                    "model_hold_weight",
+                    "model_remove_vertices",
+                    "model_remove_weights",
+                },
+                source.Elements.ToArray());
+            Assert.Contains(
+                "GeneratedRows.Add(elements, unresolved, \"model_hold_weight\", () => new ToolElements(ToolElementKind.Hold,"
+                    + " new ToolReceiver(ToolReceiverKind.Pmx, null, EditKind.Read),",
+                source.Text);
+        }
+
+        [Fact]
+        public void AListOfPositionedItemsCarriesTheTypesItsItemsCanTake()
+        {
+            ToolBindingSource source = Build(Kinds(Vertex, Leaf), Collection());
+
+            Assert.Contains(
+                "new ToolItem(\"leaf\", typeof(global::" + Leaf + "), item => item is global::"
+                    + Leaf + ")",
+                source.Text);
+        }
+
+        [Fact]
+        public void AListOfHandledItemsCarriesNoSuchTypes()
+        {
+            ToolBindingSource source = Build(
+                RolesWith(
+                    new TypeRoleRecord[0],
+                    new[]
+                    {
+                        new ElementCollectionRecord(
+                            KeptListKey, true, "題材の根拠。", new[] { KeptListKey }),
+                    }),
+                Kinds(Kept, KeptLeaf),
+                Kepts());
+
+            Assert.Contains("GeneratedRows.Add(elements, unresolved, \"model_add_kepts\",", source.Text);
+            Assert.Contains("typeof(global::" + Kept + "), item => item is global::" + Kept, source.Text);
+            Assert.DoesNotContain("new ToolItem(", source.Text);
+        }
+
+        [Fact]
+        public void TheClosingToolChecksTheUndoableEditsBeforeItIsCalled()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_close", Method("Close", "System.Void")),
+                Released(Property("UndoCount", "System.Int32", true, false)));
+
+            Assert.Contains(
+                "preconditions.Add(\"session_close\", new ToolPrecondition(PreconditionKind.SavedEdits,"
+                    + " new string[] {  }, new string[] { \"" + Form + ".UndoCount()\" },"
+                    + " new string[] { \"" + Form + ".Close()\" }));",
+                source.Text);
+        }
+
+        [Fact]
+        public void EachUndoingToolChecksItsOwnRemainingCount()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_undo", Method("Undo", "System.Void")),
+                Dispatched("session_redo", Method("Redo", "System.Void")),
+                Dispatched("session_open_pmx_file", Method("OpenPMXFile", "System.Boolean", "path")),
+                Released(Property("UndoCount", "System.Int32", true, false)),
+                Released(Property("RedoCount", "System.Int32", true, false)));
+
+            Assert.Contains(
+                "preconditions.Add(\"session_undo\", new ToolPrecondition(PreconditionKind.UndoHistory,"
+                    + " new string[] {  }, new string[] { \"" + Form + ".UndoCount()\" },"
+                    + " new string[] { \"" + Form + ".Undo()\" }));",
+                source.Text);
+            Assert.Contains(
+                "preconditions.Add(\"session_redo\", new ToolPrecondition(PreconditionKind.UndoHistory,"
+                    + " new string[] {  }, new string[] { \"" + Form + ".RedoCount()\" },"
+                    + " new string[] { \"" + Form + ".Redo()\" }));",
+                source.Text);
+            Assert.Equal(2, Occurrences(source.Text, "preconditions.Add("));
+        }
+
+        [Fact]
+        public void TheCallOnWhatIsPickedReadsThePickedObjectsThroughTheirTools()
+        {
+            ToolBindingSource source = Build(
+                RolesWith(
+                    new[]
+                    {
+                        new TypeRoleRecord(
+                            Guide, TypeRole.Connector, "題材の根拠。", "vertex_guide_connector",
+                            string.Empty, CapabilityOwner.View),
+                        new TypeRoleRecord(
+                            PmdView, TypeRole.Connector, "題材の根拠。", "pmd_view_connector",
+                            string.Empty, CapabilityOwner.View),
+                    },
+                    new ElementCollectionRecord[0]),
+                new TypeRecord[0],
+                Dispatched(
+                    "view_get_selected_current_vertex",
+                    ConnectorMethod(Guide, "GetSelectedCurrentVertex", "System.Int32")),
+                Dispatched(
+                    "view_get_selected_vertex_indices",
+                    ConnectorMethod(PmdView, "GetSelectedVertexIndices", "System.Int32[]")),
+                Dispatched(
+                    "view_get_selected_face_indices",
+                    ConnectorMethod(PmdView, "GetSelectedFaceIndices", "System.Int32[]")));
+
+            Assert.Contains(
+                "preconditions.Add(\"view_get_selected_current_vertex\","
+                    + " new ToolPrecondition(PreconditionKind.PickedObjects,"
+                    + " new string[] { \"view_get_selected_face_indices\", \"view_get_selected_vertex_indices\" },"
+                    + " new string[] {  }, new string[] { \"" + Guide + ".GetSelectedCurrentVertex()\" }));",
+                source.Text);
+            Assert.Equal(1, Occurrences(source.Text, "preconditions.Add("));
+        }
+
+        private const string Guide = "PEPlugin.View.IPEVertexGuideConnector";
+
+        private const string PmdView = "PEPlugin.View.IPEPMDViewConnector";
+
+        private static SignatureRecord ConnectorMethod(string type, string member, string valueType)
+        {
+            return new SignatureRecord(
+                type + "." + member + "()",
+                type,
+                MemberKind.Method,
+                member,
+                false,
+                0,
+                new ParameterRecord[0],
+                valueType,
+                false,
+                false,
+                OperationDirection.Read);
+        }
+
+        private static TypeRoleTable RolesWith(
+            IEnumerable<TypeRoleRecord> types, IEnumerable<ElementCollectionRecord> collections)
+        {
+            TypeRoleTable roles = Roles();
+
+            return new TypeRoleTable(
+                roles.Types.Concat(types).ToList(),
+                roles.Issuances,
+                roles.Collections.Concat(collections).ToList());
+        }
+
+        [Fact]
+        public void AnOwningListAlsoBringsTheRelayThatReadsAndWritesIt()
+        {
+            ToolBindingSource source = Build(Collection());
+
+            Assert.Contains(
+                "lists.Add(\"" + ListKey + "\",", source.Text);
+            Assert.Contains(
+                "new SdkList(owner => ((global::" + Pmx + ")owner).Vertex.Count,"
+                    + " (owner, index) => ((global::" + Pmx + ")owner).Vertex[index],"
+                    + " (owner, item) => ((global::" + Pmx + ")owner).Vertex.Add((global::"
+                    + Vertex + ")item),"
+                    + " (owner, index) => ((global::" + Pmx + ")owner).Vertex.RemoveAt(index)));",
+                source.Text);
+        }
+
+        [Fact]
+        public void TheFlowsNameTheRowsThatDuplicateAndReflectTheCurrentModel()
+        {
+            ToolBindingSource source = Build(Collection());
+
+            Assert.Contains(
+                "new PmxFlow(\"" + StateReadKey + "\", \"" + CommitKey + "\", \"" + Connector
+                    + "\", new FlowSlot[] {  }, new FlowSlot[] { FlowSlot.Pmx }, \"" + StopUndoKey
+                    + "\", \"" + ResumeUndoKey + "\", partialCommit: \"" + PartialCommitKey + "\");",
+                source.Text);
+            Assert.Contains(
+                "new PmxFlow(\"" + BridgeReadKey + "\", \"" + BridgeCommitKey
+                    + "\", null, new FlowSlot[] { FlowSlot.Connector },"
+                    + " new FlowSlot[] { FlowSlot.Connector, FlowSlot.Pmx, FlowSlot.UndoLock });",
+                source.Text);
+        }
+
+        [Fact]
+        public void AListUnderAnElementCarriesTheTypeThatHoldsItSoTheParentCanBePointedByHandle()
+        {
+            ToolBindingSource source = Build(Collection(), Weights());
+
+            Assert.Contains(
+                "new ToolAccess(ToolAccessKind.Element, \"" + WeightKey
+                    + "\", new ToolHop[] { new ToolHop(\"" + ListKey + "\", true) },"
+                    + " true, typeof(global::" + Weight + "), item => item is global::" + Weight
+                    + ", \"weight\", null, typeof(global::" + Vertex + "))",
+                source.Text);
+        }
+
+        [Theory]
+        [InlineData(false, true)]
+        [InlineData(null, true)]
+        [InlineData(true, false)]
+        public void AnArgumentThatPointsAtAnElementRefusesNullUnlessTheSchemaAllowsIt(
+            bool? nullable, bool refuses)
+        {
+            SignatureRecord signature = new SignatureRecord(
+                Form + ".Shape(" + Pmx + "," + Vertex + ")",
+                Form,
+                MemberKind.Method,
+                "Shape",
+                false,
+                0,
+                new[]
+                {
+                    new ParameterRecord("pmx", Pmx, ParameterDirection.In, false),
+                    new ParameterRecord("vertex", Vertex, ParameterDirection.In, false),
+                },
+                "System.Void",
+                false,
+                false,
+                OperationDirection.Write);
+            SchemaItem input = new SchemaItem(
+                null, null, null, "vertex", null, true, null, false, null, nullable, null, false, null);
+            ToolSchema schema = new ToolSchema(
+                "session_shape_form_connector",
+                new[] { new SchemaBranch("only", null, null, new[] { input }, new SchemaChoice[0]) },
+                new SchemaItem(
+                    "number", null, null, null, ItemOrigin.HostOutput, null, null, false, null,
+                    null, null, false, null),
+                null);
+
+            ToolBindingSource source = Build(
+                new ToolSchemaTable(new[] { schema }),
+                new TypeRecord[0],
+                Collection(),
+                Dispatched("session_shape_form_connector", signature));
+
+            Assert.Equal(refuses, source.Text.Contains("refusesNull: true"));
+        }
+
+        [Fact]
+        public void ThePmxComesFromTheHostAndOtherOperationTargetsComeAsPositions()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                Form + ".Shape(" + Pmx + "," + Vertex + ")",
+                Form,
+                MemberKind.Method,
+                "Shape",
+                false,
+                0,
+                new[]
+                {
+                    new ParameterRecord("pmx", Pmx, ParameterDirection.In, false),
+                    new ParameterRecord("vertex", Vertex, ParameterDirection.In, false),
+                },
+                "System.Void",
+                false,
+                false,
+                OperationDirection.Write);
+
+            ToolBindingSource source = Build(
+                Collection(), Dispatched("session_shape_form_connector", signature));
+
+            Assert.Contains(
+                "new ToolArgument(\"pmx\", typeof(global::" + Pmx + "), true),"
+                    + " new ToolArgument(\"vertex\", typeof(global::" + Vertex + "), false,"
+                    + " new ToolAccess(ToolAccessKind.Element, \"" + ListKey
+                    + "\", new ToolHop[] {  }, true, typeof(global::" + Vertex
+                    + "), item => item is global::" + Vertex + ", \"vertex\", null, null))",
+                source.Text);
+        }
+
+        [Fact]
+        public void AListWithASoleMemberOfItsElementTypePutsThatRowAtTheFrontOfTheList()
+        {
+            ToolBindingSource source = Build(Collection(), Head());
+
+            Assert.Contains(
+                "owner => 1 + " + Without() + ".Count",
+                source.Text);
+            Assert.Contains(
+                "(owner, index) => index == 0 ? (object)((global::" + Pmx
+                    + ")owner).Head : " + Without() + "[index - 1]",
+                source.Text);
+        }
+
+        [Fact]
+        public void TheRowAtTheFrontOfTheListCannotBeTakenOutOfIt()
+        {
+            ToolBindingSource source = Build(Collection(), Head());
+
+            Assert.Contains(
+                "((global::" + Pmx + ")owner).Vertex.Remove(" + Without()
+                    + "[SdkList.Behind(index, 1)])",
+                source.Text);
+        }
+
+        [Fact]
+        public void AListWithNoSoleMemberOfItsElementTypeIsRelayedAsItIs()
+        {
+            ToolBindingSource source = Build(Collection(), Weights());
+
+            Assert.Contains(
+                "owner => ((global::" + Pmx + ")owner).Vertex.Count",
+                source.Text);
+            Assert.DoesNotContain("SdkList.Behind(", source.Text);
+        }
+
+        private static string Without()
+        {
+            return "SdkList.Without(((global::" + Pmx + ")owner).Vertex, new object[] { ((global::"
+                + Pmx + ")owner).Head })";
+        }
+
+        /// <summary>そのリストと同じ要素の型を1つだけ返す、同じ型のメンバーの題材。</summary>
+        private static Binding Head()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                HeadKey,
+                Pmx,
+                MemberKind.Property,
+                "Head",
+                false,
+                0,
+                new ParameterRecord[0],
+                Vertex,
+                true,
+                false,
+                OperationDirection.Read);
+
+            return new Binding(
+                signature,
+                null,
+                new ToolMapRow(
+                    HeadKey, ToolMapEditKind.Read, null, "題材の根拠。", null, null, null));
+        }
+
+        /// <summary>継いだ型を1つ持つ題材の型の並び。</summary>
+        private static IList<TypeRecord> Kinds(string baseType, string derived)
+        {
+            return new[]
+            {
+                new TypeRecord(
+                    baseType,
+                    TypeKind.Interface,
+                    false,
+                    false,
+                    false,
+                    new string[0],
+                    new string[0]),
+                new TypeRecord(
+                    derived,
+                    TypeKind.Interface,
+                    false,
+                    false,
+                    false,
+                    new[] { baseType },
+                    new string[0]),
+            };
+        }
+
+        /// <summary>ハンドルで指す型を並べるリストの題材。</summary>
+        private static Binding Kepts()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                KeptListKey,
+                Pmx,
+                MemberKind.Property,
+                "Kept",
+                false,
+                0,
+                new ParameterRecord[0],
+                "System.Collections.Generic.IList<" + Kept + ">",
+                true,
+                false,
+                OperationDirection.Read);
+
+            return new Binding(
+                signature,
+                null,
+                new ToolMapRow(
+                    KeptListKey, ToolMapEditKind.Read, null, "題材の根拠。", null, null, null));
+        }
+
+        private static Binding Collection()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                ListKey,
+                Pmx,
+                MemberKind.Property,
+                "Vertex",
+                false,
+                0,
+                new ParameterRecord[0],
+                "System.Collections.Generic.IList<" + Vertex + ">",
+                true,
+                false,
+                OperationDirection.Read);
+
+            return new Binding(
+                signature,
+                null,
+                new ToolMapRow(
+                    ListKey, ToolMapEditKind.Read, null, "題材の根拠。", null, null, null));
+        }
+
+        /// <summary>要素の下にある、もう一段深いリストの題材。</summary>
+        private static Binding Weights()
+        {
+            SignatureRecord signature = new SignatureRecord(
+                WeightKey,
+                Vertex,
+                MemberKind.Property,
+                "Weight",
+                false,
+                0,
+                new ParameterRecord[0],
+                "System.Collections.Generic.IList<" + Weight + ">",
+                true,
+                false,
+                OperationDirection.Read);
+
+            return new Binding(
+                signature,
+                null,
+                new ToolMapRow(
+                    WeightKey, ToolMapEditKind.Read, null, "題材の根拠。", null, null, null));
+        }
+
+        private static int Occurrences(string text, string part)
+        {
+            int count = 0;
+            for (int at = text.IndexOf(part, StringComparison.Ordinal);
+                at >= 0;
+                at = text.IndexOf(part, at + part.Length, StringComparison.Ordinal))
+            {
+                count++;
+            }
+
+            return count;
+        }
+
+        private static ToolBindingSource Build(params Binding[] bindings)
+        {
+            return Build(new TypeRecord[0], bindings);
+        }
+
+        private static ToolBindingSource Build(
+            IList<TypeRecord> types, params Binding[] bindings)
+        {
+            return Build(new ToolSchemaTable(new ToolSchema[0]), types, bindings);
+        }
+
+        /// <summary>載せる正本を差し替えて組み立てる。応える先の照合だけがこれを見る。</summary>
+        private static ToolBindingSource Build(
+            ToolSchemaTable schemas, IList<TypeRecord> types, params Binding[] bindings)
+        {
+            return Build(schemas, Roles(), types, bindings);
+        }
+
+        private static ToolBindingSource Build(
+            TypeRoleTable roles, IList<TypeRecord> types, params Binding[] bindings)
+        {
+            return Build(new ToolSchemaTable(new ToolSchema[0]), roles, types, bindings);
+        }
+
+        private static ToolBindingSource Build(
+            ToolSchemaTable schemas,
+            TypeRoleTable roles,
+            IList<TypeRecord> types,
+            params Binding[] bindings)
+        {
+            Dictionary<string, SignatureRecord> signatures = bindings.ToDictionary(
+                b => b.Signature.Key, b => b.Signature, StringComparer.Ordinal);
+            foreach (SignatureRecord flow in Flows())
+            {
+                signatures.Add(flow.Key, flow);
+            }
+
+            return ToolBindingSourceBuilder.Build(
+                new ToolMap(bindings.Select(b => b.Row).ToList()),
+                roles,
+                new InventoryRecord(
+                    "題材",
+                    "0.0.0.0",
+                    types.ToList(),
+                    new TypeRecord[0],
+                    signatures.Values.ToList()),
+                bindings.Where(b => b.Tool != null)
+                    .ToDictionary(b => b.Signature.Key, b => b.Tool, StringComparer.Ordinal),
+                Assignments(),
+                schemas,
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                new string[0]);
+        }
+
+        /// <summary>複製編集の流れが通る2つのシグネチャ。組み立てはこの2つを名指しする。</summary>
+        private static IList<SignatureRecord> Flows()
+        {
+            return new[]
+            {
+                new SignatureRecord(
+                    StateReadKey,
+                    Connector,
+                    MemberKind.Method,
+                    "GetCurrentState",
+                    false,
+                    0,
+                    new ParameterRecord[0],
+                    "PEPlugin.Pmx.IPXPmx",
+                    false,
+                    false,
+                    OperationDirection.Read),
+                new SignatureRecord(
+                    CommitKey,
+                    Connector,
+                    MemberKind.Method,
+                    "Update",
+                    false,
+                    0,
+                    new[]
+                    {
+                        new ParameterRecord(
+                            "pmx", "PEPlugin.Pmx.IPXPmx", ParameterDirection.In, false),
+                    },
+                    "System.Void",
+                    false,
+                    false,
+                    OperationDirection.Write),
+                new SignatureRecord(
+                    BridgeReadKey,
+                    Bridge,
+                    MemberKind.Method,
+                    "GetCurrentPmx",
+                    true,
+                    0,
+                    new[]
+                    {
+                        new ParameterRecord("c", BridgeConnector, ParameterDirection.In, false),
+                    },
+                    "PEPlugin.Pmx.IPXPmx",
+                    false,
+                    false,
+                    OperationDirection.Read),
+                new SignatureRecord(
+                    BridgeCommitKey,
+                    Bridge,
+                    MemberKind.Method,
+                    "UpdatePmx",
+                    true,
+                    0,
+                    new[]
+                    {
+                        new ParameterRecord("c", BridgeConnector, ParameterDirection.In, false),
+                        new ParameterRecord(
+                            "pmx", "PEPlugin.Pmx.IPXPmx", ParameterDirection.In, false),
+                        new ParameterRecord("undo", "System.Boolean", ParameterDirection.In, false),
+                    },
+                    "System.Void",
+                    false,
+                    false,
+                    OperationDirection.Write),
+                new SignatureRecord(
+                    PartialCommitKey,
+                    Connector,
+                    MemberKind.Method,
+                    "Update",
+                    false,
+                    0,
+                    new[]
+                    {
+                        new ParameterRecord(
+                            "pmx", "PEPlugin.Pmx.IPXPmx", ParameterDirection.In, false),
+                        new ParameterRecord(
+                            "obj", "PEPlugin.Pmx.PmxUpdateObject", ParameterDirection.In, false),
+                        new ParameterRecord("index", "System.Int32", ParameterDirection.In, false),
+                    },
+                    "System.Void",
+                    false,
+                    false,
+                    OperationDirection.Write),
+                new SignatureRecord(
+                    StopUndoKey,
+                    Connector,
+                    MemberKind.Method,
+                    "LockUndo",
+                    false,
+                    0,
+                    new ParameterRecord[0],
+                    "System.Void",
+                    false,
+                    false,
+                    OperationDirection.Write),
+                new SignatureRecord(
+                    ResumeUndoKey,
+                    Connector,
+                    MemberKind.Method,
+                    "UnlockUndo",
+                    false,
+                    0,
+                    new ParameterRecord[0],
+                    "System.Void",
+                    false,
+                    false,
+                    OperationDirection.Write),
+            };
+        }
+
+        private static CommonAssignmentTable Assignments()
+        {
+            return new CommonAssignmentTable(
+                new[]
+                {
+                    new CommonAssignmentRecord(
+                        Held + ".Drop()",
+                        CommonAssignmentKind.Tool,
+                        "session_release_handle",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        Form + ".LetGo(" + Held + ")",
+                        CommonAssignmentKind.Tool,
+                        "session_release_handle",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        StateReadKey, CommonAssignmentKind.InternalFlow, "stateRead", "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        CommitKey,
+                        CommonAssignmentKind.InternalFlow,
+                        "duplicateEdit",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        PartialCommitKey,
+                        CommonAssignmentKind.InternalFlow,
+                        "duplicateEdit",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        BridgeReadKey,
+                        CommonAssignmentKind.InternalFlow,
+                        "stateRead",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        BridgeCommitKey,
+                        CommonAssignmentKind.InternalFlow,
+                        "duplicateEdit",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        StopUndoKey,
+                        CommonAssignmentKind.CommonArg,
+                        "suppressUndo",
+                        "題材の根拠。"),
+                    new CommonAssignmentRecord(
+                        ResumeUndoKey,
+                        CommonAssignmentKind.CommonArg,
+                        "suppressUndo",
+                        "題材の根拠。"),
+                });
+        }
+
+        [Fact]
+        public void ACallThatReturnsACarriedTypeAlsoCarriesTheRowsOfItsItems()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_info", Method("GetInfo", Info)),
+                Embedded(Carried(Info, "Name", "System.String"), "session_info"),
+                Embedded(Carried(Info, "Option", Option), "session_info"),
+                Embedded(Carried(Option, "Bootup", "System.Boolean"), "session_info"));
+
+            Assert.Contains(
+                "typeof(global::" + Info + "), null, new ToolField[] { new ToolField(\"name\", \""
+                    + Info + ".Name()\", typeof(global::System.String)), new ToolField(\"option\","
+                    + " \"" + Info + ".Option()\", typeof(global::" + Option + "),"
+                    + " new ToolField[] { new ToolField(\"bootup\", \"" + Option
+                    + ".Bootup()\", typeof(global::System.Boolean)) }) })",
+                source.Text);
+        }
+
+        [Fact]
+        public void ACallThatReturnsCarriedTypesInARowCarriesTheMarkOfWritingThemOneByOne()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_infos", Method("GetInfos", Info + "[]")),
+                Embedded(Carried(Info, "Name", "System.String"), "session_infos"));
+
+            Assert.Contains(
+                "typeof(global::" + Info + "[]), null, new ToolField[] { new ToolField(\"name\", \""
+                    + Info + ".Name()\", typeof(global::System.String)) }, null, false, true,"
+                    + " paged: true)",
+                source.Text);
+        }
+
+        [Fact]
+        public void OnlyTheItemsThatCanBeReadGoIntoWhatTheCallReturns()
+        {
+            ToolBindingSource source = Build(
+                Dispatched("session_info", Method("GetInfo", Info)),
+                Embedded(Carried(Info, "Name", "System.String"), "session_info"),
+                Embedded(Written(Info, "Hidden", "System.String"), "session_info"));
+
+            Assert.Contains("\"name\"", source.Text);
+            Assert.DoesNotContain("\"hidden\"", source.Text);
+        }
+
+        [Fact]
+        public void ACallThatReturnsACarriedTypeWithoutItsItemsIsRefused()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Build(Dispatched("session_info", Method("GetInfo", Info))));
+
+            Assert.StartsWith(
+                "返す運搬用の型の項目を持ち込む行が無い:", error.Message, StringComparison.Ordinal);
+        }
+
+        private static TypeRoleTable Roles()
+        {
+            return new TypeRoleTable(
+                new[]
+                {
+                    new TypeRoleRecord(
+                        Form,
+                        TypeRole.Connector,
+                        "題材の根拠。",
+                        "form_connector",
+                        string.Empty,
+                        CapabilityOwner.Session),
+                    new TypeRoleRecord(
+                        "Sdk.Bridge",
+                        TypeRole.Connector,
+                        "題材の根拠。",
+                        "bridge",
+                        string.Empty,
+                        CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Pmx,
+                        TypeRole.OperationTarget,
+                        "題材の根拠。",
+                        "pmx",
+                        "pmxes",
+                        CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Vertex,
+                        TypeRole.OperationTarget,
+                        "題材の根拠。",
+                        "vertex",
+                        "vertices",
+                        CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Leaf,
+                        TypeRole.OperationTarget,
+                        "題材の根拠。",
+                        "leaf",
+                        "leaves",
+                        CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Kept,
+                        TypeRole.HandleTarget,
+                        "題材の根拠。",
+                        "kept",
+                        "kepts",
+                        CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        KeptLeaf,
+                        TypeRole.HandleTarget,
+                        "題材の根拠。",
+                        "kept_leaf",
+                        "kept_leaves",
+                        CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Weight,
+                        TypeRole.OperationTarget,
+                        "題材の根拠。",
+                        "weight",
+                        "weights",
+                        CapabilityOwner.Model),
+                    new TypeRoleRecord(
+                        Held,
+                        TypeRole.HandleTarget,
+                        "題材の根拠。",
+                        "held_thing",
+                        "held_things",
+                        CapabilityOwner.View),
+                    new TypeRoleRecord(Info, TypeRole.Dto, "題材の根拠。"),
+                    new TypeRoleRecord(Option, TypeRole.Dto, "題材の根拠。"),
+                },
+                new HandleIssuanceRecord[0],
+                new[]
+                {
+                    new ElementCollectionRecord(ListKey, true, "題材の根拠。", new[] { ListKey }),
+                    new ElementCollectionRecord(
+                        WeightKey, true, "題材の根拠。", new[] { ListKey, WeightKey }),
+                });
+        }
+
+        private static Binding Dispatched(string tool, SignatureRecord signature)
+        {
+            return new Binding(
+                signature,
+                tool,
+                new ToolMapRow(
+                    signature.Key,
+                    ToolMapEditKind.DirectChange,
+                    null,
+                    "題材の根拠。",
+                    new[]
+                    {
+                        new Postcondition(
+                            EffectType.None,
+                            string.Empty,
+                            EffectCheckKind.CallLogOnly,
+                            null,
+                            null,
+                            null,
+                            EffectComparison.Exists,
+                            null,
+                            false,
+                            null),
+                    },
+                    null,
+                    null));
+        }
+
+        /// <summary>生成物を返す呼び出しの束縛。返り値を台帳へ預ける行になる。</summary>
+        private static Binding Issuing(string tool, SignatureRecord signature)
+        {
+            return new Binding(
+                signature,
+                tool,
+                new ToolMapRow(
+                    signature.Key,
+                    ToolMapEditKind.DirectChange,
+                    null,
+                    "題材の根拠。",
+                    new[]
+                    {
+                        new Postcondition(
+                            EffectType.HandleCreated,
+                            string.Empty,
+                            EffectCheckKind.CallLogOnly,
+                            null,
+                            null,
+                            null,
+                            EffectComparison.Exists,
+                            null,
+                            false,
+                            null),
+                    },
+                    null,
+                    null));
+        }
+
+        /// <summary>解放のツールが受け持つと定めたメンバーの束縛。独立したツールを持たない。</summary>
+        private static Binding Released(SignatureRecord signature)
+        {
+            return new Binding(
+                signature,
+                null,
+                new ToolMapRow(
+                    signature.Key, ToolMapEditKind.DirectChange, null, "題材の根拠。",
+                    null, null, null));
+        }
+
+        private static Binding Embedded(SignatureRecord signature, params string[] tools)
+        {
+            return new Binding(
+                signature,
+                null,
+                new ToolMapRow(
+                    signature.Key,
+                    ToolMapEditKind.ViewSession,
+                    null,
+                    "題材の根拠。",
+                    null,
+                    null,
+                    tools));
+        }
+
+        /// <summary>ハンドル操作型が宣言するメソッド。</summary>
+        private static SignatureRecord HeldMethod(string member, string valueType)
+        {
+            return new SignatureRecord(
+                Held + "." + member + "()",
+                Held,
+                MemberKind.Method,
+                member,
+                false,
+                0,
+                new ParameterRecord[0],
+                valueType,
+                false,
+                false,
+                OperationDirection.Read);
+        }
+
+        /// <summary>引数1つを取るメソッド。引数の型は題材の側で決める。</summary>
+        private static SignatureRecord Taking(string member, string valueType, string parameterType)
+        {
+            return new SignatureRecord(
+                Form + "." + member + "(" + parameterType + ")",
+                Form,
+                MemberKind.Method,
+                member,
+                false,
+                0,
+                new[] { new ParameterRecord("one", parameterType, ParameterDirection.In, false) },
+                valueType,
+                false,
+                false,
+                OperationDirection.Read);
+        }
+
+        private static SignatureRecord Method(
+            string member, string valueType, params string[] parameters)
+        {
+            return new SignatureRecord(
+                Form + "." + member + "("
+                    + string.Join(",", parameters.Select(p => "System.String").ToArray()) + ")",
+                Form,
+                MemberKind.Method,
+                member,
+                false,
+                0,
+                parameters
+                    .Select(p => new ParameterRecord(p, "System.String", ParameterDirection.In, false))
+                    .ToArray(),
+                valueType,
+                false,
+                false,
+                OperationDirection.Write);
+        }
+
+        /// <summary>運搬用の型が持つ、書き込みだけの項目。</summary>
+        private static SignatureRecord Written(string owner, string member, string valueType)
+        {
+            return new SignatureRecord(
+                owner + "." + member + "()",
+                owner,
+                MemberKind.Property,
+                member,
+                false,
+                0,
+                new ParameterRecord[0],
+                valueType,
+                false,
+                true,
+                OperationDirection.Write);
+        }
+
+        /// <summary>運搬用の型が持つ、読み取りだけの項目。</summary>
+        private static SignatureRecord Carried(string owner, string member, string valueType)
+        {
+            return new SignatureRecord(
+                owner + "." + member + "()",
+                owner,
+                MemberKind.Property,
+                member,
+                false,
+                0,
+                new ParameterRecord[0],
+                valueType,
+                true,
+                false,
+                OperationDirection.Read);
+        }
+
+        private static SignatureRecord Property(
+            string member, string valueType, bool canRead, bool canWrite)
+        {
+            return new SignatureRecord(
+                Form + "." + member + "()",
+                Form,
+                MemberKind.Property,
+                member,
+                false,
+                0,
+                new ParameterRecord[0],
+                valueType,
+                canRead,
+                canWrite,
+                canWrite ? OperationDirection.Write : OperationDirection.Read);
+        }
+
+        /// <summary>
+        /// ブリッジが載せるツール定義の名前はスキーマ正本の綴りで、ホストが登録する結線の名前は
+        /// 能力対応表と型役割から導かれる。出所が別なので綴りは食い違いうるが、食い違えば
+        /// クライアントが呼べる名前をホストが未知のメソッドとして断る。同じ能力対応表から結線を
+        /// 導き、スキーマ正本が持つ綴りと同じ集合になることを見る。
+        /// </summary>
+        [Fact]
+        public void TheDefinitionsAndTheBindingsCarryTheSameToolNames()
+        {
+            ToolSchemaTable schemas = Schemas(BendTool, TurnTool);
+
+            Assert.Equal(Defined(schemas), Bound(Derived(schemas, Bending())));
+        }
+
+        /// <summary>
+        /// スキーマ正本だけが持つ名前は、応える先が無いので組み立てが断る。ブリッジは正本の名前を
+        /// そのままクライアントへ載せ、ホストは登録に無い名前を未知のメソッドとして断るので、
+        /// 受け持つものの無い名前を載せたまま出荷させない。
+        /// </summary>
+        [Fact]
+        public void AToolThatNothingAnswersIsRefused()
+        {
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => Derived(Schemas(BendTool, TurnTool, "session_fold"), Bending()));
+
+            Assert.Contains("session_fold", error.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// 結線だけが持つ名前も見つかる。能力対応表が2行を持つのにスキーマ正本が1つしか綴りを
+        /// 持たないとき、残る1つはクライアントへ載らないので呼ばれないが、載る名前との対応は
+        /// ここで崩れている。
+        /// </summary>
+        [Fact]
+        public void ANameThatOnlyTheBindingsCarryBreaksTheAgreement()
+        {
+            ToolSchemaTable schemas = Schemas(BendTool);
+
+            Assert.NotEqual(Defined(schemas), Bound(Derived(schemas, Bending())));
+        }
+
+        /// <summary>
+        /// 応える先は中継の群だけではない。項目を集める群と要素の群の名前も正本に載るので、
+        /// 3つの群をすべて数えないと、載っている名前を応える先の無いものとして断ってしまう。
+        /// </summary>
+        [Fact]
+        public void TheAggregatingAndElementToolsAnswerForTheirOwnNames()
+        {
+            ToolBindingSource aggregating = Build(
+                Schemas(GetTool, UpdateTool),
+                new TypeRecord[0],
+                Embedded(Property("UndoCount", "System.Int32", true, false), GetTool),
+                Embedded(
+                    Property("PmxFormActivate", "System.Boolean", true, true), GetTool, UpdateTool));
+
+            Assert.Equal(new[] { GetTool, UpdateTool }, aggregating.Aggregations.ToArray());
+
+            ToolBindingSource holding = Build(
+                Schemas("model_add_vertices", "model_remove_vertices"),
+                new TypeRecord[0],
+                Collection());
+
+            Assert.Equal(
+                new[] { "model_add_vertices", "model_remove_vertices" },
+                holding.Elements.ToArray());
+        }
+
+        /// <summary>
+        /// 共通契約が合成のツールとして載せた名前は、結線に現れなくても応える先として数える
+        /// ——ホストが手書きのクラスで受け持ち、行から結線を組み立てられない。
+        /// </summary>
+        [Fact]
+        public void AComposedToolAnswersForItsNameWithoutABinding()
+        {
+            ToolSchemaTable schemas = Schemas(BendTool, TurnTool, "session_compose");
+
+            Assert.Equal(
+                new[] { BendTool, TurnTool },
+                Bound(Derived(schemas, new[] { "session_compose" }, Bending())).ToArray());
+        }
+
+        /// <summary>ツールの名前を持たせず、行とシグネチャだけを持つ題材。</summary>
+        private static Binding[] Bending()
+        {
+            return new[]
+            {
+                Dispatched(null, Method("Bend", "System.Void")),
+                Dispatched(null, Method("Turn", "System.Void")),
+            };
+        }
+
+        /// <summary>
+        /// ツールの名前を能力対応表と型役割から導いて組み立てた結線。題材が名前を渡さないので、
+        /// スキーマ正本の綴りとは別の道で決まる。
+        /// </summary>
+        private static ToolBindingSource Derived(
+            ToolSchemaTable schemas, params Binding[] bindings)
+        {
+            return Derived(schemas, new string[0], bindings);
+        }
+
+        /// <summary>合成のツールを載せて組み立てる。応える先の照合だけがこれを見る。</summary>
+        private static ToolBindingSource Derived(
+            ToolSchemaTable schemas, IList<string> composed, params Binding[] bindings)
+        {
+            Dictionary<string, SignatureRecord> signatures = bindings.ToDictionary(
+                b => b.Signature.Key, b => b.Signature, StringComparer.Ordinal);
+            foreach (SignatureRecord flow in Flows())
+            {
+                signatures.Add(flow.Key, flow);
+            }
+
+            InventoryRecord inventory = new InventoryRecord(
+                "題材",
+                "0.0.0.0",
+                new TypeRecord[0],
+                new TypeRecord[0],
+                signatures.Values.ToList());
+            ToolMap map = new ToolMap(bindings.Select(b => b.Row).ToList());
+
+            return ToolBindingSourceBuilder.Build(
+                map,
+                Roles(),
+                inventory,
+                ToolNameEvidence.Resolve(map, Roles(), Assignments(), inventory),
+                Assignments(),
+                schemas,
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                composed);
+        }
+
+        /// <summary>ホストが結線として登録する名前。3つの群をすべて無条件に登録する。</summary>
+        private static IList<string> Bound(ToolBindingSource source)
+        {
+            return source.Calls
+                .Concat(source.Aggregations)
+                .Concat(source.Elements)
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .ToList();
+        }
+
+        /// <summary>ブリッジの定義が載せる名前。</summary>
+        private static IList<string> Defined(ToolSchemaTable schemas)
+        {
+            return ToolDefinitionBuilder.Build(
+                schemas,
+                schemas.Tools.ToDictionary(
+                    t => t.Tool, t => "題材の説明。", StringComparer.Ordinal),
+                new AssumedLength(
+                    new Dictionary<string, int>(StringComparer.Ordinal) { { "boolean", 5 } },
+                    new Dictionary<SchemaItem, string>()),
+                DefinitionValueChars,
+                DefinitionRequestBytes,
+                DefinitionTokenLimit,
+                new Dictionary<SchemaItem, string>(),
+                new HashSet<string>(StringComparer.Ordinal),
+                new HashSet<string>(StringComparer.Ordinal),
+                new HashSet<string>(StringComparer.Ordinal),
+                new HashSet<string>(StringComparer.Ordinal))
+                .Select(d => d.Name)
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .ToList();
+        }
+
+        /// <summary>引数を取らないツールだけを並べたスキーマ正本。</summary>
+        private static ToolSchemaTable Schemas(params string[] tools)
+        {
+            return new ToolSchemaTable(tools
+                .Select(t => new ToolSchema(
+                    t,
+                    new[]
+                    {
+                        new SchemaBranch(
+                            "only", null, null, new SchemaItem[0], new SchemaChoice[0]),
+                    },
+                    new SchemaItem(
+                        "boolean", null, null, null, ItemOrigin.HostOutput, null, null, false,
+                        null, null, null, false, null),
+                    null))
+                .ToList());
+        }
+
+        /// <summary>1つの行と、そのシグネチャと、持つならツールの名前。</summary>
+        private sealed class Binding
+        {
+            public Binding(SignatureRecord signature, string tool, ToolMapRow row)
+            {
+                Signature = signature;
+                Tool = tool;
+                Row = row;
+            }
+
+            public SignatureRecord Signature { get; }
+
+            public string Tool { get; }
+
+            public ToolMapRow Row { get; }
+        }
+    }
+}

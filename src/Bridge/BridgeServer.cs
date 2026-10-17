@@ -1,0 +1,63 @@
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Protocol;
+
+namespace PmxEditorMcp.Bridge
+{
+    /// <summary>stdioを使うMCPサーバーとしてのブリッジの構成。</summary>
+    public static class BridgeServer
+    {
+        public const string ServerName = "pmx-editor-mcp";
+
+        public const string ServerInstructions =
+            "PMXエディタを相手にするサーバー。ツールの名前は6つの系統に分かれ、" +
+            "どれを引くかは何を知りたいかで決まる。" +
+            "どの系統を引けばよいか分からないときは find_tool に語を並べて渡す。" +
+            "名前と説明文にそのどれかの語を含むツールを返す。当たりが limit を超えると一部だけを返すので、" +
+            "続きは返った nextOffset を offset へ渡して読む。" +
+            "PMXエディタが複数動いているときは、list_editors で見分け、select_editor で" +
+            "接続先を選んでから呼ぶ。" +
+            "model_ はモデルの中身をどう読み書きするか——頂点と面・材質・ボーンとモーフ・剛体とJoint——を" +
+            "受け持つ。" +
+            "motion_ はモーションをどう組み立てるか——VMDのキー・ボーンとモーフの動き・カメラと照明——を" +
+            "受け持つ。" +
+            "view_ はPmxViewをどう見せて何を選ぶか——カメラ・表示・選択中の要素——を受け持つ。" +
+            "session_ はエディタと何をやり取りするか——ファイル・プラグイン・元に戻す——を" +
+            "受け持つ。" +
+            "editor_ はPMXエディタ上でどう操作すればよいか——ウィンドウとメニューの辿り方・" +
+            "ショートカット・確認の文言——を受け持つ。";
+
+        /// <summary>
+        /// stdioトランスポートのMCPサーバーを構成して動かす。標準出力はプロトコルの通り道で、ログと
+        /// 診断は標準エラー出力だけへ出す。
+        /// </summary>
+        public static async Task RunAsync(string[] args, HostIpcClient client)
+        {
+            HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
+            builder.Logging.SetMinimumLevel(LogLevel.Warning);
+
+            builder.Services
+                .AddMcpServer(options =>
+                {
+                    options.ServerInfo = new Implementation
+                    {
+                        Name = ServerName,
+                        Version = typeof(BridgeServer).Assembly.GetName().Version.ToString(),
+                    };
+                    options.ServerInstructions = ServerInstructions;
+                })
+                .WithStdioServerTransport()
+                .WithTools(BridgeTools.Create(
+                    client,
+                    BridgeDeclaration.ReadFromEnvironment(),
+                    BridgeDebugHooks.ReadFromEnvironment()));
+
+            await builder.Build().RunAsync().ConfigureAwait(false);
+        }
+    }
+}

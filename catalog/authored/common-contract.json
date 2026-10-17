@@ -1,0 +1,715 @@
+{
+  "spellings": [
+    {
+      "spelling": "base64",
+      "assumedChars": 256
+    },
+    {
+      "spelling": "boolean",
+      "assumedChars": 5
+    },
+    {
+      "spelling": "brush",
+      "assumedChars": 48
+    },
+    {
+      "spelling": "color",
+      "assumedChars": 48
+    },
+    {
+      "spelling": "enum_name",
+      "assumedChars": 32
+    },
+    {
+      "spelling": "font",
+      "assumedChars": 299
+    },
+    {
+      "spelling": "image",
+      "assumedChars": 256
+    },
+    {
+      "spelling": "json",
+      "assumedChars": 256
+    },
+    {
+      "spelling": "null_value",
+      "assumedChars": 4
+    },
+    {
+      "spelling": "number",
+      "assumedChars": 11
+    },
+    {
+      "spelling": "number_array",
+      "assumedChars": 48
+    },
+    {
+      "spelling": "point",
+      "assumedChars": 24
+    },
+    {
+      "spelling": "rectangle",
+      "assumedChars": 48
+    },
+    {
+      "spelling": "size",
+      "assumedChars": 24
+    },
+    {
+      "spelling": "text",
+      "assumedChars": 256
+    }
+  ],
+  "components": [
+    {
+      "typeName": "PEPlugin.Pmd.IPEQuaternion",
+      "count": 4
+    },
+    {
+      "typeName": "PEPlugin.Pmd.IPEVector3",
+      "count": 3
+    },
+    {
+      "typeName": "PEPlugin.SDX.M",
+      "count": 16
+    },
+    {
+      "typeName": "PEPlugin.SDX.Q",
+      "count": 4
+    },
+    {
+      "typeName": "PEPlugin.SDX.V2",
+      "count": 2
+    },
+    {
+      "typeName": "PEPlugin.SDX.V3",
+      "count": 3
+    },
+    {
+      "typeName": "PEPlugin.SDX.V4",
+      "count": 4
+    },
+    {
+      "typeName": "SlimDX.Matrix",
+      "count": 16
+    },
+    {
+      "typeName": "SlimDX.Quaternion",
+      "count": 4
+    },
+    {
+      "typeName": "SlimDX.Vector3",
+      "count": 3
+    }
+  ],
+  "types": [
+    {
+      "typeName": "PEPlugin.Pmd.BodyBoxKind",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.BodyMode",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.BoneKind",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.IPEQuaternion",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.IPEVector3",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.Pmd.UpdateObject",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.JointKind",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.MorphKind",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.PmxUpdateObject",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.PrimitiveType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.SoftBodyShape",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Pmx.SphereType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.SDX.M",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.SDX.Q",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.SDX.V2",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.SDX.V3",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.SDX.V4",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "PEPlugin.View.AntiAliasingType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.View.FillMode",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.View.PartsSelectObject",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.View.ToonType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.View.VertexEditObject",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Vme.OpType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "PEPlugin.Vme.PEVmePathType",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "SlimDX.Matrix",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "SlimDX.Quaternion",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "SlimDX.Vector3",
+      "shape": "number_array"
+    },
+    {
+      "typeName": "System.Boolean",
+      "shape": "boolean"
+    },
+    {
+      "typeName": "System.Byte",
+      "shape": "number"
+    },
+    {
+      "typeName": "System.Collections.Generic.IList<1>",
+      "shape": null
+    },
+    {
+      "typeName": "System.Double",
+      "shape": "number"
+    },
+    {
+      "typeName": "System.Drawing.Bitmap",
+      "shape": "image"
+    },
+    {
+      "typeName": "System.Drawing.Brush",
+      "shape": "brush"
+    },
+    {
+      "typeName": "System.Drawing.Color",
+      "shape": "color"
+    },
+    {
+      "typeName": "System.Drawing.Font",
+      "shape": "font"
+    },
+    {
+      "typeName": "System.Drawing.Point",
+      "shape": "point"
+    },
+    {
+      "typeName": "System.Drawing.Rectangle",
+      "shape": "rectangle"
+    },
+    {
+      "typeName": "System.Drawing.Size",
+      "shape": "size"
+    },
+    {
+      "typeName": "System.Int32",
+      "shape": "number"
+    },
+    {
+      "typeName": "System.Nullable<1>",
+      "shape": null
+    },
+    {
+      "typeName": "System.Object",
+      "shape": "json"
+    },
+    {
+      "typeName": "System.Single",
+      "shape": "number"
+    },
+    {
+      "typeName": "System.String",
+      "shape": "text"
+    },
+    {
+      "typeName": "System.Version",
+      "shape": "text"
+    },
+    {
+      "typeName": "System.Void",
+      "shape": "null_value"
+    },
+    {
+      "typeName": "System.Windows.Forms.FormWindowState",
+      "shape": "enum_name"
+    },
+    {
+      "typeName": "System.Windows.Forms.MouseButtons",
+      "shape": "enum_name"
+    }
+  ],
+  "composedTools": [
+    {
+      "tool": "editor_close_window",
+      "branching": false,
+      "duty": "エディタのウィンドウを閉じる。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。閉じていれば何もせず alreadyClosed に真を返し、開いていれば閉じて alreadyClosed に偽を返す。主画面 PmxEditor.PmxForm(Pmx編集)は、閉じずに TOOL_NOT_APPLICABLE を返す。エディタを終了するなら session_close を使う。閉じると editor_open_window で開き直せないウィンドウも閉じない。閉じるときにエディタが出したダイアログは、editor_press_item と同じく呼び出しの中で片付け、ボタン1つで閉じたメッセージボックスの本文を messages に返す。確認をいいえで閉じたときは、ウィンドウは開いたままで TOOL_OPERATION_FAILED を返す。エディタがすでに人の応答を待つ表示を出しているときは、閉じずに TOOL_NOT_APPLICABLE を返す。"
+    },
+    {
+      "tool": "editor_find_operation",
+      "branching": false,
+      "duty": "文言から画面の部品を探し、主画面からそこまでの道筋を返す。エディタが起きていなくても、ウィンドウが閉じていても同じ答えを返す。texts に並べた語のどれかを、ウィンドウのタイトル・部品の文言・部品を指したときに出る説明・そのウィンドウが出す確認や報告の文言へ部分一致で当てる。語は日本語で、PMXエディタで一般的に使われている語にする。エディタの表記が英語の語は、その表記(Joint など)でも読み(ジョイント など)でも当たる。大文字小文字と全角半角と仮名の種類は区別しない。matches の各件はウィンドウの型の完全名 form を持ち、タイトルのあるウィンドウではタイトル title も持つ。部品に当たったものはウィンドウの根からその部品までの path、確認や報告の文言に当たったものは message を持つ。route は主画面からそのウィンドウを開くまでの各段で、段ごとに開く側のウィンドウ form と、そのウィンドウの中で辿る部品 via と、辿り着いた部品のショートカット shortcut を持つ。route は、editor_open_window が辿るのと同じく、押すとそのウィンドウだけを開き editor_press_item が押す部品だけで組む。そうした道で主画面から開けないウィンドウは route の代わりに unreachable を持つ。total は当たった総数で、limit と応答の枠で返しきれなかった残りがあるときは nextOffset を返す。その値を offset へ渡すと続きが取れる。"
+    },
+    {
+      "tool": "editor_get_prompt",
+      "branching": false,
+      "duty": "いまエディタが人の応答を待つ表示を出しているかを返す。モデルも画面も変えない。表示が出ていてほかのツールが TOOL_PROMPT_SHOWN で進めない間も答える。shown は表示が出ていれば真で、そのとき text にダイアログのタイトルと本文を返す。出ていなければ shown は偽で、text を返さない。表示へ答えるのは人で、答えて消えたかはこのツールを呼び直して確かめる。"
+    },
+    {
+      "tool": "editor_get_screen_structure",
+      "branching": false,
+      "duty": "ウィンドウの一覧と、ウィンドウの中の部品の木を返す。木はウィンドウが閉じていても同じものを返し、いま開いているかを各ウィンドウの open に添える。人の応答を待つ表示が出ていて読めないときは open を省き、理由を警告に返す。window を省くと全部のウィンドウの一覧を返す。window は型の完全名かタイトルで指す。型の完全名が当たればそのウィンドウだけ、無ければタイトルが一致するもの、それも無ければ名前かタイトルに部分一致するものをすべて返し、どれも当たらなければ空を返す。型の完全名かタイトルが一致したウィンドウには、どこから開くか openedBy と、部品の木 node と、そのウィンドウが出す確認や報告の文言 messages が付く。node は type と name と text と toolTip と shortcut と contextMenu と fragment と dynamic と opens と danger と children を持つ。children は同じ形の節が並ぶ。fragment はその節へ差し込んだ断片のクラス、dynamic は件数が実行時に決まる枝で組み立てる method を持ち、opens はその部品が開くウィンドウの型の完全名である。danger は editor_press_item が押さない部品の区分の並びである。無い項目は省く。path は node の根から降りる name の並びで、渡すとその部品を根とする木を返す。depth は返す段数である。0はその節だけ、省くと下まで全部を返す。木が応答の枠に収まらないときはエラーを返す。path で降りるか window で1つに絞って取り直す。total は当たったウィンドウの総数で、返しきれなかった残りがあるときは nextOffset を返す。その値を offset へ渡すと続きが取れる。"
+    },
+    {
+      "tool": "editor_open_window",
+      "branching": false,
+      "duty": "エディタのウィンドウを開く。TransformView のように、ほかのツールが相手にするウィンドウが閉じているときに使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。TransformView・PmxSubView・PmxViewSelector など、SDK のコネクタで開閉できるウィンドウはそのコネクタで開く。ほかのウィンドウは、いま開いているウィンドウから、押すとそのウィンドウだけを開くメニュー項目かボタンを辿り、人が押すのと同じ順に押して開く。途中のウィンドウが閉じていればそれも開く。右クリックメニューの中の項目と、editor_press_item が押さない部品は辿らない。エディタが人の応答を待つ表示として開くウィンドウは、開かずに TOOL_NOT_APPLICABLE を返す。開いていれば何もせず alreadyOpen に真を返し、開いたら alreadyOpen に偽を返す。title は開いているウィンドウのタイトルである。辿れる道が無いとき、途中の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。開くときにエディタが出したダイアログは、editor_press_item と同じく呼び出しの中で片付け、ボタン1つで閉じたメッセージボックスの本文を messages に返す。エディタがすでに人の応答を待つ表示を出しているときは、開かずに TOOL_NOT_APPLICABLE を返す。"
+    },
+    {
+      "tool": "editor_press_item",
+      "branching": false,
+      "duty": "開いているウィンドウの中のメニュー項目・ボタン・チェックボックスを1つ、人が押すのと同じように押す。ほかのツールに無い操作に使う。window はウィンドウの型の完全名で、editor_get_screen_structure の form と同じ綴りである。path はウィンドウの根から押す部品までの name の並びで、editor_find_operation の path で分かる。押せるのは子を持たないメニュー項目と、ボタンと、チェックボックスで、右クリックメニューの中の項目と、人の応答を待つ表示の中の部品は押さない。タブの中の部品はそのタブを選んでから押す。ウィンドウが閉じているときは TOOL_NOT_APPLICABLE を返す。editor_open_window で開いてから呼ぶ。部品がいまは押せないとき、エディタを終える・ファイルへ書く・モデルを空にする・クリップボードを読み書きする・人の応答を待つ表示を開く部品(node の danger で分かる)のときも、押さずに TOOL_NOT_APPLICABLE を返し、その働きを受け持つツールがあれば名前を添える。メニュー項目・ツールバーのボタン・チェックボックスを押したときは、押した後の入り切りを checked に返す。checked を渡すと、その入り切りにそろえ、すでにそうなら押さない。押したあとエディタが出したダイアログは、呼び出しの中で片付けてから戻る。ボタンが1つだけでアイコンの無いメッセージボックスはそのボタンで閉じ、その本文を出た順に messages に返す。ほかのダイアログは、いいえかキャンセルで閉じ、それまでに閉じたメッセージボックスの本文とあわせて TOOL_OPERATION_FAILED で返す。エディタがすでに人の応答を待つ表示を出しているときは、押さずに TOOL_NOT_APPLICABLE を返す。"
+    },
+    {
+      "tool": "editor_press_saving_item",
+      "branching": false,
+      "duty": "開いているウィンドウの中の、ファイルへ書くメニュー項目かボタンを1つ押し、そのあとエディタが出す保存のダイアログと確認のダイアログへ答える。window と path は editor_press_item と同じ形で、押せるのは editor_press_item が「このツールで押して行う」と断る部品である。保存のダイアログで書き先を訊く部品では、file に在るフォルダの中の、拡張子の付いたファイルを指す絶対パスを渡す。同じ名前のファイルが在れば置き換える。決まった場所へ書く部品では file を渡さない。confirm に真を渡す。押したあとエディタが出す確認のうち、その部品がふつうに訊くものには、はいで答える。答えた確認のダイアログの本文を、出た順に messages に返す。それ以外のダイアログが出たら、いいえかキャンセルで閉じ、本文を添えて TOOL_OPERATION_FAILED を返す。エディタがファイルを書かなかったとき、書く途中の失敗を画面に出さずに続けたときも TOOL_OPERATION_FAILED を返す。TOOL_OPERATION_FAILED のときは、file と決まった書き先を押す前へ戻す。PmxForm のエクスポートは、保存のダイアログのあとのサイズ調整他のダイアログを、初めの値のまま OK で閉じる。エクスポートで拡張子 .pmx・.pmd のファイルへ書くときは TOOL_NOT_APPLICABLE を返し、session_save_pmx_file・session_save_pmd_file が受け持つ。クリップボードへも書く部品は押さずに TOOL_NOT_APPLICABLE を返し、書かなくする入り切りがあれば名指す。ウィンドウが閉じているときは TOOL_NOT_APPLICABLE を返す。editor_open_window で開いてから呼ぶ。エディタが人の応答を待つ表示を出しているとき、部品がいまは押せないときも TOOL_NOT_APPLICABLE を返す。"
+    },
+    {
+      "tool": "model_clean_faces",
+      "branching": false,
+      "duty": "指した材質から、不正な面と重なった面を落とす。材質は indices・range・all・selected のどれか1つで指す。operation の invalid は3つの頂点が揃っていない面を、duplicate はモデル全体で同じ3頂点を指す面を、duplicateInMaterial は材質ごとに同じ3頂点を指す面を、最初の1つだけ残して落とす。removed に落とした面の数を返す。"
+    },
+    {
+      "tool": "model_compare_shape",
+      "branching": false,
+      "duty": "変形の前後で、メッシュの伸び縮み・折れ・面の裏返りがどれだけ起きたかを数で確かめる。ポーズや変形を付けた後の引き伸ばし・折れ・裏返りの確認に使う。basePmxHandle に、変形する前のモデルの複製(model_clone_pmx が出したもの)のハンドルを渡す。モデルも複製も選択も変えない。頂点・材質・ボーン・各材質の面の数が複製と違えば invalid_argument になる。測る面は、materialIndices ならその材質の面、頂点を指したときは3頂点とも指した頂点に入る面とする。辺は2面が共有しても1本と数える。伸びは、辺の長さの複製の長さに対する比で、複製で長さ0の辺は測らない。edgeCount に辺の数を、minStretch・maxStretch に比の最小と最大を、maxStretchVertices と maxStretchPoints に最大の辺の2頂点の位置と現在の座標を返す。stretchThresholds に比を並べると、それ以上の辺の数を並べた順に stretchDistribution へ limit と count の組で返す。折れは、辺を共有する2面の法線のなす角が複製のときの角から変わった大きさ(度)で、複製が既に持つ折れは数えない。法線が0の面を含む組は測らない。facePairCount に測った組の数を、maxBend に最大を、maxBendFaces にその2面の material・face(材質の中での位置)と現在の座標を返す。bendThresholds に度を並べると、それ以上の組の数を bendDistribution に同じ形で返す。flippedCount に法線が複製と逆向きになった面の数を返す。測る辺や組が無ければ最小・最大・位置は返さない。同値のときは頂点・面の位置が小さい辺・組を返す。"
+    },
+    {
+      "tool": "model_copy_from_reference",
+      "branching": false,
+      "duty": "剛体とJointへ、指している相手の名前や位置を写す。対象は indices・range・all・selected のどれか1つで指し、bodyNameFromBone は剛体を、それ以外はJointを指す。jointPositionFromSameNameBone は、Jointと同じ名前のボーンを探し、その位置をJointへ写す。写す元を指していない要素は変えない。changed に変えた要素の数を返す。"
+    },
+    {
+      "tool": "model_create_physics",
+      "branching": false,
+      "duty": "指したボーンや頂点から、剛体とJointを作る。対象は indices・range・all・selected のどれか1つで指し、joint は剛体を、bodyAtVertices は頂点を、それ以外はボーンを指す。joint と splitBodies 以外は shape を渡す。bodyFollowBone はボーンに追従する剛体を、bodyPhysics は物理で動く剛体を、ボーンごとに足す。joint は指した剛体を並びの順に、隣り合う組へJointで繋ぐ。bodyAndJoint は物理で動く剛体と、親のボーンを指す剛体へ繋ぐJointを足す。bodyAtVertices は指した頂点を包む大きさの剛体を1つ足す。その大きさは形ごとに読み分けられ、球は半径、箱は各軸の半幅、カプセルは半径と中心線の長さになる。その大きさが単精度で持てる範囲を超えるときは、剛体を足さずに断る。splitBodies は model_edit_bones の addMiddle で足したような、親と表示先の間にあるボーンを指し、親に付く剛体を親からそのボーンまでと、そのボーンから表示先までの2つに割る。後半は複製してそのボーンへ付け、区間に沿う位置と大きさの成分を区間の長さの比で縮める。前後は、親側の剛体へ繋ぐJointを写したJoint(無ければ新しいJoint)でそのボーンの位置に繋ぐ。先の区間の剛体へのJointは後半へ付け替え、両側の剛体とも割れる横のJointは後半どうしにも写す。addedBodies と addedJoints に足した位置を返す。"
+    },
+    {
+      "tool": "model_delete_elements",
+      "branching": false,
+      "duty": "指した要素を並びから消す。kind のうち親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。消す対象は indices・range・all・selected のどれか1つで指す。related の repair は指す先を失った参照を直し、ウェイトは残るボーンへ移し、直せない参照は落とす。cascade はそれに加えて、消した要素だけが使っていた要素も消す。keep は何も触らない。removed に消した件数、following に種類ごとのつられて消えた件数、repaired に直した参照の数を返す。modelIndices は kind が face のときだけ渡せ、全部の材質の面を材質の順につないだ列の位置(モデル全体で数えた面の通し番号)で指す。親と、indices・range・all・selected とは一緒に渡さない。親を複数指したとき、indices・range の位置は指した親のそれぞれの中で数える。"
+    },
+    {
+      "tool": "model_draw_uv_layout",
+      "branching": false,
+      "duty": "指した材質の面の辺を、UVの上へ線で描いた画像を返す。材質は indices・range・all・selected のどれか1つで指す。画像は一辺1024画素の正方形で、Uを右へ、Vを下へ取り、0から1の範囲と描く点のすべてが収まる大きさで描く。0から1の範囲を灰色の枠で示し、辺の色は材質ごとに変える。UVに有限でない値を持つ面は描かない。モデルは変えない。値は画像そのもので、ブリッジがMCPの画像として返す。"
+    },
+    {
+      "tool": "model_edit_bones",
+      "branching": false,
+      "duty": "ボーンの整理・生成・軸の設定・ミラー(片側の変形を反対側へ)を行う。ボーン(addAtVertices と addAtVerticesWithWeight では頂点)は indices・range・all・selected のどれか1つで指し、relevelHierarchy と addRootParent はどれも渡さない。ボーンを足す操作はウェイトを変えず、addAtVerticesWithWeight だけが指した頂点のウェイトを足したボーンへ全部振る。addAtVertices は指した頂点の平均の位置へボーンを1本足す。mergeSameName は同じ名前のボーンを先頭の1つへまとめ、指していた参照を付け替える。relevelHierarchy は親が子より先に来るよう並べ直す。addRootParent は「全ての親」を先頭へ足し、親を持たないボーンをその子にする。hideTipBones は子を持たないボーンの表示と操作を切る。tipToOffset は表示先をボーンからそこまでの隔たりへ置き換え、offsetToTip は表示先を最も近い子のボーンへ向ける。addTipBones は表示先のボーンを持たないボーンの隔たりの先へ「～先」のボーンを足して表示先をそこへ移し、dissolveTipBones は名前が「先」で終わるボーンを外し、指していた表示先を隔たりへ戻す。addMultiStageParent は同じ位置へ足したボーンを指したボーンの親として挟み、addMultiStageChild は同じ位置へ足したボーンを子として挟んで指したボーンの子を引き継がせ、addMiddle は親との中点へ足したボーンを親との間へ挟む。この3つは表示先も繋ぎ直す。addAppendParent は同じ位置へ付与率1の付与親を足し、親子と表示先は変えない。makeIk は linkCount に親を辿るリンクの数を渡す。fixAxisToTip は軸制限を表示先への向きにし、setLocalAxis は表示先への向きをX、それと親からの向きに垂直な向きをZとし、resetLocalAxis はローカル軸を外し、setPmdBoneKind は今のフラグからPMDのボーン種別を決めて入れ直す。mirrorPosition と mirrorDisplacement は axis を渡し、名前の左右(model_mirror_elements と同じ規則)が逆のボーンを相手にする。mirrorPosition は相手の位置の鏡像へそろえる。mirrorDisplacement は basePmxHandle も渡し、指したボーンの複製から今への動きを反転して相手の今の位置へ足し、双方の表示先が隔たりなら相手の隔たりを今の隔たりの反転にする。相手が無ければ変えない。followVertices は basePmxHandle(動かす前の複製)と radius を渡し、ボーンの複製での位置から radius 以内の頂点の、複製から今への剛体当てはめで、位置と表示先の隔たり(表示先がボーンなら変えない)を置き直して頂点の変形に追従させる。3つ未満か一直線の頂点しか無いボーンは動かさない。added は足したボーンの位置。"
+    },
+    {
+      "tool": "model_edit_faces",
+      "branching": false,
+      "duty": "指した面の向き・対角線・押し出し・共有頂点の分離を行う。材質は parentIndices・parentRange・parentAll のどれか1つ、その中の面は indices・range・all・selected のどれか1つで指す。selected に真を渡すと、画面がいま選んでいる面のうち、指した材質のものを対象にする。flip は2つめと3つめの頂点を入れ替える。swapDiagonal は辺を共有する2つの面が作る四角の対角線を引き直す。extrude は distance に押し出す長さを渡し、指した面をひとまとまりとして押し出して境界の辺へ側面を張る。separateSharedVertices は指していない面と共有する頂点を複製して分ける。changed・addedVertices・addedFaces を返す。modelIndices は、全部の材質の面を材質の順につないだ列の位置(モデル全体で数えた面の通し番号)で面を指す。材質の指し方と、indices・range・all・selected とは一緒に渡さない。"
+    },
+    {
+      "tool": "model_edit_materials",
+      "branching": false,
+      "duty": "指した材質の結合・単一化・分割・取り出し・複製・色の丸めを行う。材質は indices・range・all・selected のどれか1つで指す。merge は指した材質を先頭へまとめ、mergeAll は並びのすべてを1つへまとめる。mergeSame は colorTolerance に色の許容幅を渡し、その中で設定が同じ材質どうしをまとめる。extractFaces は faceIndices・faceRange・faceAll のどれか1つで材質の中の面を指し、その面を新しい材質へ移す。extractFacesWithVertices は同じ指し方で面を指し、指していない面と共にしている頂点を複製して分けたうえで新しい材質へ移す。extractVertices は vertexIndices か vertexSelected で頂点を指し、その頂点だけで作られている面を、指した材質から集めて新しい材質へ移す。duplicateParts は parts を渡し、その持ち物を複製した材質を足す。clampColor は色の各成分を0以上1以下へ丸める。changed・removed・added を返す。extractFaces・extractFacesWithVertices では、faceModelIndices に全部の材質の面を材質の順につないだ列の位置(モデル全体で数えた面の通し番号)を渡して面を指すこともでき、そのときは材質を指さず、面を持つ材質ごとに新しい材質を足す。材質の指し方・faceIndices・faceRange・faceAll とは一緒に渡さない。"
+    },
+    {
+      "tool": "model_edit_morphs",
+      "branching": false,
+      "duty": "指したモーフの結合・まとめ・分離と、いまの材質の値からの作成を行う。materialFromCurrent と vertexMorphFromVertices 以外は、indices・range・all のどれか1つでモーフを指す。addOffsets は targetIndices で指した相手(そのモーフのオフセットが指す種類の並びから選ぶ。モーフ以外は targetSelected でも指せる)を指す動かさない値のオフセットを、指したモーフへ1つずつ足し、種類が違えば断る。vertexMorphFromVertices は同じ指し方で指した頂点の頂点モーフを1つ足す。まとめる操作は先頭の1つへオフセットを移し、指していた参照を付け替える。mergeSameName は名前と種類の両方が同じモーフだけをまとめる。mergeSameKindAdd は同じ相手を指す頂点・UV・グループのオフセットの値を足し合わせ、それ以外はそのまま並べる。name は groupInto・flipInto・materialFromCurrent・vertexMorphFromVertices が足すモーフの名前。splitVertices は頂点モーフを面で繋がった頂点のまとまりごとのモーフへ、splitVerticesByAxis は指す頂点の位置が axis の boundary(省くと0)以上か未満かで2つのモーフへ分け(名前は元の名前に1・2を付け、オフセットの無い側は作らない)、元のモーフを外して、元を指していた参照を分けたモーフの数だけ並べ直す。mirrorOffsets は basePmxHandle・axis・targetIndices を渡し、頂点モーフかボーンモーフの、targetIndices の頂点かボーンを指すオフセットを反転して反対側(ミラー)の相手へ置き、既にあれば置き換える。相手の決め方は両ツールの mirrorDisplacement と同じで、無ければ置かない。ボーンモーフは回転も反射する。added は足したモーフの位置。"
+    },
+    {
+      "tool": "model_edit_nodes",
+      "branching": false,
+      "duty": "表示枠への一括登録と、表情の枠の正規化を行う。枠は indices・range・all のどれか1つで指す。registerUnlistedBones と registerUnlistedMorphs は、どの枠にも載っていないボーンかモーフを、指した枠のうち先頭の末尾へ足す。ボーンを足す2つは、表情の枠を飛ばして次の枠へ足し、表情の枠しか指していなければ断る。registerPickedBones と registerPickedMorphs は、targetIndices で指したボーンかモーフのうち、どの枠にも載っていないものだけを同じ末尾へ足す。registerPickedBones は targetSelected でも指せる。normalizeExpressionNode は、指した枠の中身をモーフの並びの順にそろえる。added に足した中身の数、changed に変えた枠の数を返す。"
+    },
+    {
+      "tool": "model_edit_normals",
+      "branching": false,
+      "duty": "指した頂点の法線を整えるか、変形に追従させる。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。average は指した頂点の法線の平均へそろえ、averageNear は threshold に距離のしきい値を渡して、その中にある頂点どうしで平均する。fromFaces はその頂点を使う面の向きの平均を法線にし、normalize は長さを1にそろえ、flip は向きを逆にし、rotate は rotationAxis に軸の向きを、rotationAngle に角を度で渡して、その軸のまわりに法線だけを回す。rotationAxis は長さを持たなければならない。正の角で、軸が X なら +Y を +Z へ回す。rotateFromBase は basePmxHandle に動かす前のモデルの複製のハンドルを渡し、面ごとに、辺と面の法線で決まる座標系の、複製から今への回転を求め、頂点ごとに、その頂点を使う面の回転を面積で重みを付けて平均した回転で、今の法線を回す。法線は変形に追従し、作り込んだ法線の面からのずれは保たれるので、fromFaces で作り直さない。複製か今で面積の無い面は数えず、数える面の無い頂点は動かさない。複製と頂点・材質・ボーン・面の数が違えば断る。basePmxHandle は rotateFromBase のときだけ渡せる。changed に変えた頂点の数を返す。"
+    },
+    {
+      "tool": "model_edit_uv",
+      "branching": false,
+      "duty": "指した頂点のUVの反転・写し取り・視線方向からの貼り直しを行う。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。反転は1から引く。copy は source に写す元の頂点の位置を渡す。projectFromView は direction に見る向きを渡し、その向きに垂直な面へ落とした位置をUVにする。長さの無い向きは受け取らない。changed に変えた頂点の数を返す。"
+    },
+    {
+      "tool": "model_edit_vertices",
+      "branching": false,
+      "duty": "materialIndices は材質の面の頂点。weld は先頭へ結合、weldNear は threshold 以内を統合。align は軸の値を平均へ、mirrorCopy は鏡像の複製を足し、mirrorModel は鏡像へ移し3頂点とも移った面は裏返す。projectOntoSurface は surfaceMaterialIndices の面の最も近い点(direction 指定時はその向きの半直線上)から表へ surfaceOffset の所へ投影、当たらないか distanceLimit 超は不動。pushOutOfSurface はめり込みを直す。最も近い点から margin 離れるまで押し出し(内側は向き不問で越え)、面上は不動。spreadRadius は押す量と押す頂点が離れる倍率を半径で0のガウス重みで広げる。remaining は面内か margin 未満で残った数。followGuide は複製 basePmxHandle から手本 guideIndices(不動)の変形へ追従。rigid は手本の剛体当てはめ(一直線でない3つ以上)、interpolate は距離2乗の逆数で補間。mirrorDisplacement は片側の変形を反対側へ写す。basePmxHandle から今への変位を axis で反転し、複製で鏡像位置(0.001以内)の頂点の今へ足し、法線は指した頂点の法線の反転。複数なら隣が合う方、無しは不変。軸上は自分が相手で軸方向を除く。sweepBand は rootIndices から辺伝いの距離 t で帯を層(layerTolerance 以内は同層)に分け、層の重心を offsets(線形補間、外は端の値)で動かし(両端 fixedEnds 層は不動)、断面を回転最小化フレームで回す。lateralScale は across 成分 wide を knots の center(省略0)まわりに scale 倍(s は from=0・to=1 の射影比。間はなめらか、外は端の値)。side は both(既定)・positive・negative で wide−center が正・負の頂点だけ。copyFromBase は basePmxHandle の同位置の頂点の座標・法線・SDEF値を写す。"
+    },
+    {
+      "tool": "model_edit_weights",
+      "branching": false,
+      "duty": "指した頂点のウェイトを整える。materialIndices は材質の面が使う頂点を指す。average は平均へそろえ、smooth は strength で同じ面の頂点の平均へ寄せる。fromNearestBonePosition は位置が、fromNearestBoneAxis は根元から表示先までの線分が最も近いボーンへ全部振る。fromMirror は axis の鏡像の頂点から左右を model_mirror_elements と同じ規則で入れ替えたウェイトとSDEFを写す。replaceBone は fromBone の正のウェイトを toBone へ付け替える。splitTowardTip は表示先が子のボーンのウェイトを、子の根元から表示先までの線分の方が近い頂点でその子へ移す。fromSurface は surfaceMaterialIndices の面の最も近い点で、面の3頂点のウェイトを重心座標で補間する。projection は nearest(既定)か、法線の表裏へ飛ばして先に当たる面を使う ray(外れれば最も近い点)。excludeBones のボーンと子孫を外し、maxBones(既定4)の重い順に残してから minWeight 未満を外す。falloff は near 以内を写した値、near+fade 以上を元の値とし、間をなめらかに混ぜる。面の3頂点が同じ2本のSDEFなら C・R0・R1 を補間してSDEFにする。指した頂点の間だけで、smoothSpatial は radius 以内をガウス(σ=半径/2)の重みの平均へ iterations 回寄せ、averageNear は threshold 以内どうしを平均へそろえ、sourceSmoothRadius と falloffSmoothRadius は写した値と falloff の割合を同じガウスの平均へならす。rampToward は最も近い targetIndices までの距離 d で 1−d/radius(0で下限)の割合だけそのウェイトへ寄せ、割合0の頂点は変えず数えない。どの操作でも、合計を1へそろえ、正の枠が無ければ先頭のボーンへウェイト1を振り、並びに居ないボーンは祖先へ移す。normalize と repairMissingBone はこの処理だけを行う。changed は変えた頂点の数。"
+    },
+    {
+      "tool": "model_find_bone_weights",
+      "branching": false,
+      "duty": "指した頂点のウェイトが乗っているボーンを、ボーンごとに集計して返す。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。モデルも画面の選択も変えない。頂点の4つの枠のうちウェイトが正の枠だけを数え、モデルのボーンの並びに居ないボーンを指す枠は数えず、1つの頂点が同じボーンを複数の枠で持つときはその頂点を1つと数えてウェイトを足す。count に指した頂点の数を返し、bones に乗っているボーンごとの組を weightSum の大きい順に並べる(同じ値はボーンの位置の小さい順)。組は、ボーンの位置 index・名前 name・そのボーンにウェイトが乗る指した頂点の数 vertexCount・その頂点のウェイトの合計 weightSum・頂点ごとのウェイトの最大 weightMax を持つ。offset と limit で切り出し、切り出す前の件数を total に返し、応答の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。1件も収まらなければ response_too_large を返す。"
+    },
+    {
+      "tool": "model_find_coincident_vertices",
+      "branching": false,
+      "duty": "指した頂点を、位置の近いものどうしの組(同じ位置の頂点・重なった頂点・ずれた継ぎ目・溶接の候補)に分けて返す。複製との比較で、変形で離れてしまった同じ位置の頂点(分離した継ぎ目・ずれ)の洗い出しにも使う。モデルも複製も画面の選択も変えない。頂点は indices・range・all・selected・materialIndices のどれか1つで指し、materialIndices ではその材質の面が使う頂点を指す。距離が threshold 以内の頂点どうしを組にし、近い頂点の連なりを辿ってつながるものも1つの組にする。距離は座標の直線距離で、ちょうど threshold のものも組にし、0なら位置の同じ頂点だけを組にする。頂点が1つだけの組は返さない。basePmxHandle に変形する前のモデルの複製(model_clone_pmx が出したもの)のハンドルを渡すと、組分けを複製の位置で行い、組の広がりは今の位置で測る。頂点・材質・ボーン・各材質の面の数が複製と違えば invalid_argument になる。count に組の数を返し、組ごとの spread は、組の頂点どうしの今の位置の最大距離(2頂点間の最大)で、maxSpread にその最大を返す。spreadLimit を渡すと、spread がそれを超える組の数を overLimitCount に返す(ちょうどの組は数えない)。groups は spread の大きい順(同じなら頂点の位置が最も小さい組が先)に並べ、組ごとに vertices へ頂点の位置を昇順に返す。組が無ければ maxSpread は返さない。offset と limit で groups を切り出し、応答の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。1件も収まらなければ response_too_large になる。"
+    },
+    {
+      "tool": "model_find_exposed_vertices",
+      "branching": false,
+      "duty": "指した頂点のうち、basePmxHandle のモデル(静止時)では surfaceMaterialIndices の材質の面の内側にあり、pmxHandle のモデル(姿勢後)では外側にある頂点を数えて返す。姿勢で肌の点が衣装の面の外へ出たかの測定に使う。モデルも複製も画面の選択も変えない。頂点は indices・range・all・selected・materialIndices のどれか1つで指し、materialIndices ではその材質の面が使う頂点を指す。basePmxHandle に姿勢をつける前のモデルの複製(model_clone_pmx が出したもの)のハンドルを必ず渡す。頂点・材質・ボーン・各材質の面の数が複製と違えば invalid_argument になる。内側は、複製の面を3方向の半直線が貫く回数の偶奇の多数決で奇数となることで決め(model_find_surface_distances の sideBy が rayParity のときと同じ)、姿勢後の外側も、姿勢後の面について同じ判定で外側であることで決める。面積の無い面は測らない。count に外へ出た頂点の数を、maxDepth に depth の最大を、maxVertex にそれを取った頂点の位置を返す。depth は、頂点の姿勢後の位置から姿勢後の面までの最も近い距離である。外へ出た頂点が無ければ maxDepth と maxVertex は返さない。vertices は depth の大きい順(同じ値は頂点の位置の小さい順)に並べ、頂点ごとに vertex(頂点の位置)と depth を持つ。offset と limit で vertices を切り出し、応答の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。1件も収まらなければ response_too_large になる。surfaceMaterialIndices の材質に面積のある面が複製か姿勢後のどちらかに無ければ not_applicable になる。"
+    },
+    {
+      "tool": "model_find_material_vertices",
+      "branching": false,
+      "duty": "指した材質の面が使う頂点の位置を、重なりなく昇順で返す。材質は indices・range・all・selected のどれか1つで指す。モデルも画面の選択も変えない。offset と limit で切り出し、切り出す前の件数を total に、切り出した位置を vertexIndices に返す。runs に真を渡すと、連続した位置を start と count の組にまとめて vertexIndices の代わりに vertexRuns に返し、total・offset・limit・nextOffset はその組の数で数える。値の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。"
+    },
+    {
+      "tool": "model_find_parts",
+      "branching": false,
+      "duty": "materialIndices に並べた材質の面を、頂点を共有するか位置の近い頂点を持つものどうしでつないだ部品(パーツ・離れた塊)に分けて返す。別々の部品が重なっていないか、同じ位置の頂点でつながった層がないか、いくつの離れた塊からできているかの確認に使う。モデルも画面の選択も変えない。面が頂点を共有していれば同じ部品で、別々の頂点でも距離が weldDistance 以内なら同じ部品にし、近い頂点の連なりを辿ってつながるものも1つの部品になる。距離は座標の直線距離で、ちょうど weldDistance のものもつなぐ。weldDistance を省くか0にすると位置の同じ頂点だけをつなぐ。指した材質の面だけを使い、ほかの材質の面は部品をつながない。count に部品の数を返し、parts は頂点の数の多い順(同じ数は頂点の位置が最も小さい部品が先)に並べる。部品ごとに、vertexRuns に頂点の位置を昇順に連なりごとの start と count の組で、vertexCount に頂点の数、faceCount に面の数、min と max に頂点の座標の各軸の最小と最大を返す。offset と limit で parts を切り出し、応答の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。1件も収まらなければ response_too_large になる。"
+    },
+    {
+      "tool": "model_find_referrers",
+      "branching": false,
+      "duty": "指した要素を指している要素を数えて返す。detail が count なら指す側の種類ごとの件数を referrers へ並べ、指される側が複数ならどれか1つでも指されていれば1つに畳む。countPerTarget なら指される側1件ごとの位置 index と件数 referrers を targets へ、indices なら referrerKind で名指した1種類の位置を referrerIndices へ並べる。referrerKind と runs は indices のときだけ渡せる。countPerTarget と indices だけは offset と limit で切り出し、切り出す前の件数を total に添え、応答の枠に収まるまで減らして警告を添え(収まらなければ response_too_large)、残りがあれば次の offset に渡す nextOffset を返す。runs に真を渡すと、連続した位置を start と count の組にまとめて referrerIndices の代わりに referrerRuns に返し、total・offset・limit・nextOffset はその組の数で数える。指す側と見る項目は、頂点へ face・material・morph(頂点・UV・追加 UV)・softBody(ピン・アンカー)、材質へ morph(材質)・softBody、ボーンへ vertex(4つの枠)・bone(親・付与親・表示先・IK のターゲット・リンク)・morph(ボーン)・node(ボーン項目)・body、モーフへ morph(グループ・フリップ)・node(モーフ項目)、剛体へ joint(AとB)・morph(インパルス)・softBody。面の位置はモデル全体の通し番号。表示枠は model_list_nodes が並べる枠だけを数える。材質を指さない材質モーフのオフセットは全材質を指す。minWeight は kind が bone のときだけ渡せ、これより大きいウェイトの枠だけを数える。0ではウェイト0の枠を数えず、負の値で数える。"
+    },
+    {
+      "tool": "model_find_surface_distances",
+      "branching": false,
+      "duty": "指した頂点から、surfaceMaterialIndices に並べた材質の面までの最も近い距離を、面の表の側を正、裏の側を負として測る。めり込み・はみ出しの確認に使う。materialIndices はその材質の面が使う頂点を指す。モデルも選択も変えない。面積の無い面は測らない。表は、sideBy が normal(既定)なら、面の上の最も近い点でその面の3頂点の法線を補間した向きの側とし、補間した法線が0なら面の頂点の並びから決める。最も近い点から頂点へ向かう向きが表の向きと直交する頂点は表に数える。rayParity なら法線によらず、3方向の半直線が面を貫く回数の偶奇の多数決で奇数となる頂点(閉じた面の内側)を裏とする。距離0の頂点はどちらでも表に数える。count に測った頂点の数を、frontCount・backCount に表と裏の頂点の数を返す。minDistance・maxDistance に符号付きの距離の最小と最大を、minVertex・maxVertex にそれを取った頂点の位置を、minPoint・maxPoint に最も近い面の上の点を返す。同値のときは位置が最も小さい頂点を返す。distanceLimit を渡すと、面までそれより遠い頂点を count から外して farCount に数える。測った頂点が無ければ距離・頂点・点は返さない。distanceThresholds に距離を並べると、測った頂点のうち面までの距離の絶対値がそれ以下の数を、並べた順に distribution へ limit と count の組で返す。boxes に箱を並べると、指した頂点のうち箱に入るものについて同じ項目を、箱ごとに boxes へ返す。箱の書き方と境の扱いは model_find_vertex_bounds の boxes と同じ。surfaceMaterialIndices の材質に面積のある面が1つも無ければ not_applicable になる。"
+    },
+    {
+      "tool": "model_find_surface_intersections",
+      "branching": false,
+      "duty": "surfaceMaterialIndices の材質の面と otherSurfaceMaterialIndices の材質の面が交差している組を数え、交差の位置と深さを返す。頂点から面までの距離では測れない、開いた面の突き抜けの有無と深さを数で確かめるのに使う。同じ材質を両側へ指せない。モデルも画面の選択も変えない。面積の無い面は測る相手に含めない。交差とは2つの面が正の長さの線分で交わることで、点や辺で接するだけの組・同じ平面の上で重なる組・座標の同じ頂点を持つ組(頂点を共有する組と、別々の頂点が同じ座標にある組)は数えない。count に交差した組の数を、faceCount と otherFaceCount に交差に加わった面の数をそれぞれの側で、totalLength に交差の線分の長さの合計を、maxDepth に depth の最大を返す。交差した組が無ければ maxDepth は返さない。pairs は depth の大きい順(同じ値は material・face・otherMaterial・otherFace の小さい順)に並べ、組ごとに material と face(材質の中での面の位置)、otherMaterial と otherFace、交差の線分の length と両端 start・end(x の小さい側を start に置き、x が等しければ y、それも等しければ z の小さい側)、depth を持つ。depth は面の組ごとの値で、どちらかの面の3頂点を、相手の面を含む平面の片側へ出しきるのに要る距離の最小(両側と両方の面で比べる)で、メッシュが細かいほど小さくなる。offset と limit で pairs を切り出し、応答の枠に収まる件数まで減らしたときは警告を添え、残りがあれば次に渡す位置を nextOffset に返す。1件も収まらなければ response_too_large を返す。surfaceMaterialIndices か otherSurfaceMaterialIndices の材質に面積のある面が1つも無ければ not_applicable になる。"
+    },
+    {
+      "tool": "model_find_surface_section",
+      "branching": false,
+      "duty": "materialIndices の材質の面を、planePoint を通り planeNormal に直交する平面で切った線(断面)を、折れ線の点と長さで返す。曲面に沿った長さを測るのに使う。planeNormal は長さを持たなければならない。モデルも画面の選択も変えない。面積の無い面は切らない。位置の同じ頂点は1つとみなし、頂点を分けた継ぎ目も1本の線になり、重なった面の線は1本に畳む。頂点が平面の上にあるかは、単精度へ丸めた planePoint・planeNormal と頂点の座標から厳密に決め、平面に乗る辺は線に含め、3頂点とも平面の上にある面は切らない。from と to を省くと、lines に線ごとの組を長い順に並べる。組は、始点へ戻る線なら closed に真を、length に長さを、points に角の点を線に沿って持ち、閉じた線でも始点を最後に繰り返さない。from と to に点を渡すと、それぞれに最も近い線の上の点の間を線に沿って結ぶ。points は from の側から並べ、length にその長さを、lineLength と closed に線全体の長さと閉じているかを、fromGap と toGap に渡した点から線までの距離を返す。閉じた線では短い側を結び、via に点を渡すと via に最も近い線の上の点を通る側を結ぶ。via は from と to と一緒にだけ渡せ、from と to は揃えて渡す。spacing を渡すと、points を端から spacing おきの点へ置き直して最後の端の点を足す。長さは置き直す前の線で測る。平面が面と交わらないときと、from と to に最も近い点が別々の線に乗るときは not_applicable、points が応答の枠に収まらなければ response_too_large になる。"
+    },
+    {
+      "tool": "model_find_surface_sections",
+      "branching": false,
+      "duty": "indices か materialIndices で指した面の集まりごとに、from から to への軸に直交する平面で面を切った切り口を、位置 at ごとに折れ線の点で返す。履物や服の幅・隙間を位置ごとに測るのに使う。モデルも画面の選択も変えない。軸上の位置 s は from を0、to を1とし、at は s の並びで、省くと集まりの頂点の s を昇順に重複なく並べた位置すべてで切る。sets は集まりを1つ以上並べた並びで、各集まりは indices(頂点の位置)か materialIndices(材質の位置)のどちらか1つを持つ。切る面は、materialIndices ではその材質の面すべて、indices では3つの角がすべて indices に含まれる面である。across の軸に直交する成分を正規化した向きを横とし、横と軸の外積の向きを上下とする。点は from を原点とする [横, 上下] の距離である。from と to が同じ点のとき、across が軸と平行か零ベクトルのとき、sets・at が空のとき、集まりが indices と materialIndices の両方か一方も持たないときは invalid_argument になる。頂点が平面の上にあるかの決め方と、継ぎ目・重なった面の畳み方は model_find_surface_section と同じである。sections には集まりの順に、集まりの中では s の昇順(at は渡した順)に、set(sets の位置)・s・lines を並べる。lines は length の長い順(同じなら始点の横・上下の小さい順)で、線ごとに closed・length・points を持つ。開いた線の points は横(同じなら上下)の小さい端から、閉じた線の points は始点を繰り返さず、横と上下の面で反時計回りに、横(同じなら上下)の最も小さい点から並べる。切り口が無い位置の lines は空である。points が応答の枠に収まらなければ response_too_large になる。"
+    },
+    {
+      "tool": "model_find_vertex_bounds",
+      "branching": false,
+      "duty": "指した頂点の座標の範囲を返す。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。モデルも画面の選択も変えない。count に頂点の数を、min・max に3つの軸それぞれの最小と最大を、center にその中ほどを返す。minVertices・maxVertices に、軸ごとに最小・最大を取った頂点の位置を3つ返し、同じ値の頂点が複数あれば位置が最も小さいものを返す。頂点が1つも無ければ count だけを返す。boxes に箱を並べると、指した頂点のうち箱に入るものの count・min・max・center・minVertices・maxVertices を、箱ごとに同じ並びで boxes に返す。箱は minX・maxX・minY・maxY・minZ・maxZ で軸ごとの境を持ち、境の上の頂点も箱に入る。両方の境を渡す軸では、min を max 以下にする。省いた境はその側を切らない。最小が最大を超える箱は invalid_argument になる。boxes と一緒に runs に真を渡すと、箱ごとの組に、箱に入る頂点の位置を、連続した位置を start と count の組にまとめて昇順に並べた vertexRuns を添える。runs は boxes なしでは渡せず、boxes なしで渡すと invalid_argument になる。vertexRuns が値の枠に収まらなければ response_too_large になる。"
+    },
+    {
+      "tool": "model_insert_elements",
+      "branching": false,
+      "duty": "新しい要素か、指した要素の複製を並びへ入れる。kind のうち親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。operation が new のときは count に作る数を渡し、clone のときは indices・range・all・selected のどれか1つで写す元を指す。親が並びを持つ5つは、new では作れず、clone だけを受け取る。morph を new で作るときは、variant を渡して種類を決められる。省くと作る相手が決める種類になる。at は入れる位置で、省くと末尾へ足す。ranges に、入った位置を親ごとに start と count の組で返し、親を指さない8つでは組は1つになる。組が値の枠に収まらないときは何も入れず response_too_large を返す。modelIndices は kind が face で operation が clone のときだけ渡せ、全部の材質の面を材質の順につないだ列の位置(モデル全体で数えた面の通し番号)で写す元を指す。親と、indices・range・all・selected とは一緒に渡さない。modelIndices のときは、写しは元の面の材質の中の位置 at へ入り、ranges には入った後のモデル全体で数えた通し番号を返す。親を複数指したとき、indices・range の位置は指した親のそれぞれの中で数える。"
+    },
+    {
+      "tool": "model_mirror_elements",
+      "branching": false,
+      "duty": "X軸で左右を反転した写しを足すか、モデル全体を左右へ反転する。copyTargets は targets で指した要素の写しを足す。targets は写す要素を種類ごとに指した組の並びで、組ごとに kind を取り、その中の要素を indices・range・all・selected のどれか1つで指す。頂点の組は代わりに materialIndices に材質の位置を並べ、その材質の面が使う頂点を指せる。同じ種類を二度並べることはできない。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。面は、その3つの頂点すべてを同じ呼び出しで写したものだけを写し、写していない頂点を使う面は飛ばす。写しは位置のxを打ち消し、名前の頭と末尾の _ を読み飛ばした最初と最後の文字で左右を見て入れ替え、左右を持たない名前には M- を頭へ足す。写した頂点を指す頂点モーフとUVモーフのオフセットも、写しを指すものを足す。写しどうしの指し先は写しへ繋ぎ替え、写していないボーンや剛体を指す先は、指していた相手と同じ名前で左右だけが違う相手があればそちらへ繋ぐ。mirrorModel は targets を受け取らず、頂点・面・ボーン・モーフ・剛体・Jointをまとめて反転し、ボーン・剛体・Jointの名前の左右を入れ替える。左右を持たない名前はそのままにする。added に足した要素の数、changed に反転した要素の数を返す。"
+    },
+    {
+      "tool": "model_morph_from_moved",
+      "branching": false,
+      "duty": "model_clone_pmx が出した複製といまのモデルの、頂点の座標の差を頂点モーフにする。basePmxHandle に動かす前のモデルの複製のハンドルを、name に足す頂点モーフの名前を渡す。boneMorphName を渡さないと、座標が違う頂点だけがオフセットになり、その座標とSDEFのCは複製の値へ戻り、モーフは1.0で複製からいまの形へ進める。ほかの値はこの呼び出しで変わらない。渡すと、頂点とボーンはいまのまま動かさず、いまから複製の形へ戻すモーフを足し、位置が変わったボーンがあれば頂点モーフとボーンモーフを1.0にすると複製の形に戻る(素足に戻す・元の形に戻すモーフ)。ボーンモーフは名前が boneMorphName(name と同じなら断る)で、位置が変わったボーンを複製の位置へ戻す。移動は自分の動きから親の動きを引いた値(親が無ければ自分の動き)で、回転は無く、移動0のボーンは入れない。頂点モーフのオフセットは、複製までの隔たりから、頂点の各ボーンの合計の動き(親を辿った合計)にウェイトを掛けて足した値(ウェイトがすべて0なら先頭のボーンへ全部)を引いた値で、0になる頂点は入れない。パネルは2つで同じ。渡さないと、頂点・材質・ボーン・モーフ・剛体の数か、頂点の座標とSDEFのC以外が複製と違えば断る。渡すと、頂点・材質・ボーンの数か各材質の面の数が違うときだけ断り、法線・UV・ウェイト・モーフ数・剛体数の違いは断らない。added に足した頂点モーフの位置、offsets にそのオフセット数を返す。ボーンモーフは頂点モーフの次に並び、ボーンが動いていなければ足さず、足したときだけ boneAdded にその位置、boneOffsets にそのオフセット数を返す。"
+    },
+    {
+      "tool": "model_place_elements",
+      "branching": false,
+      "duty": "種類をまたいだ要素を、点へそろえるか、ずらす・回す・拡大縮小する。targets は組の並びで、組は kind に種類を取り、要素を indices・range・all・selected のどれか1つで指す。vertex の組は materialIndices で材質の面が使う頂点も指せる。同じ種類は二度並べない。alignTo は position に点を、axes にそろえる軸を渡す。translateBy は offset に平行移動する量を渡す。rotateBy は rotation にX・Y・Z軸まわりの角を度で渡して Z軸・X軸・Y軸の順に回すか、rotationAxis に長さのある軸の向きを、rotationAngle に角を度で渡してその軸のまわりに回す。正の角で、X軸は +Y を +Z へ、Y軸は +Z を +X へ、Z軸は +X を +Y へ回す。頂点は位置と法線を、ボーンは位置を、剛体とJointは位置と回転を回す。SDEFのCはボーンの軸へ置き直し、R0・R1は頂点と両ボーンが同じ強さで動くときだけ動かす。scaleBy は scale に軸ごとの倍率を渡し、位置を拡縮する。倍率の軸はワールド軸で、scaleFrameRotation か scaleFrameAxis・scaleFrameAngle の一方で rotateBy と同じく回せる。頂点の法線は不均一な倍率で直し、倍率0の軸があれば変えない。剛体は倍率がそろうときだけ大きさもその倍率にする。rotateBy と scaleBy は center に不動の点を渡せ、省くと原点。alignTo 以外は ramp で要素ごとに強さを変えられる。組の axis の座標が from で強さ0、to で強さ1(from と to は違う数)、外側は近い端の強さ、間は curve が linear(既定)なら線形の強さ t、smooth なら 3t²−2t³ にする。組の強さは掛け合わせる。強さ s では、ずらす量と回す角は s 倍、倍率は scale×s+(1−s)。有限でなくなる要素があれば何も動かさず invalid_argument になる。changed に動いた数を返す。"
+    },
+    {
+      "tool": "model_pose_vertices",
+      "branching": false,
+      "duty": "指した頂点の位置と法線を、bones に並べたボーンごとの回転 rotation(四元数 [x,y,z,w])と移動 translation([x,y,z])を与えた姿勢の値へ書き換える。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。書くのは対象の頂点の位置と法線だけである。モデルに今ある頂点とボーンの位置を静止した形とみなす。bones の要素は index にボーンの位置を持ち、rotation と translation は省くと回転なし・移動なしで、同じボーンを2度並べられない。rotation は正規化して使い、translation は親の回転を受けた軸での静止位置からのずれである。ボーンの姿勢は親と付与親を先に求め、番号の順に依らない。回転付与・移動付与・ローカル付与・負の付与率に従う。使う頂点のボーンの親か付与親が循環しているときは invalid_argument になる。頂点は、SDEFの旗と2つのボーンを持つならSDEF(Cは頂点の位置をボーン1からボーン2への軸へ落とした点を使い、ファイルの値は使わない)、QDEFの旗を持つなら双対四元数、それ以外はウェイトの和で割る線形混合で変形する。ウェイトを持つボーンが無い頂点は動かない。法線は長さ1にそろえる。IK・物理・モーフ・スケール・軸制限・外部親は見ない。ボーンか頂点の位置が範囲外なら index_out_of_range、bones が無いか空・rotation が4つの有限の数でないか零・translation が3つの有限の数でない・対象の指定が無いときは invalid_argument で、断られた呼び出しは何も書かない。updated に書いた頂点の数を返す。"
+    },
+    {
+      "tool": "model_reorder_elements",
+      "branching": false,
+      "duty": "指した要素を並びの中で動かす。kind のうち親が並びを持つ5つ(face・ikLink・morphOffset・nodeItem・softBodyAnchor)では parentIndices・parentRange・parentAll のどれか1つで親を指し、残りの8つでは親を指さない。動かす対象は indices・range・all・selected のどれか1つで指す。move が to のときだけ toIndex に行き先の位置を渡す。指した要素どうしの前後は保たれ、要素を指す参照は変わらない。ranges に、動いた後の位置を連なった区間ごとに start と count の組で返す。組が値の枠に収まらないときは何も動かさず response_too_large を返す。modelIndices は kind が face のときだけ渡せ、全部の材質の面を材質の順につないだ列の位置(モデル全体で数えた面の通し番号)で指す。親と、indices・range・all・selected とは一緒に渡さない。modelIndices のときも toIndex は動かす面を持つ材質の中の位置で指し、ranges の位置はモデル全体で数えた通し番号で返す。親を複数指したとき、indices・range の位置は指した親のそれぞれの中で数える。"
+    },
+    {
+      "tool": "model_set_deform_type",
+      "branching": false,
+      "duty": "指した頂点の変形方式を変え、SDEFの値を整える。頂点は indices・range・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。convert は deform を渡し、ウェイトが正の枠を重い順にその方式が使う数まで残して、残したウェイトの合計が1になるようそろえる。normalizeSdefC はSDEFのC値を2つのボーンの位置とウェイトから決め直し、repairInvalidSdef は2つのボーンを保てないSDEFの頂点からSDEFの指定を落とす。convert のあとは、並びに居ないボーンを指すウェイトが残っている祖先のボーンへ移る。changed に変えた頂点の数を返す。"
+    },
+    {
+      "tool": "model_validate_pmx",
+      "branching": false,
+      "duty": "エディタの「PMXデータの状態検証」と同じ項目を同じ判定で数えて返す。モデルは変えない。項目ごとのキーにエディタが表示する数を返す。badFaces・duplicateFaces は面の数、badFaceVertexReferences は不正な面の頂点参照の数、bonesInFramesTwice・morphsInFramesTwice は重ねた登録の数、softBodiesWithBadBody・softBodiesWithBadVertex・softBodiesPinnedOnAnchor・softBodiesOutsideMaterial は当たったアンカーや Pin の数で、badUvaCount・emptyModelName・emptyComment・noBones・boneInExpressionFrame・missingSystemFrames は1か0。エディタが範囲外の番号として数える参照は、null か並びに居ない要素を指すものとして数え、エディタが -1 を許す参照(親・付与親・表示先・剛体のボーン・材質モーフの材質・SoftBody の材質)は null を許す。テクスチャ・スフィア・Toon(toon0.bmp と toon01〜toon10.bmp は除く)のファイルは、モデルのファイルと同じフォルダから探す。ボーンは物理後でない・変形階層が小さい・並びが前の順に変形する。加えて、ウェイトのそろっていない頂点(0でない値が負かボーンを持たない・重い順でない(SDEFは問わない)・同じボーンが重なる・合計が1でない・ウェイトが全部0でボーンを持つ)の数 unnormalizedWeights と、panel が 0 のまま表情枠に登録されたモーフの数 hiddenMorphsInExpressionFrame を返す。後者は MMD で VMD のキーが当たると落ちることがある。found は全項目の数の和。runs に位置を持つ項目の名前を1つ渡すと、当たった要素の位置を start と count の区間で runs に返す。面は全材質を通した位置、表示枠は Root・表情枠・ほかの枠の順の位置で返す。offset と limit で切り出し、区間の総数を runsTotal、続きを nextOffset に返す。"
+    },
+    {
+      "tool": "motion_apply_current_pose",
+      "branching": false,
+      "duty": "TransformView でいま変形している形——ボーンで取らせている姿勢とモーフ——を、編集中のモデルの形状へ焼き込む。TransformView のファイルメニューの「現在の変形状態でモデル形状を更新」に当たる。ボーンとそのローカル軸・頂点とその法線・剛体・Joint の位置と向きが、ボーンの変形とモーフを当てた後の値になり、そのあと TransformView の変形とモーフは初期の状態へ戻る。エディタの元に戻す1回で呼び出しの前へ戻る。一部の頂点だけへ入れるには、焼き込んだ後に model_clone_pmx で複製し、session_undo で戻してから model_edit_vertices の copyFromBase でその頂点へ写す。morphThreshold を渡すと、頂点モーフを焼き込んだ形に合わせて計算し直し、X・Y・Z の差がどれも morphThreshold 以下の頂点はオフセットから外す。このとき TransformView で当てていた頂点モーフ・グループモーフ・フリップモーフは0へ戻してから焼き込み、それらの変形は形状に入らない。渡さなければ頂点モーフは計算し直さず、当てていたモーフはすべて形状に入る。ファイルメニューの正規化の入り切りは呼び出しの前のまま残す。TransformView が開いていないとき、人の応答を待つ表示を出しているとき、項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。成功したときは何も返さない。"
+    },
+    {
+      "tool": "motion_get_vmd_camera_view",
+      "branching": false,
+      "duty": "VMD のカメラを、フレームごとに読む。vmd に VMD のハンドルを、frames にフレームの番号を渡す。frames の並びのまま、cameras に、フレーム frame・視点の位置 position・注視点 target・上の向き upVector・視野角 fov(度)を返す。position・target・upVector は3つの数の並びで、PMXエディタの VME がカメラの結果として返すのと同じ値である。キーとキーの間のフレームは、キーの補間曲線で補間した値になる。vmd に使えないハンドルを渡したとき、VMD でないハンドルを渡したときは TOOL_INVALID_HANDLE を、VMD にカメラのキーが無いときは TOOL_NOT_APPLICABLE を、frames が多くて返す値が応答の枠に収まらないときは TOOL_RESPONSE_TOO_LARGE を返す。最後のキーより後のフレームは、最後のキーの値になる。motion_set_vmd_vme は、PMX から初期化した VME では VMD のキーを登録しない。カメラの視点は VME を通さずにこのツールで読む。"
+    },
+    {
+      "tool": "motion_rotate_bone_about_axis",
+      "branching": false,
+      "duty": "TransformView のビューで選んでいるボーンを、axis の向きの軸まわりに angle 度だけ回す。axis は長さを問わず、長さ0は断る。軸と回る向きは motion_bone_rotate と同じく親ボーンの回転を受けたモデルの X・Y・Z 軸で表し、axis が [1,0,0] なら boneRotateXyz の X に angle を渡して回したのと同じになる。いまの回転へ足し込み、置き換えない。回すときは boneRotateXyz へ Z・X・Y の順に重ねて同じ回転になる角度の組を入れて1回で回し、入力欄は元の値へ戻す。回すのに使った角度の組を、入力欄が文字で持つ桁に丸まった値で、rotateXyz に boneRotateXyz と同じ並びで返す。TransformView が開いていないとき、一覧でボーンが選ばれていないとき、修飾キーが押されているとき、選ばれているボーンが軸固定のときは断る。IK のリンクの扱いと、ビューと一覧の選択の食い違いは motion_bone_rotate と同じである。"
+    },
+    {
+      "tool": "motion_set_camera_view",
+      "branching": false,
+      "duty": "TransformView の視点を動かす。position に視点の位置を、target に見る先を、upVector に上の向きを、それぞれ渡す。PMXView の視点をいったんそこへ入れ、PMXView の表示メニューのカメラ同期で TransformView へ写してから、PMXView の視点と同期の入り切りを呼び出しの前へ戻す。同期で写し、SubView の視点も同じ位置へ動く。TransformView か SubView のカメラをロックしていると、その視点は動かない。PMXView が4画面モードのとき、カメラ同期の項目がいまは押せないときは TOOL_NOT_APPLICABLE を返す。撮るには続けて motion_get_client_image を呼ぶ。成功したときは何も返さない。"
+    },
+    {
+      "tool": "motion_set_transform_view_ik",
+      "branching": false,
+      "duty": "TransformView のIKごとの入り切りを、TransformView のIKの一覧の項目のチェックとして切り替える。enabled にそろえる入り切りを渡す。IKを持つボーンの位置を boneIndices に並べるとそのボーンのIKだけを、省くとモデルのIKを持つボーンすべてを切り替える。IKを切ると、そのIKのリンクに入っているボーンを motion_bone_rotate・motion_rotate_bone_about_axis で回したとき、IKが回し直さない。切り替えた各IKの、IKを持つボーンの位置 boneIndex と、切り替え後の入り切り enabled を、iks に boneIndices の並びのまま返す。boneIndices に同じ位置が重なっているときは、1件にまとめて返す。TransformView が開いていないとき、TransformView のIKの一覧の数がモデルでIKを持つボーンの数と合わないとき、一覧のどれかの項目が、次のいずれかに当たるときは断る。一覧の中での番号で始まっていない。モデルでIKを持つボーンを並べたとき同じ順に当たるボーンの名前で終わっていない。番号と名前の間に英数字がある。番号と名前の間の文字列が、項目ごとに違う。boneIndices の位置がIKを持つボーンでないときは、何も切り替えずに断る。"
+    },
+    {
+      "tool": "motion_set_transform_view_vmd_frame",
+      "branching": false,
+      "duty": "VMD の1フレームの姿勢を、TransformView の変形にする。vmd に VMD のハンドルを、frame にフレームの番号を渡す。VMD のボーンとモーフのうち、名前がいまのモデルのボーンとモーフの名前に当たるものへ、そのフレームの値を当てる。キーとキーの間はキーの補間曲線で補間した値になり、最初のキーより前は、フレーム0の初期状態から最初のキーへの補間に、最後のキーより後は最後のキーの値になる。VMD のフレーム0のキーが、同じボーンまたはモーフの別のキーより後ろに並んでいるときは、並びの最初のキーの手前は補間せずそのキーの値になる。当てる前に TransformView の変形とモーフを初期の状態へ戻し、キーの無いものは初期の状態になる。物理演算と VMD のIKの入り切りは当たらず、IKは TransformView のいまの入り切りのまま(切るには先に motion_set_transform_view_ik を呼ぶ)。当てたボーンの数を bones に、モーフの数を morphs に、フレームを frame に返す。名前が空、名前の先頭が空白、名前に改行を含むボーンとモーフは当たらない。モデルに同名のモーフがあるとき、エディタが VPD から捨てる、位置が名前の種類の数以上のモーフは当たらず、morphs に数えない。vmd に使えないハンドルを渡したとき、VMD でないハンドルを渡したときは TOOL_INVALID_HANDLE を、TransformView が開いていないとき、VMD のキーを持つ名前がモデルのボーンとモーフのどれにも当たらないとき、キーの値が有限の数でないとき、動いているカルチャの小数点が . でないときは、何も当てずに TOOL_NOT_APPLICABLE を返す。当てた姿勢をモデルの形状へ入れるには motion_apply_current_pose を呼ぶ。"
+    },
+    {
+      "tool": "session_release_handle",
+      "branching": false,
+      "duty": "台帳が発行したハンドルを解放する"
+    },
+    {
+      "tool": "session_select_lists_from_view",
+      "branching": false,
+      "duty": "画面の選択を、リストの選択へ写す。material は選んだ面を持つ材質を材質のリストで選び、bone は選んだボーンのうち先頭をボーンのリストで選ぶ。ボーンのリストは1つしか選べない。画面でその種類を1つも選んでいなければ、リストの選択も空にする。selected に写した要素の数を返す。"
+    },
+    {
+      "tool": "session_update_all_lists",
+      "branching": false,
+      "duty": "全部のリストの表示を今のデータで作り直す。引数は受け取らない。updated はいつも1で、全部の区分をまとめて1回で頼んだことを表す。"
+    },
+    {
+      "tool": "view_capture_image",
+      "branching": false,
+      "duty": "PmxViewの画像を撮る。position に視点の位置を、target に見る先を、upVector に上の向きを、それぞれ渡すと、撮る前に視点をそこへ入れて描き直し、撮ったあとは呼び出しの前の視点へ戻して描き直す。3つのうち一部だけを渡すと断る。どれも渡さなければ、いまの視点のまま撮る。perspective に視野角(度)を渡すと、撮る間だけ視野角をそこへ入れ、撮ったあとは元の視野角へ戻す。視点の3つとは独立に渡せる。ニアクリップ面は、PmxViewの表示設定のZ範囲の手前の値(既定は1)の距離にあり、このツールはその値を変えない。小さな部品を大きく写すには、視点をその距離より離したまま perspective を小さくして視野角を絞る。エディタが画像を撮れなかったときは TOOL_OPERATION_FAILED で断る。値は画像そのもので、ブリッジがMCPの画像として返す。"
+    },
+    {
+      "tool": "view_clear_vmd_view",
+      "branching": false,
+      "duty": "VMDViewの再生を止める。parts の motionOnly は再生を止めるだけ、modelAndMotion は読み込んだモーションを捨てて、いま編集しているモデルを読み直す。どちらの持ち物でも、VMDViewのウィンドウは開いたままになる。"
+    },
+    {
+      "tool": "view_filter_display",
+      "branching": false,
+      "duty": "画面の絞込みの表示を、画面の選択から決める。materialsFromVertices は画面で選んでいる頂点を使う材質だけを表示に残し、materialsFromFaces は画面で選んでいる面を持つ材質だけを残す。excludeMaterialsFromFaces は、いま表示している材質からその面を持つ材質を外す。verticesByEdgeScale はエッジの倍率が1でない頂点だけを絞込みの表示に出す。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。shown に表示へ残した数を返す。"
+    },
+    {
+      "tool": "view_get_vmd_view_state",
+      "branching": false,
+      "duty": "VMDViewの再生の状態を読む。frame にいまのフレームを、lastFrame に最後のフレームを、playing に再生中かを、playRangeStart と playRangeEnd に再生範囲を、loop に繰り返しの入り切りを、startAtCurrentFrame に「現在位置から開始」の入り切りを返す。フレームの番号は、モーションのキーのフレーム番号と同じ数え方である。ただし VME のイベントを VMDView へ設定したあと(view_set_vme_event・motion_preview_vme)は、イベントの先頭からの数え方になる。VMDViewが開いていないときと、再生範囲の欄が整数でないときは TOOL_NOT_APPLICABLE で断る。欄が整数でないときは、view_set_vmd_view_state へ playRangeStart と playRangeEnd を両方渡すと直る。"
+    },
+    {
+      "tool": "view_load_vmd_view",
+      "branching": false,
+      "duty": "VMDViewへモデルとモーションを読み込む。読み込むモデルは、modelPath を渡せばそのファイルのモデル、省けばいま編集しているモデルである。道の末尾が .pmd のファイルはPMDとして読み、それ以外はPMXとして読む。parts の modelOnly はモデルだけを読み込み、残りは motionPath が指すVMDも読み込んで再生を始める。wholeMotion はVMDの中身をすべて使い、modelMotion はボーン・モーフ・IK表示のキーだけ、cameraMotion はカメラのキーだけ、lightMotion は照明とセルフシャドウのキーだけを残して、残りを落とす。VMDViewが立ち上がっていなければ、ここで立ち上がる。booted にVMDViewが立ち上がっているかを返す。"
+    },
+    {
+      "tool": "view_pick_screen_point",
+      "branching": false,
+      "duty": "PmxViewを撮った画像の画素に写る材質・面・交点・頂点を引く。PmxViewのいまの視点の行列を使う。画像はいまの視点のまま撮ったもの(視点も perspective も渡さない view_capture_image か view_get_client_image_pmd_view_connector の画像)でなければならない。x と y に、画像の左上を原点として右と下を正にした画素の座標を、imageWidth と imageHeight にその画像の幅と高さを渡す。x は0以上 imageWidth 以下、y は0以上 imageHeight 以下でなければならない。screen は視点の行列を読む4画面表示の画面の番号。前述の2つのツールの画像は画面0のものである。画素を視線へ戻し、モデルの頂点の座標(ボーンやモーフの変形は掛けない)でできた面と交わらせる。ニアクリップ面からファークリップ面までの間で交わる面だけを数え、両面描画でない材質の裏向きの面は数えない。表示から外した材質も数える。materialIndices に材質の位置を並べるとその材質の面だけを、省けば全部の材質の面を相手にする。視線が交わった面を視点に近い順に並べ、limit 件までを hits に、返した件数を count に返す。交わる面が無ければ count は0で hits は空になる。hits の組は、材質の位置 material・面のモデル全体の通し番号 face・面の3つの頂点の位置 vertices・交点の座標 point・ニアクリップ面上で視線が通る点から交点までの長さ distance・面が表向きか frontFacing・交点にいちばん近い頂点の位置 vertex とその頂点までの長さ vertexDistance・その頂点が写る画素の x と y の vertexScreen を持つ。頂点がニアクリップ面より視点の側にあるときは vertexScreen を持たない。モデルも画面の選択も変えない。"
+    },
+    {
+      "tool": "view_poll_events",
+      "branching": true,
+      "duty": "溜まったイベントを取り出す"
+    },
+    {
+      "tool": "view_reload_model",
+      "branching": false,
+      "duty": "テクスチャを読み直してモデルの描画を作り直し、画面を描き直す。別ウィンドウのビューが開いていればその描画も作り直す。引数は受け取らない。"
+    },
+    {
+      "tool": "view_select_elements",
+      "branching": false,
+      "duty": "画面の選択を、種類ごとにまとめて選び直す。kind の種類の選択だけを置き換える。all と invert のときは kind の代わりに kinds へ同じ名前を渡せ、渡した種類の選択をまとめて置き換える。kind と kinds は、どちらか1つだけを渡す。all・invert・halfModel は画面に表示している要素だけを相手にし、頂点は絞り込んだ表示に残っているもの、面は3つの頂点がすべて表示されているもの、剛体とJointは表示しているもので、ボーンは表示に関わらずすべてである。invert は表示している要素のうち選んでいないものを選ぶ。expand は選んだ頂点を角に持つ面の頂点のうち画面に表示しているものを選び、どの面にも載らない頂点は選択から外れる。expand と reduce は面で隣り合う頂点で広げ狭め、connected は選んだ頂点から面を伝ってつながる頂点をすべて足して面で連結した部品全体を選ぶ。この3つは vertex にだけ当てられる。childChain は選んだボーンの子孫を足し、bone にだけ当てられる。halfModel は axis で片側を指し、x・y・z はその軸の値が境以上の側、negativeX・negativeY・negativeZ は境より小さい側で、面は3つの頂点がすべて片側にあるものを選ぶ。境は boundary に渡し、省くと0である。boundary を渡せるのは halfModel のときだけである。面の位置はモデル全体の通し番号で、材質の区切りをまたいで数える。selected に選んだ要素の数を返す。mode は選んだ結果の入れ方で、replace(既定)は置き換え、add は加え、subtract は除き、intersect は重なりだけを残す。"
+    },
+    {
+      "tool": "view_select_related",
+      "branching": false,
+      "duty": "画面の選択を、関連する要素で選び直す。verticesToFaces は頂点から面へ、角の頂点がすべて選ばれている面を選ぶ。facesToVertices は面から頂点へ、その面が使う頂点を選ぶ。expandAdjacentFaces は面から面へ、選んだ面と辺でつながる一続きの面の表示中のものを選ぶ。materialToFaces は選択を読まず、materialIndices か materialSelected で指した材質の面を、materialToVertices はその面が使う頂点を選ぶ。verticesToMaterials は頂点から面へ、その頂点を使う材質の面を選ぶ。facesToMaterials は面から面へ、その面を持つ材質の面を選ぶ。excludeFacesMaterials は面から面へ、それ以外の材質の面を選ぶ。unusedVertices はどの面にも使われていない頂点を、edgeScaleChangedVertices はエッジの倍率が1でない頂点を、選択を読まずに選ぶ。bonesToWeightedVertices はボーンから頂点へ、そのボーンに0でないウェイトが乗る頂点を選ぶ。uvRegionVertices は選択を読まず、minU・maxU・minV・maxV で指したUVの範囲に入る頂点を選ぶ。端の値は範囲に入り、UVを持たない頂点は入らない。materialIndices を添えると、その材質の面が使う頂点だけへ絞る。maxU は minU 以上、maxV は minV 以上でなければ断る。materialIndices と materialSelected は material で始まる2つと uvRegionVertices、UVの範囲の4つは uvRegionVertices のときだけ渡す。読んだ選択は既定で残り、releaseSource に真を渡すと空になる。選択を読まない操作と、読む種類と選び直す種類が同じ操作では何も起きない。選び直した種類を kind に、選んだ要素の数を selected に返す。mode は選んだ結果の入れ方で、replace(既定)は置き換え、add は加え、subtract は除き、intersect は重なりだけを残す。"
+    },
+    {
+      "tool": "view_set_camera_rotate_center",
+      "branching": false,
+      "duty": "視点の回転の中心を、画面で選んでいる要素の重心にする。operation の face と faceFront は選んだ面が使う頂点の重心を取り、2つ以上の面が同じくする頂点はその面の数だけ数える。faceFront は中心を決めたうえで、選んだ面の法線をならした向きの側からその中心を見るところへ視点を移し、上を+Yへ向ける。その種類を1つも選んでいなければ断る。centre に決めた中心のxyzを返す。"
+    },
+    {
+      "tool": "view_set_vmd_view_state",
+      "branching": false,
+      "duty": "VMDViewのフレーム・再生範囲・繰り返し・「現在位置から開始」を変える。渡した項目だけを変えて、変えたあとの状態を view_get_vmd_view_state と同じ形で返す。「編集」メニューの「Fixモーションで再生」が無効のとき、frame へ移した姿勢は物理演算を回さずに表示され、物理演算を含む姿勢は再生でだけ得られる。その姿勢は、物理演算が有効なときに、playRangeStart を 0 に、playRangeEnd を見たいフレームに、loop と startAtCurrentFrame を偽にして view_play_vmd_view で再生し、view_get_vmd_view_state の playing が偽に戻ったあとの姿勢である。「Fixモーションで再生」が有効のときは、frame へ移すだけで、Fixモーションが持つ物理演算を含む姿勢が表示される。その画像は、MCPクライアントがスクリーンショットを撮って得る。再生中は view_stop_vmd_view で止めるまで、VME のイベントを VMDView へ設定したあと(view_set_vme_event・motion_preview_vme)は VMDView を閉じて view_load_vmd_view で開き直すまで、VMDView が開いていないときは開くまで、映像出力のダイアログの表示中と Fixモーションの作成中は終わるまで、再生範囲の欄が整数でないときは playRangeStart と playRangeEnd を両方渡すまで、TOOL_NOT_APPLICABLE で断る。frame が最後のフレームを超えるときと、再生範囲の終わりが最後のフレームを超えるときと、始まりが終わりを超えるときは TOOL_INVALID_ARGUMENT で断る。断ったときは何も変えない。"
+    },
+    {
+      "tool": "view_update_parts_select_window",
+      "branching": false,
+      "duty": "PmxViewの絞込のウィンドウの表示を切り替える。visible に真を渡すと開き、偽を渡すと閉じる。このウィンドウは一度表示するまで材質・ボーン・表情の一覧を組まず、組まれていない間、一覧の位置を読み書きするツールは断る。切り替えたあとの表示を visible に、3つの一覧に並んでいる項目の数を materialItemsCount・boneItemsCount・expressionItemsCount に返す。"
+    }
+  ],
+  "viewImages": [
+    {
+      "tool": "motion_get_client_image",
+      "view": "transform"
+    },
+    {
+      "tool": "view_capture_image",
+      "view": "pmx"
+    },
+    {
+      "tool": "view_get_client_image_pmd_view_connector",
+      "view": "pmx"
+    },
+    {
+      "tool": "view_get_client_image_sub_view_connector",
+      "view": "sub"
+    }
+  ],
+  "drawnImages": [
+    {
+      "tool": "model_draw_uv_layout"
+    }
+  ],
+  "overwritingTools": [
+    {
+      "tool": "editor_press_saving_item"
+    }
+  ],
+  "unkeptMembers": [
+    {
+      "tool": "model_update_faces",
+      "members": [
+        "vertex1",
+        "vertex2",
+        "vertex3"
+      ],
+      "basis": "面の3つの頂点は位置で指す。ハンドルで持つ面はまだどのPMXにも属していないので、書いた位置はその時点では解けない。値のまま預かり、材質へ入れる呼び出しが自分の相手にするPMXの中で解いて書き込むので、書いた直後には読み返せない。"
+    },
+    {
+      "tool": "model_update_ik_links",
+      "members": [
+        "bone"
+      ],
+      "basis": "IKの内容が書き戻るのはIKの印が立っているボーンだけである。印の無いボーンでは、まとめて反映するときにIKの組ごと捨てられ、その中の並びへ加えた要素も残らないので、書いた値を読み返せない。"
+    },
+    {
+      "tool": "model_update_iks",
+      "members": [
+        "target"
+      ],
+      "basis": "IKの内容が書き戻るのはIKの印が立っているボーンだけである。印の無いボーンでは、まとめて反映するときにIKの組が捨てられ、既定の組が読み返るので、書いた値を読み返せない。"
+    }
+  ],
+  "targetedMembers": [
+    {
+      "tool": "model_update_faces",
+      "members": [
+        "vertex1",
+        "vertex2",
+        "vertex3"
+      ],
+      "basis": "書き戻しは面の頂点が今のPMXに在るときだけ番号を並べ、材質の面数をその数から取り直す。指す先の無い面は番号が1つも並ばず、加えたはずの面が消える。"
+    },
+    {
+      "tool": "model_update_ik_links",
+      "members": [
+        "bone"
+      ],
+      "basis": "書き戻しの正規化は、指すボーンが今のPMXに無いIKリンクをリンクごと外す。"
+    },
+    {
+      "tool": "model_update_morph_offsets",
+      "members": [
+        "vertex",
+        "bone",
+        "morph"
+      ],
+      "basis": "書き戻しの正規化は、指す頂点・ボーン・モーフが今のPMXに無いオフセットをオフセットごと外し、オフセットが空になったモーフ本体まで外す。材質と衝撃のオフセットは外さないので挙げない。"
+    },
+    {
+      "tool": "model_update_node_items",
+      "members": [
+        "bone"
+      ],
+      "basis": "書き戻しの正規化は、指すボーンが今のPMXに無い表示枠の項目を項目ごと外す。モーフを指す項目を外す枝は、ボーンを指す項目であることを条件に持つので通らない。"
+    }
+  ],
+  "parentValues": [
+    {
+      "tool": "model_add_morph_offsets",
+      "parentTool": "model_update_morphs",
+      "member": "kind",
+      "value": "Bone",
+      "basis": "ボーンのオフセットは、種別がボーンのモーフへしか加えられない。既定の種別のモーフへ加えると呼び先が落ちる。"
+    }
+  ],
+  "budgets": {
+    "responseDefaultChars": 100000,
+    "warningRoomChars": 2000,
+    "requestBytes": 8000000,
+    "structureTokenLimit": 200000
+  }
+}

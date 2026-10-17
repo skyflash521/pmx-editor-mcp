@@ -1,0 +1,1055 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using PEPlugin;
+using PEPlugin.Pmd;
+using PEPlugin.Pmx;
+using PEPlugin.SDX;
+using Vec = PmxEditorMcp.SurfaceGeometry.Vec;
+
+namespace PmxEditorMcp
+{
+    /// <summary>
+    /// 指したボーンの整理と生成と軸の設定を行うツール。
+    /// </summary>
+    public static class ModelEditBones
+    {
+        public const string ToolName = "model_edit_bones";
+
+        public const string MergeSameName = "mergeSameName";
+
+        public const string HideTipBones = "hideTipBones";
+
+        public const string TipToOffset = "tipToOffset";
+
+        public const string OffsetToTip = "offsetToTip";
+
+        public const string AddTipBones = "addTipBones";
+
+        public const string DissolveTipBones = "dissolveTipBones";
+
+        public const string RelevelHierarchy = "relevelHierarchy";
+
+        public const string AddRootParent = "addRootParent";
+
+        public const string AddMultiStageParent = "addMultiStageParent";
+
+        public const string AddMultiStageChild = "addMultiStageChild";
+
+        public const string AddMiddle = "addMiddle";
+
+        public const string AddAppendParent = "addAppendParent";
+
+        public const string AddAtVertices = "addAtVertices";
+
+        public const string AddAtVerticesWithWeight = "addAtVerticesWithWeight";
+
+        public const string MakeIk = "makeIk";
+
+        public const string MirrorPosition = "mirrorPosition";
+
+        public const string FixAxisToTip = "fixAxisToTip";
+
+        public const string SetLocalAxis = "setLocalAxis";
+
+        public const string ResetLocalAxis = "resetLocalAxis";
+
+        public const string SetPmdBoneKind = "setPmdBoneKind";
+
+        public const string FollowVertices = "followVertices";
+
+        public const string MirrorDisplacement = "mirrorDisplacement";
+
+        public const string AxisName = "axis";
+
+        public const string RadiusName = "radius";
+
+        public const string LinkCountName = "linkCount";
+
+        public const string AddedName = "added";
+
+        public const string ChangedName = "changed";
+
+        public const string RemovedName = "removed";
+
+        /// <summary>ボーンではなく頂点を指す操作。</summary>
+        private static IList<string> Vertices
+        {
+            get { return new[] { AddAtVertices, AddAtVerticesWithWeight }; }
+        }
+
+        /// <summary>指した要素ではなく並び全体を相手にする操作。</summary>
+        private static IList<string> Whole
+        {
+            get { return new[] { RelevelHierarchy, AddRootParent }; }
+        }
+
+        /// <summary>受け取れる操作。スキーマが並べる順。</summary>
+        public static IList<string> Operations
+        {
+            get
+            {
+                return new[]
+                {
+                    MergeSameName,
+                    HideTipBones,
+                    TipToOffset,
+                    OffsetToTip,
+                    AddTipBones,
+                    DissolveTipBones,
+                    RelevelHierarchy,
+                    AddRootParent,
+                    AddMultiStageParent,
+                    AddMultiStageChild,
+                    AddMiddle,
+                    AddAppendParent,
+                    AddAtVertices,
+                    AddAtVerticesWithWeight,
+                    MakeIk,
+                    MirrorPosition,
+                    FixAxisToTip,
+                    SetLocalAxis,
+                    ResetLocalAxis,
+                    SetPmdBoneKind,
+                    FollowVertices,
+                    MirrorDisplacement,
+                };
+            }
+        }
+
+        /// <summary><paramref name="builder"/> は新しい要素を作る相手を返す。</summary>
+        public static void AddTo(McpMethodTable methods, ComposedEdit edit, Func<object> builder)
+        {
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (edit == null)
+            {
+                throw new ArgumentNullException(nameof(edit));
+            }
+
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            List<string> known = new List<string>
+            {
+                ComposedOperation.OperationName,
+                TargetNames.Element.Indices,
+                TargetNames.Element.Range,
+                TargetNames.Element.All,
+                TargetNames.Element.Selected,
+                AxisName,
+                LinkCountName,
+                RadiusName,
+                ModelMorphFromMoved.BasePmxHandleName,
+            };
+            methods.Add(
+                ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
+        }
+
+        private static ComposedEditResult Run(
+            McpMethodContext context, object pmx, Func<object> builder)
+        {
+            IPXPmx model = (IPXPmx)pmx;
+            string operation;
+            string code;
+            string message;
+            IList<int> chosen;
+            if (!ComposedOperation.TryTake(
+                    context, Operations, out operation, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            bool vertices = Vertices.Contains(operation, StringComparer.Ordinal);
+            string axis;
+            int links;
+            float radius;
+            if (!TryChosen(context, model, operation, vertices, out chosen, out code, out message)
+                || !ComposedInput.TryChoice(
+                    context,
+                    AxisName,
+                    operation,
+                    new[] { MirrorPosition, MirrorDisplacement },
+                    ModelEditVertices.Axes,
+                    out axis,
+                    out code,
+                    out message)
+                || !ComposedInput.TryCount(
+                    context,
+                    LinkCountName,
+                    operation,
+                    new[] { MakeIk },
+                    1,
+                    out links,
+                    out code,
+                    out message)
+                || !ComposedInput.TryFloat(
+                    context,
+                    RadiusName,
+                    operation,
+                    new[] { FollowVertices },
+                    0f,
+                    ComposedInput.NoCeiling,
+                    out radius,
+                    out code,
+                    out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            bool following = string.Equals(operation, FollowVertices, StringComparison.Ordinal);
+            bool displacing = string.Equals(operation, MirrorDisplacement, StringComparison.Ordinal);
+            if (!following && !displacing && context.Params.ContainsKey(ModelMorphFromMoved.BasePmxHandleName))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    ModelMorphFromMoved.BasePmxHandleName + " を渡せるのは "
+                        + FollowVertices + "・" + MirrorDisplacement + " のときだけである。");
+            }
+
+            if (following)
+            {
+                return Followed(context, model, chosen, radius);
+            }
+
+            if (displacing)
+            {
+                return Displaced(context, model, chosen, axis);
+            }
+
+            if (vertices)
+            {
+                return AtVertices(
+                    model,
+                    (IPXPmxBuilder)builder(),
+                    chosen.Select(at => model.Vertex[at]).ToList(),
+                    string.Equals(operation, AddAtVerticesWithWeight, StringComparison.Ordinal));
+            }
+
+            IList<IPXBone> picked = chosen.Select(at => model.Bone[at]).ToList();
+            switch (operation)
+            {
+                case MergeSameName:
+                    return Merged(model, picked);
+
+                case RelevelHierarchy:
+                    return Releveled(model);
+
+                case AddRootParent:
+                    return Rooted(model, (IPXPmxBuilder)builder());
+
+                case AddMultiStageParent:
+                case AddMultiStageChild:
+                case AddMiddle:
+                case AddAppendParent:
+                    return Staged(model, (IPXPmxBuilder)builder(), picked, operation);
+
+                case MakeIk:
+                    return Reaching(model, (IPXPmxBuilder)builder(), picked, links);
+
+                case AddTipBones:
+                    return Tipped(model, (IPXPmxBuilder)builder(), picked);
+
+                case DissolveTipBones:
+                    return Dissolved(model, picked);
+
+                default:
+                    return Answer(
+                        new int[0],
+                        picked.Count(bone => Set(model, bone, operation, axis)),
+                        0,
+                        new[] { ElementKinds.Bone });
+            }
+        }
+
+        /// <summary>並び全体を相手にする操作では、選択の指定を受け取らない。</summary>
+        private static bool TryChosen(
+            McpMethodContext context,
+            IPXPmx model,
+            string operation,
+            bool vertices,
+            out IList<int> chosen,
+            out string code,
+            out string message)
+        {
+            if (!Whole.Contains(operation, StringComparer.Ordinal))
+            {
+                return TargetInput.TryPositions(
+                    context.Params,
+                    TargetNames.Element,
+                    vertices ? model.Vertex.Count : model.Bone.Count,
+                    out chosen,
+                    out code,
+                    out message,
+                    context.Screen.Pick(
+                        vertices ? ElementKinds.Vertex : ElementKinds.Bone,
+                        vertices ? model.Vertex.Count : model.Bone.Count));
+            }
+
+            chosen = new int[0];
+
+            return TargetInput.TryNoTarget(
+                context.Params,
+                TargetNames.Element,
+                Operations.Where(held => !Whole.Contains(held, StringComparer.Ordinal)).ToList(),
+                out code,
+                out message);
+        }
+
+        /// <summary>変えたなら真を返す。</summary>
+        private static bool Set(IPXPmx model, IPXBone bone, string operation, string axis)
+        {
+            switch (operation)
+            {
+                case HideTipBones:
+                    return Hidden(model, bone);
+
+                case TipToOffset:
+                    return Loosened(bone);
+
+                case OffsetToTip:
+                    return Pointed(model, bone);
+
+                case MirrorPosition:
+                    return Mirrored(model, bone, axis);
+
+                case FixAxisToTip:
+                    return Fixed(model, bone);
+
+                case SetLocalAxis:
+                    return Framed(model, bone);
+
+                case ResetLocalAxis:
+                    return Unframed(bone);
+
+                default:
+                    return Sorted(bone);
+            }
+        }
+
+        private static ComposedEditResult Followed(
+            McpMethodContext context, IPXPmx model, IList<int> chosen, float radius)
+        {
+            IPXPmx based;
+            string code;
+            string message;
+            if (!ModelMorphFromMoved.TryBase(context, out based, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            string differs = ModelCompareShape.Differs(based, model);
+            if (differs != null)
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, differs);
+            }
+
+            Vec[] before = ModelCompareShape.Positions(based);
+            Vec[] now = ModelCompareShape.Positions(model);
+            int changed = 0;
+            HashSet<IPXBone> followed = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
+            foreach (int at in chosen.Distinct())
+            {
+                IPXBone bone = model.Bone[at];
+                IPXBone origin = based.Bone[at];
+                Vec centre = Vec.Of(origin.Position);
+                List<Vec> from = new List<Vec>();
+                List<Vec> to = new List<Vec>();
+                for (int vertex = 0; vertex < before.Length; vertex++)
+                {
+                    if ((before[vertex] - centre).Length <= radius)
+                    {
+                        from.Add(before[vertex]);
+                        to.Add(now[vertex]);
+                    }
+                }
+
+                RigidFit fit = RigidFit.Of(from, to);
+                if (fit == null)
+                {
+                    continue;
+                }
+
+                Vec moved = fit.Point(centre);
+                V3 position = new V3((float)moved.X, (float)moved.Y, (float)moved.Z);
+                V3 offset = bone.ToOffset;
+                if (bone.ToBone == null)
+                {
+                    Vec turned = fit.Direction(Vec.Of(origin.ToOffset));
+                    offset = new V3((float)turned.X, (float)turned.Y, (float)turned.Z);
+                }
+
+                if (!Vectors.Same(bone.Position, position))
+                {
+                    followed.Add(bone);
+                }
+
+                if (!Vectors.Same(bone.Position, position) || !Vectors.Same(bone.ToOffset, offset))
+                {
+                    bone.Position = position;
+                    bone.ToOffset = offset;
+                    changed++;
+                }
+            }
+
+            VertexWeights.ProjectSdefCenters(model.Vertex, followed);
+
+            return Answer(new int[0], changed, 0, new[] { ElementKinds.Bone });
+        }
+
+        private static ComposedEditResult Displaced(
+            McpMethodContext context, IPXPmx model, IList<int> chosen, string axis)
+        {
+            IPXPmx based;
+            string code;
+            string message;
+            if (!ModelMorphFromMoved.TryBase(context, out based, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            string differs = ModelCompareShape.Differs(based, model);
+            if (differs != null)
+            {
+                return ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, differs);
+            }
+
+            int along = MirrorPartners.AxisIndex(axis);
+            Dictionary<IPXBone, KeyValuePair<V3, V3>> made =
+                new Dictionary<IPXBone, KeyValuePair<V3, V3>>(ReferenceComparer<IPXBone>.Instance);
+            foreach (int at in chosen.Distinct())
+            {
+                IPXBone bone = model.Bone[at];
+                IPXBone twin = MirrorPartners.OfBone(model, bone);
+                if (twin == null)
+                {
+                    continue;
+                }
+
+                Vec moved = Vec.Of(bone.Position) - Vec.Of(based.Bone[at].Position);
+                V3 offset = bone.ToBone == null && twin.ToBone == null
+                    ? MirrorPartners.Flip(Vec.Of(bone.ToOffset), along).ToV3()
+                    : twin.ToOffset;
+                made[twin] = new KeyValuePair<V3, V3>(
+                    (Vec.Of(twin.Position) + MirrorPartners.Flip(moved, along)).ToV3(), offset);
+            }
+
+            int changed = 0;
+            HashSet<IPXBone> displaced = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
+            foreach (KeyValuePair<IPXBone, KeyValuePair<V3, V3>> each in made)
+            {
+                if (Vectors.Same(each.Key.Position, each.Value.Key)
+                    && Vectors.Same(each.Key.ToOffset, each.Value.Value))
+                {
+                    continue;
+                }
+
+                if (!Vectors.Same(each.Key.Position, each.Value.Key))
+                {
+                    displaced.Add(each.Key);
+                }
+
+                each.Key.Position = each.Value.Key;
+                each.Key.ToOffset = each.Value.Value;
+                changed++;
+            }
+
+            VertexWeights.ProjectSdefCenters(model.Vertex, displaced);
+
+            return Answer(new int[0], changed, 0, new[] { ElementKinds.Bone });
+        }
+
+        private static ComposedEditResult Merged(IPXPmx model, IList<IPXBone> picked)
+        {
+            Dictionary<IPXBone, IPXBone> moved =
+                new Dictionary<IPXBone, IPXBone>(ReferenceComparer<IPXBone>.Instance);
+            int changed = 0;
+            foreach (IGrouping<string, IPXBone> group in picked
+                .GroupBy(bone => bone.Name, StringComparer.Ordinal)
+                .Where(g => g.Count() > 1))
+            {
+                foreach (IPXBone dropped in group.Skip(1))
+                {
+                    model.Bone.Remove(dropped);
+                    moved[dropped] = group.First();
+                }
+
+                changed++;
+            }
+
+            ReferenceCleanup.Repoint(model, moved);
+
+            return Answer(new int[0], changed, moved.Count);
+        }
+
+        /// <summary>親より先に子が来ないよう並びを組み直す。先に来ていた子の数を返す。</summary>
+        private static ComposedEditResult Releveled(IPXPmx model)
+        {
+            IList<IPXBone> before = model.Bone.ToList();
+            int early = before.Count(
+                bone => bone.Parent != null && before.IndexOf(bone.Parent) > before.IndexOf(bone));
+            if (early == 0)
+            {
+                return Answer(new int[0], 0, 0);
+            }
+
+            List<IPXBone> after = new List<IPXBone>();
+            HashSet<IPXBone> taken = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
+            foreach (IPXBone bone in before)
+            {
+                Place(after, taken, before, bone);
+            }
+
+            model.Bone.Clear();
+            foreach (IPXBone bone in after)
+            {
+                model.Bone.Add(bone);
+            }
+
+            return Answer(new int[0], early, 0);
+        }
+
+        private static void Place(
+            IList<IPXBone> after, ISet<IPXBone> taken, IList<IPXBone> before, IPXBone bone)
+        {
+            if (!taken.Add(bone))
+            {
+                return;
+            }
+
+            if (bone.Parent != null && before.Contains(bone.Parent))
+            {
+                Place(after, taken, before, bone.Parent);
+            }
+
+            after.Add(bone);
+        }
+
+        private static ComposedEditResult Rooted(IPXPmx model, IPXPmxBuilder builder)
+        {
+            IList<IPXBone> loose = model.Bone.Where(bone => bone.Parent == null).ToList();
+            if (loose.Count == 0)
+            {
+                return Answer(new int[0], 0, 0);
+            }
+
+            IPXBone made = builder.Bone();
+            made.Name = RootName;
+            made.NameE = string.Empty;
+            made.Visible = true;
+            made.Controllable = true;
+            made.IsRotation = true;
+            model.Bone.Insert(0, made);
+            foreach (IPXBone bone in loose)
+            {
+                bone.Parent = made;
+            }
+
+            return Answer(new[] { 0 }, loose.Count, 0);
+        }
+
+        private static ComposedEditResult Staged(
+            IPXPmx model, IPXPmxBuilder builder, IList<IPXBone> picked, string operation)
+        {
+            List<int> added = new List<int>();
+            bool appending = string.Equals(operation, AddAppendParent, StringComparison.Ordinal);
+            foreach (IPXBone bone in picked)
+            {
+                if (appending
+                    && (bone.IsAppendRotation || bone.IsAppendTranslation
+                        || !(bone.IsRotation || bone.IsTranslation)))
+                {
+                    continue;
+                }
+
+                IPXBone made = builder.Bone();
+                made.Name = bone.Name + Tail(operation);
+                made.NameE = string.Empty;
+                made.Visible = true;
+                made.Controllable = true;
+                made.IsRotation = true;
+                made.Position = Spot(bone, operation);
+                TakeTurn(made, bone);
+                if (string.Equals(operation, AddMiddle, StringComparison.Ordinal) && bone.Parent != null)
+                {
+                    Between(made, bone);
+                }
+
+                if (string.Equals(operation, AddMultiStageParent, StringComparison.Ordinal))
+                {
+                    Over(model, made, bone);
+                }
+
+                if (string.Equals(operation, AddMultiStageChild, StringComparison.Ordinal))
+                {
+                    Under(model, made, bone);
+                    model.Bone.Insert(model.Bone.IndexOf(bone) + 1, made);
+                }
+                else
+                {
+                    made.Parent = bone.Parent;
+                    if (appending)
+                    {
+                        made.IsRotation = bone.IsRotation;
+                        made.IsTranslation = bone.IsTranslation;
+                        bone.AppendParent = made;
+                        bone.IsAppendRotation = bone.IsRotation;
+                        bone.IsAppendTranslation = bone.IsTranslation;
+                        bone.AppendRatio = 1f;
+                    }
+                    else
+                    {
+                        bone.Parent = made;
+                    }
+
+                    model.Bone.Insert(model.Bone.IndexOf(bone), made);
+                }
+
+                added.Add(model.Bone.IndexOf(made));
+            }
+
+            return Answer(added, added.Count, 0);
+        }
+
+        private static void Between(IPXBone made, IPXBone bone)
+        {
+            IPXBone above = bone.Parent;
+            made.Name = above.Name + MiddleJoint + bone.Name;
+            made.ToBone = bone;
+            Flagged(made, bone.Visible ? bone : above);
+            if (ReferenceEquals(above.ToBone, bone))
+            {
+                above.ToBone = made;
+            }
+        }
+
+        private static void Over(IPXPmx model, IPXBone made, IPXBone bone)
+        {
+            Flagged(made, bone);
+            foreach (IPXBone held in model.Bone.Where(held => ReferenceEquals(held.ToBone, bone)))
+            {
+                held.ToBone = made;
+            }
+
+            made.ToBone = bone;
+        }
+
+        private static void Under(IPXPmx model, IPXBone made, IPXBone bone)
+        {
+            Flagged(made, bone);
+            foreach (IPXBone held in model.Bone.Where(held => ReferenceEquals(held.Parent, bone)).ToList())
+            {
+                held.Parent = made;
+            }
+
+            made.Parent = bone;
+            made.ToBone = bone.ToBone;
+            made.ToOffset = Vectors.Copied(bone.ToOffset);
+            if (bone.ToBone != null)
+            {
+                bone.ToBone = made;
+            }
+        }
+
+        private static void Flagged(IPXBone made, IPXBone source)
+        {
+            made.Visible = source.Visible;
+            made.Controllable = source.Controllable;
+            made.IsRotation = source.IsRotation;
+            made.IsTranslation = source.IsTranslation;
+        }
+
+        private static void TakeTurn(IPXBone made, IPXBone bone)
+        {
+            made.IsAfterPhysics = bone.IsAfterPhysics;
+            made.Level = bone.Level;
+        }
+
+        /// <summary>足すボーンを置く点。中間へ足すときだけ親との中ほどになる。</summary>
+        private static V3 Spot(IPXBone bone, string operation)
+        {
+            return string.Equals(operation, AddMiddle, StringComparison.Ordinal)
+                && bone.Parent != null
+                ? Vectors.Between(bone.Position, bone.Parent.Position)
+                : Vectors.Copied(bone.Position);
+        }
+
+        private static string Tail(string operation)
+        {
+            switch (operation)
+            {
+                case AddMultiStageParent:
+                    return ParentTail;
+
+                case AddMultiStageChild:
+                    return ChildTail;
+
+                case AddMiddle:
+                    return MiddleTail;
+
+                default:
+                    return AppendTail;
+            }
+        }
+
+        private static ComposedEditResult Reaching(
+            IPXPmx model, IPXPmxBuilder builder, IList<IPXBone> picked, int links)
+        {
+            List<int> added = new List<int>();
+            foreach (IPXBone bone in picked)
+            {
+                IPXBone made = builder.Bone();
+                made.Name = bone.Name + IkTail;
+                made.NameE = string.Empty;
+                made.Position = Vectors.Copied(bone.Position);
+                made.Visible = true;
+                made.Controllable = true;
+                made.IsRotation = true;
+                made.IsTranslation = true;
+                made.IsIK = true;
+                made.IK.Target = bone;
+                IPXBone above = bone.Parent;
+                for (int at = 0; at < links && above != null; at++)
+                {
+                    made.IK.Links.Add(builder.IKLink(above));
+                    above = above.Parent;
+                }
+
+                model.Bone.Add(made);
+                added.Add(model.Bone.Count - 1);
+            }
+
+            return Answer(added, picked.Count, 0);
+        }
+
+        private static ComposedEditResult AtVertices(
+            IPXPmx model, IPXPmxBuilder builder, IList<IPXVertex> picked, bool weighted)
+        {
+            if (picked.Count == 0)
+            {
+                return Answer(new int[0], 0, 0);
+            }
+
+            IPXBone made = builder.Bone();
+            made.Name = VerticesName;
+            made.NameE = string.Empty;
+            made.Position = Vectors.Middle(picked.Select(vertex => vertex.Position));
+            made.Visible = true;
+            made.Controllable = true;
+            made.IsRotation = true;
+            model.Bone.Add(made);
+            if (!weighted)
+            {
+                return Answer(new[] { model.Bone.Count - 1 }, 0, 0);
+            }
+
+            foreach (IPXVertex vertex in picked)
+            {
+                VertexWeights.Write(
+                    vertex, new[] { new KeyValuePair<IPXBone, float>(made, 1f) });
+            }
+
+            return Answer(new[] { model.Bone.Count - 1 }, picked.Count, 0);
+        }
+
+        /// <summary>
+        /// 指したボーンの表示先の隔たりの先へ「～先」ボーンを足し、表示先をそのボーンへ移す。既に
+        /// 表示先のボーンを持つボーンは変えない。
+        /// </summary>
+        private static ComposedEditResult Tipped(
+            IPXPmx model, IPXPmxBuilder builder, IList<IPXBone> picked)
+        {
+            List<int> added = new List<int>();
+            foreach (IPXBone bone in picked.Where(held => held.ToBone == null))
+            {
+                IPXBone made = builder.Bone();
+                made.Name = bone.Name + TipTail;
+                made.NameE = string.Empty;
+                made.Position = Vectors.Add(bone.Position, bone.ToOffset);
+                made.Parent = bone;
+                TakeTurn(made, bone);
+                bone.ToBone = made;
+                bone.ToOffset = new V3(0f, 0f, 0f);
+                model.Bone.Add(made);
+                added.Add(model.Bone.Count - 1);
+            }
+
+            return Answer(added, added.Count, 0);
+        }
+
+        /// <summary>
+        /// 指した「～先」ボーンを並びから外し、そのボーンを表示先にしていたボーンの表示先を、消した
+        /// ボーンまでの隔たりへ移す。「～先」の名を持たないボーンは変えない。
+        /// </summary>
+        private static ComposedEditResult Dissolved(IPXPmx model, IList<IPXBone> picked)
+        {
+            IList<IPXBone> going = picked
+                .Where(held => held.Name != null && held.Name.EndsWith(TipTail, StringComparison.Ordinal))
+                .ToList();
+            HashSet<IPXBone> gone = new HashSet<IPXBone>(going, ReferenceComparer<IPXBone>.Instance);
+            foreach (IPXBone above in model.Bone.Where(held => held.ToBone != null && gone.Contains(held.ToBone)))
+            {
+                above.ToOffset = Vectors.Apart(above.ToBone.Position, above.Position, 1f);
+                above.ToBone = null;
+            }
+
+            foreach (IPXBone dropped in going)
+            {
+                model.Bone.Remove(dropped);
+            }
+
+            ReferenceCleanup.Repoint(
+                model,
+                gone.ToDictionary(
+                    held => held, held => Above(held, gone), ReferenceComparer<IPXBone>.Instance));
+
+            return Answer(new int[0], going.Count, going.Count);
+        }
+
+        private static bool Hidden(IPXPmx model, IPXBone bone)
+        {
+            if (model.Bone.Any(held => ReferenceEquals(held.Parent, bone))
+                || (!bone.Visible && !bone.Controllable))
+            {
+                return false;
+            }
+
+            bone.Visible = false;
+            bone.Controllable = false;
+
+            return true;
+        }
+
+        private static bool Loosened(IPXBone bone)
+        {
+            if (bone.ToBone == null)
+            {
+                return false;
+            }
+
+            bone.ToOffset = Vectors.Apart(bone.ToBone.Position, bone.Position, 1f);
+            bone.ToBone = null;
+
+            return true;
+        }
+
+        private static bool Pointed(IPXPmx model, IPXBone bone)
+        {
+            IPXBone found = null;
+            float best = 0f;
+            foreach (IPXBone child in model.Bone.Where(held => ReferenceEquals(held.Parent, bone)))
+            {
+                float apart = Vectors.Distance(bone.Position, child.Position);
+                if (found == null || apart < best)
+                {
+                    found = child;
+                    best = apart;
+                }
+            }
+
+            if (found == null || ReferenceEquals(bone.ToBone, found))
+            {
+                return false;
+            }
+
+            bone.ToBone = found;
+            bone.ToOffset = new V3(0f, 0f, 0f);
+
+            return true;
+        }
+
+        /// <summary>そのボーンの祖先のうち、消えない先頭の1つ。無ければ空を返す。</summary>
+        private static IPXBone Above(IPXBone bone, ICollection<IPXBone> gone)
+        {
+            HashSet<IPXBone> met = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
+            IPXBone found = bone.Parent;
+            while (found != null && gone.Contains(found) && met.Add(found))
+            {
+                found = found.Parent;
+            }
+
+            return found != null && gone.Contains(found) ? null : found;
+        }
+
+
+        private static bool Mirrored(IPXPmx model, IPXBone bone, string axis)
+        {
+            IPXBone twin = MirrorPartners.OfBone(model, bone);
+            if (twin == null)
+            {
+                return false;
+            }
+
+            V3 across = MirrorPartners.Across(twin.Position, axis);
+            if (Vectors.Same(bone.Position, across))
+            {
+                return false;
+            }
+
+            bone.Position = across;
+            VertexWeights.ProjectSdefCenters(model.Vertex, new[] { bone });
+
+            return true;
+        }
+
+        private static bool Fixed(IPXPmx model, IPXBone bone)
+        {
+            V3 along = Toward(bone);
+            if (!Vectors.HasLength(along))
+            {
+                return false;
+            }
+
+            bool was = bone.IsFixAxis;
+            V3 held = bone.FixAxis;
+            bone.IsFixAxis = true;
+            bone.FixAxis = along;
+
+            return !was || held == null || !Vectors.Same(held, bone.FixAxis);
+        }
+
+        private static bool Framed(IPXPmx model, IPXBone bone)
+        {
+            V3 along = Toward(bone);
+            if (!Vectors.HasLength(along))
+            {
+                return false;
+            }
+
+            V3 up = bone.Parent == null
+                ? new V3(0f, 1f, 0f)
+                : Vectors.Toward(bone.Position, bone.Parent.Position);
+            V3 across = Vectors.Perpendicular(along, up);
+            bool was = bone.IsLocalFrame;
+            V3 wasX;
+            V3 wasY;
+            V3 wasZ;
+            bone.GetLocalAxis(out wasX, out wasY, out wasZ);
+            bone.IsLocalFrame = true;
+            bone.SetLocalAxis(
+                along, Vectors.HasLength(across) ? across : Vectors.Perpendicular(along, Aside(along)));
+            V3 nowX;
+            V3 nowY;
+            V3 nowZ;
+            bone.GetLocalAxis(out nowX, out nowY, out nowZ);
+
+            return !was || !Vectors.Same(wasX, nowX) || !Vectors.Same(wasZ, nowZ);
+        }
+
+        private static bool Unframed(IPXBone bone)
+        {
+            if (!bone.IsLocalFrame)
+            {
+                return false;
+            }
+
+            bone.IsLocalFrame = false;
+
+            return true;
+        }
+
+        private static bool Sorted(IPXBone bone)
+        {
+            object[] was = KindFlags(bone);
+            bone.SetPMDBoneKind(Kind(bone));
+
+            return !was.SequenceEqual(KindFlags(bone));
+        }
+
+        /// <summary>PMDのボーン種別を入れたときに書き換わる値。</summary>
+        private static object[] KindFlags(IPXBone bone)
+        {
+            return new object[]
+            {
+                bone.IsRotation, bone.Visible, bone.Controllable, bone.IsTranslation, bone.IsIK,
+                bone.IsAppendRotation, bone.IsFixAxis, bone.Level, bone.AppendParent, bone.AppendRatio,
+            };
+        }
+
+        private static BoneKind Kind(IPXBone bone)
+        {
+            if (bone.IsIK)
+            {
+                return BoneKind.IK;
+            }
+
+            if (bone.IsAppendRotation)
+            {
+                return BoneKind.RotateEffect;
+            }
+
+            if (bone.IsFixAxis)
+            {
+                return BoneKind.Twist;
+            }
+
+            if (!bone.Visible)
+            {
+                return BoneKind.Unvisible;
+            }
+
+            return bone.IsTranslation ? BoneKind.RotateMove : BoneKind.Rotate;
+        }
+
+        /// <summary>
+        /// そのボーンの表示先への向きを、長さを1にそろえて返す。表示先を持たないボーンでは長さを
+        /// 持たない向きを返す。
+        /// </summary>
+        private static V3 Toward(IPXBone bone)
+        {
+            return bone.ToBone == null
+                ? Vectors.Normalized(bone.ToOffset)
+                : Vectors.Toward(bone.ToBone.Position, bone.Position);
+        }
+
+        /// <summary>その向きと平行でない向き。</summary>
+        private static V3 Aside(V3 given)
+        {
+            return Math.Abs(given.X) < Math.Abs(given.Y)
+                ? new V3(1f, 0f, 0f)
+                : new V3(0f, 1f, 0f);
+        }
+
+        private const string RootName = "全ての親";
+
+        private const string VerticesName = "頂点";
+
+        private const string ParentTail = "親";
+
+        private const string TipTail = "先";
+
+        private const string ChildTail = "子";
+
+        private const string MiddleTail = "中間";
+
+        private const string MiddleJoint = "-";
+
+        private const string AppendTail = "付与親";
+
+        private const string IkTail = "IK";
+
+        /// <summary>
+        /// 結末を作る。<paramref name="rewritten"/> は並びを変えずに中身だけを書き換えた種類で、
+        /// 並びを変えうる操作では null。
+        /// </summary>
+        private static ComposedEditResult Answer(
+            IList<int> added, int changed, int removed, IList<string> rewritten = null)
+        {
+            Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { AddedName, added.Cast<object>().ToArray() },
+                { ChangedName, changed },
+                { RemovedName, removed },
+            };
+
+            return rewritten == null
+                ? ComposedEditResult.Complete(value)
+                : ComposedEditResult.CompleteRewriting(value, rewritten);
+        }
+    }
+}

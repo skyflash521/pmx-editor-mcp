@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <!-- 値の題材にSDKの座標型を使い、その実体はビット数ごとに置かれた描画ライブラリを参照する。
+         ホスト自身は呼び出し側のビット数に依存しないが、テストは実体を読み込むので、実行対象の
+         エディタ(PmxEditor_x64.exe)と同じ64ビットへそろえる。 -->
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>PmxEditorMcp.HostPlugin.Tests</AssemblyName>
+    <RootNamespace>PmxEditorMcp.Tests</RootNamespace>
+    <!-- SDKを読むので、導入ディレクトリの指定が要る。 -->
+    <RequiresPmxEditorDir>true</RequiresPmxEditorDir>
+    <PmxEditorSdkCopied>true</PmxEditorSdkCopied>
+  </PropertyGroup>
+
+  <Import Project="..\..\PmxEditorSdk.props" />
+
+  <ItemGroup>
+    <!-- 応答の照合で、ホストと同じシリアライザを使ってJSONを読み解くため。 -->
+    <Reference Include="System.Web.Extensions" />
+    <!-- 画像の受け渡しの題材を組み立て、返った画像の形式と大きさを読むため。 -->
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\HostPlugin\PmxEditorMcp.HostPlugin.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,98 @@
+using System;
+using System.Globalization;
+using System.IO;
+using System.Text;
+
+namespace PmxEditorMcp.SignatureDump
+{
+    /// <summary>実行1回ぶんの配線。引数の検査・アセンブリの読み込み・列挙・書き出しを順に行う。</summary>
+    public static class SignatureDumpRunner
+    {
+        /// <summary>
+        /// 実行する。引数はPMXエディタ導入ディレクトリと書き出し先パスの2つ。結果は書き出し先へ
+        /// BOMなしUTF-8で書く。成功したときは要約を <paramref name="output"/> へ書き、
+        /// <paramref name="error"/> には何も書かない。失敗したときはその説明を
+        /// <paramref name="error"/> へ書き、<paramref name="output"/> には何も書かない。
+        /// </summary>
+        public static int Run(string[] args, TextWriter output, TextWriter error)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (output == null)
+            {
+                throw new ArgumentNullException(nameof(output));
+            }
+
+            if (error == null)
+            {
+                throw new ArgumentNullException(nameof(error));
+            }
+
+            if (args.Length != 2)
+            {
+                error.WriteLine("引数は2つ: <PMXエディタ導入ディレクトリ> <書き出し先パス>");
+                return ExitCodes.InvalidArguments;
+            }
+
+            string editorDirectory = args[0];
+            string outputPath = args[1];
+            string assemblyPath = SdkAssemblyLocator.GetAssemblyPath(editorDirectory);
+
+            if (!File.Exists(assemblyPath))
+            {
+                error.WriteLine("対象のアセンブリが無い: " + assemblyPath);
+                return ExitCodes.InputUnavailable;
+            }
+
+            InventoryRecord inventory;
+            try
+            {
+                inventory = SdkInventory.Load(editorDirectory, assemblyPath);
+            }
+            catch (Exception exception)
+            {
+                error.WriteLine("対象のアセンブリを列挙できない: " + assemblyPath);
+                error.WriteLine(exception.Message);
+                return ExitCodes.InputUnavailable;
+            }
+
+            try
+            {
+                File.WriteAllText(outputPath, InventoryJson.Write(inventory), new UTF8Encoding(false));
+            }
+            catch (Exception exception)
+            {
+                error.WriteLine("結果を書き出せない: " + outputPath);
+                error.WriteLine(exception.Message);
+                Discard(outputPath);
+                return ExitCodes.WriteFailed;
+            }
+
+            output.WriteLine(string.Format(
+                CultureInfo.InvariantCulture,
+                "書き出した: {0}(型 {1} 件・シグネチャ {2} 件)",
+                outputPath,
+                inventory.Types.Count,
+                inventory.Signatures.Count));
+
+            return ExitCodes.Success;
+        }
+
+        private static void Discard(string outputPath)
+        {
+            try
+            {
+                if (File.Exists(outputPath))
+                {
+                    File.Delete(outputPath);
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
+}

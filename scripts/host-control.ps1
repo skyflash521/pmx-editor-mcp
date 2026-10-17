@@ -1,0 +1,1722 @@
+# 実機動作確認で使うホストの操作役。
+# PMXエディタの起動と終了、プラグインメニューからの稼働状態の確認・停止・開始、
+# 待ち受けているホストのパイプの一覧と権限を、画面を人手で操作せずに行う。
+# メニューはWinFormsのToolStripで、Win32のHMENUではない。
+# Windowsの表示言語が日本語であることを前提にする。
+#
+# 状態を変える操作は、その結果が観測できるようになるまで待ってから戻る。待受の公開も停止手順も
+# エディタ側の別スレッドで進む。
+#
+# 停止・開始は、いま押そうとしている問いが要求した操作のものであることを確かめてから押す。
+# ホストは稼働中なら停止を、停止済みなら開始を問う同じ形の表示を出す。
+#
+# 待ちはどれも、時間の見積りではなく観測で抜ける。待受のパイプの出現と消失、プロセスの終了、
+# 状態表示の文言がその観測にあたる。どの待ちにも上限を持たせ、締切は繰り返しの先頭で判じ、
+# 待ち時間は残り時間で頭打ちにする。
+[CmdletBinding()]
+param(
+    # 行う操作。
+    #   pipes  待ち受けているホストのパイプ名を一覧する
+    #   editors このセッションの導入先から動いているPMXエディタのプロセスIDを一覧する(ホストの
+    #          稼働状態を問わない)。導入先は editor-dir.ps1 の Get-SessionEditorDirectory が決める
+    #   launch このセッションの導入先のPMXエディタを起動し、そのホストの待受が現れるまで待ち、-View を指していれば
+    #          そのビューを開いてからプロセスIDを返す。待受が現れないときは、起こしたエディタを
+    #          こちらで閉じてから失敗する
+    #   close  指定したエディタを通常の手順で終了し、終了と待受の消失を待つ
+    #   status プラグインメニューの稼働状態を表示させ、本文を読んで閉じる。続けてホストのログの所在を返す
+    #   stop   稼働中のホストを、メニューを通さずに停止し、待受が消えるまで待つ
+    #   start  停止済みのホストを、メニューを通さずに開始し、待受が現れるまで待つ
+    #   acl    指定したエディタの待受のパイプに掛かっている権限の規則を表示する
+    #   undo   指定したエディタの編集を1回分だけ元に戻す
+    #   answer 指定したエディタが出している応答待ちの表示へ応答して閉じ、閉じたものの素性を
+    #          1行ずつ返す
+    #   open    指定したビューのウィンドウが現れていなければ、その表示を切り替えるキーを1度送り、
+    #           ウィンドウが現れるまで待つ
+    #   show    指定したビューのウィンドウを手前へ出す
+    #   click   指定したビューの描画面の中央を左クリックする
+    #   capture 指定したビューの描画面に中身を描かせ、PNGへ書き出して大きさを返す
+    [Parameter(Mandatory = $true)]
+    [ValidateSet(
+        "pipes", "editors", "launch", "close", "status", "stop", "start", "acl", "undo", "answer",
+        "open", "show", "click", "capture")]
+    [string]$Action,
+
+    # 操作の対象にするエディタのプロセスID。pipes と launch では使わない。
+    [int]$ProcessId,
+
+    # 画面への操作の相手にするビューの名前。launch・open・show・click・capture で使う。
+    # launch と open と capture は並べて渡された分をまとめて相手にし、show と click は1つに限る。
+    [ValidateSet("pmx", "transform", "sub")]
+    [string[]]$View,
+
+    # 写し取った画像の書き出し先。capture で使う。-View と同じ数を同じ並びで渡す。
+    [string[]]$Path,
+
+    # 待ちの上限の秒数。上限は、終了待ちへミリ秒で渡せる範囲に収める。
+    #
+    # この上限は待ちごとに別々に効き、メニューを辿って項目を押すところまでを含む。
+    #
+    # この上限に達した待ちは失敗とする。
+    [ValidateRange(1, 2147483)]
+    [int]$TimeoutSeconds = 20
+)
+
+Set-StrictMode -Version Latest
+
+. (Join-Path $PSScriptRoot 'editor-dir.ps1')
+$ErrorActionPreference = "Stop"
+
+$HostControlTypes = @"
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+public static class HostControlWindow {
+  [DllImport("user32.dll")] public static extern IntPtr PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
+  [DllImport("user32.dll")] private static extern IntPtr GetDlgItem(IntPtr dialog, int id);
+  [DllImport("user32.dll")] private static extern bool EnumChildWindows(IntPtr parent, EnumProc callback, IntPtr state);
+  [DllImport("user32.dll")] private static extern bool GetClientRect(IntPtr window, out Rect box);
+  [DllImport("user32.dll")] private static extern bool ClientToScreen(IntPtr window, ref Spot spot);
+  [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr window);
+  [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr window, int how);
+  [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr window, uint kind);
+  [DllImport("user32.dll")] private static extern IntPtr GetParent(IntPtr window);
+  [DllImport("user32.dll", SetLastError = true)]
+  private static extern IntPtr SendMessageTimeout(
+      IntPtr window, uint message, IntPtr first, IntPtr second, uint how, uint limitMs,
+      out IntPtr answer);
+  [DllImport("user32.dll")] private static extern bool AttachThreadInput(uint from, uint to, bool attach);
+  [DllImport("user32.dll")] private static extern bool PrintWindow(IntPtr window, IntPtr canvas, uint how);
+  [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+
+  [StructLayout(LayoutKind.Sequential)] public struct Rect { public int Left, Top, Right, Bottom; }
+  [StructLayout(LayoutKind.Sequential)] public struct Spot { public int X, Y; }
+
+  /// <summary>
+  /// ビューの中身が描かれる面。ウィンドウの中で一番広い、見えている子を持たない子がそれに当たる。
+  /// 中身を載せる入れ物は、面より広くても面そのものではない。
+  /// </summary>
+  public static IntPtr Surface(IntPtr window) {
+    var seen = new System.Collections.Generic.List<IntPtr>();
+    EnumChildWindows(window, (child, state) => {
+      if (IsWindowVisible(child)) { seen.Add(child); }
+      return true;
+    }, IntPtr.Zero);
+
+    var holders = new System.Collections.Generic.HashSet<IntPtr>();
+    foreach (IntPtr child in seen) { holders.Add(GetParent(child)); }
+
+    IntPtr widest = IntPtr.Zero;
+    long area = 0;
+    foreach (IntPtr child in seen) {
+      Rect box;
+      if (holders.Contains(child) || !GetClientRect(child, out box)) { continue; }
+      long size = (long)(box.Right - box.Left) * (box.Bottom - box.Top);
+      if (size > area) { area = size; widest = child; }
+    }
+    return widest;
+  }
+
+  /// <summary>そのウィンドウの中身が画面のどこに在るか。左上のX・Y・幅・高さの順。読めなければ空。</summary>
+  public static int[] ScreenBox(IntPtr window) {
+    Rect box;
+    Spot corner = new Spot();
+    if (!GetClientRect(window, out box) || !ClientToScreen(window, ref corner)) {
+      return new int[0];
+    }
+    return new int[] { corner.X, corner.Y, box.Right - box.Left, box.Bottom - box.Top };
+  }
+
+  /// <summary>
+  /// ウィンドウを手前へ出すよう頼む。手前に出たかどうかは <see cref="IsInFront"/> で見る。
+  /// Windowsは、いま手前に在るウィンドウと入力の列を共にしない側からの入れ替えを断る。
+  /// </summary>
+  public static void Raise(IntPtr window) {
+    const int SW_RESTORE = 9;
+    uint ours = GetCurrentThreadId();
+    uint theirs = 0;
+    IntPtr front = GetForegroundWindow();
+    if (front != IntPtr.Zero) { GetWindowThreadProcessId(front, out theirs); }
+
+    bool joined = theirs != 0 && theirs != ours && AttachThreadInput(ours, theirs, true);
+    try {
+      ShowWindow(window, SW_RESTORE);
+      SetForegroundWindow(window);
+    }
+    finally {
+      if (joined) { AttachThreadInput(ours, theirs, false); }
+    }
+  }
+
+  /// <summary>
+  /// ウィンドウに自分の中身を描かせて写し取る。画面に出ている姿ではないので、手前に出ていなくても、
+  /// 別のウィンドウに覆われていても中身が取れる。
+  /// </summary>
+  public static bool Draw(IntPtr window, IntPtr canvas) {
+    const uint PW_CLIENTONLY = 1;
+    const uint PW_RENDERFULLCONTENT = 2;
+    return PrintWindow(window, canvas, PW_CLIENTONLY | PW_RENDERFULLCONTENT);
+  }
+
+  /// <summary>そのウィンドウが手前に在るか。子は親の一部として数える。</summary>
+  public static bool IsInFront(IntPtr window) {
+    const uint GA_ROOT = 2;
+    IntPtr front = GetForegroundWindow();
+    return front != IntPtr.Zero
+        && (front == window || GetAncestor(front, GA_ROOT) == GetAncestor(window, GA_ROOT));
+  }
+
+  /// <summary>
+  /// そのウィンドウを持つスレッドが、積んだ知らせをそこまで捌いたか。捌けずに時間切れなら偽。
+  /// </summary>
+  public static bool HasCaughtUp(IntPtr window, int limitMs) {
+    const uint WM_NULL = 0x0000;
+    const uint SMTO_ABORTIFHUNG = 0x0002;
+    IntPtr answer;
+    return SendMessageTimeout(
+        window, WM_NULL, IntPtr.Zero, IntPtr.Zero, SMTO_ABORTIFHUNG, (uint)limitMs, out answer)
+      != IntPtr.Zero;
+  }
+
+  /// <summary>
+  /// ウィンドウの中身の真ん中を左で押して離す。画面の指し手は動かさない。ウィンドウが捌き終えるまで戻らない
+  /// ので、戻った時点で押されている。押しと離しを合わせて <paramref name="limitMs"/> までに
+  /// 捌き終えなければ偽。
+  /// </summary>
+  public static bool ClickCenter(IntPtr window, int limitMs) {
+    Rect box;
+    if (!GetClientRect(window, out box)) { return false; }
+    const uint WM_LBUTTONDOWN = 0x0201;
+    const uint WM_LBUTTONUP = 0x0202;
+    const int MK_LBUTTON = 0x0001;
+    int x = (box.Right - box.Left) / 2;
+    int y = (box.Bottom - box.Top) / 2;
+    IntPtr spot = new IntPtr((y << 16) | (x & 0xFFFF));
+    var clock = System.Diagnostics.Stopwatch.StartNew();
+    bool pressed = Send(window, WM_LBUTTONDOWN, new IntPtr(MK_LBUTTON), spot, limitMs);
+    int left = limitMs - (int)clock.ElapsedMilliseconds;
+    bool released = left > 0 && Send(window, WM_LBUTTONUP, IntPtr.Zero, spot, left);
+    // 捌き終えるのを待てなかった離しは積んで残す。押しが後から捌かれたときに押しっぱなしが残る。
+    if (!released && PostMessage(window, WM_LBUTTONUP, IntPtr.Zero, spot) == IntPtr.Zero) {
+      return false;
+    }
+
+    return pressed && released;
+  }
+
+  /// <summary>ウィンドウが捌き終えるまで待って知らせを送る。捌き終えずに時間切れなら偽。</summary>
+  private static bool Send(IntPtr window, uint message, IntPtr first, IntPtr second, int limitMs) {
+    const uint SMTO_ABORTIFHUNG = 0x0002;
+    IntPtr answer;
+    return SendMessageTimeout(
+        window, message, first, second, SMTO_ABORTIFHUNG, (uint)limitMs, out answer)
+      != IntPtr.Zero;
+  }
+  [DllImport("user32.dll")] private static extern bool IsWindowEnabled(IntPtr window);
+
+  // 表示の押しボタンをその番号で押す。押せる相手が居なければ偽。
+  // UIオートメーションは、止まっているUIスレッドのウィンドウを押しボタンとして見せない。
+  public static bool Press(IntPtr dialog, int id) {
+    IntPtr control = GetDlgItem(dialog, id);
+    if (control == IntPtr.Zero || !IsWindowVisible(control) || !IsWindowEnabled(control)) {
+      return false;
+    }
+    const uint WM_COMMAND = 0x0111;
+    return PostMessage(dialog, WM_COMMAND, new IntPtr(id), control) != IntPtr.Zero;
+  }
+
+  private delegate bool EnumProc(IntPtr window, IntPtr state);
+  [DllImport("user32.dll")] private static extern bool EnumWindows(EnumProc callback, IntPtr state);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+  private static extern int GetClassName(IntPtr window, StringBuilder text, int length);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+  private static extern int GetWindowText(IntPtr window, StringBuilder text, int length);
+  [DllImport("user32.dll")]
+  private static extern uint GetWindowThreadProcessId(IntPtr window, out uint owner);
+  [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr window);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+  private static extern uint RegisterWindowMessage(string name);
+
+  /// <summary>その名前で登録したウィンドウメッセージの番号。ホストが同じ名前で登録している。</summary>
+  public static uint Registered(string name) { return RegisterWindowMessage(name); }
+
+  /// <summary>その持ち主の、タイトルがその文字列のウィンドウ。見えているかは問わない。</summary>
+  public static IntPtr[] FindHidden(int owner, string title) {
+    var found = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((window, state) => {
+      uint actual;
+      GetWindowThreadProcessId(window, out actual);
+      if (actual != (uint)owner) { return true; }
+
+      var caption = new StringBuilder(512);
+      GetWindowText(window, caption, caption.Capacity);
+      if (caption.ToString() == title) { found.Add(window); }
+      return true;
+    }, IntPtr.Zero);
+    return found.ToArray();
+  }
+
+  /// <summary>指定したプロセスが持つ、見えているトップレベルのウィンドウを名前と種類で絞って返す。</summary>
+  public static IntPtr[] Find(int owner, string className, string title) {
+    var found = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((window, state) => {
+      uint actual;
+      GetWindowThreadProcessId(window, out actual);
+      if (actual != (uint)owner || !IsWindowVisible(window)) { return true; }
+
+      var name = new StringBuilder(256);
+      GetClassName(window, name, name.Capacity);
+      if (name.ToString() != className) { return true; }
+
+      var caption = new StringBuilder(512);
+      GetWindowText(window, caption, caption.Capacity);
+      if (caption.ToString() != title) { return true; }
+
+      found.Add(window);
+      return true;
+    }, IntPtr.Zero);
+    return found.ToArray();
+  }
+
+  /// <summary>タイトルがその文字列で始まるウィンドウ。ビューのウィンドウはエディタがタイトルを付けるのでタイトルで引く。</summary>
+  public static IntPtr[] FindByTitle(int owner, string head) {
+    var found = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((window, state) => {
+      uint actual;
+      GetWindowThreadProcessId(window, out actual);
+      if (actual != (uint)owner || !IsWindowVisible(window)) { return true; }
+
+      var title = new StringBuilder(256);
+      GetWindowText(window, title, title.Capacity);
+      if (title.ToString().StartsWith(head, StringComparison.Ordinal)) { found.Add(window); }
+      return true;
+    }, IntPtr.Zero);
+    return found.ToArray();
+  }
+
+  /// <summary>題を問わず、種類だけで絞って返す。</summary>
+  // その持ち主のウィンドウのうち、中に与えた言葉を持つ押しボタンが在るものを返す。例外を知らせる表示は
+  // ウィンドウの中に現れるので、デスクトップ直下のクラスでは見つからない。
+  public static IntPtr[] FindByButton(int owner, string word) {
+    var found = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((window, state) => {
+      uint actual;
+      GetWindowThreadProcessId(window, out actual);
+      if (actual != (uint)owner || !IsWindowVisible(window)) { return true; }
+
+      if (Button(window, word) != IntPtr.Zero) { found.Add(window); }
+      return true;
+    }, IntPtr.Zero);
+    return found.ToArray();
+  }
+
+  // そのウィンドウの中の、与えた言葉を持つ押しボタン。無ければゼロ。
+  public static IntPtr Button(IntPtr window, string word) {
+    IntPtr wanted = IntPtr.Zero;
+    EnumChildWindows(window, (child, state) => {
+      var name = new StringBuilder(256);
+      GetClassName(child, name, name.Capacity);
+      if (!name.ToString().StartsWith("Button", StringComparison.Ordinal)
+          && name.ToString().IndexOf("BUTTON", StringComparison.OrdinalIgnoreCase) < 0) {
+        return true;
+      }
+
+      var text = new StringBuilder(256);
+      GetWindowText(child, text, text.Capacity);
+      if (text.ToString().IndexOf(word, StringComparison.Ordinal) >= 0
+          && IsWindowVisible(child) && IsWindowEnabled(child)) {
+        wanted = child;
+        return false;
+      }
+      return true;
+    }, IntPtr.Zero);
+    return wanted;
+  }
+
+  /// <summary>その持ち主の見えているトップレベルのウィンドウのうち、種類がその綴りでないもの。</summary>
+  public static IntPtr[] FindOtherClass(int owner, string className) {
+    var found = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((window, state) => {
+      uint actual;
+      GetWindowThreadProcessId(window, out actual);
+      if (actual != (uint)owner || !IsWindowVisible(window)) { return true; }
+
+      var name = new StringBuilder(256);
+      GetClassName(window, name, name.Capacity);
+      if (name.ToString() != className) { found.Add(window); }
+      return true;
+    }, IntPtr.Zero);
+    return found.ToArray();
+  }
+
+  public static IntPtr[] FindByClass(int owner, string className) {
+    var found = new System.Collections.Generic.List<IntPtr>();
+    EnumWindows((window, state) => {
+      uint actual;
+      GetWindowThreadProcessId(window, out actual);
+      if (actual != (uint)owner || !IsWindowVisible(window)) { return true; }
+
+      var name = new StringBuilder(256);
+      GetClassName(window, name, name.Capacity);
+      if (name.ToString() == className) { found.Add(window); }
+      return true;
+    }, IntPtr.Zero);
+    return found.ToArray();
+  }
+}
+public static class HostControlPath {
+  // .NET のパスの絶対化は、相対の要素を畳むだけで、ジャンクション・シンボリックリンク・
+  // 8.3形式の短い名前は解決しない。同じ実体を指す2つのパスを比べるには、開いたハンドルから
+  // 最終的なパスを取り直す必要がある。
+  [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+  private static extern IntPtr CreateFileW(string name, uint access, uint share, IntPtr security,
+      uint disposition, uint flags, IntPtr template);
+  [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+  private static extern uint GetFinalPathNameByHandleW(IntPtr file, StringBuilder path, uint length,
+      uint flags);
+  [DllImport("kernel32.dll", SetLastError = true)]
+  private static extern bool CloseHandle(IntPtr handle);
+  public static string Final(string path) {
+    IntPtr handle = CreateFileW(path, 0, 7, IntPtr.Zero, 3, 0x02000000, IntPtr.Zero);
+    if (handle == new IntPtr(-1)) { return null; }
+    try {
+      StringBuilder buffer = new StringBuilder(32768);
+      uint written = GetFinalPathNameByHandleW(handle, buffer, (uint)buffer.Capacity, 0);
+      if (written == 0 || written >= buffer.Capacity) { return null; }
+      return buffer.ToString();
+    } finally { CloseHandle(handle); }
+  }
+}
+"@
+
+$AutomationLoaded = $false
+
+function Import-Automation {
+    <#
+        .SYNOPSIS
+        UI Automation の組を読み込む。ウィンドウの木を辿る操作だけがこれを要する。
+    #>
+    if ($script:AutomationLoaded) { return }
+
+    Add-Type -AssemblyName UIAutomationClient
+    Add-Type -AssemblyName UIAutomationTypes
+    $script:AutomationLoaded = $true
+}
+
+function Import-HostControlTypes {
+    param([Parameter(Mandatory)][string]$Source)
+
+    $bytes = [System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($Source))
+    $named = (Get-FileHash -InputStream $bytes -Algorithm SHA256).Hash
+    $assembly = Join-Path $env:TEMP "pmx-editor-mcp-host-control-$named.dll"
+
+    if (-not (Test-Path $assembly)) {
+        $building = "$assembly.$PID"
+        Add-Type -TypeDefinition $Source -OutputAssembly $building
+        try {
+            Move-Item -LiteralPath $building -Destination $assembly
+        }
+        catch {
+            # 読み込まれている物は開かれたままで、置き換えは通らない。
+            Remove-Item -LiteralPath $building -Force -ErrorAction Ignore
+        }
+    }
+
+    Add-Type -Path $assembly
+}
+
+Import-HostControlTypes -Source $HostControlTypes
+
+# ホストが待受に使うパイプ名。接頭辞の後ろはエディタのプロセスIDで、ホストは十進で書くだけで、
+# 先頭の0や数字以外は現れない。ブリッジ側の絞り込みと同じ形で、大文字小文字を区別して照合する。
+$HostPipePattern = "^pmx-editor-mcp-([1-9][0-9]*)$"
+
+# 待ち受けているパイプが並ぶディレクトリ。
+$PipeDirectory = "\\.\pipe\"
+
+# プラグインのメニュー文言。状態表示の表題にも同じ文言が出る。
+$PluginName = "PMX Editor MCP"
+
+# 編集メニューの中で1回分の元に戻す操作を起こす項目の名前。実機の編集メニューが持つ綴りである。
+$UndoItemName = "元に戻す(U)"
+
+# 元に戻した分をやり直す項目の名前。元に戻す操作が1回起きていれば、この項目は使える。
+$RedoItemName = "やり直し(R)"
+
+# 状態表示のウィンドウクラス。標準のメッセージボックスのもの。
+$DialogClassName = "#32770"
+
+# メニューを開くと現れる影のウィンドウクラス。影の専用クラスで、他の用途には使われない。
+$ShadowClassName = "SysShadow"
+
+# 状態を見に行く間隔。
+$PollIntervalMs = 25
+
+# 開始を頼んで待受が現れないときに、頼み直すまでの間隔。
+$StartRetryMs = 300
+
+# 応えない相手へ同じ働きかけを送り直す間隔。送り直しは相手の受け取り待ちを取り消す。
+$NudgeIntervalMs = 500
+
+# 閉じるためのウィンドウメッセージ(WM_CLOSE)。
+$WindowMessageClose = 0x0010
+
+# キーの押しと離しを知らせるウィンドウメッセージ(WM_KEYDOWN・WM_KEYUP)。
+$WindowMessageKeyDown = 0x0100
+$WindowMessageKeyUp = 0x0101
+
+# ビューの名前から、そのビューを載せているウィンドウのタイトルの始まりへ。
+$ViewTitles = @{ pmx = "PmxView"; transform = "TransformView"; sub = "SubView" }
+
+# ビューの名前から、そのビューの表示と非表示を切り替えるキーへ。Host はそのキーを受け取るウィンドウの
+# ビューの名前で、Key はそのキーの仮想キーコードである。ここに無いビューは開く操作を持たない
+# ——PmxViewはエディタが自分で出す。
+#
+# キーはPmxViewの表示メニューが項目ごとに持つショートカットキーで、変形ビューは F9、
+# サブビューは F8 である。
+$ViewOpeners = @{
+    transform = @{ Host = "pmx"; Key = 0x78 }
+    sub       = @{ Host = "pmx"; Key = 0x77 }
+}
+
+# ウィンドウの中に現れる知らせは、応答待ちの表示を探す道では見つからず素性も読めない。
+$ThrownNoticeName = "投げられた例外の知らせ"
+
+# 素性を読めなかった表示の言い方。
+$UnreadableDialog = "読めない表示"
+
+<#
+    .SYNOPSIS
+    投げられた例外を知らせる表示で、そのまま続けるほうの押しボタンが持つ言葉。
+#>
+$ContinueWord = "続行"
+
+<#
+    .SYNOPSIS
+    押しボタンが捌き終えるのを待つ上限。
+#>
+$ThrownNoticeLimitMs = 2000
+
+# 押しボタンの番号(IDCANCEL・IDNO・IDOK)。表示の文言は環境で変わる。
+$IdsThatAvoidTheAffirmative = @(2, 7, 1)
+$IdsThatLetTheEditorClose = @(7, 1)
+
+$EditMenuBars = @()
+$EditMenuLocated = $null
+
+# 編集メニューからプラグイン項目までの、子の番の並びを控える場所。この並びはメニューの形が決め、
+# 同じ導入物なら動いているエディタが何であっても同じである。
+$MenuPathFileName = "pmx-editor-mcp-menu-path.txt"
+
+function Get-HostPipeNames {
+    <#
+        .SYNOPSIS
+        待ち受けているホストのパイプ名を返す。ホストが名乗る形のものだけに絞る。
+    #>
+    [System.IO.Directory]::GetFiles($PipeDirectory) |
+        ForEach-Object { Split-Path -Leaf $_ } |
+        Where-Object { $_ -cmatch $HostPipePattern -and [int]::TryParse($Matches[1], [ref]$null) }
+}
+
+function Test-HostPipe {
+    <#
+        .SYNOPSIS
+        そのエディタの待受が在るか。名前を組み立てて1つだけ見る。
+    #>
+    param([int]$OwnerProcessId)
+
+    [System.IO.File]::Exists($PipeDirectory + "pmx-editor-mcp-$OwnerProcessId")
+}
+
+function Wait-HostPipe {
+    <#
+        .SYNOPSIS
+        指定したエディタの待受が、現れる(Present)か消える(Absent)まで待つ。
+    #>
+    param(
+        [int]$OwnerProcessId,
+        [ValidateSet("Present", "Absent")][string]$Until
+    )
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ($true) {
+        if (((Test-HostPipe -OwnerProcessId $OwnerProcessId)) -eq ($Until -eq "Present")) { return }
+        if ((Get-Date) -ge $deadline) { break }
+        Wait-Interval -Deadline $deadline
+    }
+
+    $state = if ($Until -eq "Present") { "現れなかった" } else { "消えなかった" }
+    throw "待受 pmx-editor-mcp-$OwnerProcessId が $TimeoutSeconds 秒以内に$state。"
+}
+
+$HostSwitchEnvironmentName = "PMX_EDITOR_MCP_HOST_SWITCH"
+$HostSwitchWindowTitle = "PmxEditorMcp.HostSwitch"
+$HostSwitchMessageName = "PmxEditorMcp.HostSwitch"
+
+function Send-HostSwitch {
+    <#
+        .SYNOPSIS
+        ホストの停止か開始を、ホストのウィンドウへメッセージを送って頼む。ウィンドウが見つからなければ失敗させる。
+        頼みは非同期に届くので、結果は待受の有無で確かめる。
+    #>
+    param([int]$OwnerProcessId, [ValidateSet("stop", "start")][string]$Turn)
+
+    $windows = @([HostControlWindow]::FindHidden($OwnerProcessId, $HostSwitchWindowTitle))
+    if ($windows.Count -eq 0) { throw "ホストの停止と開始を頼むウィンドウが無い: プロセスID $OwnerProcessId" }
+
+    $message = [HostControlWindow]::Registered($HostSwitchMessageName)
+    $first = [IntPtr]::Zero
+    if ($Turn -eq "start") { $first = [IntPtr]1 }
+    if ([HostControlWindow]::PostMessage([IntPtr]$windows[0], $message, $first, [IntPtr]::Zero) -eq [IntPtr]::Zero) {
+        throw "ホストの停止と開始を頼むメッセージを送れなかった: プロセスID $OwnerProcessId"
+    }
+}
+
+function Wait-HostStarted {
+    <#
+        .SYNOPSIS
+        ホストの開始を頼み、待受が現れるまで、間隔を置いて頼み直しながら待つ。
+    #>
+    param([int]$OwnerProcessId)
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ($true) {
+        Send-HostSwitch -OwnerProcessId $OwnerProcessId -Turn "start"
+
+        $retry = (Get-Date).AddMilliseconds($StartRetryMs)
+        while ((Get-Date) -lt $retry) {
+            if (Test-HostPipe -OwnerProcessId $OwnerProcessId) { return }
+            Start-Sleep -Milliseconds $PollIntervalMs
+        }
+
+        if ((Get-Date) -ge $deadline) { break }
+    }
+
+    throw "待受 pmx-editor-mcp-$OwnerProcessId が $TimeoutSeconds 秒以内に現れなかった。"
+}
+
+function Get-EditorProcess {
+    <#
+        .SYNOPSIS
+        対象がこのリポジトリの導入ディレクトリのPMXエディタであることを確かめてプロセスを返す。
+        プロセスIDは使い回されるうえ、同じ名前のエディタが別の導入ディレクトリからも動く。
+    #>
+    param([int]$OwnerProcessId)
+
+    $process = Get-Process -Id $OwnerProcessId
+
+    # 別のセッションが持つプロセスでは実行ファイルのパスを読めない。読めないものは対象外とする。
+    $actual = $null
+    try { $actual = $process.Path } catch [System.ComponentModel.Win32Exception] { }
+
+    if ($null -eq $actual) {
+        throw "プロセスの実行ファイルを読めない: $OwnerProcessId ($($process.ProcessName))"
+    }
+
+    $editorDirectory = Get-SessionEditorDirectory
+    $expected = [HostControlPath]::Final((Join-Path $editorDirectory "PmxEditor_x64.exe"))
+    if ($null -eq $expected) {
+        throw "導入ディレクトリのエディタの実行ファイルを開けない: $editorDirectory"
+    }
+
+    $resolved = [HostControlPath]::Final($actual)
+    if ($null -eq $resolved -or -not [string]::Equals(
+            $resolved, $expected, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "プロセスIDが導入ディレクトリのPMXエディタのものではない: $OwnerProcessId ($actual)"
+    }
+
+    $process
+}
+
+function Get-EditorProcessIds {
+    <#
+        .SYNOPSIS
+        この導入ディレクトリのPMXエディタとして動いているプロセスのIDを返す。ホストが待ち受けて
+        いるかどうかは問わない——停止させたホストのエディタも、実行ファイルを掴んだまま残る。
+    #>
+    $name = [System.IO.Path]::GetFileNameWithoutExtension("PmxEditor_x64.exe")
+    foreach ($candidate in @(Get-Process -Name $name -ErrorAction Ignore)) {
+        # 別の導入ディレクトリのエディタと、読めないプロセスは対象から外す。
+        try { [void](Get-EditorProcess -OwnerProcessId $candidate.Id) } catch { continue }
+
+        $candidate.Id
+    }
+}
+
+function Get-ProcessElements {
+    <#
+        .SYNOPSIS
+        指定したプロセスのウィンドウの直下にある要素を、条件で絞って返す。
+
+        木の全体は辿らない。UI Automation の探索は、辿った要素の一つずつにプロセスをまたぐ往復が
+        要る。メニューバーはフォームの直下の子である。
+    #>
+    param([int]$OwnerProcessId, $Match)
+
+    $root = [System.Windows.Automation.AutomationElement]::RootElement
+    $condition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ProcessIdProperty, $OwnerProcessId)
+
+    foreach ($window in $root.FindAll(
+            [System.Windows.Automation.TreeScope]::Children, $condition)) {
+        $window.FindAll([System.Windows.Automation.TreeScope]::Children, $Match)
+    }
+}
+
+function Get-StatusDialogs {
+    <#
+        .SYNOPSIS
+        プラグインが出した状態表示を返す。
+    #>
+    param([int]$OwnerProcessId)
+
+    @([HostControlWindow]::Find($OwnerProcessId, $DialogClassName, $PluginName) |
+        ForEach-Object { [System.Windows.Automation.AutomationElement]::FromHandle($_) })
+}
+
+function Wait-Interval {
+    <#
+        .SYNOPSIS
+        次に観測し直すまで、締切を越えない範囲で待つ。
+    #>
+    param($Deadline)
+
+    $remaining = [int]($Deadline - (Get-Date)).TotalMilliseconds
+    if ($remaining -le 0) { return }
+
+    Start-Sleep -Milliseconds ([Math]::Min($PollIntervalMs, $remaining))
+}
+
+function Wait-Nudge {
+    <#
+        .SYNOPSIS
+        次に同じ働きかけを送り直すまで、締切を越えない範囲で待つ。
+    #>
+    param($Deadline)
+
+    $remaining = [int]($Deadline - (Get-Date)).TotalMilliseconds
+    if ($remaining -le 0) { return }
+
+    Start-Sleep -Milliseconds ([Math]::Min($NudgeIntervalMs, $remaining))
+}
+
+function Get-EditorWindows {
+    <#
+        .SYNOPSIS
+        対象のエディタが持つ、終了要求の相手になるウィンドウのハンドルを返す。
+    #>
+    param([int]$OwnerProcessId)
+
+    @([HostControlWindow]::FindOtherClass($OwnerProcessId, $ShadowClassName))
+}
+
+function Get-MenuShadows {
+    <#
+        .SYNOPSIS
+        対象のエディタが持つ影のウィンドウのハンドルを返す。
+    #>
+    param([int]$OwnerProcessId)
+
+    @([HostControlWindow]::FindByClass($OwnerProcessId, $ShadowClassName))
+}
+
+function Get-EditorDialogs {
+    <#
+        .SYNOPSIS
+        対象のエディタが出している状態表示のウィンドウのハンドルを返す。所有されたウィンドウで、
+        デスクトップ直下の列挙には現れない。
+    #>
+    param([int]$OwnerProcessId)
+
+    @([HostControlWindow]::FindByClass($OwnerProcessId, $DialogClassName))
+}
+
+function Clear-ThrownNotice {
+    <#
+        .SYNOPSIS
+        投げられた例外を知らせる表示を閉じる。この表示はウィンドウの中に現れ、応答待ちの表示を
+        探す道では見つからない。閉じたものの数を返す。終わらせる側を選ぶと、編集中のものが失われる。
+    #>
+    param([int]$OwnerProcessId)
+
+    $closed = 0
+    foreach ($handle in [HostControlWindow]::FindByButton($OwnerProcessId, $ContinueWord)) {
+        $button = [HostControlWindow]::Button([IntPtr]$handle, $ContinueWord)
+        if ($button -eq [IntPtr]::Zero) { continue }
+
+        if ([HostControlWindow]::ClickCenter($button, $ThrownNoticeLimitMs)) { $closed++ }
+    }
+
+    return $closed
+}
+
+function Close-MenuShadow {
+    <#
+        .SYNOPSIS
+        メニューを開いた跡に残る影のウィンドウを閉じる。開いた側が片付けないと画面へ残る。
+        閉じるのは影の専用クラスを持つもののうち、メニューを開いてから現れたものだけに絞る。
+    #>
+    param([int]$OwnerProcessId, $Existing)
+
+    foreach ($handle in Get-MenuShadows -OwnerProcessId $OwnerProcessId) {
+        if ($Existing -contains $handle) { continue }
+
+        [void][HostControlWindow]::PostMessage(
+            [IntPtr]$handle, $WindowMessageClose, [IntPtr]::Zero, [IntPtr]::Zero)
+    }
+}
+
+function Close-OpenMenu {
+    <#
+        .SYNOPSIS
+        開いたメニューを畳む。開いたままだとメニューが入力待ちを続け、エディタは終了要求も
+        受け付けなくなる。畳む形を持たないメニューは、開いた操作をもう一度行って閉じる
+        ——メニューバーの項目は押すたびに開閉が入れ替わる。
+    #>
+    param($Menu)
+
+    $pattern = $null
+    if ($Menu.TryGetCurrentPattern(
+            [System.Windows.Automation.ExpandCollapsePattern]::Pattern, [ref]$pattern)) {
+        $pattern.Collapse()
+
+        return
+    }
+
+    Invoke-Element -Element $Menu
+}
+
+function Close-OpenMenuSafely {
+    <#
+        .SYNOPSIS
+        開いたメニューを畳む。畳めなかったことは警告として知らせるだけにして、元の失敗を
+        置き換えない。
+    #>
+    param($Menu)
+
+    try {
+        Close-OpenMenu -Menu $Menu
+    }
+    catch {
+        Write-Warning "開いたメニューを閉じられなかった: $($_.Exception.Message)" -WarningAction Continue
+    }
+}
+
+function Confirm-EditorDialog {
+    <#
+        .SYNOPSIS
+        応答待ちの表示へ、与えた番号のうち先に押せたもので応答して閉じる。応答できたら真を返す。
+        応答できない形の表示は偽を返す。
+    #>
+    param([int]$Handle, [Parameter(Mandatory = $true)][int[]]$Ids)
+
+    foreach ($id in $Ids) {
+        if ([HostControlWindow]::Press([IntPtr]$Handle, $id)) { return $true }
+    }
+
+    return $false
+}
+
+function Get-EditorDialogNote {
+    <#
+        .SYNOPSIS
+        応答待ちの表示の素性。読めないウィンドウは読めない旨を返し、失敗にはしない。
+    #>
+    param([int]$Handle)
+
+    try {
+        Import-Automation
+        $dialog = [System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$Handle)
+        if ($null -eq $dialog) { return $UnreadableDialog }
+
+        # 止まっているUIスレッドのウィンドウは、押しボタンとして見えない。
+        $parts = @($dialog.FindAll(
+            [System.Windows.Automation.TreeScope]::Descendants,
+            [System.Windows.Automation.Condition]::TrueCondition) |
+            Where-Object { $_.Current.Name -ne "" } |
+            ForEach-Object { $_.Current.Name + "(" + $_.Current.AutomationId + ")" })
+
+        # 素性は1行で返す。
+        return (($dialog.Current.Name + ": " + ($parts -join " / ")) -replace "\s*[\r\n]+\s*", " ")
+    }
+    catch {
+        return $UnreadableDialog
+    }
+}
+
+function Clear-EditorDialogs {
+    <#
+        .SYNOPSIS
+        出ている応答待ちの表示へすべて応答して閉じる。応答した表示と応答できなかった表示の
+        素性をそれぞれ返す。応答できない表示が残る限り、エディタは次の要求も終了要求も
+        受け付けない。
+    #>
+    param([int]$OwnerProcessId, [Parameter(Mandatory = $true)][int[]]$Ids)
+
+    $answered = @()
+    $left = @()
+    foreach ($handle in Get-EditorDialogs -OwnerProcessId $OwnerProcessId) {
+        # 応答したウィンドウは閉じ、後から読むと名前も中身も残っていない。
+        $note = Get-EditorDialogNote -Handle $handle
+
+        # UIオートメーションは、止まっているUIスレッドのウィンドウで応答しないことがある。
+        $pressed = Confirm-EditorDialog -Handle $handle -Ids $Ids
+        if ($pressed) {
+            $answered += $note
+            continue
+        }
+
+        $left += $note
+    }
+
+    [pscustomobject]@{ Answered = $answered; Left = $left }
+}
+
+function Invoke-Element {
+    param($Element)
+
+    $Element.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+}
+
+function Get-MenuPathFile {
+    Join-Path $env:TEMP $MenuPathFileName
+}
+
+function Read-MenuPath {
+    <#
+        .SYNOPSIS
+        控えてある道筋。無ければ空を返す。
+    #>
+    $path = Get-MenuPathFile
+    if (-not (Test-Path $path)) { return @() }
+
+    try {
+        @((Get-Content $path -Raw -Encoding UTF8).Trim() -split ',' |
+            ForEach-Object { [int]$_ })
+    }
+    catch {
+        @()
+    }
+}
+
+function Write-MenuPath {
+    param([int[]]$Path)
+
+    Set-Content -Path (Get-MenuPathFile) -Value ($Path -join ',') -Encoding UTF8 -NoNewline
+}
+
+function Get-ChildAt {
+    <#
+        .SYNOPSIS
+        その要素の指した番の子。番が範囲の外なら空を返す。
+    #>
+    param($Element, [int]$At)
+
+    $kids = @($Element.FindAll(
+        [System.Windows.Automation.TreeScope]::Children,
+        [System.Windows.Automation.Condition]::TrueCondition))
+    if ($At -lt 0 -or $At -ge $kids.Count) { return $null }
+
+    $kids[$At]
+}
+
+function Resolve-MenuPath {
+    <#
+        .SYNOPSIS
+        控えた道筋をたどって、編集メニューとプラグイン項目を返す。たどれない・辿り着いた先の名前が
+        違うときは空を返す。道筋は編集メニューからプラグイン項目までの子の番の並びで、編集メニュー
+        そのものは名前で探す。
+    #>
+    param([int[]]$Path, $Bars)
+
+    # 空の並びは、渡す途中で展開されて $null になる。
+    $steps = @($Path)
+    if ($steps.Count -eq 0) { return $null }
+
+    $found = @()
+    foreach ($bar in @($Bars)) {
+        foreach ($menu in $bar.FindAll(
+                [System.Windows.Automation.TreeScope]::Children,
+                [System.Windows.Automation.Condition]::TrueCondition)) {
+            if ($menu.Current.Name -notlike "編集*") { continue }
+
+            $node = $menu
+            foreach ($at in $steps) {
+                $node = Get-ChildAt -Element $node -At $at
+                if (-not $node) { break }
+            }
+
+            if ($node -and $node.Current.Name -eq $PluginName) {
+                $found += [pscustomobject]@{ Menu = $menu; Item = $node }
+            }
+        }
+    }
+
+    if ($found.Count -gt 1) {
+        throw "「$PluginName」を含む編集メニューが $($found.Count) 個ある。"
+    }
+    if ($found.Count -eq 0) { return $null }
+
+    $found[0]
+}
+
+function Get-MenuPathTo {
+    <#
+        .SYNOPSIS
+        その要素からプラグイン項目までの、子の番の並び。見つからなければ空を返す。深さは実機で3で、
+        探索は幅優先に近い形で進めて浅い側から見る。
+    #>
+    param($Element, [int]$Depth = 1)
+
+    if ($Depth -gt 5) { return @() }
+
+    $kids = @($Element.FindAll(
+        [System.Windows.Automation.TreeScope]::Children,
+        [System.Windows.Automation.Condition]::TrueCondition))
+    for ($at = 0; $at -lt $kids.Count; $at++) {
+        if ($kids[$at].Current.Name -eq $PluginName) { return @($at) }
+    }
+
+    for ($at = 0; $at -lt $kids.Count; $at++) {
+        $deeper = @(Get-MenuPathTo -Element $kids[$at] -Depth ($Depth + 1))
+        if ($deeper.Count -gt 0) { return @($at) + $deeper }
+    }
+
+    @()
+}
+
+function Save-MenuPath {
+    <#
+        .SYNOPSIS
+        同定した編集メニューとプラグイン項目から道筋を組み立てて控える。組み立てられなければ控えない。
+    #>
+    param($Located)
+
+    $inner = @(Get-MenuPathTo -Element $Located.Menu)
+    if ($inner.Count -eq 0) { return $false }
+
+    Write-MenuPath -Path $inner
+
+    $true
+}
+
+function Find-EditMenu {
+    <#
+        .SYNOPSIS
+        与えたメニューバーから、プラグインの項目が属する編集メニューを選ぶ。編集のメニューを持つ
+        メニューバーは1つとは限らない。まだ組み上がっていなければ空を返す。該当が複数あるときは
+        選ばずに失敗させる。
+    #>
+    param([int]$OwnerProcessId, $Bars)
+
+    $pluginCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::NameProperty, $PluginName)
+
+    $found = @()
+    foreach ($bar in $Bars) {
+        foreach ($item in $bar.FindAll(
+                [System.Windows.Automation.TreeScope]::Children,
+                [System.Windows.Automation.Condition]::TrueCondition)) {
+            if ($item.Current.Name -notlike "編集*") { continue }
+
+            $plugin = $item.FindFirst(
+                [System.Windows.Automation.TreeScope]::Descendants, $pluginCondition)
+            if ($plugin) { $found += [pscustomobject]@{ Menu = $item; Item = $plugin } }
+        }
+    }
+
+    if ($found.Count -gt 1) {
+        throw "「$PluginName」を含む編集メニューが $($found.Count) 個ある: プロセスID $OwnerProcessId"
+    }
+    if ($found.Count -eq 0) { return $null }
+
+    $found[0]
+}
+
+function Get-EditMenu {
+    <#
+        .SYNOPSIS
+        編集メニューが現れるまで待って返す。待受の公開はプラグインの読み込みで済むが、ウィンドウと
+        メニューが揃うのはそれとは別に進み、起動直後はまだ辿れないことがある。
+    #>
+    param([int]$OwnerProcessId, $Deadline)
+
+    $barCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::MenuBar)
+
+    if ($script:EditMenuLocated) { return $script:EditMenuLocated }
+
+    $kept = $null
+    if (Test-Path -Path variable:global:HostControlEditMenu) { $kept = $global:HostControlEditMenu }
+    if ($kept -and $kept.ProcessId -eq $OwnerProcessId) {
+        try {
+            [void]$kept.Located.Menu.Current.Name
+            [void]$kept.Located.Item.Current.Name
+            $script:EditMenuLocated = $kept.Located
+
+            return $kept.Located
+        }
+        catch {
+            $global:HostControlEditMenu = $null
+        }
+    }
+
+    while ($true) {
+        # メニューバーは、エディタが動いている間そのままである。
+        if ($script:EditMenuBars.Count -eq 0) {
+            $script:EditMenuBars = @(
+                Get-ProcessElements -OwnerProcessId $OwnerProcessId -Match $barCondition)
+        }
+
+        $located = Resolve-MenuPath -Path (Read-MenuPath) -Bars $script:EditMenuBars
+        if (-not $located) {
+            $located = Find-EditMenu -OwnerProcessId $OwnerProcessId -Bars $script:EditMenuBars
+            if ($located) { [void](Save-MenuPath -Located $located) }
+        }
+
+        if ($located) {
+            $script:EditMenuLocated = $located
+            $global:HostControlEditMenu = @{ ProcessId = $OwnerProcessId; Located = $located }
+
+            return $located
+        }
+        if ((Get-Date) -ge $Deadline) {
+            throw "「$PluginName」を含む編集メニューが現れない: プロセスID $OwnerProcessId"
+        }
+        Wait-Interval -Deadline $Deadline
+    }
+}
+
+function Get-Deadline {
+    <#
+        .SYNOPSIS
+        待ちの期限を返す。呼び出し元から期限を渡されていればそれを引き継ぐ。
+    #>
+    param($Deadline)
+
+    if ($Deadline) { return $Deadline }
+
+    (Get-Date).AddSeconds($TimeoutSeconds)
+}
+
+function Show-StatusDialog {
+    <#
+        .SYNOPSIS
+        プラグインメニューを実行して稼働状態の表示を出し、その要素を返す。編集メニューを開いて
+        から配下のプラグイン項目を押す。項目も表示も辿れるようになるまで待ってから次へ進む。
+    #>
+    param([int]$OwnerProcessId, $Deadline)
+
+    $deadline = Get-Deadline -Deadline $Deadline
+    $located = Get-EditMenu -OwnerProcessId $OwnerProcessId -Deadline $deadline
+    $edit = $located.Menu
+    $shadows = @(Get-MenuShadows -OwnerProcessId $OwnerProcessId)
+
+    # 開く呼び出しが例外を返しても、画面には既に開いた跡が残りうる。
+    $pressError = $null
+    $pressing = $false
+    try {
+        Invoke-Element -Element $edit
+
+        $target = $located.Item
+
+        # ここから先の失敗は、押す操作が届いた後かもしれない。
+        $pressing = $true
+        Invoke-Element -Element $target
+    }
+    catch {
+        # 押せたときは、押した側が畳む。
+        Close-OpenMenuSafely -Menu $edit
+        if (-not $pressing) { throw }
+
+        $pressError = $_
+    }
+    finally {
+        # 後始末の失敗で、元の失敗を上書きしない。
+        try {
+            Close-MenuShadow -OwnerProcessId $OwnerProcessId -Existing $shadows
+        }
+        catch {
+            Write-Warning "メニューの影を片付けられなかった: $($_.Exception.Message)" -WarningAction Continue
+        }
+    }
+
+    if ($pressError) {
+        # 押す操作は失敗したが、届いていれば表示は出る。
+        try {
+            $late = Wait-StatusDialog -OwnerProcessId $OwnerProcessId `
+                -Deadline (Get-Date).AddSeconds($TimeoutSeconds)
+            if ($late) { Close-StatusDialogSafely -Dialog $late }
+        }
+        catch {
+            Write-Warning "押す操作の失敗後に表示を片付けられなかった: $($_.Exception.Message)" -WarningAction Continue
+        }
+
+        throw $pressError
+    }
+
+    # 押した後は、期限が尽きていても表示が出るまで待つ。
+    $dialog = Wait-StatusDialog -OwnerProcessId $OwnerProcessId `
+        -Deadline (Get-Date).AddSeconds($TimeoutSeconds)
+    if (-not $dialog) { throw "稼働状態の表示が $TimeoutSeconds 秒以内に出なかった。" }
+
+    $dialog
+}
+
+function Get-MenuItem {
+    <#
+        .SYNOPSIS
+        開いているメニューから名前で項目を選ぶ。項目が辿れるようになるまで待つ。
+    #>
+    param($Menu, [string]$Name, $Deadline)
+
+    $nameCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::NameProperty, $Name)
+
+    while ($true) {
+        $found = $Menu.FindFirst(
+            [System.Windows.Automation.TreeScope]::Descendants, $nameCondition)
+        if ($found) { return $found }
+        if ((Get-Date) -ge $Deadline) { throw "メニュー項目が見つからない: $Name" }
+        Wait-Interval -Deadline $Deadline
+    }
+}
+
+function Invoke-UndoOnce {
+    <#
+        .SYNOPSIS
+        編集メニューから1回分の元に戻す操作を起こす。プラグインの項目を押すのと同じ経路を通るが、
+        押した先に表示は出ないので、待つのは項目が辿れるようになるところまでである。
+    #>
+    param([int]$OwnerProcessId, $Deadline)
+
+    $deadline = Get-Deadline -Deadline $Deadline
+    $edit = (Get-EditMenu -OwnerProcessId $OwnerProcessId -Deadline $deadline).Menu
+    $shadows = @(Get-MenuShadows -OwnerProcessId $OwnerProcessId)
+
+    try {
+        Invoke-Element -Element $edit
+
+        $target = Get-MenuItem -Menu $edit -Name $UndoItemName -Deadline $deadline
+        if (-not $target.Current.IsEnabled) {
+            throw "元に戻せる編集が無い: プロセスID $OwnerProcessId"
+        }
+
+        $redo = Get-MenuItem -Menu $edit -Name $RedoItemName -Deadline $deadline
+
+        Invoke-Element -Element $target
+
+        # やり直しは2回目以降すでに使えていて、メニューの項目の使用可否もウィンドウのタイトルも、
+        # 元に戻すたびには変わらない。ここで確かめられるのは「押せて、やり直せる編集が在る」
+        # ところまでで、元に戻す操作が何を戻したかは、呼び出し側が編集の中身で確かめる。
+        $process = Get-EditorProcess -OwnerProcessId $OwnerProcessId
+        $remaining = [int]($deadline - (Get-Date)).TotalMilliseconds
+        if ($remaining -le 0 -or -not $process.WaitForInputIdle($remaining)) {
+            throw "エディタが入力待ちへ戻らなかった: プロセスID $OwnerProcessId"
+        }
+
+        # 元に戻す操作が1回起きていれば、やり直せる編集が在る。
+        while (-not $redo.Current.IsEnabled) {
+            if ((Get-Date) -ge $deadline) {
+                throw "元に戻す操作が起きなかった: プロセスID $OwnerProcessId"
+            }
+
+            Wait-Interval -Deadline $deadline
+        }
+    }
+    catch {
+        # 押せたときは、押した側が畳む。
+        Close-OpenMenuSafely -Menu $edit
+        throw
+    }
+    finally {
+        # 後始末の失敗で、元の失敗を上書きしない。
+        try {
+            Close-MenuShadow -OwnerProcessId $OwnerProcessId -Existing $shadows
+        }
+        catch {
+            Write-Warning "メニューの影を片付けられなかった: $($_.Exception.Message)" -WarningAction Continue
+        }
+    }
+}
+
+function Wait-StatusDialog {
+    <#
+        .SYNOPSIS
+        稼働状態の表示が現れるまで待って返す。期限までに現れなければ空を返す。
+    #>
+    param([int]$OwnerProcessId, $Deadline)
+
+    while ($true) {
+        # 関数の戻り値は、1件だと単体へ畳まれる。
+        $dialogs = @(Get-StatusDialogs -OwnerProcessId $OwnerProcessId)
+        if ($dialogs.Count -ge 1) { return $dialogs[0] }
+        if ((Get-Date) -ge $Deadline) { return $null }
+        Wait-Interval -Deadline $Deadline
+    }
+}
+
+function Get-DialogText {
+    param($Dialog)
+
+    @($Dialog.FindAll(
+        [System.Windows.Automation.TreeScope]::Descendants,
+        [System.Windows.Automation.Condition]::TrueCondition) |
+        Where-Object { $_.Current.ControlType -eq [System.Windows.Automation.ControlType]::Text } |
+        ForEach-Object { $_.Current.Name })
+}
+
+function Get-DialogButton {
+    param($Dialog, [string]$Label)
+
+    $buttonCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::Button)
+    @($Dialog.FindAll(
+        [System.Windows.Automation.TreeScope]::Descendants, $buttonCondition) |
+        Where-Object { $_.Current.Name -like "$Label*" })
+}
+
+function Close-StatusDialog {
+    <#
+        .SYNOPSIS
+        状態表示を、何も起こさない側の選択で閉じる。問いの形なら否定、確認だけの形なら了解。
+    #>
+    param($Dialog)
+
+    foreach ($label in @("いいえ", "OK")) {
+        $buttons = @(Get-DialogButton -Dialog $Dialog -Label $label)
+        if ($buttons.Count -ge 1) {
+            Invoke-Element -Element $buttons[0]
+            return
+        }
+    }
+
+    throw "状態表示を閉じるボタンが見つからない。"
+}
+
+function Test-ElementAvailable {
+    <#
+        .SYNOPSIS
+        要素がまだ辿れるかを返す。閉じた画面の要素は失効し、触れると例外になる。
+    #>
+    param($Element)
+
+    try {
+        [void]$Element.Current.Name
+        $true
+    }
+    catch [System.Windows.Automation.ElementNotAvailableException] {
+        $false
+    }
+    catch {
+        # 判じられないときは、まだ辿れる側に倒す。
+        $true
+    }
+}
+
+function Close-StatusDialogSafely {
+    <#
+        .SYNOPSIS
+        受け取った状態表示がまだ出ていれば閉じる。既に閉じていれば何もしない。閉じられなかった
+        ことは警告として知らせるだけにして、元の失敗を置き換えない。
+        閉じる相手は受け取った要素そのものに限る。ウィンドウのハンドルは、閉じた後に使い回される。
+    #>
+    param($Dialog)
+
+    try {
+        Close-StatusDialog -Dialog $Dialog
+    }
+    catch {
+        # 既に閉じているかは、失敗の種類ではなく表示そのものが辿れるかで判じる。
+        if (-not (Test-ElementAvailable -Element $Dialog)) { return }
+
+        Write-Warning "状態表示を閉じられなかった: $($_.Exception.Message)" -WarningAction Continue
+    }
+}
+
+function Assert-View {
+    <#
+        .SYNOPSIS
+        画面への操作の相手にするビューが指定されていることを確かめる。1つのウィンドウしか相手にできない
+        操作では、2つ以上を渡されたら失敗させる。
+    #>
+    param([switch]$Single)
+
+    if (-not $View) { throw "この操作には -View が要る: $Action" }
+    if ($Single -and @($View).Count -ne 1) {
+        throw "この操作は1つのビューだけを相手にする: $Action"
+    }
+}
+
+function Get-ViewSurface {
+    <#
+        .SYNOPSIS
+        そのビューの描画面のウィンドウ。ウィンドウそのものではなく、中身が描かれている面を相手にする。
+    #>
+    param([int]$OwnerProcessId, [string]$Name)
+
+    $surface = [HostControlWindow]::Surface(
+        (Get-ViewWindow -OwnerProcessId $OwnerProcessId -Name $Name))
+    if ($surface -eq [IntPtr]::Zero) { throw "そのビューの描画面が無い: $Name" }
+
+    $surface
+}
+
+function Find-ViewWindows {
+    <#
+        .SYNOPSIS
+        そのビューを載せているウィンドウを、見つかっただけ返す。開かれていないビューでは空になる。
+    #>
+    param([int]$OwnerProcessId, [string]$Name)
+
+    @([HostControlWindow]::FindByTitle($OwnerProcessId, $ViewTitles[$Name]))
+}
+
+function Get-ViewWindow {
+    <#
+        .SYNOPSIS
+        そのビューを載せているウィンドウ。見つからなければ、何を探したかを言って失敗する。
+    #>
+    param([int]$OwnerProcessId, [string]$Name)
+
+    $found = @(Find-ViewWindows -OwnerProcessId $OwnerProcessId -Name $Name)
+    if ($found.Count -eq 0) {
+        throw "そのビューのウィンドウが無い: $Name(タイトルが $($ViewTitles[$Name]) で始まるウィンドウ)"
+    }
+    if ($found.Count -gt 1) { throw "そのビューのウィンドウが $($found.Count) 個ある: $Name" }
+
+    $found[0]
+}
+
+function Wait-ViewWindow {
+    <#
+        .SYNOPSIS
+        そのビューのウィンドウが現れるまで待つ。現れなければ失敗する。探す前に、押した分をエディタが
+        捌き終えるのを待つ。ビューが自分を組み立てている間は、ウィンドウがまだ無い。
+    #>
+    param([int]$OwnerProcessId, [string]$Name, $Deadline)
+
+    $process = Get-EditorProcess -OwnerProcessId $OwnerProcessId
+    $remaining = [int]($Deadline - (Get-Date)).TotalMilliseconds
+    if ($remaining -le 0 -or -not $process.WaitForInputIdle($remaining)) {
+        throw "エディタが入力待ちへ戻らなかった: プロセスID $OwnerProcessId"
+    }
+
+    while ($true) {
+        if (@(Find-ViewWindows -OwnerProcessId $OwnerProcessId -Name $Name).Count -ne 0) { return }
+        if ((Get-Date) -ge $Deadline) {
+            throw "ビューのウィンドウが $TimeoutSeconds 秒以内に現れなかった: $Name"
+        }
+
+        Wait-Interval -Deadline $Deadline
+    }
+}
+
+function Open-View {
+    <#
+        .SYNOPSIS
+        そのビューの表示を切り替えるキーを1度送り、ウィンドウが現れるまで待つ。既に現れていれば送らない
+        ——このキーは押すたびに表示と非表示が入れ替わる。
+    #>
+    param([int]$OwnerProcessId, [string]$Name, $Deadline)
+
+    $deadline = Get-Deadline -Deadline $Deadline
+    if (@(Find-ViewWindows -OwnerProcessId $OwnerProcessId -Name $Name).Count -ne 0) { return }
+
+    $opener = $ViewOpeners[$Name]
+    if (-not $opener) { throw "そのビューを開くキーが無い: $Name" }
+
+    # 待受が現れた時点では、エディタはまだウィンドウを出していないことがある。
+    Wait-ViewWindow -OwnerProcessId $OwnerProcessId -Name $opener.Host -Deadline $deadline
+
+    # メニューのショートカットキーは、ウィンドウの手続きではなくメッセージの列を引き取るところで
+    # 捌かれる。ウィンドウへ直に届けると、ショートカットキーとして扱われない。
+    $window = Get-ViewWindow -OwnerProcessId $OwnerProcessId -Name $opener.Host
+    foreach ($message in @($WindowMessageKeyDown, $WindowMessageKeyUp)) {
+        if ([HostControlWindow]::PostMessage(
+                $window, $message, [IntPtr]$opener.Key, [IntPtr]::Zero) -eq [IntPtr]::Zero) {
+            throw "ビューを開くキーを送れない: $Name"
+        }
+    }
+
+    Wait-ViewWindow -OwnerProcessId $OwnerProcessId -Name $Name -Deadline $deadline
+}
+
+function Wait-ViewInFront {
+    <#
+        .SYNOPSIS
+        そのウィンドウが手前に出るまで待つ。出なければ失敗する。頼んだだけでは、手前に出たことにならない。
+    #>
+    param([IntPtr]$Window, [string]$Name)
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ($true) {
+        if ([HostControlWindow]::IsInFront($Window)) { return }
+        if ((Get-Date) -ge $deadline) {
+            throw "ビューのウィンドウが $TimeoutSeconds 秒以内に手前へ出なかった: $Name"
+        }
+
+        [HostControlWindow]::Raise($Window)
+        Wait-Nudge -Deadline $deadline
+    }
+}
+
+function Save-ViewImage {
+    <#
+        .SYNOPSIS
+        描画面に中身を描かせてPNGへ書き出し、写した大きさを返す。
+    #>
+    param([IntPtr]$Surface, [string]$Destination)
+
+    $box = [HostControlWindow]::ScreenBox($Surface)
+    if ($box.Length -ne 4 -or $box[2] -le 0 -or $box[3] -le 0) {
+        throw "描画面の大きさを読めない。"
+    }
+
+    Add-Type -AssemblyName System.Drawing
+    $image = New-Object System.Drawing.Bitmap($box[2], $box[3])
+    try {
+        $canvas = [System.Drawing.Graphics]::FromImage($image)
+        $handle = $canvas.GetHdc()
+        try {
+            if (-not [HostControlWindow]::Draw($Surface, $handle)) {
+                throw "描画面に中身を描かせられない。"
+            }
+        }
+        finally {
+            $canvas.ReleaseHdc($handle)
+            $canvas.Dispose()
+        }
+
+        $image.Save($Destination, [System.Drawing.Imaging.ImageFormat]::Png)
+    }
+    finally {
+        $image.Dispose()
+    }
+
+    "$($box[2])x$($box[3])"
+}
+
+function Assert-ProcessId {
+    <#
+        .SYNOPSIS
+        対象のエディタが指定されていることを確かめる。プロセスIDに0以下は割り当てられない。
+    #>
+    if ($ProcessId -le 0) {
+        throw "この操作には -ProcessId が要る: $Action"
+    }
+}
+
+switch ($Action) {
+    "pipes" {
+        Get-HostPipeNames
+    }
+    "editors" {
+        Get-EditorProcessIds
+    }
+    "launch" {
+        $editorPath = Join-Path (Get-SessionEditorDirectory) "PmxEditor_x64.exe"
+        if (-not (Test-Path $editorPath)) { throw "エディタの実行ファイルが無い: $editorPath" }
+
+        $hostSwitch = [Environment]::GetEnvironmentVariable($HostSwitchEnvironmentName)
+        try {
+            [Environment]::SetEnvironmentVariable($HostSwitchEnvironmentName, "1")
+            $started = Start-Process -FilePath $editorPath -PassThru
+        }
+        finally {
+            [Environment]::SetEnvironmentVariable($HostSwitchEnvironmentName, $hostSwitch)
+        }
+
+        try {
+            Wait-HostPipe -OwnerProcessId $started.Id -Until Present
+
+            foreach ($name in @($View)) {
+                Open-View -OwnerProcessId $started.Id -Name $name -Deadline $null
+            }
+        }
+        catch {
+            try {
+                & $PSCommandPath -Action close -ProcessId $started.Id `
+                    -TimeoutSeconds $TimeoutSeconds | Out-Null
+            }
+            catch {
+                Write-Error "起こしたエディタを閉じられなかった: $($started.Id)" -ErrorAction Continue
+            }
+
+            throw
+        }
+
+        $started.Id
+    }
+    "close" {
+        Assert-ProcessId
+        # 強制終了はプラグインの後始末を通らない。エディタは編集とビューのウィンドウを別々に持ち、
+        # 閉じ残すとプロセスが終わらない。
+        $process = Get-EditorProcess -OwnerProcessId $ProcessId
+        $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+        $nudge = [datetime]::MinValue
+        while ($true) {
+            $process.Refresh()
+            if ($process.HasExited) { break }
+
+            $windows = $null
+            try {
+                $windows = Get-EditorWindows -OwnerProcessId $ProcessId
+            }
+            catch {
+                $process.Refresh()
+                # 閉じている最中のウィンドウは、読めなくなる。
+                if ($process.HasExited) { break }
+                throw
+            }
+
+            # 応答しないまま閉じる要求を送り直すと、確認はキャンセルされ、次の要求がまた確認を出す。
+            $cleared = Clear-EditorDialogs -OwnerProcessId $ProcessId `
+                -Ids $IdsThatLetTheEditorClose
+            $standing = @($cleared.Left)
+            $repeating = @($cleared.Answered)
+            if ($repeating.Count -eq 0 -and $standing.Count -eq 0 -and (Get-Date) -ge $nudge) {
+                $nudge = (Get-Date).AddMilliseconds($NudgeIntervalMs)
+                foreach ($handle in $windows) {
+                    if ((Get-Date) -ge $deadline) { break }
+
+                    [void][HostControlWindow]::PostMessage(
+                        [IntPtr]$handle, $WindowMessageClose, [IntPtr]::Zero, [IntPtr]::Zero)
+                }
+            }
+
+            $remaining = [int]($deadline - (Get-Date)).TotalMilliseconds
+            if ($remaining -le 0) {
+                $left = "不明"
+                try { $left = @(Get-EditorWindows -OwnerProcessId $ProcessId).Count } catch { }
+
+                $process.Refresh()
+                if ($process.HasExited) { break }
+
+                $shown = ""
+                if ($standing.Count -ne 0) {
+                    $shown = " 応答できない表示: " + ($standing -join " / ")
+                }
+                elseif ($repeating.Count -ne 0) {
+                    $shown = " 応答しても出直す表示: " + ($repeating -join " / ")
+                }
+
+                throw ("エディタが $TimeoutSeconds 秒以内に終了しなかった: $ProcessId " +
+                    "残っているウィンドウ: $left" + $shown)
+            }
+
+            if ($process.WaitForExit([Math]::Min($PollIntervalMs, $remaining))) { break }
+        }
+
+        Wait-HostPipe -OwnerProcessId $ProcessId -Until Absent
+    }
+    "undo" {
+        Import-Automation
+        Assert-ProcessId
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        Invoke-UndoOnce -OwnerProcessId $ProcessId -Deadline $null
+    }
+    "open" {
+        Assert-ProcessId
+        Assert-View
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        foreach ($name in @($View)) {
+            Open-View -OwnerProcessId $ProcessId -Name $name -Deadline $null
+        }
+    }
+    "show" {
+        Assert-ProcessId
+        Assert-View -Single
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        Wait-ViewInFront -Name $View[0] `
+            -Window (Get-ViewWindow -OwnerProcessId $ProcessId -Name $View[0])
+    }
+    "click" {
+        Assert-ProcessId
+        Assert-View -Single
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        $surface = Get-ViewSurface -OwnerProcessId $ProcessId -Name $View[0]
+        if (-not [HostControlWindow]::ClickCenter($surface, $TimeoutSeconds * 1000)) {
+            throw "描画面の中央を $TimeoutSeconds 秒以内に押せなかった: $($View[0])"
+        }
+    }
+    "capture" {
+        Assert-ProcessId
+        Assert-View
+        $names = @($View)
+        $places = @($Path)
+        if ($places.Count -ne $names.Count) {
+            throw "この操作には -View と同じ数の -Path が要る: $Action"
+        }
+
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        for ($at = 0; $at -lt $names.Count; $at++) {
+            $surface = Get-ViewSurface -OwnerProcessId $ProcessId -Name $names[$at]
+            if (-not [HostControlWindow]::HasCaughtUp($surface, $TimeoutSeconds * 1000)) {
+                throw "ビューの描画面が $TimeoutSeconds 秒以内に描き終えなかった: $($names[$at])"
+            }
+
+            Write-Output (Save-ViewImage -Surface $surface -Destination $places[$at])
+        }
+    }
+    "answer" {
+        Assert-ProcessId
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        $cleared = Clear-EditorDialogs -OwnerProcessId $ProcessId `
+            -Ids $IdsThatAvoidTheAffirmative
+        $left = @($cleared.Left)
+        if ($left.Count -ne 0) {
+            throw ("応答できない表示が残っている: " + ($left -join " / "))
+        }
+
+        $thrown = Clear-ThrownNotice -OwnerProcessId $ProcessId
+
+        foreach ($note in @($cleared.Answered)) { Write-Output $note }
+        for ($at = 0; $at -lt $thrown; $at++) { Write-Output $ThrownNoticeName }
+    }
+    "status" {
+        Import-Automation
+        Assert-ProcessId
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        $dialog = Show-StatusDialog -OwnerProcessId $ProcessId
+        try {
+            Get-DialogText -Dialog $dialog
+        }
+        finally {
+            Close-StatusDialogSafely -Dialog $dialog
+        }
+        "ログ: " + (Join-Path $env:TEMP "pmx-editor-mcp-host-$ProcessId.log")
+    }
+    "stop" {
+        Assert-ProcessId
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        Send-HostSwitch -OwnerProcessId $ProcessId -Turn "stop"
+        Wait-HostPipe -OwnerProcessId $ProcessId -Until Absent
+    }
+    "start" {
+        Assert-ProcessId
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        Wait-HostStarted -OwnerProcessId $ProcessId
+    }
+    "acl" {
+        Assert-ProcessId
+        [void](Get-EditorProcess -OwnerProcessId $ProcessId)
+        $pipe = New-Object System.IO.Pipes.NamedPipeClientStream(
+            ".",
+            "pmx-editor-mcp-$ProcessId",
+            [System.IO.Pipes.PipeAccessRights]"ReadWrite, ReadPermissions",
+            [System.IO.Pipes.PipeOptions]::None,
+            [System.Security.Principal.TokenImpersonationLevel]::None,
+            [System.IO.HandleInheritability]::None)
+        try {
+            $pipe.Connect($TimeoutSeconds * 1000)
+            [System.IO.Pipes.PipesAclExtensions]::GetAccessControl($pipe).GetAccessRules(
+                $true, $true, [System.Security.Principal.NTAccount])
+        }
+        finally {
+            $pipe.Dispose()
+        }
+    }
+}

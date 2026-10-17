@@ -1,0 +1,579 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+namespace PmxEditorMcp.SignatureDump
+{
+    /// <summary>スキーマ正本を読む。</summary>
+    public static class ToolSchemaJsonReader
+    {
+        private const string ToolsName = "tools";
+
+        private const string ToolName = "tool";
+
+        private const string BranchesName = "branches";
+
+        private const string OutputName = "output";
+
+        private const string PayloadsName = "payloads";
+
+        private const string BranchName = "branch";
+
+        private const string SelectorName = "selector";
+
+        private const string InputsName = "inputs";
+
+        private const string ChoicesName = "choices";
+
+        private const string NamesName = "names";
+
+        private const string TypeName = "type";
+
+        private const string MembersName = "members";
+
+        private const string ShapeName = "shape";
+
+        private const string ElementName = "element";
+
+        private const string NameName = "name";
+
+        private const string OriginName = "origin";
+
+        private const string RequiredName = "required";
+
+        private const string DefaultName = "default";
+
+        private const string BoundsName = "bounds";
+
+        private const string NullableName = "nullable";
+
+        private const string SourceName = "source";
+
+        private const string InjectedName = "injected";
+
+        private const string MaxItemsName = "maxItems";
+
+        private const string EmptyAllowedName = "emptyAllowed";
+
+        private const string UniqueItemsName = "uniqueItems";
+
+        private const string NullMeaningName = "nullMeaning";
+
+        private const string MinimumName = "minimum";
+
+        private const string MaximumName = "maximum";
+
+        private const string ValueName = "value";
+
+        /// <summary>イベント1件が持つ、種別ごとに形の変わる値の項目。</summary>
+        private const string PayloadName = "payload";
+
+        private static readonly Regex SnakeCaseName = new Regex(
+            "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", RegexOptions.CultureInvariant);
+
+        private static readonly Regex MemberName = new Regex(
+            "^[a-z][A-Za-z0-9]*$", RegexOptions.CultureInvariant);
+
+        private static readonly Dictionary<string, ItemOrigin> Origins =
+            new Dictionary<string, ItemOrigin>(StringComparer.Ordinal)
+            {
+                { "hostInput", ItemOrigin.HostInput },
+                { "hostOutput", ItemOrigin.HostOutput },
+            };
+
+        private static readonly JsonForm NamedItem = Item(true);
+
+        private static readonly JsonForm UnnamedItem = Item(false);
+
+        private static readonly JsonForm Items = JsonForm.Array(NamedItem, allowEmpty: true);
+
+        private static readonly JsonForm Form = JsonForm.Object(
+            JsonForm.Member(
+                ToolsName,
+                JsonForm.Array(
+                    JsonForm.Object(
+                        JsonForm.Member(ToolName, JsonForm.Text()),
+                        JsonForm.Member(
+                            BranchesName,
+                            JsonForm.Array(
+                                JsonForm.Object(
+                                    JsonForm.Member(BranchName, JsonForm.Text()),
+                                    JsonForm.Member(InputsName, Items),
+                                    JsonForm.Optional(
+                                        SelectorName,
+                                        JsonForm.Object(
+                                            JsonForm.Member(NameName, JsonForm.Text()),
+                                            JsonForm.Member(ValueName, JsonForm.Any()))),
+                                    JsonForm.Optional(
+                                        ChoicesName,
+                                        JsonForm.Array(
+                                            JsonForm.Object(
+                                                JsonForm.Member(
+                                                    NamesName, JsonForm.Array(JsonForm.Text())),
+                                                JsonForm.Member(RequiredName, JsonForm.Flag())),
+                                            allowEmpty: true))))),
+                        JsonForm.Member(OutputName, UnnamedItem),
+                        JsonForm.Optional(
+                            PayloadsName,
+                            JsonForm.Array(
+                                JsonForm.Object(
+                                    JsonForm.Member(TypeName, JsonForm.Text()),
+                                    JsonForm.Member(MembersName, Items))))),
+                    ToolName,
+                    allowEmpty: true)));
+
+        /// <summary>
+        /// ツールを書かれた順に返す。名前が昇順に重複なく並ぶことと、項目が形をちょうど1つで表す
+        /// ことを求める。例外は2つで、SDKに由来する項目は綴りを持たず組と配列の入れ子だけを表し、
+        /// イベントの取り出しの応答が持つ `payload` の項目は形を持たず `payloads` が種別ごとに
+        /// 定める。形が違えば <see cref="FormatException"/>。
+        /// </summary>
+        public static ToolSchemaTable Read(string json)
+        {
+            if (json == null)
+            {
+                throw new ArgumentNullException(nameof(json));
+            }
+
+            IDictionary<string, object> root = (IDictionary<string, object>)Form.Read(json);
+
+            return new ToolSchemaTable(Each(root[ToolsName]).Select(ReadTool).ToList());
+        }
+
+        private static JsonForm Item(bool named)
+        {
+            List<JsonMember> members = new List<JsonMember>();
+            if (named)
+            {
+                members.Add(JsonForm.Member(NameName, JsonForm.Text()));
+            }
+
+            members.AddRange(new[]
+            {
+                JsonForm.Optional(OriginName, JsonForm.Text()),
+                JsonForm.Optional(ShapeName, JsonForm.Text()),
+                JsonForm.Optional(MembersName, JsonForm.Deferred(() => Items)),
+                JsonForm.Optional(ElementName, JsonForm.Deferred(() => UnnamedItem)),
+                JsonForm.Optional(RequiredName, JsonForm.Flag()),
+                JsonForm.Optional(DefaultName, JsonForm.Any()),
+                JsonForm.Optional(
+                    BoundsName,
+                    JsonForm.Object(
+                        JsonForm.Optional(MinimumName, JsonForm.Number()),
+                        JsonForm.Optional(MaximumName, JsonForm.Number()))),
+                JsonForm.Optional(NullableName, JsonForm.Flag()),
+                JsonForm.Optional(SourceName, JsonForm.Text()),
+                JsonForm.Optional(InjectedName, JsonForm.Flag()),
+                JsonForm.Optional(MaxItemsName, JsonForm.Count()),
+                JsonForm.Optional(EmptyAllowedName, JsonForm.Flag()),
+                JsonForm.Optional(UniqueItemsName, JsonForm.Flag()),
+                JsonForm.Optional(NullMeaningName, JsonForm.Text()),
+            });
+
+            return JsonForm.Object(members.ToArray());
+        }
+
+        private static ToolSchema ReadTool(IDictionary<string, object> members)
+        {
+            List<SchemaBranch> branches = new List<SchemaBranch>();
+            List<string> names = new List<string>();
+            foreach (IDictionary<string, object> each in Each(members[BranchesName]))
+            {
+                SchemaBranch branch = ReadBranch(each);
+                if (names.Contains(branch.Branch, StringComparer.Ordinal))
+                {
+                    throw new FormatException("同じ呼び分けが二度現れる: " + branch.Branch);
+                }
+
+                names.Add(branch.Branch);
+                branches.Add(branch);
+            }
+
+            bool polls = members.ContainsKey(PayloadsName);
+            try
+            {
+                return new ToolSchema(
+                    Name((string)members[ToolName], ToolName),
+                    branches,
+                    ReadItem((IDictionary<string, object>)members[OutputName], false, false, polls),
+                    polls ? ReadPayloads(members[PayloadsName]) : null);
+            }
+            catch (ArgumentException exception)
+            {
+                throw new FormatException(exception.Message, exception);
+            }
+        }
+
+        private static SchemaBranch ReadBranch(IDictionary<string, object> members)
+        {
+            List<SchemaItem> inputs = ReadItems(members[InputsName], true);
+            List<SchemaChoice> choices = members.ContainsKey(ChoicesName)
+                ? ReadChoices(members[ChoicesName], inputs)
+                : new List<SchemaChoice>();
+            RequireChosenOrRequired(inputs, choices);
+            string selectorName = null;
+            object selectorValue = null;
+            if (members.ContainsKey(SelectorName))
+            {
+                IDictionary<string, object> selector =
+                    (IDictionary<string, object>)members[SelectorName];
+                selectorName = Member((string)selector[NameName], NameName);
+                if (!inputs.Any(i => string.Equals(i.Name, selectorName, StringComparison.Ordinal)))
+                {
+                    throw new FormatException("分岐を選ぶ項目が入力に無い: " + selectorName);
+                }
+
+                selectorValue = selector[ValueName];
+                RequireLiteral(selectorValue);
+            }
+
+            try
+            {
+                return new SchemaBranch(
+                    Member((string)members[BranchName], BranchName), selectorName, selectorValue,
+                    inputs, choices);
+            }
+            catch (ArgumentException exception)
+            {
+                throw new FormatException(exception.Message, exception);
+            }
+        }
+
+        /// <summary>
+        /// まとまりは、その分岐の入力に実在する2件以上の項目を、まとまりをまたいで重ねずに並べる。
+        /// </summary>
+        private static List<SchemaChoice> ReadChoices(object value, IList<SchemaItem> inputs)
+        {
+            List<SchemaChoice> choices = new List<SchemaChoice>();
+            List<string> taken = new List<string>();
+            foreach (IDictionary<string, object> members in Each(value))
+            {
+                List<string> names = new List<string>();
+                foreach (string each in ((object[])members[NamesName]).Cast<string>())
+                {
+                    string name = Member(each, NamesName);
+                    if (!inputs.Any(i => string.Equals(i.Name, name, StringComparison.Ordinal)))
+                    {
+                        throw new FormatException("まとまりが入力に無い項目を並べている: " + name);
+                    }
+
+                    if (taken.Contains(name, StringComparer.Ordinal))
+                    {
+                        throw new FormatException("同じ項目が二つのまとまりに現れる: " + name);
+                    }
+
+                    taken.Add(name);
+                    names.Add(name);
+                }
+
+                if (names.Count < 2)
+                {
+                    throw new FormatException(NamesName + " は2件以上でなければならない。");
+                }
+
+                choices.Add(new SchemaChoice(names, (bool)members[RequiredName]));
+            }
+
+            return choices;
+        }
+
+        /// <summary>
+        /// 呼び出す側が渡す項目だけが要不要を持つことを、入れ子まで含めて求める。まとまりに入る項目は
+        /// まとまりの側が、`injected` の項目はホストが、それぞれ要不要を決める。
+        /// </summary>
+        private static void RequireChosenOrRequired(
+            IList<SchemaItem> inputs, IList<SchemaChoice> choices)
+        {
+            List<string> chosen = choices.SelectMany(c => c.Names).ToList();
+            foreach (SchemaItem item in inputs)
+            {
+                RequirePassedByCaller(item, chosen.Contains(item.Name, StringComparer.Ordinal));
+                foreach (SchemaItem nested in item.WithNested.Skip(1).Where(i => i.Name != null))
+                {
+                    RequirePassedByCaller(nested, false);
+                }
+            }
+        }
+
+        private static void RequirePassedByCaller(SchemaItem item, bool chosen)
+        {
+            if ((!chosen && !item.Injected) != item.Required.HasValue)
+            {
+                throw new FormatException(
+                    "呼び出す側が渡す項目だけが " + RequiredName + " を持つ: " + item.Name);
+            }
+        }
+
+        private static List<SchemaPayload> ReadPayloads(object value)
+        {
+            List<SchemaPayload> payloads = new List<SchemaPayload>();
+            List<string> types = new List<string>();
+            foreach (IDictionary<string, object> members in Each(value))
+            {
+                string type = (string)members[TypeName];
+                if (types.Contains(type, StringComparer.Ordinal))
+                {
+                    throw new FormatException("同じ分岐が二度現れる: " + type);
+                }
+
+                types.Add(type);
+                payloads.Add(new SchemaPayload(type, ReadItems(members[MembersName], false)));
+            }
+
+            return payloads;
+        }
+
+        private static List<SchemaItem> ReadItems(object value, bool input, bool polls = false)
+        {
+            List<SchemaItem> items = new List<SchemaItem>();
+            List<string> names = new List<string>();
+            foreach (IDictionary<string, object> item in Each(value))
+            {
+                SchemaItem read = ReadItem(item, true, input, polls);
+                if (names.Contains(read.Name, StringComparer.Ordinal))
+                {
+                    throw new FormatException("同じ項目の名前が二度現れる: " + read.Name);
+                }
+
+                names.Add(read.Name);
+                items.Add(read);
+            }
+
+            return items;
+        }
+
+        /// <summary>
+        /// 応答の値そのものと配列の要素は名前を持たない。イベントの payload は、3つの表し方のどれも
+        /// 持たない。
+        /// </summary>
+        private static SchemaItem ReadItem(
+            IDictionary<string, object> members, bool named, bool input, bool polls = false)
+        {
+            string name = named ? Member((string)members[NameName], NameName) : null;
+            string[] forms = { ShapeName, MembersName, ElementName };
+            int shapes = forms.Count(members.ContainsKey);
+            bool payload = polls && string.Equals(name, PayloadName, StringComparison.Ordinal);
+            bool fromSdk = !members.ContainsKey(OriginName);
+            bool wrong = payload
+                ? shapes != 0
+                : fromSdk ? shapes > 1 || members.ContainsKey(ShapeName) : shapes != 1;
+            if (wrong)
+            {
+                throw new FormatException(
+                    "項目の形は3つのうち1つでなければならない(SDKに由来する項目は表現を書かず、"
+                        + "イベントの `payload` はどれも持たない): " + Written(members, NameName));
+            }
+
+            bool namedInput = named && input;
+            if (members.ContainsKey(RequiredName) && !namedInput)
+            {
+                throw new FormatException(
+                    "呼び出す側が渡す項目だけが " + RequiredName + " を持つ: "
+                        + Written(members, NameName));
+            }
+
+            if (members.ContainsKey(InjectedName) && !namedInput)
+            {
+                throw new FormatException(
+                    "名前のある入力の項目だけが " + InjectedName + " を持つ: "
+                        + Written(members, NameName));
+            }
+
+            ItemOrigin? origin = fromSdk
+                ? (ItemOrigin?)null
+                : Lookup(Origins, (string)members[OriginName], OriginName);
+            bool hasValue = members.ContainsKey(DefaultName) || members.ContainsKey(BoundsName);
+            bool hasSource = members.ContainsKey(SourceName);
+            bool hasCount = members.ContainsKey(MaxItemsName);
+            if (members.ContainsKey(EmptyAllowedName)
+                && !(members.ContainsKey(ElementName) && NonEmptyArrayRule.NonEmptyName(name)))
+            {
+                throw new FormatException(
+                    EmptyAllowedName + " を書けるのは、名前の上では空にできない並びだけである: "
+                        + Written(members, NameName));
+            }
+
+            if (members.ContainsKey(UniqueItemsName) && !members.ContainsKey(ElementName))
+            {
+                throw new FormatException(
+                    UniqueItemsName + " を書けるのは並びだけである: " + Written(members, NameName));
+            }
+
+            if (members.ContainsKey(NullMeaningName) && !Flag(members, NullableName))
+            {
+                throw new FormatException(
+                    NullMeaningName + " を書けるのは、null を受ける項目だけである: "
+                        + Written(members, NameName));
+            }
+
+            if (fromSdk && hasValue && !hasSource)
+            {
+                throw new FormatException(
+                    "SDKに由来する既定と範囲は転記元を伴う: " + Written(members, NameName));
+            }
+
+            if (hasSource && !hasValue && !hasCount)
+            {
+                throw new FormatException(
+                    "転記元は、SDKに由来する値か一次資料が定めた要素数に伴う: "
+                        + Written(members, NameName));
+            }
+
+            if (hasSource && hasValue && !fromSdk && !hasCount)
+            {
+                throw new FormatException(
+                    "共通契約が定める値は転記元を持たない: " + Written(members, NameName));
+            }
+
+            if (hasCount && fromSdk && hasValue)
+            {
+                throw new FormatException(
+                    "転記元は1つなので、SDKに由来する値と要素数の上限を同じ項目に持たない: "
+                        + Written(members, NameName));
+            }
+
+            if (hasCount && (!members.ContainsKey(ElementName) || !hasSource))
+            {
+                throw new FormatException(
+                    "一次資料が要素数を定めている並びだけが要素数の上限を持つ: "
+                        + Written(members, NameName));
+            }
+
+            object defaultValue = null;
+            if (members.ContainsKey(DefaultName))
+            {
+                defaultValue = members[DefaultName];
+                RequireLiteral(defaultValue);
+            }
+
+            return new SchemaItem(
+                members.ContainsKey(ShapeName) ? (string)members[ShapeName] : null,
+                members.ContainsKey(MembersName)
+                    ? ReadItems(members[MembersName], input, polls)
+                    : null,
+                members.ContainsKey(ElementName)
+                    ? ReadItem((IDictionary<string, object>)members[ElementName], false, input, polls)
+                    : null,
+                name,
+                origin,
+                members.ContainsKey(RequiredName) ? (bool)members[RequiredName] : (bool?)null,
+                defaultValue,
+                members.ContainsKey(DefaultName),
+                members.ContainsKey(BoundsName)
+                    ? ReadBounds((IDictionary<string, object>)members[BoundsName])
+                    : null,
+                members.ContainsKey(NullableName) ? (bool)members[NullableName] : (bool?)null,
+                members.ContainsKey(SourceName) ? (string)members[SourceName] : null,
+                Flag(members, InjectedName),
+                members.ContainsKey(MaxItemsName) ? (int)members[MaxItemsName] : (int?)null,
+                Flag(members, EmptyAllowedName),
+                Flag(members, UniqueItemsName),
+                members.ContainsKey(NullMeaningName) ? (string)members[NullMeaningName] : null);
+        }
+
+        private static ValueBounds ReadBounds(IDictionary<string, object> members)
+        {
+            try
+            {
+                return new ValueBounds(Number(members, MinimumName), Number(members, MaximumName));
+            }
+            catch (ArgumentException exception)
+            {
+                throw new FormatException(exception.Message, exception);
+            }
+        }
+
+        /// <summary>既定はJSONのリテラルで、演算も参照も持たない。入れ子の中も同じとする。</summary>
+        private static void RequireLiteral(object value)
+        {
+            object[] items = value as object[];
+            if (items != null)
+            {
+                foreach (object item in items)
+                {
+                    RequireLiteral(item);
+                }
+
+                return;
+            }
+
+            Dictionary<string, object> members = value as Dictionary<string, object>;
+            if (members == null)
+            {
+                return;
+            }
+
+            foreach (KeyValuePair<string, object> pair in members)
+            {
+                if (!MemberName.IsMatch(pair.Key))
+                {
+                    throw new FormatException("値の項目の名前でない: " + pair.Key);
+                }
+
+                RequireLiteral(pair.Value);
+            }
+        }
+
+        private static string Written(IDictionary<string, object> members, string name)
+        {
+            object value;
+            return members.TryGetValue(name, out value) ? value as string ?? "名前無し" : "名前無し";
+        }
+
+        private static double? Number(IDictionary<string, object> members, string name)
+        {
+            object value;
+            return members.TryGetValue(name, out value)
+                ? Convert.ToDouble(value, CultureInfo.InvariantCulture)
+                : (double?)null;
+        }
+
+        private static bool Flag(IDictionary<string, object> members, string name)
+        {
+            object value;
+            return members.TryGetValue(name, out value) && (bool)value;
+        }
+
+        private static string Member(string text, string name)
+        {
+            if (!MemberName.IsMatch(text))
+            {
+                throw new FormatException(
+                    name + " は小文字で始まり、英数字だけからなる語でなければならない: " + text);
+            }
+
+            return text;
+        }
+
+        private static string Name(string text, string name)
+        {
+            if (!SnakeCaseName.IsMatch(text))
+            {
+                throw new FormatException(
+                    name + " は小文字で始まり、小文字と数字と下線だけからなる語でなければならない: "
+                        + text);
+            }
+
+            return text;
+        }
+
+        private static TValue Lookup<TValue>(
+            Dictionary<string, TValue> table, string text, string name)
+        {
+            TValue found;
+            if (!table.TryGetValue(text, out found))
+            {
+                throw new FormatException("知らない " + name + ": " + text);
+            }
+
+            return found;
+        }
+
+        private static IEnumerable<IDictionary<string, object>> Each(object value)
+        {
+            return ((object[])value).Cast<IDictionary<string, object>>();
+        }
+    }
+}

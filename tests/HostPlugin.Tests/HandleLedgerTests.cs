@@ -1,0 +1,514 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using Xunit;
+
+namespace PmxEditorMcp.Tests
+{
+    [Collection(TimedCollection.Name)]
+    public sealed class HandleLedgerTests : IDisposable
+    {
+        private const string UiModel = "uiModel";
+
+        private const string Listener = "eventListener";
+
+        private const int ManyHandles = 10000;
+
+        private static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(2);
+
+        private readonly string _root;
+
+        private readonly HostLog _log;
+
+        private readonly HandleLedger _ledger;
+
+        private readonly List<int> _releases = new List<int>();
+
+        public HandleLedgerTests()
+        {
+            _root = Path.Combine(
+                Path.GetTempPath(), "pmx-editor-mcp-handles-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(_root);
+            _log = new HostLog(Path.Combine(_root, "host.log"));
+            _ledger = new HandleLedger(_log, new HandleIdIssuer());
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                Directory.Delete(_root, true);
+            }
+            catch (IOException)
+            {
+            }
+        }
+
+        [Fact]
+        public void HandlesArePositiveAndDistinct()
+        {
+            int first = Issue(UiModel);
+            int second = Issue(UiModel);
+
+            Assert.Equal(1, first);
+            Assert.Equal(2, second);
+        }
+
+        [Fact]
+        public void TheTargetIsTakenBackByItsTypeAndId()
+        {
+            object target = new object();
+            int id = _ledger.Issue(UiModel, target, () => { });
+
+            object found;
+
+            Assert.True(_ledger.TryGet(id, UiModel, out found));
+            Assert.Same(target, found);
+        }
+
+        [Fact]
+        public void AHandleOfAnotherTypeIsNotTakenBack()
+        {
+            int id = Issue(UiModel);
+
+            object found;
+
+            Assert.False(_ledger.TryGet(id, Listener, out found));
+            Assert.Null(found);
+        }
+
+        [Fact]
+        public void TheTargetIsAlsoTakenBackWithoutNamingItsType()
+        {
+            object target = new object();
+            int id = _ledger.Issue(UiModel, target, () => { });
+
+            object found;
+
+            Assert.True(_ledger.TryGet(id, out found));
+            Assert.Same(target, found);
+        }
+
+        [Fact]
+        public void AReleasedHandleIsNotTakenBackWithoutNamingItsTypeEither()
+        {
+            int id = Issue(UiModel);
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result);
+
+            object found;
+
+            Assert.False(_ledger.TryGet(id, out found));
+            Assert.Null(found);
+        }
+
+        [Fact]
+        public void AnUnknownHandleIsNotTakenBack()
+        {
+            object found;
+
+            Assert.False(_ledger.TryGet(7, UiModel, out found));
+        }
+
+        [Fact]
+        public void AReleasedHandleIsNotTakenBack()
+        {
+            int id = Issue(UiModel);
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result);
+
+            object found;
+
+            Assert.False(_ledger.TryGet(id, UiModel, out found));
+            Assert.False(_ledger.IsValid(id));
+        }
+
+        [Fact]
+        public void ReleasingRunsTheReleaseOfTheType()
+        {
+            int id = Issue(UiModel);
+
+            HandleReleaseResult result;
+
+            Assert.True(_ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result));
+            Assert.Equal(new[] { id }, result.Invalidated);
+            Assert.Empty(result.Failed);
+            Assert.Equal(new[] { id }, _releases);
+        }
+
+        [Fact]
+        public void ReleasingTwiceStopsAtTheSecond()
+        {
+            int id = Issue(UiModel);
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result);
+
+            Assert.False(_ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result));
+            Assert.Null(result);
+            Assert.Equal(new[] { id }, _releases);
+        }
+
+        [Fact]
+        public void DependentsAreReleasedBeforeTheHandleTheyDependOn()
+        {
+            int model = Issue(UiModel);
+            int listener = Issue(Listener, model);
+
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(new[] { model }, new InlineInvoker(), out result);
+
+            Assert.Equal(new[] { listener, model }, result.Invalidated);
+            Assert.Equal(new[] { listener, model }, _releases);
+        }
+
+        [Fact]
+        public void DependentsOfDependentsAreReleasedFirst()
+        {
+            int model = Issue(UiModel);
+            int listener = Issue(Listener, model);
+            int leaf = Issue(Listener, listener);
+
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(new[] { model }, new InlineInvoker(), out result);
+
+            Assert.Equal(new[] { leaf, listener, model }, result.Invalidated);
+        }
+
+        [Fact]
+        public void AHandleWithTwoDependenciesIsReleasedWithEitherOfThem()
+        {
+            int model = Issue(UiModel);
+            int connector = Issue(UiModel);
+            int listener = _ledger.Issue(
+                Listener, new object(), () => _releases.Add(3), new[] { model, connector });
+
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(new[] { connector }, new InlineInvoker(), out result);
+
+            Assert.Equal(new[] { listener, connector }, result.Invalidated);
+            Assert.True(_ledger.IsValid(model));
+        }
+
+        [Fact]
+        public void ReleasingOnlyTheDependentKeepsTheHandleItDependsOn()
+        {
+            int model = Issue(UiModel);
+            int listener = Issue(Listener, model);
+
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(new[] { listener }, new InlineInvoker(), out result);
+
+            Assert.Equal(new[] { listener }, result.Invalidated);
+            Assert.True(_ledger.IsValid(model));
+        }
+
+        [Fact]
+        public void AFailedReleaseIsRecordedAndTheRestGoesOn()
+        {
+            int model = _ledger.Issue(
+                UiModel, new object(), () => { throw new InvalidOperationException("解放に失敗。"); });
+            int listener = Issue(Listener, model);
+
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(new[] { model }, new InlineInvoker(), out result);
+
+            Assert.Equal(new[] { listener, model }, result.Invalidated);
+            Assert.Equal(new[] { model }, result.Failed);
+            Assert.Subset(result.Invalidated.ToHashSet(), result.Failed.ToHashSet());
+            Assert.False(_ledger.IsValid(model));
+            Assert.Equal(new[] { listener }, _releases);
+        }
+
+        [Fact]
+        public void AHandleReachedByTwoPathsIsReleasedOnce()
+        {
+            int root = Issue(UiModel);
+            int left = Issue(Listener, root);
+            int right = Issue(Listener, root);
+            int leaf = _ledger.Issue(
+                Listener, new object(), () => _releases.Add(4), new[] { left, right });
+
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(new[] { root }, new InlineInvoker(), out result);
+
+            Assert.Equal(new[] { leaf, right, left, root }, result.Invalidated);
+            Assert.Equal(new[] { 4 }, _releases.Where(r => r == 4));
+            Assert.Equal(0, _ledger.Count);
+        }
+
+        [Fact]
+        public void ReleasingManyHandlesAtOnceFinishesInTime()
+        {
+            int[] issued = Enumerable.Range(0, ManyHandles).Select(at => Issue(UiModel)).ToArray();
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(issued, new InlineInvoker(), out result);
+            elapsed.Stop();
+
+            Assert.Equal(ManyHandles, result.Invalidated.Count);
+            Assert.True(elapsed.Elapsed < TimeLimit, "解放に " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void ReleasingEveryHandleOfAFullLedgerFinishesInTime()
+        {
+            foreach (int at in Enumerable.Range(0, ManyHandles))
+            {
+                Issue(UiModel);
+            }
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            HandleReleaseResult result = _ledger.ReleaseAll(new InlineInvoker());
+            elapsed.Stop();
+
+            Assert.Equal(ManyHandles, result.Invalidated.Count);
+            Assert.True(elapsed.Elapsed < TimeLimit, "解放に " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void ReleasingTheRootOfALongChainFinishesInTime()
+        {
+            int root = Issue(UiModel);
+            int last = root;
+            for (int at = 1; at < ManyHandles; at++)
+            {
+                last = Issue(Listener, last);
+            }
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            HandleReleaseResult result;
+            _ledger.TryReleaseAll(new[] { root }, new InlineInvoker(), out result);
+            elapsed.Stop();
+
+            Assert.Equal(last, result.Invalidated[0]);
+            Assert.Equal(root, result.Invalidated[ManyHandles - 1]);
+            Assert.True(elapsed.Elapsed < TimeLimit, "解放に " + elapsed.Elapsed + " かかった");
+        }
+
+        [Fact]
+        public void EveryHandleIsReleasedAtOnceInDependencyOrder()
+        {
+            int model = Issue(UiModel);
+            int listener = Issue(Listener, model);
+            int other = Issue(UiModel);
+
+            HandleReleaseResult result = _ledger.ReleaseAll(new InlineInvoker());
+
+            Assert.Equal(0, _ledger.Count);
+            Assert.Equal(3, result.Invalidated.Count);
+            Assert.True(
+                result.Invalidated.IndexOf(listener) < result.Invalidated.IndexOf(model),
+                "子が依存元より先に並んでいない。");
+            Assert.Contains(other, result.Invalidated);
+        }
+
+        [Fact]
+        public void TheLedgerIsClosedAfterReleasingEveryHandle()
+        {
+            Issue(UiModel);
+
+            Assert.False(_ledger.IsClosed);
+            _ledger.ReleaseAll(new InlineInvoker());
+
+            Assert.True(_ledger.IsClosed);
+            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+                () => _ledger.Issue(UiModel, new object(), () => { }));
+            Assert.Contains("閉じている", error.Message, StringComparison.Ordinal);
+            Assert.Equal(0, _ledger.Count);
+        }
+
+        [Fact]
+        public void ReleasingEveryHandleTwiceIsAllowed()
+        {
+            Issue(UiModel);
+            _ledger.ReleaseAll(new InlineInvoker());
+
+            HandleReleaseResult result = _ledger.ReleaseAll(new InlineInvoker());
+
+            Assert.Empty(result.Invalidated);
+            Assert.Equal(2, Lines().Count(l => l.Contains("全ハンドルの解放")));
+        }
+
+        [Fact]
+        public void ReleasingEveryHandleOfAnEmptyLedgerReleasesNothingButIsRecorded()
+        {
+            HandleReleaseResult result = _ledger.ReleaseAll(new InlineInvoker());
+
+            Assert.Empty(result.Invalidated);
+            Assert.Empty(result.Failed);
+            Assert.Single(Lines(), l => l.Contains("全ハンドルの解放: 件数=0 失敗=0"));
+        }
+
+        [Fact]
+        public void ReleasingEveryHandleIsRecordedWithTheCounts()
+        {
+            Issue(UiModel);
+            _ledger.Issue(
+                UiModel, new object(), () => { throw new InvalidOperationException("解放に失敗。"); });
+
+            _ledger.ReleaseAll(new InlineInvoker());
+
+            Assert.Single(Lines(), l => l.Contains("全ハンドルの解放: 件数=2 失敗=1"));
+        }
+
+        [Fact]
+        public void ReleasingIsRecorded()
+        {
+            int id = Issue(UiModel);
+            HandleReleaseResult result;
+
+            _ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result);
+
+            Assert.Single(Lines(), l => l.Contains("ハンドルの解放: id=" + id + " type=" + UiModel));
+        }
+
+        [Fact]
+        public void AFailedReleaseIsRecordedToo()
+        {
+            int id = _ledger.Issue(
+                UiModel, new object(), () => { throw new InvalidOperationException("解放に失敗。"); });
+            HandleReleaseResult result;
+
+            _ledger.TryReleaseAll(new[] { id }, new InlineInvoker(), out result);
+
+            Assert.Single(Lines(), l => l.Contains("ハンドルの解放で例外が起きた: id=" + id));
+        }
+
+        [Fact]
+        public void AnInvalidDependencyStops()
+        {
+            ArgumentException error = Assert.Throws<ArgumentException>(
+                () => _ledger.Issue(Listener, new object(), () => { }, new[] { 7 }));
+
+            Assert.Contains("依存元", error.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void EveryArgumentIsRequired()
+        {
+            Assert.Throws<ArgumentNullException>(() => new HandleLedger(null, new HandleIdIssuer()));
+            Assert.Throws<ArgumentNullException>(() => _ledger.Issue(null, new object(), () => { }));
+            Assert.Throws<ArgumentNullException>(() => _ledger.Issue(UiModel, null, () => { }));
+            Assert.Throws<ArgumentNullException>(
+                () => _ledger.Issue(UiModel, new object(), (Action)null));
+            Assert.Throws<ArgumentNullException>(
+                () => _ledger.Issue(UiModel, new object(), (Action<IUiInvoker>)null));
+            Assert.Throws<ArgumentException>(() => _ledger.Issue("  ", new object(), () => { }));
+
+            object found;
+            Assert.Throws<ArgumentNullException>(() => _ledger.TryGet(1, null, out found));
+
+            HandleReleaseResult released;
+            Assert.Throws<ArgumentNullException>(() => _ledger.TryReleaseAll(new[] { 1 }, null, out released));
+            Assert.Throws<ArgumentNullException>(
+                () => _ledger.TryReleaseAll(new[] { 1 }, null, out released));
+            Assert.Throws<ArgumentNullException>(() => _ledger.ReleaseIssuedAfter(0, null));
+            Assert.Throws<ArgumentNullException>(() => _ledger.ReleaseAll(null));
+        }
+
+        [Fact]
+        public void NothingIssuedYetMeansTheLastIdIsZero()
+        {
+            Assert.Equal(0, _ledger.LastIssuedId);
+        }
+
+        [Fact]
+        public void TheLastIdFollowsTheHandlesThatWereIssued()
+        {
+            int first = Issue(UiModel);
+
+            Assert.Equal(first, _ledger.LastIssuedId);
+
+            int second = Issue(UiModel);
+
+            Assert.Equal(second, _ledger.LastIssuedId);
+        }
+
+        [Fact]
+        public void ReleasingWhatCameAfterAnIdLeavesTheEarlierHandlesAlone()
+        {
+            int kept = Issue(UiModel);
+            int mark = _ledger.LastIssuedId;
+            int later = Issue(UiModel);
+
+            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(mark, new InlineInvoker());
+
+            Assert.Equal(new[] { later }, result.Invalidated);
+            Assert.Empty(result.Failed);
+            Assert.True(_ledger.IsValid(kept));
+            Assert.False(_ledger.IsValid(later));
+        }
+
+        [Fact]
+        public void ReleasingWhatCameAfterAnIdGoesFromTheChildToWhatItDependsOn()
+        {
+            int mark = _ledger.LastIssuedId;
+            int model = Issue(UiModel);
+            int listener = Issue(Listener, model);
+
+            _ledger.ReleaseIssuedAfter(mark, new InlineInvoker());
+
+            Assert.Equal(new[] { listener, model }, _releases);
+        }
+
+        [Fact]
+        public void ReleasingWhatCameAfterAnIdTakesAChildOfAHandleIssuedEarlier()
+        {
+            int model = Issue(UiModel);
+            int mark = _ledger.LastIssuedId;
+            int listener = Issue(Listener, model);
+
+            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(mark, new InlineInvoker());
+
+            Assert.Equal(new[] { listener }, result.Invalidated);
+            Assert.False(_ledger.IsValid(listener));
+            Assert.True(_ledger.IsValid(model));
+        }
+
+        [Fact]
+        public void ReleasingWhatCameAfterTheLastIdReleasesNothing()
+        {
+            Issue(UiModel);
+
+            HandleReleaseResult result = _ledger.ReleaseIssuedAfter(_ledger.LastIssuedId, new InlineInvoker());
+
+            Assert.Empty(result.Invalidated);
+            Assert.Empty(result.Failed);
+            Assert.Empty(_releases);
+        }
+
+        [Fact]
+        public void ReleasingWhatCameAfterAnIdDoesNotCloseTheLedger()
+        {
+            int mark = _ledger.LastIssuedId;
+            Issue(UiModel);
+
+            _ledger.ReleaseIssuedAfter(mark, new InlineInvoker());
+
+            Assert.False(_ledger.IsClosed);
+            Assert.True(Issue(UiModel) > 0);
+        }
+
+        private int Issue(string type, int? dependency = null)
+        {
+            int id = 0;
+            id = _ledger.Issue(
+                type,
+                new object(),
+                () => _releases.Add(id),
+                dependency.HasValue ? new[] { dependency.Value } : null);
+
+            return id;
+        }
+
+        private string[] Lines()
+        {
+            return File.Exists(_log.FilePath)
+                ? LogText.Lines(_log.FilePath).Where(l => l.Length != 0).ToArray()
+                : new string[0];
+        }
+    }
+}

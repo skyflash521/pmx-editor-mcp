@@ -1,0 +1,317 @@
+// SDKのコネクタは中身を変えるだけで、ビューも一覧も描き直さない。
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using PEPlugin.Form;
+using PEPlugin.Pmd;
+using PEPlugin.View;
+
+namespace PmxEditorMcp
+{
+    public enum ScreenRefreshKind
+    {
+        /// <summary>画面に映るものは変わっていない。</summary>
+        None,
+
+        /// <summary>ビューを描き直す。</summary>
+        Drawn,
+
+        /// <summary>リストとビューのモデルを作り直してから描き直す。</summary>
+        Rebuilt,
+    }
+
+    public sealed class ScreenRefresh
+    {
+        public const string NotShownWarning =
+            "エディタの画面を映し直せなかった。呼び出しは済んでいるが、画面とリストは呼び出しの"
+                + "前の中身を映したままになっている。";
+
+        /// <summary>書くとビューの見た目が変わるのに、描き直しを伴わない行。</summary>
+        private static readonly HashSet<string> Draws =
+            new HashSet<string>(StringComparer.Ordinal)
+            {
+                "PEPlugin.View.IPEPMDViewConnector.SetSelectedVertexIndices(System.Int32[])",
+                "PEPlugin.View.IPEPMDViewConnector.SetSelectedFaceIndices(System.Int32[])",
+                "PEPlugin.View.IPEPMDViewConnector.SetSelectedBoneIndices(System.Int32[])",
+                "PEPlugin.View.IPEPMDViewConnector.SetSelectedBodyIndices(System.Int32[])",
+                "PEPlugin.View.IPEPMDViewConnector.SetSelectedJointIndices(System.Int32[])",
+                "PEPlugin.View.IPEPMDViewConnector.SetVertexIndices(System.Int32[])",
+                "PEPlugin.View.IPEPMDViewConnector.SelectedBodyIndex()",
+                "PEPlugin.View.IPEPMDViewConnector.SelectedJointIndex()",
+                "PEPlugin.View.IPEPMDViewConnector.EnableHandleEdit()",
+                "PEPlugin.View.IPEPMDViewConnector.CameraPosition()",
+                "PEPlugin.View.IPEPMDViewConnector.CameraTarget()",
+                "PEPlugin.View.IPEPMDViewConnector.CameraUpVector()",
+                "PEPlugin.View.IPEPMDViewConnector.CameraRotateCenter()",
+                "PEPlugin.View.IPEPMDViewConnector.SetCameraView("
+                    + "PEPlugin.Pmd.IPEVector3,PEPlugin.Pmd.IPEVector3,PEPlugin.Pmd.IPEVector3)",
+            };
+
+        /// <summary>モデルの中身そのものを変えるのに、リストの作り直しを伴わない行。</summary>
+        private static readonly HashSet<string> Rebuilds =
+            new HashSet<string>(StringComparer.Ordinal)
+            {
+                "PEPlugin.View.IPEPMDViewConnector.UpdateModelSize(System.Single)",
+                "PEPlugin.View.IPEPMDViewConnector.UpdateModelSize(System.Single,System.Boolean)",
+                "PEPlugin.View.IPEVertexEditConnector.Move()",
+                "PEPlugin.View.IPEVertexEditConnector.Move(PEPlugin.Pmd.IPEVector3)",
+                "PEPlugin.View.IPEVertexEditConnector.MoveNormalAxis()",
+                "PEPlugin.View.IPEVertexEditConnector.MoveNormalAxis(System.Single)",
+                "PEPlugin.View.IPEVertexEditConnector.Rotate()",
+                "PEPlugin.View.IPEVertexEditConnector.Rotate(PEPlugin.Pmd.IPEVector3)",
+                "PEPlugin.View.IPEVertexEditConnector.RotateNormal()",
+                "PEPlugin.View.IPEVertexEditConnector.RotateNormal(PEPlugin.Pmd.IPEVector3)",
+                "PEPlugin.View.IPEVertexEditConnector.Scaling()",
+                "PEPlugin.View.IPEVertexEditConnector.Scaling(PEPlugin.Pmd.IPEVector3)",
+            };
+
+        /// <summary>ビューでは、その区分だけを作り直せば映るリストの行。</summary>
+        private static readonly Dictionary<string, Action<IPXPmxViewConnector>> Remakes =
+            new Dictionary<string, Action<IPXPmxViewConnector>>(StringComparer.Ordinal)
+            {
+                { "PEPlugin.Pmx.IPXPmx.Bone()", view => view.UpdateModel_Bone() },
+                { "PEPlugin.Pmx.IPXPmx.Body()", view => view.UpdateModel_Body() },
+                { "PEPlugin.Pmx.IPXPmx.Joint()", view => view.UpdateModel_Joint() },
+            };
+
+        /// <summary>
+        /// ビューでは、要素の数を変えずに中身だけを書き換えたとき、その区分だけを作り直せば映る
+        /// 要素の種類。
+        /// </summary>
+        private static readonly Dictionary<string, Action<IPXPmxViewConnector>> Rewrites =
+            new Dictionary<string, Action<IPXPmxViewConnector>>(StringComparer.Ordinal)
+            {
+                { ElementKinds.Vertex, view => view.UpdateModel_Vertex() },
+                { ElementKinds.Bone, view => view.UpdateModel_Bone() },
+                { ElementKinds.Body, view => view.UpdateModel_Body() },
+                { ElementKinds.Joint, view => view.UpdateModel_Joint() },
+                { WeightKind, view => view.UpdateModel_Weight() },
+            };
+
+        private static readonly Dictionary<string, string[]> Lists =
+            new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                { "PEPlugin.Pmx.IPXPmx.Vertex()", new[] { ElementKinds.Vertex, WeightKind } },
+                { "PEPlugin.Pmx.IPXPmx.Bone()", new[] { ElementKinds.Bone } },
+                { "PEPlugin.Pmx.IPXPmx.Body()", new[] { ElementKinds.Body } },
+                { "PEPlugin.Pmx.IPXPmx.Joint()", new[] { ElementKinds.Joint } },
+            };
+
+        public const string WeightKind = "weight";
+
+        private readonly Func<object> _view;
+
+        private readonly Func<object> _form;
+
+        private readonly Action _modelChanged = () => { };
+
+        /// <summary>
+        /// PmxViewのコネクタとリストのコネクタを引く手立てを与えて生成する。引けないときは null を返してよく、
+        /// その相手への手順は飛ばす。
+        /// </summary>
+        public ScreenRefresh(Func<object> view, Func<object> form)
+        {
+            if (view == null)
+            {
+                throw new ArgumentNullException(nameof(view));
+            }
+
+            if (form == null)
+            {
+                throw new ArgumentNullException(nameof(form));
+            }
+
+            _view = view;
+            _form = form;
+        }
+
+        /// <summary><paramref name="modelChanged"/> は、ビューのモデルを作り直した後に呼ばれる。</summary>
+        public ScreenRefresh(Func<object> view, Func<object> form, Action modelChanged)
+            : this(view, form)
+        {
+            _modelChanged = modelChanged ?? throw new ArgumentNullException(nameof(modelChanged));
+        }
+
+        /// <summary>ビューとリストには触らず、モデルが変わったことだけを伝える段。</summary>
+        public ScreenRefresh WithoutViews()
+        {
+            return new ScreenRefresh(() => null, () => null, _modelChanged);
+        }
+
+        /// <summary>
+        /// 映せなかったことを知らせへ足す。映せた呼び出しでは渡された知らせをそのまま返す。
+        /// </summary>
+        public static IList<string> Noted(IList<string> warnings, bool shown)
+        {
+            if (shown)
+            {
+                return warnings;
+            }
+
+            List<string> all = new List<string>(warnings ?? new string[0]) { NotShownWarning };
+
+            return all;
+        }
+
+        public static ScreenRefreshKind Needed(EditKind edit, IEnumerable<string> rowKeys)
+        {
+            if (rowKeys == null)
+            {
+                throw new ArgumentNullException(nameof(rowKeys));
+            }
+
+            if (edit == EditKind.Read || edit == EditKind.DuplicateEdit)
+            {
+                return ScreenRefreshKind.None;
+            }
+
+            ScreenRefreshKind needed = ScreenRefreshKind.None;
+            foreach (string rowKey in rowKeys)
+            {
+                if (Rebuilds.Contains(rowKey))
+                {
+                    return ScreenRefreshKind.Rebuilt;
+                }
+
+                if (Draws.Contains(rowKey) || ReplacedModelSelection.Replaces(rowKey))
+                {
+                    needed = ScreenRefreshKind.Drawn;
+                }
+            }
+
+            return needed;
+        }
+
+        /// <summary>
+        /// 映せたら真で、映せなければ偽を返す。UIスレッドへ委譲した中で呼ぶ。引けないコネクタは
+        /// 飛ばす。
+        /// </summary>
+        public bool Apply(ScreenRefreshKind kind)
+        {
+            if (kind == ScreenRefreshKind.None)
+            {
+                return true;
+            }
+
+            try
+            {
+                Show(kind);
+
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 複製を反映した後に映し直す。<paramref name="listRow"/> は反映で変えたリストの行で、
+        /// 分からなければ null。
+        /// </summary>
+        public bool ApplyReflected(string listRow)
+        {
+            Action<IPXPmxViewConnector> remake;
+            if (listRow == null || !Remakes.TryGetValue(listRow, out remake))
+            {
+                return Apply(ScreenRefreshKind.Rebuilt);
+            }
+
+            return Remake(new[] { remake });
+        }
+
+        /// <summary>
+        /// そのリストの要素の中身だけを書き換えたときの、書き換えうる種類。区分だけの作り直しと
+        /// 反映を持たないリストでは null。
+        /// </summary>
+        public static IList<string> RewrittenIn(string listRow)
+        {
+            string[] kinds;
+
+            return listRow != null && Lists.TryGetValue(listRow, out kinds) ? kinds.ToArray() : null;
+        }
+
+        /// <summary>
+        /// 要素の数を変えずに、<paramref name="kinds"/> の種類の中身だけを書き換えた複製を反映した
+        /// 後に映し直す。種類は <see cref="ElementKinds"/> の名前で渡す。区分だけの作り直しを
+        /// 持たない種類が混じれば、ビューのモデルを丸ごと作り直す。
+        /// </summary>
+        public bool ApplyRewritten(IList<string> kinds)
+        {
+            if (kinds == null)
+            {
+                throw new ArgumentNullException(nameof(kinds));
+            }
+
+            if (!kinds.All(Rewrites.ContainsKey))
+            {
+                return Apply(ScreenRefreshKind.Rebuilt);
+            }
+
+            return Remake(kinds.Select(kind => Rewrites[kind]).ToList());
+        }
+
+        /// <summary>リストを作り直し、ビューは渡した区分だけを作り直してから描き直す。</summary>
+        private bool Remake(IList<Action<IPXPmxViewConnector>> remakes)
+        {
+            try
+            {
+                IPEFormConnector form = _form() as IPEFormConnector;
+                if (form != null)
+                {
+                    form.UpdateList(UpdateObject.All);
+                }
+
+                IPXPmxViewConnector view = _view() as IPXPmxViewConnector;
+                if (view != null)
+                {
+                    foreach (Action<IPXPmxViewConnector> remake in remakes)
+                    {
+                        remake(view);
+                    }
+
+                    view.UpdateView();
+                }
+
+                _modelChanged();
+
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private void Show(ScreenRefreshKind kind)
+        {
+
+            if (kind == ScreenRefreshKind.Rebuilt)
+            {
+                IPEFormConnector form = _form() as IPEFormConnector;
+                if (form != null)
+                {
+                    form.UpdateList(UpdateObject.All);
+                }
+            }
+
+            IPXPmxViewConnector view = _view() as IPXPmxViewConnector;
+            if (view != null)
+            {
+                if (kind == ScreenRefreshKind.Rebuilt)
+                {
+                    view.UpdateModel();
+                }
+
+                view.UpdateView();
+            }
+
+            if (kind == ScreenRefreshKind.Rebuilt)
+            {
+                _modelChanged();
+            }
+        }
+
+    }
+}

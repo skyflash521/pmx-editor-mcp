@@ -1,0 +1,471 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using PEPlugin.Pmx;
+
+namespace PmxEditorMcp
+{
+    /// <summary>新しい要素か、指した要素の複製を、並びの指した位置へ入れるツール。</summary>
+    public static class ModelInsertElements
+    {
+        public const string ToolName = "model_insert_elements";
+
+        public const string OperationName = "operation";
+
+        public const string New = "new";
+
+        public const string Clone = "clone";
+
+        public const string AtName = "at";
+
+        public const string CountName = "count";
+
+        public const string RangesName = "ranges";
+
+        public const string VariantName = "variant";
+
+        public const string VertexMorph = "vertex";
+
+        public const string UvMorph = "uv";
+
+        public const string UvA1Morph = "uvA1";
+
+        public const string UvA2Morph = "uvA2";
+
+        public const string UvA3Morph = "uvA3";
+
+        public const string UvA4Morph = "uvA4";
+
+        public const string BoneMorph = "bone";
+
+        public const string MaterialMorph = "material";
+
+        public const string GroupMorph = "group";
+
+        public const string FlipMorph = "flip";
+
+        public const string ImpulseMorph = "impulse";
+
+        public static IList<string> Variants
+        {
+            get
+            {
+                return new[]
+                {
+                    VertexMorph,
+                    UvMorph,
+                    UvA1Morph,
+                    UvA2Morph,
+                    UvA3Morph,
+                    UvA4Morph,
+                    BoneMorph,
+                    MaterialMorph,
+                    GroupMorph,
+                    FlipMorph,
+                    ImpulseMorph,
+                };
+            }
+        }
+
+        /// <summary>受け取れる操作。スキーマが並べる順。</summary>
+        public static IList<string> Operations
+        {
+            get { return new[] { New, Clone }; }
+        }
+
+        /// <summary><paramref name="builder"/> は新しい要素を作る相手を返す。</summary>
+        public static void AddTo(McpMethodTable methods, ComposedEdit edit, Func<object> builder)
+        {
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (edit == null)
+            {
+                throw new ArgumentNullException(nameof(edit));
+            }
+
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            List<string> known = new List<string>(ElementScope.Names)
+            {
+                TargetNames.Element.Indices,
+                TargetNames.Element.Range,
+                TargetNames.Element.All,
+                TargetNames.Element.Selected,
+                TargetNames.Element.Numbered,
+                OperationName,
+                AtName,
+                CountName,
+                VariantName,
+            };
+            methods.Add(
+                ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
+        }
+
+        private static ComposedEditResult Run(
+            McpMethodContext context, object pmx, Func<object> builder)
+        {
+            ElementKind kind;
+            IList<object> owners;
+            string code;
+            string message;
+            string operation;
+            if (!ElementScope.TryTake(context, pmx, out kind, out owners, out code, out message)
+                || !TryOperation(context, out operation, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            bool copying = string.Equals(operation, Clone, StringComparison.Ordinal);
+            int count;
+            int? at;
+            string variant;
+            if (!TryCount(context, copying, out count, out code, out message)
+                || !TryAt(context, out at, out code, out message)
+                || !TryVariant(context, kind, copying, out variant, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            if (!copying && kind.Owner != null)
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    kind.Name + " はほかの要素を指して初めて意味を持つ種類なので、"
+                        + New + " では作れない。" + Clone + " で写して入れる。");
+            }
+
+            if (!copying && context.Params.Keys.Any(Points))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    OperationName + " が " + New + " のときは、写す元を指さない。");
+            }
+
+            List<IList<object>> makes = new List<IList<object>>();
+            foreach (object owner in owners)
+            {
+                IList<object> made;
+                if (!TryMade(
+                    context,
+                    pmx,
+                    kind,
+                    owner,
+                    builder,
+                    copying,
+                    count,
+                    variant,
+                    out made,
+                    out code,
+                    out message))
+                {
+                    return ComposedEditResult.Refuse(code, message);
+                }
+
+                makes.Add(made);
+            }
+
+            bool numbered = context.Params.ContainsKey(TargetNames.Element.Numbered);
+            List<int> bases = new List<int>();
+            List<int> numbers = new List<int>();
+            if (numbered)
+            {
+                int before = 0;
+                for (int each = 0; each < owners.Count; each++)
+                {
+                    bases.Add(before);
+                    before += kind.Items(owners[each]).Count + makes[each].Count;
+                }
+
+                List<int> receiving = Enumerable.Range(0, owners.Count)
+                    .Where(each => makes[each].Count != 0)
+                    .ToList();
+                bases = receiving.Select(each => bases[each]).ToList();
+                owners = receiving.Select(each => owners[each]).ToList();
+                makes = receiving.Select(each => makes[each]).ToList();
+            }
+
+            List<int> puts = new List<int>();
+            List<object> landed = new List<object>();
+            for (int each = 0; each < owners.Count; each++)
+            {
+                int length = kind.Items(owners[each]).Count;
+                int put = at ?? length;
+                if (!PositionInput.TryWithin(put, length + 1, AtName, out code, out message))
+                {
+                    return ComposedEditResult.Refuse(code, message);
+                }
+
+                puts.Add(put);
+                if (numbered)
+                {
+                    numbers.AddRange(Enumerable.Range(bases[each] + put, makes[each].Count));
+                }
+                else
+                {
+                    landed.Add(PositionRuns.Of(put, makes[each].Count));
+                }
+            }
+
+            if (numbered)
+            {
+                landed.AddRange(PositionRuns.Joined(numbers));
+            }
+
+            Dictionary<string, object> answer =
+                new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { RangesName, landed.ToArray() },
+            };
+            if (!ResponseSize.Fits(answer, context.BudgetChars))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.ResponseTooLarge,
+                    "入った位置が値の枠に収まらないので、何も入れなかった。親を分けて呼ぶ。");
+            }
+
+            for (int each = 0; each < owners.Count; each++)
+            {
+                List<object> written = new List<object>(kind.Items(owners[each]));
+                written.InsertRange(puts[each], makes[each]);
+                kind.Replace(owners[each], written);
+            }
+
+            return ComposedEditResult.Complete(answer);
+        }
+
+        private static bool TryMade(
+            McpMethodContext context,
+            object pmx,
+            ElementKind kind,
+            object owner,
+            Func<object> builder,
+            bool copying,
+            int count,
+            string variant,
+            out IList<object> made,
+            out string code,
+            out string message)
+        {
+            made = null;
+            code = null;
+            message = null;
+            if (!copying)
+            {
+                List<object> built = new List<object>();
+                for (int step = 0; step < count; step++)
+                {
+                    object item = kind.Create(builder(), owner);
+                    if (item == null)
+                    {
+                        code = ToolEnvelope.NotApplicable;
+                        message = kind.Name + " の新しい要素をこの相手のもとでは作れない。";
+
+                        return false;
+                    }
+
+                    if (variant != null)
+                    {
+                        ((IPXMorph)item).Kind = Kind(variant);
+                    }
+
+                    built.Add(item);
+                }
+
+                made = built;
+
+                return true;
+            }
+
+            IList<int> chosen;
+            if (!ElementScope.TryPositions(
+                context, pmx, kind, owner, out chosen, out code, out message))
+            {
+                return false;
+            }
+
+            IList<object> items = kind.Items(owner);
+            made = chosen.Select(at => kind.CloneOf(items[at])).ToList();
+
+            return true;
+        }
+
+        private static bool Points(string name)
+        {
+            return string.Equals(name, TargetNames.Element.Indices, StringComparison.Ordinal)
+                || string.Equals(name, TargetNames.Element.Range, StringComparison.Ordinal)
+                || string.Equals(name, TargetNames.Element.All, StringComparison.Ordinal)
+                || string.Equals(name, TargetNames.Element.Selected, StringComparison.Ordinal)
+                || string.Equals(name, TargetNames.Element.Numbered, StringComparison.Ordinal);
+        }
+
+        private static bool TryOperation(
+            McpMethodContext context, out string operation, out string code, out string message)
+        {
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            object given;
+            context.Params.TryGetValue(OperationName, out given);
+            operation = given as string;
+            if (operation == null || !Operations.Contains(operation, StringComparer.Ordinal))
+            {
+                message = OperationName + " は次のどれかでなければならない: "
+                    + string.Join("・", Operations.ToArray());
+
+                return false;
+            }
+
+            code = null;
+
+            return true;
+        }
+
+        private static bool TryCount(
+            McpMethodContext context, bool copying, out int count, out string code, out string message)
+        {
+            count = 1;
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(CountName, out given))
+            {
+                code = null;
+
+                return true;
+            }
+
+            if (copying)
+            {
+                message = CountName + " を渡せるのは " + OperationName + " が " + New
+                    + " のときだけである。";
+
+                return false;
+            }
+
+            if (!ValueInput.TryIndex(given, out count) || count < 1)
+            {
+                message = CountName + " は1以上の整数でなければならない。";
+
+                return false;
+            }
+
+            code = null;
+
+            return true;
+        }
+
+        /// <summary>
+        /// モーフを新しく作るとき以外に渡されていれば偽で、断る内容を渡す。渡されていなければ空を
+        /// 渡し、作る相手が決める種類のままにする。
+        /// </summary>
+        private static bool TryVariant(
+            McpMethodContext context,
+            ElementKind kind,
+            bool copying,
+            out string variant,
+            out string code,
+            out string message)
+        {
+            variant = null;
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(VariantName, out given))
+            {
+                code = null;
+
+                return true;
+            }
+
+            if (copying || !string.Equals(kind.Name, ElementKinds.Morph, StringComparison.Ordinal))
+            {
+                message = VariantName + " を渡せるのは、" + ElementKinds.Morph + " を "
+                    + New + " で作るときだけである。";
+
+                return false;
+            }
+
+            variant = given as string;
+            if (variant == null || !Variants.Contains(variant, StringComparer.Ordinal))
+            {
+                variant = null;
+                message = VariantName + " は次のどれかでなければならない: "
+                    + string.Join("・", Variants.ToArray());
+
+                return false;
+            }
+
+            code = null;
+
+            return true;
+        }
+
+        private static MorphKind Kind(string variant)
+        {
+            switch (variant)
+            {
+                case VertexMorph:
+                    return MorphKind.Vertex;
+
+                case UvMorph:
+                    return MorphKind.UV;
+
+                case UvA1Morph:
+                    return MorphKind.UVA1;
+
+                case UvA2Morph:
+                    return MorphKind.UVA2;
+
+                case UvA3Morph:
+                    return MorphKind.UVA3;
+
+                case UvA4Morph:
+                    return MorphKind.UVA4;
+
+                case BoneMorph:
+                    return MorphKind.Bone;
+
+                case MaterialMorph:
+                    return MorphKind.Material;
+
+                case FlipMorph:
+                    return MorphKind.Flip;
+
+                case ImpulseMorph:
+                    return MorphKind.Impulse;
+
+                default:
+                    return MorphKind.Group;
+            }
+        }
+
+        private static bool TryAt(
+            McpMethodContext context, out int? at, out string code, out string message)
+        {
+            at = null;
+            code = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(AtName, out given))
+            {
+                return true;
+            }
+
+            int taken;
+            if (!PositionInput.TryRead(
+                given, AtName + " は整数でなければならない。", out taken, out code, out message))
+            {
+                return false;
+            }
+
+            at = taken;
+
+            return true;
+        }
+    }
+}

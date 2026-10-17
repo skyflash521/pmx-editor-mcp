@@ -1,0 +1,18 @@
+<Project>
+
+  <!-- PMXエディタのSDKと、SDKの座標型が内部で参照する描画ライブラリ。各自の導入物を参照する。
+       配布物のDLLは再配布できないので、PmxEditorSdkCopied が真のプロジェクトだけが出力へ複製する。 -->
+  <ItemGroup>
+    <Reference Include="PEPlugin">
+      <HintPath>$(PmxEditorDir)\Lib\PEPlugin\PEPlugin.dll</HintPath>
+      <Private Condition="'$(PmxEditorSdkCopied)' == 'true'">true</Private>
+      <Private Condition="'$(PmxEditorSdkCopied)' != 'true'">false</Private>
+    </Reference>
+    <Reference Include="SlimDX">
+      <HintPath>$(PmxEditorDir)\Lib\SlimDX\x64\SlimDX.dll</HintPath>
+      <Private Condition="'$(PmxEditorSdkCopied)' == 'true'">true</Private>
+      <Private Condition="'$(PmxEditorSdkCopied)' != 'true'">false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

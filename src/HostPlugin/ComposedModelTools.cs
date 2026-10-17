@@ -1,0 +1,60 @@
+using System;
+
+namespace PmxEditorMcp
+{
+    public static class ComposedModelTools
+    {
+        public static void AddTo(McpMethodTable methods, ComposedEdit edit, Func<object> builder)
+        {
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (edit == null)
+            {
+                throw new ArgumentNullException(nameof(edit));
+            }
+
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            ModelReorderElements.AddTo(methods, edit);
+            ModelCleanFaces.AddTo(methods, edit);
+            ModelEditFaces.AddTo(methods, edit);
+            ModelEditMaterials.AddTo(methods, edit);
+            ModelEditVertices.AddTo(methods, edit);
+            ModelEditUv.AddTo(methods, edit);
+            ModelDrawUvLayout.AddTo(methods, edit);
+            ModelEditNormals.AddTo(methods, edit);
+            ModelEditWeights.AddTo(methods, edit);
+            ModelSetDeformType.AddTo(methods, edit);
+            ModelEditBones.AddTo(methods, edit, builder);
+            ModelCreatePhysics.AddTo(methods, edit, builder);
+            ModelEditMorphs.AddTo(methods, edit, builder);
+            ModelMorphFromMoved.AddTo(methods, edit, builder);
+            ModelEditNodes.AddTo(methods, edit, builder);
+            ModelCopyFromReference.AddTo(methods, edit);
+            ModelPlaceElements.AddTo(methods, edit);
+            ModelMirrorElements.AddTo(methods, edit);
+            ModelValidatePmx.AddTo(methods, edit);
+            ModelFindReferrers.AddTo(methods, edit);
+            ModelFindMaterialVertices.AddTo(methods, edit);
+            ModelFindVertexBounds.AddTo(methods, edit);
+            ModelFindBoneWeights.AddTo(methods, edit);
+            ModelFindSurfaceDistances.AddTo(methods, edit);
+            ModelFindSurfaceSection.AddTo(methods, edit);
+            ModelFindSurfaceSections.AddTo(methods, edit);
+            ModelPoseVertices.AddTo(methods, edit);
+            ModelFindSurfaceIntersections.AddTo(methods, edit);
+            ModelCompareShape.AddTo(methods, edit);
+            ModelFindParts.AddTo(methods, edit);
+            ModelFindCoincidentVertices.AddTo(methods, edit);
+            ModelFindExposedVertices.AddTo(methods, edit);
+            ModelInsertElements.AddTo(methods, edit, builder);
+            ModelDeleteElements.AddTo(methods, edit);
+        }
+    }
+}

@@ -1,0 +1,315 @@
+using System;
+using PEPlugin;
+using PEPlugin.Form;
+using PEPlugin.Pmd;
+using PEPlugin.Pmx;
+using PEPlugin.View;
+using PXCPlugin;
+
+namespace PmxEditorMcp.Tests
+{
+    /// <summary>
+    /// 接続初期化が辿る経路だけを持つ題材。辿らないメンバーは呼ばれたら止まる——通ってはいけない
+    /// 経路を通ったことを、値を返して隠さないためである。
+    /// </summary>
+    public sealed class StubRunArgs : IPERunArgs
+    {
+        private readonly bool? _bootup;
+
+        private readonly IPEPluginHost _host;
+
+        private readonly string _modulePath;
+
+        public StubRunArgs(IPEPluginHost host, string modulePath)
+        {
+            _host = host;
+            _modulePath = modulePath;
+        }
+
+        /// <summary>起動時実行かどうかだけを答える題材。接続の経路は持たない。</summary>
+        public StubRunArgs(bool bootup)
+        {
+            _bootup = bootup;
+        }
+
+        public IPEPluginHost Host
+        {
+            get
+            {
+                if (_bootup != null)
+                {
+                    throw new NotSupportedException();
+                }
+
+                return _host;
+            }
+        }
+
+        public string ModulePath
+        {
+            get
+            {
+                if (_bootup != null)
+                {
+                    throw new NotSupportedException();
+                }
+
+                return _modulePath;
+            }
+        }
+
+        public bool IsBootup
+        {
+            get
+            {
+                if (_bootup == null)
+                {
+                    throw new NotSupportedException();
+                }
+
+                return _bootup.Value;
+            }
+        }
+    }
+
+    public sealed class StubPluginHost : IPEPluginHost
+    {
+        public StubPluginHost(IPEConnector connector)
+        {
+            Connector = connector;
+        }
+
+        public IPEConnector Connector { get; }
+
+        public IPEBuilder Builder
+        {
+            get { throw new NotSupportedException(); }
+        }
+
+        public string Name
+        {
+            get { throw new NotSupportedException(); }
+        }
+
+        public string Version
+        {
+            get { throw new NotSupportedException(); }
+        }
+    }
+
+    public sealed class StubConnector : IPEConnector
+    {
+        public StubConnector(IPESystemConnector system)
+        {
+            System = system;
+        }
+
+        public IPESystemConnector System { get; }
+
+        public IPEFormConnector Form
+        {
+            get { throw new NotSupportedException(); }
+        }
+
+        public IPEPmdConnector Pmd
+        {
+            get { throw new NotSupportedException(); }
+        }
+
+        public IPXPmxConnector Pmx
+        {
+            get { throw new NotSupportedException(); }
+        }
+
+        public IPEViewConnector View
+        {
+            get { throw new NotSupportedException(); }
+        }
+    }
+
+    public sealed class StubSystemConnector : IPESystemConnector
+    {
+        private readonly IPXCPluginRunArgs _cPluginRunArgs;
+
+        public const int RegisteredPlugins = 23;
+
+        public const int RegisteredCPlugins = 24;
+
+        public StubSystemConnector(IPXCPluginRunArgs cPluginRunArgs)
+        {
+            _cPluginRunArgs = cPluginRunArgs;
+        }
+
+        /// <summary>Cプラグインの実行引数を求めた回数。取得が一度だけであることを見るために数える。</summary>
+        public int CloneCount { get; private set; }
+
+        /// <summary>最後に渡されたモジュールパス。</summary>
+        public string LastModulePath { get; private set; }
+
+        public IPXCPluginRunArgs GetCPluginRunArgsClone(string modulePath)
+        {
+            CloneCount++;
+            LastModulePath = modulePath;
+
+            return _cPluginRunArgs;
+        }
+
+        public string DefaultPluginFolderPath
+        {
+            get { throw new NotSupportedException(); }
+        }
+
+        public string HostApplicationPath
+        {
+            get { throw new NotSupportedException(); }
+        }
+
+        public string PEPluginAssemblyPath
+        {
+            get { throw new NotSupportedException(); }
+        }
+
+        public Version PEPluginAssemblyVersion
+        {
+            get { throw new NotSupportedException(); }
+        }
+
+        public int RegisteredCPluginCount
+        {
+            get { return RegisteredCPlugins; }
+        }
+
+        public int RegisteredPluginCount
+        {
+            get { return RegisteredPlugins; }
+        }
+
+        public string SlimDXAssemblyPath
+        {
+            get { throw new NotSupportedException(); }
+        }
+
+        public int[] FindRegisteredPluginsFromMenuText(string menuText, bool contains)
+        {
+            throw new NotSupportedException();
+        }
+
+        public IPERegisteredPluginInfo GetCPluginInfo(int n)
+        {
+            throw new NotSupportedException();
+        }
+
+        public IPERegisteredPluginInfo GetPluginInfo(int n)
+        {
+            throw new NotSupportedException();
+        }
+
+        public object GetShareObject(string key, bool clear)
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool RemoveShareObject(string key)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void RunCPlugin(int n)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void RunPlugin(int n)
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool SetShareObject(string key, object obj)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    public sealed class StubCPluginConnector : IPXCPluginConnector
+    {
+        public object Connect(int n, object obj)
+        {
+            if (n == 1250)
+            {
+                return 7u;
+            }
+
+            throw new NotSupportedException();
+        }
+
+        public int[] GetSelectedBodyIndices()
+        {
+            throw new NotSupportedException();
+        }
+
+        public int[] GetSelectedBoneIndices()
+        {
+            throw new NotSupportedException();
+        }
+
+        public int[] GetSelectedFaceIndices()
+        {
+            throw new NotSupportedException();
+        }
+
+        public int[] GetSelectedJointIndices()
+        {
+            throw new NotSupportedException();
+        }
+
+        public int[] GetSelectedVertexIndices()
+        {
+            throw new NotSupportedException();
+        }
+
+        public int[] GetVisibleMaterialIndices()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetSelectedBodyIndices(int[] indices)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetSelectedBoneIndices(int[] indices)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetSelectedFaceIndices(int[] indices)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetSelectedJointIndices(int[] indices)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetSelectedVertexIndices(int[] indices)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    public sealed class StubCPluginRunArgs : IPXCPluginRunArgs
+    {
+        public StubCPluginRunArgs(IPXCPluginConnector connector)
+        {
+            Connector = connector;
+        }
+
+        public IPXCPluginConnector Connector { get; }
+
+        public string ModulePath
+        {
+            get { throw new NotSupportedException(); }
+        }
+    }
+}

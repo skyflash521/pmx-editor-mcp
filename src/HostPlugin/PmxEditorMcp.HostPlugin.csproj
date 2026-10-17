@@ -1,0 +1,90 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <AssemblyName>PmxEditorMcp</AssemblyName>
+    <RootNamespace>PmxEditorMcp</RootNamespace>
+    <RequiresPmxEditorDir>true</RequiresPmxEditorDir>
+  </PropertyGroup>
+
+  <Import Project="..\..\PmxEditorSdk.props" />
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PmxEditorMcp.HostPlugin.Tests" />
+    <InternalsVisibleTo Include="PmxEditorMcp.HostPlugin.ModalTests" />
+    <InternalsVisibleTo Include="PmxEditorMcp.HostPlugin.SavingItemTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Web.Extensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SignatureDump\TextMatch.cs" Link="TextMatch.cs" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- 本文の評価の時点では、中間の置き場はまだ決まっていない。 -->
+    <RelaySourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedSdkRelay.g.cs</RelaySourcePath>
+    <ToolBindingSourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedTools.g.cs</ToolBindingSourcePath>
+    <UiStructureSourcePath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedUiStructure.g.cs</UiStructureSourcePath>
+    <UiStructurePath>$(MSBuildThisFileDirectory)..\..\catalog\observed\ui-structure.json</UiStructurePath>
+    <ToolMapPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\tool-map.json</ToolMapPath>
+    <LedgerPath>$(MSBuildThisFileDirectory)..\..\catalog\observed\capability-ledger.json</LedgerPath>
+    <TypeRolesPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\type-roles.json</TypeRolesPath>
+    <CommonAssignmentsPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\common-assignments.json</CommonAssignmentsPath>
+    <ToolSchemasPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\tool-schemas.json</ToolSchemasPath>
+    <CommonContractPath>$(MSBuildThisFileDirectory)..\..\catalog\authored\common-contract.json</CommonContractPath>
+  </PropertyGroup>
+
+  <!-- 生成器の出力先は、組み立ての指定によって動く。 -->
+  <Target Name="BuildRelayGenerator">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\SignatureDump\PmxEditorMcp.SignatureDump.csproj"
+             Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="RelayGeneratorOutput" />
+    </MSBuild>
+    <PropertyGroup>
+      <RelayGeneratorPath>@(RelayGeneratorOutput)</RelayGeneratorPath>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="GenerateRelaySource"
+          BeforeTargets="BeforeCompile"
+          DependsOnTargets="EnsurePmxEditorDir;BuildRelayGenerator">
+    <Exec Command="&quot;$(RelayGeneratorPath)&quot; relay-source &quot;$(PmxEditorDir)&quot; &quot;$(ToolMapPath)&quot; &quot;$(LedgerPath)&quot; &quot;$(RelaySourcePath)&quot;" />
+    <ItemGroup>
+      <Compile Include="$(RelaySourcePath)" Exclude="@(Compile)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="GenerateToolBindingSource"
+          BeforeTargets="BeforeCompile"
+          DependsOnTargets="EnsurePmxEditorDir;BuildRelayGenerator">
+    <Exec Command="&quot;$(RelayGeneratorPath)&quot; tool-bindings &quot;$(PmxEditorDir)&quot; &quot;$(LedgerPath)&quot; &quot;$(TypeRolesPath)&quot; &quot;$(CommonAssignmentsPath)&quot; &quot;$(ToolMapPath)&quot; &quot;$(ToolSchemasPath)&quot; &quot;$(CommonContractPath)&quot; &quot;$(ToolBindingSourcePath)&quot;" />
+    <ItemGroup>
+      <Compile Include="$(ToolBindingSourcePath)" Exclude="@(Compile)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="GenerateUiStructureSource"
+          BeforeTargets="BeforeCompile"
+          DependsOnTargets="BuildRelayGenerator">
+    <Exec Command="&quot;$(RelayGeneratorPath)&quot; ui-structure-source &quot;$(UiStructurePath)&quot; &quot;$(UiStructureSourcePath)&quot;" />
+    <ItemGroup>
+      <Compile Include="$(UiStructureSourcePath)" Exclude="@(Compile)" />
+    </ItemGroup>
+  </Target>
+
+  <!-- 配置先の導入ディレクトリ。与えなければ参照を読む PmxEditorDir へ置く。 -->
+  <Target Name="Deploy" DependsOnTargets="Build">
+    <PropertyGroup>
+      <PmxEditorDeployDir Condition="'$(PmxEditorDeployDir)' == ''">$(PmxEditorDir)</PmxEditorDeployDir>
+    </PropertyGroup>
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PmxEditorDeployDir)\_plugin\User\" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

@@ -1,0 +1,83 @@
+using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
+
+namespace PmxEditorMcp
+{
+    public static class ComposedScreenTools
+    {
+        /// <summary>
+        /// 組み立ての画面ツールを表へ足す。<paramref name="builder"/> は、VMDやPMXを作る相手を、
+        /// <paramref name="subView"/> は SubView のコネクタを、<paramref name="forms"/> は開いているウィンドウを、
+        /// <paramref name="transformView"/> は TransformView のコネクタを返す。
+        /// </summary>
+        public static void AddTo(
+            McpMethodTable methods,
+            ComposedScreen screen,
+            Func<object> builder,
+            Func<object> subView,
+            Func<IEnumerable<Form>> forms,
+            Func<object> transformView,
+            IModifierKeys keys)
+        {
+            AddTo(methods, screen, builder, subView, forms, transformView, keys, new SdkVmdPoseSource());
+        }
+
+        internal static void AddTo(
+            McpMethodTable methods,
+            ComposedScreen screen,
+            Func<object> builder,
+            Func<object> subView,
+            Func<IEnumerable<Form>> forms,
+            Func<object> transformView,
+            IModifierKeys keys,
+            IVmdPoseSource poses)
+        {
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (screen == null)
+            {
+                throw new ArgumentNullException(nameof(screen));
+            }
+
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            if (subView == null)
+            {
+                throw new ArgumentNullException(nameof(subView));
+            }
+
+            if (forms == null)
+            {
+                throw new ArgumentNullException(nameof(forms));
+            }
+
+            ViewSelectElements.AddTo(methods, screen);
+            ViewSelectRelated.AddTo(methods, screen);
+            ViewFilterDisplay.AddTo(methods, screen);
+            ViewPartsSelectWindow.AddTo(methods, screen);
+            ViewSetCameraRotateCenter.AddTo(methods, screen);
+            ViewCaptureImage.AddTo(methods, screen);
+            ViewPickScreenPoint.AddTo(methods, screen);
+            ViewReloadModel.AddTo(methods, screen, subView);
+            ViewLoadVmdView.AddTo(methods, screen, builder);
+            ViewClearVmdView.AddTo(methods, screen, builder);
+            ViewGetVmdViewState.AddTo(methods, screen, forms);
+            ViewSetVmdViewState.AddTo(methods, screen, forms);
+            SessionUpdateAllLists.AddTo(methods, screen);
+            SessionSelectListsFromView.AddTo(methods, screen);
+            MotionSetCameraView.AddTo(methods, screen, forms);
+            MotionApplyCurrentPose.AddTo(methods, screen, forms);
+            MotionSetTransformViewIk.AddTo(methods, screen, forms);
+            EditorPressSavingItem.AddTo(methods, screen, forms);
+            MotionRotateBoneAboutAxis.AddTo(methods, screen, transformView, keys);
+            MotionSetTransformViewVmdFrame.AddTo(methods, screen, transformView, poses);
+        }
+    }
+}

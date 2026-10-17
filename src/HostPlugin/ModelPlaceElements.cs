@@ -1,0 +1,921 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using PEPlugin.Pmx;
+using PEPlugin.SDX;
+
+namespace PmxEditorMcp
+{
+    public static class ModelPlaceElements
+    {
+        public const string ToolName = "model_place_elements";
+
+        public const string AlignTo = "alignTo";
+
+        public const string TranslateBy = "translateBy";
+
+        public const string OffsetName = "offset";
+
+        public const string RotateBy = "rotateBy";
+
+        public const string ScaleBy = "scaleBy";
+
+        public const string RotationName = "rotation";
+
+        public const string RotationAxisName = "rotationAxis";
+
+        public const string RotationAngleName = "rotationAngle";
+
+        public const string ScaleName = "scale";
+
+        public const string ScaleFrameRotationName = "scaleFrameRotation";
+
+        public const string ScaleFrameAxisName = "scaleFrameAxis";
+
+        public const string ScaleFrameAngleName = "scaleFrameAngle";
+
+        public const string CenterName = "center";
+
+        public const string RampName = "ramp";
+
+        public const string RampAxisName = "axis";
+
+        public const string RampFromName = "from";
+
+        public const string RampToName = "to";
+
+        public const string RampCurveName = "curve";
+
+        public const string LinearCurve = "linear";
+
+        public const string SmoothCurve = "smooth";
+
+        public static IList<string> Operations
+        {
+            get { return new[] { AlignTo, TranslateBy, RotateBy, ScaleBy }; }
+        }
+
+        public const string TargetsName = "targets";
+
+        public const string PositionName = "position";
+
+        public const string AxesName = "axes";
+
+        public const string AllAxes = "xyz";
+
+        public static IList<string> Axes
+        {
+            get
+            {
+                return new[]
+                {
+                    AllAxes,
+                    ModelEditVertices.AxisX,
+                    ModelEditVertices.AxisY,
+                    ModelEditVertices.AxisZ,
+                };
+            }
+        }
+
+        public static IList<string> Kinds
+        {
+            get
+            {
+                return new[]
+                {
+                    ElementKinds.Vertex,
+                    ElementKinds.Bone,
+                    ElementKinds.Body,
+                    ElementKinds.Joint,
+                };
+            }
+        }
+
+        public const string ChangedName = "changed";
+
+        public const string KindName = "kind";
+
+        public static void AddTo(McpMethodTable methods, ComposedEdit edit)
+        {
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (edit == null)
+            {
+                throw new ArgumentNullException(nameof(edit));
+            }
+
+            List<string> known = new List<string>
+            {
+                ComposedOperation.OperationName,
+                TargetsName,
+                PositionName,
+                AxesName,
+                OffsetName,
+                RotationName,
+                RotationAxisName,
+                RotationAngleName,
+                ScaleName,
+                ScaleFrameRotationName,
+                ScaleFrameAxisName,
+                ScaleFrameAngleName,
+                CenterName,
+                RampName,
+            };
+            methods.Add(ToolName, edit.Method(known, Run));
+        }
+
+        private static ComposedEditResult Run(McpMethodContext context, object pmx)
+        {
+            IPXPmx model = (IPXPmx)pmx;
+            string operation;
+            string code;
+            string message;
+            Func<object, float, Change> plan;
+            Func<V3, float> weight;
+            IList<KeyValuePair<string, IList<int>>> targets;
+            if (!ComposedOperation.TryTake(
+                    context, Operations, out operation, out code, out message)
+                || !TryOnlyFor(context, operation, out code, out message)
+                || !TryPlan(context, operation, out plan, out code, out message)
+                || !TryRamp(context, out weight, out code, out message)
+                || !TryTargets(context, model, out targets, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            List<Change> changes = new List<Change>();
+            foreach (KeyValuePair<string, IList<int>> target in targets)
+            {
+                IList<object> held = Held(model, target.Key);
+                foreach (int at in target.Value)
+                {
+                    float strength = weight(Spot(held[at]));
+                    Change change = plan(held[at], strength);
+                    change.Strength = strength;
+                    changes.Add(change);
+                }
+            }
+            if (!changes.All(c => c.Finite))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    operation + " で動かすと、有限の数で表せない値になる要素がある。");
+            }
+
+            Dictionary<IPXBone, float> strengths = new Dictionary<IPXBone, float>(ReferenceComparer<IPXBone>.Instance);
+            foreach (Change change in changes.Where(c => c.Item is IPXBone))
+            {
+                strengths[(IPXBone)change.Item] = change.Strength;
+            }
+
+            int changed = changes.Count(c => c.Apply(strengths));
+            foreach (IPXVertex vertex in changes.Where(c => c.Moved).Select(c => c.Item).OfType<IPXVertex>())
+            {
+                VertexWeights.ProjectSdefCenter(vertex);
+            }
+
+            VertexWeights.ProjectSdefCenters(
+                model.Vertex,
+                new HashSet<IPXBone>(
+                    changes.Where(c => c.Moved).Select(c => c.Item).OfType<IPXBone>(),
+                    ReferenceComparer<IPXBone>.Instance));
+
+            return ComposedEditResult.CompleteRewriting(
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { ChangedName, changed },
+                },
+                targets.Select(t => t.Key).ToList());
+        }
+
+        private static bool TryPlan(
+            McpMethodContext context,
+            string operation,
+            out Func<object, float, Change> plan,
+            out string code,
+            out string message)
+        {
+            plan = null;
+            V3 center = new V3(0f, 0f, 0f);
+            V3 given;
+            switch (operation)
+            {
+                case AlignTo:
+                    string axes;
+                    if (!ComposedInput.TryChoice(
+                            context, AxesName, Axes, out axes, out code, out message)
+                        || !ComposedInput.TrySpot(context, PositionName, out given, out code, out message))
+                    {
+                        return false;
+                    }
+
+                    plan = (item, strength) => Change.Of(item, Aligned(Spot(item), given, axes));
+
+                    return true;
+
+                case TranslateBy:
+                    if (!ComposedInput.TrySpot(context, OffsetName, out given, out code, out message))
+                    {
+                        return false;
+                    }
+
+                    plan = (item, strength) =>
+                    {
+                        V3 offset = Vectors.Scale(given, strength);
+                        Change made = Change.Of(item, Vectors.Add(Spot(item), offset));
+                        IPXVertex vertex = item as IPXVertex;
+                        if (vertex != null)
+                        {
+                            made.SdefR0 = Vectors.Add(vertex.SDEF_R0, offset);
+                            made.SdefR1 = Vectors.Add(vertex.SDEF_R1, offset);
+                        }
+
+                        return made;
+                    };
+
+                    return true;
+
+                case RotateBy:
+                    if (context.Params.ContainsKey(RotationAxisName) || context.Params.ContainsKey(RotationAngleName))
+                    {
+                        V3 axis;
+                        float angle;
+                        if (!TryAxisTurn(context, out axis, out angle, out code, out message)
+                            || !TryCenter(context, ref center, out code, out message))
+                        {
+                            return false;
+                        }
+
+                        plan = (item, strength) => Turned(
+                            item, RowMatrix.AroundAxis(axis.X, axis.Y, axis.Z, Radians(angle * strength)), center);
+
+                        return true;
+                    }
+
+                    if (!ComposedInput.TrySpot(context, RotationName, out given, out code, out message)
+                        || !TryCenter(context, ref center, out code, out message))
+                    {
+                        return false;
+                    }
+
+                    plan = (item, strength) => Turned(
+                        item,
+                        RowMatrix.YawPitchRoll(
+                            Radians(given.Y * strength), Radians(given.X * strength), Radians(given.Z * strength)),
+                        center);
+
+                    return true;
+
+                default:
+                    RowMatrix frame;
+                    if (!ComposedInput.TrySpot(context, ScaleName, out given, out code, out message)
+                        || !TryFrame(context, out frame, out code, out message)
+                        || !TryCenter(context, ref center, out code, out message))
+                    {
+                        return false;
+                    }
+
+                    RowMatrix back = frame.Transposed();
+                    bool even = given.X == given.Y && given.Y == given.Z;
+                    plan = (item, strength) =>
+                    {
+                        V3 scale = new V3(
+                            Eased(given.X, strength), Eased(given.Y, strength), Eased(given.Z, strength));
+                        if (scale.X == scale.Y && scale.Y == scale.Z)
+                        {
+                            return Stretched(
+                                item,
+                                RowMatrix.Diagonal(scale.X, scale.X, scale.X),
+                                scale.X < 0f ? RowMatrix.Diagonal(1d / scale.X, 1d / scale.X, 1d / scale.X) : null,
+                                center,
+                                even ? scale.X : (float?)null);
+                        }
+
+                        bool invertible = scale.X != 0f && scale.Y != 0f && scale.Z != 0f;
+
+                        return Stretched(
+                            item,
+                            back.Times(RowMatrix.Diagonal(scale.X, scale.Y, scale.Z)).Times(frame),
+                            !invertible
+                                ? null
+                                : back.Times(RowMatrix.Diagonal(1d / scale.X, 1d / scale.Y, 1d / scale.Z))
+                                    .Times(frame),
+                            center,
+                            even ? scale.X : (float?)null);
+                    };
+
+                    return true;
+            }
+        }
+
+        private static float Eased(float scale, float strength)
+        {
+            return (scale * strength) + (1f - strength);
+        }
+
+        private static bool TryRamp(
+            McpMethodContext context, out Func<V3, float> weight, out string code, out string message)
+        {
+            weight = spot => 1f;
+            code = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(RampName, out given))
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            object[] parts = given as object[];
+            if (parts == null || parts.Length == 0)
+            {
+                message = RampName + " は axis・from・to を持つ組を1つ以上並べた並びでなければならない。";
+
+                return false;
+            }
+
+            List<Func<V3, float>> weights = new List<Func<V3, float>>();
+            foreach (object part in parts)
+            {
+                Func<V3, float> one;
+                if (!TryRampPart(part, out one, out message))
+                {
+                    return false;
+                }
+
+                weights.Add(one);
+            }
+
+            weight = spot => weights.Aggregate(1f, (strength, one) => strength * one(spot));
+            code = null;
+
+            return true;
+        }
+
+        private static bool TryRampPart(object given, out Func<V3, float> weight, out string message)
+        {
+            weight = null;
+            IDictionary<string, object> held = given as IDictionary<string, object>;
+            object axisGiven = null;
+            object fromGiven = null;
+            object toGiven = null;
+            float from = 0f;
+            float to = 0f;
+            string axis = held != null && held.TryGetValue(RampAxisName, out axisGiven) ? axisGiven as string : null;
+            if (axis == null
+                || !new[] { ModelEditVertices.AxisX, ModelEditVertices.AxisY, ModelEditVertices.AxisZ }
+                    .Contains(axis, StringComparer.Ordinal))
+            {
+                message = RampName + " の " + RampAxisName + " は x・y・z のどれかでなければならない。";
+
+                return false;
+            }
+
+            if (!held.TryGetValue(RampFromName, out fromGiven)
+                || !held.TryGetValue(RampToName, out toGiven)
+                || !ValueInput.TrySingle(fromGiven, out from)
+                || !ValueInput.TrySingle(toGiven, out to))
+            {
+                message = RampName + " の " + RampFromName + " と " + RampToName + " は有限の数でなければならない。";
+
+                return false;
+            }
+
+            if (from == to)
+            {
+                message = RampName + " の " + RampFromName + " と " + RampToName + " は違う値でなければならない。";
+
+                return false;
+            }
+
+            object curveGiven;
+            string curve = held.TryGetValue(RampCurveName, out curveGiven) ? curveGiven as string : LinearCurve;
+            if (!string.Equals(curve, LinearCurve, StringComparison.Ordinal)
+                && !string.Equals(curve, SmoothCurve, StringComparison.Ordinal))
+            {
+                message = RampName + " の " + RampCurveName + " は " + LinearCurve + "・" + SmoothCurve
+                    + " のどちらかでなければならない。";
+
+                return false;
+            }
+
+            bool smooth = string.Equals(curve, SmoothCurve, StringComparison.Ordinal);
+
+            weight = spot =>
+            {
+                float along = string.Equals(axis, ModelEditVertices.AxisX, StringComparison.Ordinal)
+                    ? spot.X
+                    : string.Equals(axis, ModelEditVertices.AxisY, StringComparison.Ordinal) ? spot.Y : spot.Z;
+
+                float share = Math.Max(0f, Math.Min(1f, (along - from) / (to - from)));
+
+                return smooth ? share * share * (3f - (2f * share)) : share;
+            };
+            message = null;
+
+            return true;
+        }
+
+        private static bool TryAxisTurn(
+            McpMethodContext context, out V3 axis, out float angle, out string code, out string message)
+        {
+            axis = null;
+            angle = 0f;
+            code = ToolEnvelope.InvalidArgument;
+            if (context.Params.ContainsKey(RotationName))
+            {
+                message = RotationName + " と " + RotationAxisName + "・" + RotationAngleName + " は一緒に渡せない。";
+
+                return false;
+            }
+
+            if (!ComposedInput.TryDirection(context, RotationAxisName, out axis, out code, out message))
+            {
+                return false;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            object taken;
+            if (!context.Params.TryGetValue(RotationAngleName, out taken) || !ValueInput.TrySingle(taken, out angle))
+            {
+                message = RotationAngleName + " は有限の数でなければならない。";
+
+                return false;
+            }
+
+            code = null;
+            message = null;
+
+            return true;
+        }
+
+        private static bool TryCenter(
+            McpMethodContext context, ref V3 center, out string code, out string message)
+        {
+            code = null;
+            message = null;
+
+            return !context.Params.ContainsKey(CenterName)
+                || ComposedInput.TrySpot(context, CenterName, out center, out code, out message);
+        }
+
+        private static Change Turned(object item, RowMatrix turn, V3 center)
+        {
+            Change made = Change.Of(item, turn.TransformAbout(Spot(item), center));
+            IPXVertex vertex = item as IPXVertex;
+            if (vertex != null)
+            {
+                made.Normal = turn.Transform(vertex.Normal);
+                made.SdefR0 = turn.TransformAbout(vertex.SDEF_R0, center);
+                made.SdefR1 = turn.TransformAbout(vertex.SDEF_R1, center);
+            }
+
+            V3 rotation = Rotation(item);
+            if (rotation != null)
+            {
+                made.Rotation = RowMatrix
+                    .YawPitchRoll(rotation.Y, rotation.X, rotation.Z)
+                    .Times(turn)
+                    .ToEulerZxy();
+            }
+
+            return made;
+        }
+
+        private static bool TryFrame(
+            McpMethodContext context, out RowMatrix frame, out string code, out string message)
+        {
+            frame = RowMatrix.Diagonal(1d, 1d, 1d);
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            bool turned = context.Params.ContainsKey(ScaleFrameRotationName);
+            bool axisGiven = context.Params.ContainsKey(ScaleFrameAxisName)
+                || context.Params.ContainsKey(ScaleFrameAngleName);
+            if (turned && axisGiven)
+            {
+                message = ScaleFrameRotationName + " と " + ScaleFrameAxisName + "・" + ScaleFrameAngleName
+                    + " は一緒に渡せない。";
+
+                return false;
+            }
+
+            if (turned)
+            {
+                V3 angles;
+                if (!ComposedInput.TrySpot(context, ScaleFrameRotationName, out angles, out code, out message))
+                {
+                    return false;
+                }
+
+                frame = RowMatrix.YawPitchRoll(Radians(angles.Y), Radians(angles.X), Radians(angles.Z));
+
+                return true;
+            }
+
+            if (!axisGiven)
+            {
+                return true;
+            }
+
+            V3 axis;
+            float angle;
+            object taken;
+            if (!ComposedInput.TryDirection(context, ScaleFrameAxisName, out axis, out code, out message))
+            {
+                return false;
+            }
+
+            if (!context.Params.TryGetValue(ScaleFrameAngleName, out taken)
+                || !ValueInput.TrySingle(taken, out angle))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ScaleFrameAngleName + " は有限の数でなければならない。";
+
+                return false;
+            }
+
+            frame = RowMatrix.AroundAxis(axis.X, axis.Y, axis.Z, Radians(angle));
+            code = null;
+
+            return true;
+        }
+
+        private static Change Stretched(
+            object item, RowMatrix stretch, RowMatrix normalStretch, V3 center, float? even)
+        {
+            Change made = Change.Of(item, stretch.TransformAbout(Spot(item), center));
+            IPXVertex vertex = item as IPXVertex;
+            if (vertex != null)
+            {
+                made.SdefR0 = stretch.TransformAbout(vertex.SDEF_R0, center);
+                made.SdefR1 = stretch.TransformAbout(vertex.SDEF_R1, center);
+            }
+
+            if (vertex != null && normalStretch != null)
+            {
+                V3 turned = normalStretch.Transform(vertex.Normal);
+                double length = Math.Sqrt(
+                    ((double)turned.X * turned.X) + ((double)turned.Y * turned.Y)
+                        + ((double)turned.Z * turned.Z));
+                if (length > 0d)
+                {
+                    made.Normal = new V3(
+                        (float)(turned.X / length), (float)(turned.Y / length), (float)(turned.Z / length));
+                }
+            }
+
+            IPXBody body = item as IPXBody;
+            if (body != null && even.HasValue)
+            {
+                made.Size = Vectors.Scale(body.BoxSize, even.Value);
+            }
+
+            return made;
+        }
+
+        private static V3 Aligned(V3 before, V3 spot, string axes)
+        {
+            return new V3(
+                Taken(axes, ModelEditVertices.AxisX) ? spot.X : before.X,
+                Taken(axes, ModelEditVertices.AxisY) ? spot.Y : before.Y,
+                Taken(axes, ModelEditVertices.AxisZ) ? spot.Z : before.Z);
+        }
+
+        private static double Radians(float degrees)
+        {
+            return degrees * Math.PI / 180d;
+        }
+
+        private static V3 Rotation(object item)
+        {
+            IPXBody body = item as IPXBody;
+            if (body != null)
+            {
+                return body.Rotation;
+            }
+
+            IPXJoint joint = item as IPXJoint;
+
+            return joint == null ? null : joint.Rotation;
+        }
+
+        private static bool TryTargets(
+            McpMethodContext context,
+            IPXPmx model,
+            out IList<KeyValuePair<string, IList<int>>> targets,
+            out string code,
+            out string message)
+        {
+            targets = null;
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            object given;
+            context.Params.TryGetValue(TargetsName, out given);
+            object[] items = given as object[];
+            if (items == null || items.Length == 0)
+            {
+                message = TargetsName + " は、そろえる要素を種類ごとに指した組を1つ以上"
+                    + "並べたものでなければならない。";
+
+                return false;
+            }
+
+            List<KeyValuePair<string, IList<int>>> made =
+                new List<KeyValuePair<string, IList<int>>>();
+            foreach (object item in items)
+            {
+                IDictionary<string, object> held = item as IDictionary<string, object>;
+                object name;
+                string kind = null;
+                if (held != null && held.TryGetValue(KindName, out name))
+                {
+                    kind = name as string;
+                }
+
+                if (kind == null || !Kinds.Contains(kind, StringComparer.Ordinal))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = TargetsName + " の " + KindName + " は次のどれかでなければならない: "
+                        + string.Join("・", Kinds.ToArray());
+
+                    return false;
+                }
+
+                if (made.Any(t => string.Equals(t.Key, kind, StringComparison.Ordinal)))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = TargetsName + " へ同じ種類を二度並べている: " + kind;
+
+                    return false;
+                }
+
+                IList<int> positions;
+                int count = Held(model, kind).Count;
+                if (string.Equals(kind, ElementKinds.Vertex, StringComparison.Ordinal))
+                {
+                    if (!ModelFindVertexBounds.TryVertices(
+                        held, model, context.Screen.Pick(kind, count), out positions, out code, out message))
+                    {
+                        return false;
+                    }
+                }
+                else if (held.ContainsKey(ModelFindVertexBounds.MaterialIndicesName))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = ModelFindVertexBounds.MaterialIndicesName + " は " + KindName + " が "
+                        + ElementKinds.Vertex + " の組でだけ渡せる。";
+
+                    return false;
+                }
+                else if (!TargetInput.TryPositions(
+                    held,
+                    TargetNames.Element,
+                    count,
+                    out positions,
+                    out code,
+                    out message,
+                    context.Screen.Pick(kind, count)))
+                {
+                    return false;
+                }
+
+                made.Add(new KeyValuePair<string, IList<int>>(kind, positions));
+            }
+
+            code = null;
+            targets = made;
+
+            return true;
+        }
+
+        private static bool TryOnlyFor(
+            McpMethodContext context, string operation, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            string[] taken;
+            switch (operation)
+            {
+                case AlignTo:
+                    taken = new[] { PositionName, AxesName };
+                    break;
+
+                case TranslateBy:
+                    taken = new[] { OffsetName, RampName };
+                    break;
+
+                case RotateBy:
+                    taken = new[] { RotationName, RotationAxisName, RotationAngleName, CenterName, RampName };
+                    break;
+
+                default:
+                    taken = new[]
+                    {
+                        ScaleName, ScaleFrameRotationName, ScaleFrameAxisName, ScaleFrameAngleName, CenterName,
+                        RampName,
+                    };
+                    break;
+            }
+
+            string given = new[]
+                {
+                    PositionName, AxesName, OffsetName, RotationName, RotationAxisName, RotationAngleName, ScaleName,
+                    ScaleFrameRotationName, ScaleFrameAxisName, ScaleFrameAngleName, CenterName, RampName,
+                }
+                .Where(n => !taken.Contains(n, StringComparer.Ordinal))
+                .FirstOrDefault(context.Params.ContainsKey);
+            if (given == null)
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = given + " は " + operation + " では渡せない。";
+
+            return false;
+        }
+
+        private static IList<object> Held(IPXPmx model, string kind)
+        {
+            switch (kind)
+            {
+                case ElementKinds.Vertex:
+                    return model.Vertex.Cast<object>().ToList();
+
+                case ElementKinds.Bone:
+                    return model.Bone.Cast<object>().ToList();
+
+                case ElementKinds.Body:
+                    return model.Body.Cast<object>().ToList();
+
+                default:
+                    return model.Joint.Cast<object>().ToList();
+            }
+        }
+
+        private static bool Taken(string axes, string axis)
+        {
+            return string.Equals(axes, AllAxes, StringComparison.Ordinal)
+                || string.Equals(axes, axis, StringComparison.Ordinal);
+        }
+
+        private static V3 Spot(object item)
+        {
+            IPXVertex vertex = item as IPXVertex;
+            if (vertex != null)
+            {
+                return vertex.Position;
+            }
+
+            IPXBone bone = item as IPXBone;
+            if (bone != null)
+            {
+                return bone.Position;
+            }
+
+            IPXBody body = item as IPXBody;
+
+            return body != null ? body.Position : ((IPXJoint)item).Position;
+        }
+
+        private static void Put(object item, V3 spot)
+        {
+            IPXVertex vertex = item as IPXVertex;
+            if (vertex != null)
+            {
+                vertex.Position = spot;
+
+                return;
+            }
+
+            IPXBone bone = item as IPXBone;
+            if (bone != null)
+            {
+                bone.Position = spot;
+
+                return;
+            }
+
+            IPXBody body = item as IPXBody;
+            if (body != null)
+            {
+                body.Position = spot;
+
+                return;
+            }
+
+            ((IPXJoint)item).Position = spot;
+        }
+
+        private sealed class Change
+        {
+            private readonly object _item;
+
+            private readonly V3 _position;
+
+            private Change(object item, V3 position)
+            {
+                _item = item;
+                _position = position;
+            }
+
+            public V3 Normal { get; set; }
+
+            public V3 Rotation { get; set; }
+
+            public V3 Size { get; set; }
+
+            public V3 SdefR0 { get; set; }
+
+            public V3 SdefR1 { get; set; }
+
+            public float Strength { get; set; }
+
+            public bool Moved { get; private set; }
+
+            public object Item
+            {
+                get { return _item; }
+            }
+
+            public bool Finite
+            {
+                get
+                {
+                    return new[] { _position, Normal, Rotation, Size, SdefR0, SdefR1 }
+                        .Where(v => v != null)
+                        .All(Vectors.Finite);
+                }
+            }
+
+            public static Change Of(object item, V3 position)
+            {
+                return new Change(item, position);
+            }
+
+            /// <summary>
+            /// 書いた値のどれかが前と違っていれば真。SDEF の R0・R1 は、頂点の2つのボーンがどちらも
+            /// <paramref name="strengths"/> にあり、頂点と同じ強さで動かすときだけ書く。
+            /// </summary>
+            public bool Apply(IDictionary<IPXBone, float> strengths)
+            {
+                bool changed = false;
+                if (!Vectors.Same(Spot(_item), _position))
+                {
+                    Put(_item, _position);
+                    Moved = true;
+                    changed = true;
+                }
+
+                IPXVertex vertex = _item as IPXVertex;
+                if (Normal != null && vertex != null && !Vectors.Same(vertex.Normal, Normal))
+                {
+                    vertex.Normal = Normal;
+                    changed = true;
+                }
+
+                if (SdefR0 != null && vertex != null && vertex.SDEF
+                    && SameStrength(strengths, vertex.Bone1)
+                    && SameStrength(strengths, vertex.Bone2)
+                    && (!Vectors.Same(vertex.SDEF_R0, SdefR0) || !Vectors.Same(vertex.SDEF_R1, SdefR1)))
+                {
+                    vertex.SDEF_R0 = SdefR0;
+                    vertex.SDEF_R1 = SdefR1;
+                    changed = true;
+                }
+
+                IPXBody body = _item as IPXBody;
+                IPXJoint joint = _item as IPXJoint;
+                if (Rotation != null && body != null && !Vectors.Same(body.Rotation, Rotation))
+                {
+                    body.Rotation = Rotation;
+                    changed = true;
+                }
+
+                if (Rotation != null && joint != null && !Vectors.Same(joint.Rotation, Rotation))
+                {
+                    joint.Rotation = Rotation;
+                    changed = true;
+                }
+
+                if (Size != null && body != null && !Vectors.Same(body.BoxSize, Size))
+                {
+                    body.BoxSize = Size;
+                    changed = true;
+                }
+
+                return changed;
+            }
+
+            private bool SameStrength(IDictionary<IPXBone, float> strengths, IPXBone bone)
+            {
+                float strength;
+
+                return bone != null && strengths.TryGetValue(bone, out strength) && strength == Strength;
+            }
+        }
+    }
+}

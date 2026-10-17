@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>PmxEditorMcp.Bridge</AssemblyName>
+    <RootNamespace>PmxEditorMcp.Bridge</RootNamespace>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RequiresPmxEditorDir>true</RequiresPmxEditorDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PmxEditorMcp.Bridge.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SignatureDump\FixedToolTable.cs" Link="FixedToolTable.cs" />
+    <Compile Include="..\SignatureDump\TextMatch.cs" Link="TextMatch.cs" />
+    <Compile Include="..\SignatureDump\ToolMatch.cs" Link="ToolMatch.cs" />
+    <Compile Include="..\HostPlugin\HostProtocol.cs" Link="HostProtocol.cs" />
+    <Compile Include="..\HostPlugin\JsonRpcErrorCodes.cs" Link="JsonRpcErrorCodes.cs" />
+    <Compile Include="..\HostPlugin\MessageLimit.cs" Link="MessageLimit.cs" />
+    <Compile Include="..\HostPlugin\ResponseBudget.cs" Link="ResponseBudget.cs" />
+    <Compile Include="..\HostPlugin\ToolEnvelopeCodes.cs" Link="ToolEnvelopeCodes.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" />
+    <!-- ModelContextProtocol が推移的に持つのは Hosting.Abstractions だけで、
+         Generic Host の実装は含まれない。 -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- 本文の評価の時点では、中間の置き場はまだ決まっていない。 -->
+    <ToolDefinitionPath>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\GeneratedToolDefinitions.g.cs</ToolDefinitionPath>
+    <ObservedDirectory>$(MSBuildThisFileDirectory)..\..\catalog\observed</ObservedDirectory>
+    <AuthoredDirectory>$(MSBuildThisFileDirectory)..\..\catalog\authored</AuthoredDirectory>
+  </PropertyGroup>
+
+  <!-- 生成器の出力先は、組み立ての指定によって動く。 -->
+  <Target Name="BuildDefinitionGenerator">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)..\SignatureDump\PmxEditorMcp.SignatureDump.csproj"
+             Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="DefinitionGeneratorOutput" />
+    </MSBuild>
+    <PropertyGroup>
+      <DefinitionGeneratorPath>@(DefinitionGeneratorOutput)</DefinitionGeneratorPath>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="GenerateToolDefinitions"
+          BeforeTargets="BeforeCompile"
+          DependsOnTargets="EnsurePmxEditorDir;BuildDefinitionGenerator">
+    <Exec Command="&quot;$(DefinitionGeneratorPath)&quot; tool-definitions &quot;$(PmxEditorDir)&quot; &quot;$(ObservedDirectory)\capability-ledger.json&quot; &quot;$(AuthoredDirectory)\common-contract.json&quot; &quot;$(AuthoredDirectory)\type-roles.json&quot; &quot;$(AuthoredDirectory)\property-names.json&quot; &quot;$(AuthoredDirectory)\common-assignments.json&quot; &quot;$(AuthoredDirectory)\tool-map.json&quot; &quot;$(AuthoredDirectory)\tool-schemas.json&quot; &quot;$(ToolDefinitionPath)&quot;" />
+    <ItemGroup>
+      <Compile Include="$(ToolDefinitionPath)" Exclude="@(Compile)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

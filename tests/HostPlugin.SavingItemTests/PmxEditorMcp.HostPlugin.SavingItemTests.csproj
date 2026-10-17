@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 実物のファイル保存ダイアログを出す検査。ほかの検査とは別のプロセスで走らせる。 -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>PmxEditorMcp.HostPlugin.SavingItemTests</AssemblyName>
+    <RootNamespace>PmxEditorMcp.Tests</RootNamespace>
+    <RequiresPmxEditorDir>true</RequiresPmxEditorDir>
+    <PmxEditorSdkCopied>true</PmxEditorSdkCopied>
+  </PropertyGroup>
+
+  <Import Project="..\..\PmxEditorSdk.props" />
+
+  <ItemGroup>
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\HostPlugin\PmxEditorMcp.HostPlugin.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\HostPlugin.ModalTests\ModalWindowCollection.cs" Link="Shared\ModalWindowCollection.cs" />
+    <Compile Include="..\HostPlugin.ModalTests\DialogStartFolder.cs" Link="Shared\DialogStartFolder.cs" />
+  </ItemGroup>
+
+  <Import Project="..\HostPlugin.SharedFixtures.props" />
+
+</Project>

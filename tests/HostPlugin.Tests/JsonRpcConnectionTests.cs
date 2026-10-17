@@ -1,0 +1,1296 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Web.Script.Serialization;
+using PmxEditorMcp.Contract.Tests;
+using Xunit;
+
+namespace PmxEditorMcp.Tests
+{
+    public class JsonRpcConnectionTests : IDisposable
+    {
+        private const string HostVersion = "1.2.3.4";
+        private const int BudgetChars = 100000;
+        private const int LivingClientId = 4321;
+
+        private static readonly Encoding Utf8WithoutBom = new UTF8Encoding(false);
+        private static readonly TimeSpan WaitLimit = TimeSpan.FromSeconds(10);
+
+        private readonly string _directory;
+        private readonly HostLog _log;
+
+        public JsonRpcConnectionTests()
+        {
+            _directory = Path.Combine(Path.GetTempPath(), "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(_directory);
+            _log = new HostLog(Path.Combine(_directory, "host.log"));
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                Directory.Delete(_directory, true);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+
+        [Fact]
+        public void AHandshakeGoesToFetchBackTheUndoThatWasLeftStopped()
+        {
+            StubUndoLock target = new StubUndoLock(2);
+            UndoSuppression undo = new UndoSuppression(_log);
+            undo.Run(target, () => { });
+            Assert.True(undo.HasLeftover, "止めたままにできていない。");
+            bool leftWhenAsked = true;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("probe", context => leftWhenAsked = undo.HasLeftover);
+
+            Exchange(
+                CreateConnection(methods, new UndoRecovery(undo, target)),
+                Handshake(),
+                Request(2, "probe"));
+
+            Assert.False(leftWhenAsked, "握手のあとも止まったまま残っている。");
+        }
+
+        [Fact]
+        public void TheEndOfAConnectionGoesToFetchBackTheUndoThatWasLeftStopped()
+        {
+            StubUndoLock target = new StubUndoLock(3);
+            UndoSuppression undo = new UndoSuppression(_log);
+            undo.Run(target, () => { });
+            bool leftWhenAsked = false;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("probe", context => leftWhenAsked = undo.HasLeftover);
+
+            Exchange(
+                CreateConnection(methods, new UndoRecovery(undo, target)),
+                Handshake(),
+                Request(2, "probe"));
+
+            Assert.True(leftWhenAsked, "握手のときに戻ってしまい、後始末を確かめられない。");
+            Assert.False(undo.HasLeftover, "接続が終わっても止まったまま残っている。");
+        }
+
+        /// <summary>初めの何回かは戻せない相手。止めたまま残る様子を作るのに使う。</summary>
+        private sealed class StubUndoLock : IUndoLock
+        {
+            private readonly int _failures;
+
+            private int _attempts;
+
+            public StubUndoLock(int failures)
+            {
+                _failures = failures;
+            }
+
+            public void Lock()
+            {
+            }
+
+            public void Unlock()
+            {
+                _attempts++;
+                if (_attempts <= _failures)
+                {
+                    throw new InvalidOperationException("戻せない。");
+                }
+            }
+        }
+
+        private static string Handshake(int id, int protocol)
+        {
+            return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"method\":\"handshake\",\"params\":{\"protocol\":" + protocol + "}}";
+        }
+
+        private static string Handshake()
+        {
+            return Handshake(1, 1);
+        }
+
+        private static string Request(int id, string method)
+        {
+            return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"method\":\"" + method + "\"}";
+        }
+
+        private static string RequestWithArrayParams(int id, string method)
+        {
+            return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"method\":\"" + method + "\",\"params\":[1,2]}";
+        }
+
+        private JsonRpcConnection CreateConnection(McpMethodTable methods)
+        {
+            return CreateConnection(
+                methods, JsonRpcConnection.DefaultRequestTimeout, MessageChannel.DefaultMaxMessageBytes);
+        }
+
+        private JsonRpcConnection CreateConnection(McpMethodTable methods, UndoRecovery recovery)
+        {
+            return new JsonRpcConnection(
+                _log,
+                methods,
+                HostVersion,
+                BudgetChars,
+                JsonRpcConnection.DefaultRequestTimeout,
+                MessageChannel.DefaultMaxMessageBytes,
+                StubClientProcess.Opener(LivingClientId),
+                new SdkRelayTable(
+                    string.Empty, string.Empty, new Dictionary<string, SdkCall>(), new string[0]),
+                string.Empty,
+                recovery);
+        }
+
+        private JsonRpcConnection CreateConnection(McpMethodTable methods, TimeSpan requestTimeout, int maxMessageBytes)
+        {
+            return new JsonRpcConnection(
+                _log,
+                methods,
+                HostVersion,
+                BudgetChars,
+                requestTimeout,
+                maxMessageBytes,
+                StubClientProcess.Opener(LivingClientId));
+        }
+
+        private JsonRpcConnection CreateConnection(
+            McpMethodTable methods, TimeSpan requestTimeout, int maxMessageBytes, Func<TimeSpan> clock)
+        {
+            return new JsonRpcConnection(
+                _log,
+                methods,
+                HostVersion,
+                BudgetChars,
+                requestTimeout,
+                maxMessageBytes,
+                StubClientProcess.Opener(LivingClientId),
+                new SdkRelayTable(
+                    string.Empty, string.Empty, new Dictionary<string, SdkCall>(), new string[0]),
+                string.Empty,
+                clock: clock);
+        }
+
+        /// <summary>書かれたログ。1行も書かれていなければファイルごと無いので空とする。</summary>
+        private string WrittenLog()
+        {
+            return File.Exists(_log.FilePath)
+                ? File.ReadAllText(_log.FilePath, Encoding.UTF8)
+                : string.Empty;
+        }
+
+        private static byte[] Lines(params string[] requests)
+        {
+            return Utf8WithoutBom.GetBytes(string.Join("\n", requests) + "\n");
+        }
+
+        /// <summary>要求の並びを流し込み、返った応答を解いて返す。</summary>
+        private static IList<IDictionary<string, object>> Exchange(JsonRpcConnection connection, params string[] requests)
+        {
+            return ExchangeBytes(connection, Lines(requests));
+        }
+
+        private static IList<IDictionary<string, object>> ExchangeWith(
+            JsonRpcConnection connection, IUiInvoker ui, params string[] requests)
+        {
+            using (ExchangeStream stream = new ExchangeStream(Lines(requests)))
+            {
+                connection.Handle(stream, ui);
+                return stream.ReadResponses();
+            }
+        }
+
+        private static IList<IDictionary<string, object>> ExchangeBytes(JsonRpcConnection connection, byte[] input)
+        {
+            using (ExchangeStream stream = new ExchangeStream(input))
+            {
+                connection.Handle(stream, new InlineInvoker());
+                return stream.ReadResponses();
+            }
+        }
+
+        private static int ErrorCodeOf(IDictionary<string, object> response)
+        {
+            object error;
+            Assert.True(response.TryGetValue("error", out error), "エラーの応答ではない。");
+
+            IDictionary<string, object> body = Assert.IsAssignableFrom<IDictionary<string, object>>(error);
+            Assert.True(body.ContainsKey("message"));
+            return Convert.ToInt32(body["code"]);
+        }
+
+        private static string ErrorMessageOf(IDictionary<string, object> response)
+        {
+            IDictionary<string, object> body =
+                Assert.IsAssignableFrom<IDictionary<string, object>>(response["error"]);
+            return (string)body["message"];
+        }
+
+        private static object ResultOf(IDictionary<string, object> response)
+        {
+            object result;
+            Assert.True(response.TryGetValue("result", out result), "成功の応答ではない。");
+            Assert.False(response.ContainsKey("error"));
+            return result;
+        }
+
+        private static object IdOf(IDictionary<string, object> response)
+        {
+            Assert.Equal("2.0", response["jsonrpc"]);
+            return response["id"];
+        }
+
+        [Fact]
+        public void SuccessfulHandshakeReturnsContractValues()
+        {
+            IList<IDictionary<string, object>> responses = Exchange(CreateConnection(new McpMethodTable()), Handshake());
+
+            Assert.Single(responses);
+            Assert.Equal(1, Convert.ToInt32(IdOf(responses[0])));
+
+            IDictionary<string, object> result =
+                Assert.IsAssignableFrom<IDictionary<string, object>>(ResultOf(responses[0]));
+            Assert.Equal(HostProtocol.Number, Convert.ToInt32(result["protocol"]));
+            Assert.Equal(HostVersion, result["hostVersion"]);
+            Assert.Equal(BudgetChars, Convert.ToInt32(result["budgetChars"]));
+        }
+
+        [Fact]
+        public void ProtocolNumberIsOne()
+        {
+            Assert.Equal(1, HostProtocol.Number);
+        }
+
+        /// <summary>要求1件に許す時間は、ブリッジと揃えて持つ取り決めの値である。</summary>
+        [Fact]
+        public void DefaultRequestTimeLimitMatchesTheSharedContract()
+        {
+            Assert.Equal(HostBridgeContract.HostRequestTimeout, JsonRpcConnection.DefaultRequestTimeout);
+        }
+
+        [Theory]
+        [InlineData("ping")]
+        [InlineData("unknown")]
+        [InlineData("")]
+        public void OtherRequestBeforeHandshakeIsRejectedAndDisconnects(string method)
+        {
+            IList<IDictionary<string, object>> responses =
+                Exchange(CreateConnection(new McpMethodTable()), Request(1, method), Request(2, "ping"));
+
+            Assert.Single(responses);
+            Assert.Equal(JsonRpcErrorCodes.HandshakeRequired, ErrorCodeOf(responses[0]));
+            Assert.Equal(1, Convert.ToInt32(IdOf(responses[0])));
+        }
+
+        [Fact]
+        public void InvalidArgumentsBeforeHandshakeAreRejectedBeforeArgumentCheck()
+        {
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(new McpMethodTable()), RequestWithArrayParams(1, "ping"), Request(2, "ping"));
+
+            Assert.Single(responses);
+            Assert.Equal(JsonRpcErrorCodes.HandshakeRequired, ErrorCodeOf(responses[0]));
+        }
+
+        [Fact]
+        public void StructureErrorBeforeHandshakeIsJudgedFirstAndKeepsConnection()
+        {
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(new McpMethodTable()), "{\"id\":1,\"method\":\"ping\"}", Handshake());
+
+            // 構造不正は接続を保つので、続けて送ったハンドシェイクにも応答する。
+            Assert.Equal(2, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.InvalidRequest, ErrorCodeOf(responses[0]));
+            Assert.NotNull(ResultOf(responses[1]));
+        }
+
+        [Fact]
+        public void HandshakeWithMismatchedProtocolNumberIsRejectedAndDisconnects()
+        {
+            IList<IDictionary<string, object>> responses =
+                Exchange(CreateConnection(new McpMethodTable()), Handshake(1, 2), Request(2, "ping"));
+
+            Assert.Single(responses);
+            Assert.Equal(JsonRpcErrorCodes.ProtocolMismatch, ErrorCodeOf(responses[0]));
+            Assert.Equal(1, Convert.ToInt32(IdOf(responses[0])));
+        }
+
+        [Theory]
+        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\"}")]
+        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":{}}")]
+        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":{\"protocol\":\"1\"}}")]
+        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":[1]}")]
+        public void HandshakeWithoutNumericProtocolIsInvalidArgumentsAndKeepsConnection(string request)
+        {
+            IList<IDictionary<string, object>> responses =
+                Exchange(CreateConnection(new McpMethodTable()), request, Handshake(2, 1));
+
+            Assert.Equal(2, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.InvalidParams, ErrorCodeOf(responses[0]));
+            Assert.NotNull(ResultOf(responses[1]));
+        }
+
+        [Fact]
+        public void SecondHandshakeOnHandshakenConnectionReturnsSameContent()
+        {
+            IList<IDictionary<string, object>> responses =
+                Exchange(CreateConnection(new McpMethodTable()), Handshake(1, 1), Handshake(7, 1), Request(8, "ping"));
+
+            Assert.Equal(3, responses.Count);
+
+            IDictionary<string, object> second =
+                Assert.IsAssignableFrom<IDictionary<string, object>>(ResultOf(responses[1]));
+            Assert.Equal(7, Convert.ToInt32(IdOf(responses[1])));
+            Assert.Equal(HostProtocol.Number, Convert.ToInt32(second["protocol"]));
+            Assert.Equal(HostVersion, second["hostVersion"]);
+            Assert.Equal(BudgetChars, Convert.ToInt32(second["budgetChars"]));
+
+            // 状態は変わらないので、続く要求が最初の要求として扱われることはない。
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void HandshakeOutcomeIsNotCarriedAcrossConnections()
+        {
+            JsonRpcConnection connection = CreateConnection(new McpMethodTable());
+
+            IList<IDictionary<string, object>> first = Exchange(connection, Handshake(), Request(2, "ping"));
+            Assert.Equal(2, first.Count);
+            Assert.NotNull(ResultOf(first[0]));
+            Assert.Equal("pong", ResultOf(first[1]));
+
+            IList<IDictionary<string, object>> second = Exchange(connection, Request(1, "ping"));
+
+            Assert.Single(second);
+            Assert.Equal(JsonRpcErrorCodes.HandshakeRequired, ErrorCodeOf(second[0]));
+        }
+
+        [Fact]
+        public void PingReturnsFixedString()
+        {
+            IList<IDictionary<string, object>> responses =
+                Exchange(CreateConnection(new McpMethodTable()), Handshake(), Request(2, "ping"));
+
+            Assert.Equal(2, responses.Count);
+            Assert.Equal("pong", ResultOf(responses[1]));
+            Assert.Equal(2, Convert.ToInt32(IdOf(responses[1])));
+        }
+
+        [Theory]
+        [InlineData("unknown")]
+        [InlineData("")]
+        public void MethodWithoutHandlerIsUnknownAndKeepsConnection(string method)
+        {
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(new McpMethodTable()), Handshake(), Request(2, method), Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.MethodNotFound, ErrorCodeOf(responses[1]));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void UnknownMethodIsJudgedBeforeArgumentCheck()
+        {
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(new McpMethodTable()), Handshake(), RequestWithArrayParams(2, "unknown"));
+
+            Assert.Equal(2, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.MethodNotFound, ErrorCodeOf(responses[1]));
+        }
+
+        [Fact]
+        public void RequestWithNonObjectArgumentsIsInvalidArgumentsAndKeepsConnection()
+        {
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(new McpMethodTable()), Handshake(), RequestWithArrayParams(2, "ping"), Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.InvalidParams, ErrorCodeOf(responses[1]));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void HandlerInvalidArgumentsAreReturnedWithDescription()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("reject", context => throw new InvalidParamsException("index が足りない。"));
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods), Handshake(), Request(2, "reject"), Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.InvalidParams, ErrorCodeOf(responses[1]));
+            Assert.Contains("index が足りない。", ErrorMessageOf(responses[1]));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void HandlerReceivesArgumentsUiDispatchAndResponseBudget()
+        {
+            int observedBudget = 0;
+            IUiInvoker observedUi = null;
+            bool dispatched = false;
+
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("echo", context =>
+            {
+                observedBudget = context.BudgetChars;
+                observedUi = context.Ui;
+                dispatched = context.Ui.TryInvokeOnUi(() => { }).DidRun;
+                return context.Params["value"];
+            });
+
+            InlineInvoker ui = new InlineInvoker();
+            IList<IDictionary<string, object>> responses = ExchangeWith(
+                CreateConnection(methods),
+                ui,
+                Handshake(),
+                "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"echo\",\"params\":{\"value\":\"あ\"}}");
+
+            Assert.Equal(2, responses.Count);
+            Assert.Equal("あ", ResultOf(responses[1]));
+            Assert.Equal(BudgetChars, observedBudget);
+            Assert.Same(ui, observedUi);
+            Assert.True(dispatched);
+        }
+
+        [Fact]
+        public void OmittedArgumentsBecomeEmpty()
+        {
+            IDictionary<string, object> observed = null;
+
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("peek", context =>
+            {
+                observed = context.Params;
+                return "ok";
+            });
+
+            Exchange(CreateConnection(methods), Handshake(), Request(2, "peek"));
+
+            Assert.NotNull(observed);
+            Assert.Empty(observed);
+        }
+
+        [Fact]
+        public void UnexpectedHandlerExceptionIsInternalErrorAndKeepsConnection()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("boom", context => throw new InvalidOperationException("処理の失敗"));
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods), Handshake(), Request(2, "boom"), Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.InternalError, ErrorCodeOf(responses[1]));
+            Assert.Equal(2, Convert.ToInt32(IdOf(responses[1])));
+
+            // ハンドシェイク済みの状態は保たれる。
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void HandlerExceptionIsRecordedWithStackTrace()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("boom", context => throw new InvalidOperationException("記録される原因"));
+
+            Exchange(CreateConnection(methods), Handshake(), Request(2, "boom"));
+
+            string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
+            Assert.Contains("記録される原因", log);
+            Assert.Contains(nameof(InvalidOperationException), log);
+            Assert.Contains(nameof(JsonRpcConnectionTests), log);
+        }
+
+        [Fact]
+        public void ReturnedErrorResponseCodeIsRecorded()
+        {
+            Exchange(
+                CreateConnection(new McpMethodTable()), Handshake(), Request(2, "しらないめそっど"),
+                Request(3, "ping"));
+
+            string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
+            Assert.Contains(
+                "エラー応答: code=" + JsonRpcErrorCodes.MethodNotFound.ToString(CultureInfo.InvariantCulture),
+                log);
+        }
+
+        [Fact]
+        public void ErrorResponseDescriptionIsNotRecorded()
+        {
+            Exchange(
+                CreateConnection(new McpMethodTable()),
+                Handshake(),
+                "{" + Quoted("jsonrpc") + ":" + Quoted("2.0") + "," + Quoted("id") + ":2,"
+                    + Quoted("method") + ":" + Quoted("ping") + "," + Quoted("params") + ":"
+                    + Quoted("モデルの秘密") + "}");
+
+            string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
+            Assert.Contains(
+                "エラー応答: code=" + JsonRpcErrorCodes.InvalidParams.ToString(CultureInfo.InvariantCulture),
+                log);
+            Assert.DoesNotContain("モデルの秘密", log);
+            Assert.DoesNotContain("params はオブジェクトでなければならない。", log);
+        }
+
+        [Fact]
+        public void RepeatedErrorCodeIsRecordedOnceWithRunningTotal()
+        {
+            Exchange(
+                CreateConnection(new McpMethodTable()),
+                Handshake(),
+                Request(2, "しらないめそっど"),
+                Request(3, "しらないめそっど"),
+                Request(4, "しらないめそっど"));
+
+            string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
+            string code = JsonRpcErrorCodes.MethodNotFound.ToString(CultureInfo.InvariantCulture);
+            Assert.Equal(1, CountOccurrences(log, "エラー応答: code=" + code));
+            Assert.Contains("エラー応答の反復: code=" + code + " count=3", log);
+        }
+
+        private static int CountOccurrences(string text, string value)
+        {
+            int count = 0;
+            for (int index = text.IndexOf(value, StringComparison.Ordinal); index >= 0;
+                index = text.IndexOf(value, index + value.Length, StringComparison.Ordinal))
+            {
+                count++;
+            }
+
+            return count;
+        }
+
+        private static string Quoted(string value)
+        {
+            return "\"" + value + "\"";
+        }
+
+        [Fact]
+        public void RequestContentIsNotRecorded()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("boom", context => throw new InvalidOperationException("処理の失敗"));
+
+            Exchange(
+                CreateConnection(methods),
+                Handshake(),
+                "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"boom\",\"params\":{\"value\":\"モデルの秘密\"}}");
+
+            string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
+            // 記録しないのは要求の値であって、閉じた語彙であるメソッド名は含まない。
+            Assert.DoesNotContain("モデルの秘密", log);
+        }
+
+        [Fact]
+        public void SyntaxErrorBodyIsRejectedAndDisconnects()
+        {
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(new McpMethodTable()), Handshake(), "これはJSONではない", Request(3, "ping"));
+
+            Assert.Equal(2, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.ParseError, ErrorCodeOf(responses[1]));
+            Assert.Null(IdOf(responses[1]));
+        }
+
+        [Fact]
+        public void BodyThatIsNotValidUtf8IsRejectedAndDisconnects()
+        {
+            List<byte> input = new List<byte>();
+            input.AddRange(Lines(Handshake()));
+            input.AddRange(new byte[] { 0x82, 0xA0, (byte)'\n' });
+            input.AddRange(Lines(Request(3, "ping")));
+
+            IList<IDictionary<string, object>> responses =
+                ExchangeBytes(CreateConnection(new McpMethodTable()), input.ToArray());
+
+            Assert.Equal(2, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.ParseError, ErrorCodeOf(responses[1]));
+            Assert.Null(IdOf(responses[1]));
+        }
+
+        [Fact]
+        public void StructureErrorRequestReturnsIdAndKeepsConnection()
+        {
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(new McpMethodTable()),
+                Handshake(),
+                "{\"jsonrpc\":\"1.0\",\"id\":2,\"method\":\"ping\"}",
+                Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.InvalidRequest, ErrorCodeOf(responses[1]));
+            Assert.Equal(2, Convert.ToInt32(IdOf(responses[1])));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void RequestOverStructureLimitIsRejectedAndDisconnects()
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.Append("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"ping\",\"params\":{\"a\":[{}");
+            for (int index = 1; index <= JsonRpcCodec.ParseStructureTokenLimit; index++)
+            {
+                builder.Append(",{}");
+            }
+
+            builder.Append("]}}");
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(new McpMethodTable()), Handshake(), builder.ToString(), Request(3, "ping"));
+
+            Assert.Equal(2, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.RequestTooLarge, ErrorCodeOf(responses[1]));
+            Assert.Null(IdOf(responses[1]));
+        }
+
+        [Fact]
+        public void InputOverLimitIsRejectedAndDisconnects()
+        {
+            List<byte> input = new List<byte>();
+            input.AddRange(Lines(Handshake()));
+            input.AddRange(Utf8WithoutBom.GetBytes(new string('a', 4096)));
+
+            IList<IDictionary<string, object>> responses = ExchangeBytes(
+                CreateConnection(new McpMethodTable(), JsonRpcConnection.DefaultRequestTimeout, 256),
+                input.ToArray());
+
+            Assert.Equal(2, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.RequestTooLarge, ErrorCodeOf(responses[1]));
+            Assert.Null(IdOf(responses[1]));
+        }
+
+        [Fact]
+        public void ResponseOverLimitIsDroppedAndReportsLimitExceeded()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("large", context => new string('a', 4096));
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods, JsonRpcConnection.DefaultRequestTimeout, 1024),
+                Handshake(),
+                Request(2, "large"),
+                Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.ResponseTooLarge, ErrorCodeOf(responses[1]));
+            Assert.DoesNotContain("aaaa", ErrorMessageOf(responses[1]));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void ResponseLimitIsMeasuredInBytesNotCharacters()
+        {
+            // 「あ」はUTF-8で3バイト。400文字は400字だが1200バイトで、上限1024を超える。
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("wide", context => new string('あ', 400));
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods, JsonRpcConnection.DefaultRequestTimeout, 1024),
+                Handshake(),
+                Request(2, "wide"),
+                Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.ResponseTooLarge, ErrorCodeOf(responses[1]));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void UnbuildableResultIsInternalErrorNotLimitExceeded()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("looped", context =>
+            {
+                Dictionary<string, object> looped = new Dictionary<string, object>();
+                looped["self"] = looped;
+                return looped;
+            });
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods), Handshake(), Request(2, "looped"), Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.InternalError, ErrorCodeOf(responses[1]));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void ResultAtDepthLimitIsBuiltAndReturned()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            // 応答の包絡(トップレベルのオブジェクト)で1段、最も内側の文字列で1段使うため、
+            // 結果のリストは上限より2段少なくすると上限ちょうどになる。
+            methods.Add("deep", context => Nest(JsonRpcCodec.JsonRecursionLimit - 2));
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods), Handshake(), Request(2, "deep"), Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.True(responses[1].ContainsKey("result"));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void ResultDeeperThanLimitIsInternalErrorAndKeepsConnection()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("deep", context => Nest(JsonRpcCodec.JsonRecursionLimit - 1));
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods), Handshake(), Request(2, "deep"), Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.InternalError, ErrorCodeOf(responses[1]));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        /// <summary>指定した段数だけ入れ子にしたリストを作る。</summary>
+        private static object Nest(int depth)
+        {
+            object current = "おわり";
+            for (int index = 0; index < depth; index++)
+            {
+                current = new List<object> { current };
+            }
+
+            return current;
+        }
+
+        [Fact]
+        public void HandlesAreInvalidatedWhenTheResultCannotBeBuilt()
+        {
+            int issued = 0;
+            bool validAfterwards = true;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("looped", context =>
+            {
+                issued = context.Handles.Issue("uiModel", new object(), () => { });
+                Dictionary<string, object> looped = new Dictionary<string, object>();
+                looped["self"] = looped;
+
+                return looped;
+            });
+            methods.Add("check", context =>
+            {
+                validAfterwards = context.Handles.IsValid(issued);
+
+                return "ok";
+            });
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods), Handshake(), Request(2, "looped"), Request(3, "check"));
+
+            Assert.Equal(JsonRpcErrorCodes.InternalError, ErrorCodeOf(responses[1]));
+            Assert.True(issued > 0);
+            Assert.False(validAfterwards);
+        }
+
+        [Fact]
+        public void HandlesAreInvalidatedWhenTheMethodEndsWithAnException()
+        {
+            int issued = 0;
+            bool validAfterwards = true;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("boom", context =>
+            {
+                issued = context.Handles.Issue("uiModel", new object(), () => { });
+
+                throw new InvalidOperationException("失敗した。");
+            });
+            methods.Add("check", context =>
+            {
+                validAfterwards = context.Handles.IsValid(issued);
+
+                return "ok";
+            });
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods), Handshake(), Request(2, "boom"), Request(3, "check"));
+
+            Assert.Equal(JsonRpcErrorCodes.InternalError, ErrorCodeOf(responses[1]));
+            Assert.True(issued > 0);
+            Assert.False(validAfterwards);
+        }
+
+        [Fact]
+        public void HandlesAreInvalidatedWhenTheResultIsTooLargeToSend()
+        {
+            using (ExchangeStream stream = new ExchangeStream(
+                Lines(Handshake(), Request(2, "big"), Request(3, "check"))))
+            {
+                int issued = 0;
+                bool validAfterwards = true;
+                McpMethodTable methods = new McpMethodTable();
+                methods.Add("big", context =>
+                {
+                    issued = context.Handles.Issue("uiModel", new object(), () => { });
+
+                    return new string('a', 4096);
+                });
+
+                methods.Add("check", context =>
+                {
+                    validAfterwards = context.Handles.IsValid(issued);
+
+                    return "ok";
+                });
+
+                CreateConnection(methods, JsonRpcConnection.DefaultRequestTimeout, 1024)
+                    .Handle(stream, new InlineInvoker());
+
+                IList<IDictionary<string, object>> responses = stream.ReadResponses();
+                Assert.Equal(JsonRpcErrorCodes.ResponseTooLarge, ErrorCodeOf(responses[1]));
+                Assert.True(issued > 0);
+                Assert.False(validAfterwards);
+            }
+        }
+
+        [Fact]
+        public void HandlesIssuedByADiscardedRequestAreInvalidated()
+        {
+            using (ManualResetEventSlim started = new ManualResetEventSlim())
+            using (ManualResetEventSlim release = new ManualResetEventSlim())
+            using (ExchangeStream stream = new ExchangeStream(
+                Lines(Handshake(), Request(2, "slow"), Request(3, "check"))))
+            {
+                int issued = 0;
+                bool validAfterwards = true;
+                McpMethodTable methods = new McpMethodTable();
+                methods.Add("slow", context =>
+                {
+                    issued = context.Handles.Issue("uiModel", new object(), () => { });
+                    started.Set();
+                    release.Wait(WaitLimit);
+
+                    return issued;
+                });
+
+                methods.Add("check", context =>
+                {
+                    validAfterwards = context.Handles.IsValid(issued);
+
+                    return "ok";
+                });
+
+                JsonRpcConnection connection = CreateConnection(
+                    methods, TimeSpan.FromMilliseconds(200), MessageChannel.DefaultMaxMessageBytes, () => TimeSpan.Zero);
+
+                Thread worker = new Thread(() => connection.Handle(stream, new InlineInvoker()));
+                worker.IsBackground = true;
+                worker.Start();
+
+                try
+                {
+                    Assert.True(started.Wait(WaitLimit));
+                    Assert.True(stream.WaitForMessages(2, WaitLimit));
+                }
+                finally
+                {
+                    release.Set();
+                    worker.Join(WaitLimit);
+                }
+
+                Assert.True(issued > 0);
+                Assert.False(validAfterwards);
+
+                string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
+                Assert.Contains("届かなかった結果のハンドルの解放", log);
+            }
+        }
+
+        [Fact]
+        public void TimeoutResponseIsReturnedWithoutWaitingAndNextReadWaitsForCompletion()
+        {
+            using (ManualResetEventSlim started = new ManualResetEventSlim())
+            using (ManualResetEventSlim release = new ManualResetEventSlim())
+            using (ExchangeStream stream = new ExchangeStream(
+                Lines(Handshake(), Request(2, "slow"), Request(3, "ping"))))
+            {
+                McpMethodTable methods = new McpMethodTable();
+                methods.Add("slow", context =>
+                {
+                    started.Set();
+                    release.Wait(WaitLimit);
+                    return "遅れて返る結果";
+                });
+
+                JsonRpcConnection connection = CreateConnection(
+                    methods, TimeSpan.FromMilliseconds(200), MessageChannel.DefaultMaxMessageBytes, () => TimeSpan.Zero);
+
+                Thread worker = new Thread(() => connection.Handle(stream, new InlineInvoker()));
+                worker.IsBackground = true;
+                worker.Start();
+
+                try
+                {
+                    Assert.True(started.Wait(WaitLimit));
+
+                    // 処理が返るのを待たずに時間切れの応答が書き出される。
+                    Assert.True(stream.WaitForMessages(2, WaitLimit));
+
+                    // その後も処理が終わるまで次の要求は読まない。
+                    Assert.False(worker.Join(TimeSpan.FromMilliseconds(300)));
+                    Assert.Equal(2, stream.MessageCount);
+                }
+                finally
+                {
+                    // 待機中のワーカーがいる状態で破棄しないよう、必ず待機を解除してから抜ける。
+                    release.Set();
+                    worker.Join(WaitLimit);
+                }
+
+                IList<IDictionary<string, object>> responses = stream.ReadResponses();
+                Assert.Equal(3, responses.Count);
+                Assert.Equal(JsonRpcErrorCodes.RequestTimeout, ErrorCodeOf(responses[1]));
+                Assert.Equal(2, Convert.ToInt32(IdOf(responses[1])));
+
+                // 完了後の結果は破棄し、二重に応答しない。
+                Assert.Equal("pong", ResultOf(responses[2]));
+
+                // 超過した事実と、どの処理が超過したのかを記録する。
+                string log = File.ReadAllText(_log.FilePath, Encoding.UTF8);
+                Assert.Contains("処理タイムアウト", log);
+                Assert.Contains("slow", log);
+            }
+        }
+
+        [Fact]
+        public void ErrorResponseThatCouldNotBeWrittenIsNotRecorded()
+        {
+            using (ExchangeStream stream = new ExchangeStream(
+                Lines(Handshake(), Request(2, "しらないめそっど"))))
+            {
+                // ハンドシェイクの応答だけ通し、エラー応答は書けなくする。
+                stream.FailWritesAfter(1);
+
+                JsonRpcConnection connection = CreateConnection(new McpMethodTable());
+                try
+                {
+                    connection.Handle(stream, new InlineInvoker());
+                }
+                catch (IOException)
+                {
+                }
+
+                Assert.DoesNotContain(
+                    "エラー応答: code="
+                        + JsonRpcErrorCodes.MethodNotFound.ToString(CultureInfo.InvariantCulture),
+                    WrittenLog());
+            }
+        }
+
+        [Fact]
+        public void UnwritableTimeoutResponseStillWaitsForHandlerCompletion()
+        {
+            using (ManualResetEventSlim started = new ManualResetEventSlim())
+            using (ManualResetEventSlim release = new ManualResetEventSlim())
+            using (ExchangeStream stream = new ExchangeStream(Lines(Handshake(), Request(2, "slow"))))
+            {
+                bool completed = false;
+                McpMethodTable methods = new McpMethodTable();
+                methods.Add("slow", context =>
+                {
+                    started.Set();
+                    release.Wait(WaitLimit);
+                    completed = true;
+                    return "遅れて返る結果";
+                });
+
+                // ハンドシェイクの応答だけ通し、時間切れの応答は書けなくする。
+                stream.FailWritesAfter(1);
+
+                JsonRpcConnection connection = CreateConnection(
+                    methods, TimeSpan.FromMilliseconds(200), MessageChannel.DefaultMaxMessageBytes, () => TimeSpan.Zero);
+
+                Thread worker = new Thread(() =>
+                {
+                    try
+                    {
+                        connection.Handle(stream, new InlineInvoker());
+                    }
+                    catch (IOException)
+                    {
+                    }
+                });
+                worker.IsBackground = true;
+                worker.Start();
+
+                try
+                {
+                    Assert.True(started.Wait(WaitLimit));
+
+                    // 応答を書けなくても、処理を走らせたまま抜けない。
+                    Assert.False(worker.Join(TimeSpan.FromMilliseconds(400)));
+                }
+                finally
+                {
+                    release.Set();
+                    worker.Join(WaitLimit);
+                }
+
+                Assert.True(completed);
+            }
+        }
+
+        [Theory]
+        [InlineData("99999999999999999999")]
+        [InlineData("1e300")]
+        [InlineData("1.4")]
+        public void OverflowingProtocolNumberIsAnsweredAsMismatch(string protocol)
+        {
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(new McpMethodTable()),
+                "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":{\"protocol\":" + protocol + "}}",
+                Request(2, "ping"));
+
+            Assert.Single(responses);
+            Assert.Equal(JsonRpcErrorCodes.ProtocolMismatch, ErrorCodeOf(responses[0]));
+        }
+
+        [Fact]
+        public void DescriptionTooLongStillReturnsErrorCodeAndKeepsConnection()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("verbose", context => throw new InvalidParamsException(new string('a', 4096)));
+
+            IList<IDictionary<string, object>> responses = Exchange(
+                CreateConnection(methods, JsonRpcConnection.DefaultRequestTimeout, 1024),
+                Handshake(),
+                Request(2, "verbose"),
+                Request(3, "ping"));
+
+            Assert.Equal(3, responses.Count);
+            Assert.Equal(JsonRpcErrorCodes.InvalidParams, ErrorCodeOf(responses[1]));
+            Assert.Equal(string.Empty, ErrorMessageOf(responses[1]));
+            Assert.Equal("pong", ResultOf(responses[2]));
+        }
+
+        [Fact]
+        public void SameHandlerNameCannotBeRegisteredTwice()
+        {
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("same", context => null);
+
+            Assert.Throws<ArgumentException>(() => methods.Add("same", context => null));
+        }
+
+        [Theory]
+        [InlineData("handshake")]
+        [InlineData("ping")]
+        public void BuiltInMethodNamesCannotBeRegistered(string name)
+        {
+            McpMethodTable methods = new McpMethodTable();
+
+            Assert.Throws<ArgumentException>(() => methods.Add(name, context => null));
+        }
+
+        [Fact]
+        public void BuiltInMethodNamesCanBeEnumerated()
+        {
+            Assert.Equal(4, JsonRpcConnection.BaseMethodNames.Count);
+            Assert.Contains("handshake", JsonRpcConnection.BaseMethodNames);
+            Assert.Contains("ping", JsonRpcConnection.BaseMethodNames);
+            Assert.Contains("end_session", JsonRpcConnection.BaseMethodNames);
+            Assert.Contains("sdk_status", JsonRpcConnection.BaseMethodNames);
+        }
+
+        [Fact]
+        public void TheRequestsOfOneConnectionSeeTheSameLedgerAndQueue()
+        {
+            List<McpMethodContext> seen = new List<McpMethodContext>();
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("note", context => { seen.Add(context); return "ok"; });
+
+            Exchange(CreateConnection(methods), Handshake(), Request(2, "note"), Request(3, "note"));
+
+            Assert.Equal(2, seen.Count);
+            Assert.Same(seen[0].Handles, seen[1].Handles);
+            Assert.Same(seen[0].Events, seen[1].Events);
+        }
+
+        [Fact]
+        public void TheHandlesOutliveTheConnectionThatIssuedThem()
+        {
+            int released = 0;
+            HandleLedger ledger = null;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("issue", context =>
+            {
+                ledger = context.Handles;
+                return context.Handles.Issue("test", new object(), () => released++);
+            });
+
+            Exchange(CreateConnection(methods), Handshake(), Request(2, "issue"));
+
+            Assert.Equal(0, released);
+            Assert.False(ledger.IsClosed);
+            Assert.Equal(1, ledger.Count);
+        }
+
+        [Fact]
+        public void TheHandlesOfAnUnwritableResponseAreReleased()
+        {
+            int released = 0;
+            HandleLedger ledger = null;
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("issue", context =>
+            {
+                ledger = context.Handles;
+                return context.Handles.Issue("test", new object(), () => released++);
+            });
+
+            using (ExchangeStream stream = new ExchangeStream(Lines(Handshake(), Request(2, "issue"))))
+            {
+                // ハンドシェイクの応答だけ通し、ハンドルを発行したあとの応答は書けなくする。
+                stream.FailWritesAfter(1);
+
+                JsonRpcConnection connection = CreateConnection(methods);
+                Assert.Throws<IOException>(() => connection.Handle(stream, new InlineInvoker()));
+            }
+
+            Assert.Equal(1, released);
+            Assert.False(ledger.IsClosed);
+            Assert.Equal(0, ledger.Count);
+        }
+
+        /// <summary>ブリッジと揃えて持つ取り決めの表にあるエラーコードの名前。</summary>
+        public static IEnumerable<object[]> ContractErrorCodes()
+        {
+            foreach (HostErrorCode entry in HostBridgeContract.HostErrorCodes)
+            {
+                yield return new object[] { entry.Name };
+            }
+        }
+
+        /// <summary>
+        /// 取り決めの表にあるエラーコードをそれぞれ起こし、そのあと接続を切るかどうかが表のとおりである。
+        /// 切ったかどうかは、続けて送った ping に応答するかで見る。
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(ContractErrorCodes))]
+        public void EachErrorCodeDisconnectsAsTheSharedContractSays(string name)
+        {
+            HostErrorCode entry = HostBridgeContract.HostErrorCodes.Single(e => e.Name == name);
+            string[] requests;
+            JsonRpcConnection connection = Provoking(entry.Code, out requests);
+            List<string> sent = new List<string>(requests) { Request(99, "ping") };
+
+            IList<IDictionary<string, object>> responses = Exchange(connection, sent.ToArray());
+
+            IDictionary<string, object> answered = responses.Last(r => !IsAnswerTo(r, 99));
+            Assert.Equal(entry.Code, ErrorCodeOf(answered));
+            Assert.Equal(!entry.Disconnects, responses.Any(r => IsAnswerTo(r, 99)));
+        }
+
+        private static bool IsAnswerTo(IDictionary<string, object> response, int id)
+        {
+            object given;
+
+            return response.TryGetValue("id", out given)
+                && given != null
+                && Convert.ToInt32(given, CultureInfo.InvariantCulture) == id;
+        }
+
+        /// <summary>そのエラーコードを返させる接続と、送る要求の並び。</summary>
+        private JsonRpcConnection Provoking(int code, out string[] requests)
+        {
+            McpMethodTable methods = new McpMethodTable();
+            switch (code)
+            {
+                case JsonRpcErrorCodes.ParseError:
+                    requests = new[] { "{" };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.InvalidRequest:
+                    requests = new[] { "{\"id\":1,\"method\":\"ping\"}" };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.MethodNotFound:
+                    requests = new[] { Handshake(), Request(2, "missing") };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.InvalidParams:
+                    requests = new[] { Handshake(), RequestWithArrayParams(2, "ping") };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.InternalError:
+                    methods.Add("boom", context => throw new InvalidOperationException("落ちた。"));
+                    requests = new[] { Handshake(), Request(2, "boom") };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.ProtocolMismatch:
+                    requests = new[] { Handshake(1, 2) };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.RequestTimeout:
+                    methods.Add("slow", context =>
+                    {
+                        Thread.Sleep(300);
+                        return "遅れて返る結果";
+                    });
+                    requests = new[] { Handshake(), Request(2, "slow") };
+                    return CreateConnection(
+                        methods, TimeSpan.FromMilliseconds(50), MessageChannel.DefaultMaxMessageBytes);
+
+                case JsonRpcErrorCodes.HandshakeRequired:
+                    requests = new[] { Request(1, "ping") };
+                    return CreateConnection(methods);
+
+                case JsonRpcErrorCodes.RequestTooLarge:
+                    requests = new[]
+                    {
+                        "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":{\"protocol\":1,\"pad\":\""
+                            + new string('a', 2048) + "\"}}",
+                    };
+                    return CreateConnection(methods, JsonRpcConnection.DefaultRequestTimeout, 1024);
+
+                case JsonRpcErrorCodes.ResponseTooLarge:
+                    methods.Add("big", context => new string('a', 2048));
+                    requests = new[] { Handshake(), Request(2, "big") };
+                    return CreateConnection(methods, JsonRpcConnection.DefaultRequestTimeout, 1024);
+
+                case JsonRpcErrorCodes.SessionRefused:
+                    requests = new[] { Handshake() };
+                    return new JsonRpcConnection(
+                        _log,
+                        methods,
+                        HostVersion,
+                        BudgetChars,
+                        JsonRpcConnection.DefaultRequestTimeout,
+                        MessageChannel.DefaultMaxMessageBytes,
+                        StubClientProcess.ExitedOpener(LivingClientId));
+
+                default:
+                    throw new InvalidOperationException("起こし方を書いていないエラーコード: " + code);
+            }
+        }
+
+        [Fact]
+        public void EachConnectionGetsItsOwnLedgerAndQueue()
+        {
+            List<McpMethodContext> seen = new List<McpMethodContext>();
+            McpMethodTable methods = new McpMethodTable();
+            methods.Add("note", context => { seen.Add(context); return "ok"; });
+            JsonRpcConnection connection = CreateConnection(methods);
+
+            Exchange(connection, Handshake(), Request(2, "note"));
+            Exchange(connection, Handshake(), Request(2, "note"));
+
+            Assert.Equal(2, seen.Count);
+            Assert.NotSame(seen[0].Handles, seen[1].Handles);
+            Assert.NotSame(seen[0].Events, seen[1].Events);
+        }
+    }
+}

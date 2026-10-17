@@ -1,0 +1,140 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+
+namespace PmxEditorMcp.SignatureDump
+{
+    /// <summary>
+    /// 能力対応表とスキーマ正本を写像の規則と照合する配線。ファイルは書き出さず、合否だけを終了
+    /// コードで返す。
+    /// </summary>
+    public static class ToolMappingRunner
+    {
+        public static int Run(string[] args, TextWriter output, TextWriter error)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (output == null)
+            {
+                throw new ArgumentNullException(nameof(output));
+            }
+
+            if (error == null)
+            {
+                throw new ArgumentNullException(nameof(error));
+            }
+
+            if (args.Length != 7)
+            {
+                error.WriteLine(
+                    "引数は7つ: <PMXエディタ導入ディレクトリ> <能力台帳のパス>"
+                        + " <共通契約の正本のパス> <型役割表の正本のパス>"
+                        + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                        + " <スキーマ正本のパス>");
+                return ExitCodes.InvalidArguments;
+            }
+
+            string editorDirectory = args[0];
+            string assemblyPath = SdkAssemblyLocator.GetAssemblyPath(editorDirectory);
+            if (!File.Exists(assemblyPath))
+            {
+                error.WriteLine("対象のアセンブリが無い: " + assemblyPath);
+                return ExitCodes.InputUnavailable;
+            }
+
+            IList<CapabilityRecord> ledger;
+            CommonContractTable contract;
+            TypeRoleTable roles;
+            CommonAssignmentTable assignments;
+            ToolMap map;
+            ToolSchemaTable schemas;
+            try
+            {
+                ledger = LedgerJsonReader.Read(Read(args[1], "能力台帳"));
+                contract = CommonContractJsonReader.Read(Read(args[2], "共通契約の正本"));
+                roles = TypeRoleTableJsonReader.ReadTypeRoles(Read(args[3], "型役割表の正本"));
+                assignments = CommonAssignmentJsonReader.Read(Read(args[4], "共通契約割当の正本"));
+                map = ToolMapJsonReader.Read(Read(args[5], "能力対応表の正本"));
+                schemas = ToolSchemaJsonReader.Read(Read(args[6], "スキーマ正本"));
+            }
+            catch (Exception exception)
+            {
+                error.WriteLine(exception.Message);
+                return ExitCodes.InputUnavailable;
+            }
+
+            InventoryRecord inventory;
+            try
+            {
+                inventory = SdkInventory.Load(editorDirectory, assemblyPath);
+            }
+            catch (Exception exception)
+            {
+                error.WriteLine("対象のアセンブリを読めない: " + assemblyPath);
+                error.WriteLine(exception.Message);
+                return ExitCodes.InputUnavailable;
+            }
+
+            IDictionary<string, SignatureRecord> signatures;
+            IDictionary<string, string> toolNames;
+            try
+            {
+                roles = TypeGroupRule.Resolve(
+                    roles, TypeGroupEvidence.OwnersByType(ledger, inventory));
+                signatures = inventory.Signatures.ToDictionary(
+                    s => s.Key, s => s, StringComparer.Ordinal);
+                toolNames = ToolNameEvidence.Resolve(map, roles, assignments, inventory);
+                ToolMappingGate.Require(
+                    map,
+                    roles,
+                    signatures,
+                    schemas,
+                    toolNames,
+                    contract.ComposedTools,
+                    ElementCollectionEvidence.ConcreteTypes(
+                        inventory,
+                        roles.Types.ToDictionary(
+                            t => TypeDefinitionName.OfElement(t.TypeName),
+                            t => t.Role,
+                            StringComparer.Ordinal)),
+                    contract.ViewImages,
+                    contract.DrawnImages,
+                    contract.Types
+                        .Where(t => t.Shape != null)
+                        .ToDictionary(t => t.TypeName, t => t.Shape, StringComparer.Ordinal),
+                    contract.UnkeptMembers,
+                    contract.TargetedMembers);
+            }
+            catch (InvalidOperationException exception)
+            {
+                error.WriteLine("写像の規則に合わない。");
+                error.WriteLine(exception.Message);
+                return ExitCodes.Unresolved;
+            }
+
+            output.WriteLine(string.Format(
+                CultureInfo.InvariantCulture,
+                "照合した: ツールを持つ行 {0} 件・埋め込み先 {1} 件・呼び分け {2} 件",
+                toolNames.Count,
+                map.Rows.Sum(r => r.EmbeddedIn == null ? 0 : r.EmbeddedIn.Count),
+                schemas.Tools.Sum(t => t.Branches.Count)));
+
+            return ExitCodes.Success;
+        }
+
+        private static string Read(string path, string name)
+        {
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException(name + "が無い: " + path, path);
+            }
+
+            return File.ReadAllText(path);
+        }
+    }
+}

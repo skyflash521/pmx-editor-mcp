@@ -1,0 +1,6416 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+
+namespace PmxEditorMcp
+{
+    /// <summary>
+    /// ツールの要求を、結び付きの表が指す行へ振り分ける。SDKへ届く呼び出しはどれもUIスレッドへ
+    /// 委譲した中で行い、複製編集型はその中で反映まで閉じる。
+    /// </summary>
+    public sealed class ToolDispatch
+    {
+        public const string ConfirmName = "confirm";
+
+        public const string SuppressName = UndoBarrier.SuppressName;
+
+        public const string FieldsName = "fields";
+
+        public const string OffsetName = "offset";
+
+        public const string LimitName = "limit";
+
+        public const string NameContainsName = "nameContains";
+
+        private const string NameFieldName = "name";
+
+        public const string ValueName = "value";
+
+        public const string StartName = TargetInput.StartName;
+
+        public const string CountName = TargetInput.CountName;
+
+        public const string TotalName = "total";
+
+        public const string ItemsName = "items";
+
+        public const string NextOffsetName = "nextOffset";
+
+        public const string RunsName = "runs";
+
+        public const string ItemRunsName = "itemRuns";
+
+        public const string SelectedName = "selected";
+
+        public const string ValuesName = "values";
+
+        public const string ArgsName = "args";
+
+        public const string ArgsListName = "argsList";
+
+        public const string AssignmentsName = "assignments";
+
+        public const string ViewName = "view";
+
+        /// <summary>ビューごとに実体の分かれる表示設定の受け手の型。</summary>
+        public const string ViewSettingType = "PEPlugin.View.IPEViewSettingConnector";
+
+        private const string TransformViewType = "PEPlugin.View.IPETransformViewConnector";
+
+        private const string SubViewType = "PEPlugin.View.IPESubViewConnector";
+
+        private const string PmxFilePathRow = "PEPlugin.Pmx.IPXPmx.FilePath()";
+
+        private const string PmxConnectorType = "PEPlugin.Pmx.IPXPmxConnector";
+
+        private const string CurrentPathRow = "PEPlugin.Pmx.IPXPmxConnector.CurrentPath()";
+
+        /// <summary><see cref="ViewName"/> が取る値。先頭は渡さなかったときと同じ PMXView を指す。</summary>
+        public static readonly string[] Views = { "pmxView", "transformView", "subView" };
+
+        /// <summary>受け手の表を引く名前。PMXView を指す値は型の名前のままにする。</summary>
+        public static string ReceiverKey(string typeName, string view)
+        {
+            return view == null || string.Equals(view, Views[0], StringComparison.Ordinal)
+                ? typeName
+                : typeName + "|" + view;
+        }
+
+        /// <summary>
+        /// 一覧の各項目が持つ、その対象を指す位置の名前。親を辿らない一覧の項目がこれを持つ。
+        /// </summary>
+        public const string IndexName = "index";
+
+        /// <summary>
+        /// 一覧の各項目が持つ、その対象を指すハンドルの名前。対象をハンドルで指した呼び出しの
+        /// 項目がこれを持つ。
+        /// </summary>
+        public const string HandleName = "handle";
+
+        /// <summary>親を指す位置の名前。一覧の各項目と、親ごとの組がこれを持つ。</summary>
+        public const string ParentIndexName = "parentIndex";
+
+        /// <summary>親を指すハンドルの名前。親をハンドルで指した呼び出しがこれを持つ。</summary>
+        public const string ParentHandleName = "parentHandle";
+
+        public const string IndexInParentName = "indexInParent";
+
+        public const string ItemTypeName = "itemType";
+
+        /// <summary>ハンドル1件が応答で使う文字数。IDの十進表記の最大の桁数と区切りの1文字。</summary>
+        private const int HandleChars = 11;
+
+        private readonly SdkRelayTable _relay;
+
+        private readonly EventBindingTable _events;
+
+        private readonly HostLog _log;
+
+        private readonly ScreenRefresh _refresh;
+
+        private readonly IDictionary<string, SdkReceiver> _receivers;
+
+        private readonly IDictionary<string, SdkList> _lists;
+
+        private readonly ResidentConnection _connection;
+
+        private readonly PmxSession _pmx;
+
+        private readonly PmxSession _bridged;
+
+        private readonly UndoBarrier _barrier;
+
+        private readonly IModifierKeys _modifiers;
+
+        private readonly ScreenTargets _screen;
+
+        private readonly IDictionary<string, Func<object, object, object, IDictionary<string, object>>> _measures;
+
+        private readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, DeferredWrites> _deferred =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<object, DeferredWrites>();
+
+        private readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, object> _keeperOf =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<object, object>();
+
+        /// <summary>生成物を預ける呼び出しの、位置で受け取る引数ごとに、生成物のその引数に当たる項目。</summary>
+        private readonly Dictionary<string, Func<object, bool>> _heldKinds =
+            new Dictionary<string, Func<object, bool>>(StringComparer.Ordinal);
+
+        private readonly Dictionary<ToolArgument, ToolField> _issuedReferences =
+            new Dictionary<ToolArgument, ToolField>(ReferenceComparer<ToolArgument>.Instance);
+
+        private readonly List<ToolFields> _writableAggregations = new List<ToolFields>();
+
+        private ToolDispatch(
+            SdkRelayTable relay,
+            IDictionary<string, SdkReceiver> receivers,
+            IDictionary<string, SdkList> lists,
+            ResidentConnection connection,
+            PmxSession pmx,
+            PmxSession bridged,
+            UndoRecovery recovery,
+            IModifierKeys modifiers,
+            EventBindingTable events,
+            HostLog log,
+            ScreenRefresh refresh,
+            ScreenTargets screen,
+            IDictionary<string, Func<object, object, object, IDictionary<string, object>>> measures)
+        {
+            _screen = screen;
+            _measures = measures;
+            _refresh = refresh;
+            _events = events;
+            _log = log;
+            _relay = relay;
+            _receivers = receivers;
+            _lists = lists;
+            _connection = connection;
+            _pmx = pmx;
+            _bridged = bridged;
+            _barrier = new UndoBarrier(recovery);
+            _modifiers = modifiers;
+        }
+
+        public static void AddTo(
+            McpMethodTable methods,
+            SdkRelayTable relay,
+            IDictionary<string, SdkReceiver> receivers,
+            IDictionary<string, SdkList> lists,
+            ResidentConnection connection,
+            PmxSession pmx,
+            PmxSession bridged,
+            UndoRecovery recovery,
+            IDictionary<string, IList<ToolCall>> calls,
+            IDictionary<string, ToolFields> aggregations,
+            IDictionary<string, ToolElements> elements,
+            IDictionary<string, ToolPrecondition> preconditions,
+            IModifierKeys modifiers,
+            EventBindingTable events,
+            HostLog log,
+            ScreenRefresh refresh,
+            ScreenTargets screen,
+            IDictionary<string, Func<object, object, object, IDictionary<string, object>>> measures,
+            IEnumerable<string> unresolved = null)
+        {
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (relay == null)
+            {
+                throw new ArgumentNullException(nameof(relay));
+            }
+
+            if (receivers == null)
+            {
+                throw new ArgumentNullException(nameof(receivers));
+            }
+
+            if (lists == null)
+            {
+                throw new ArgumentNullException(nameof(lists));
+            }
+
+            if (connection == null)
+            {
+                throw new ArgumentNullException(nameof(connection));
+            }
+
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (bridged == null)
+            {
+                throw new ArgumentNullException(nameof(bridged));
+            }
+
+            if (recovery == null)
+            {
+                throw new ArgumentNullException(nameof(recovery));
+            }
+
+            if (calls == null)
+            {
+                throw new ArgumentNullException(nameof(calls));
+            }
+
+            if (aggregations == null)
+            {
+                throw new ArgumentNullException(nameof(aggregations));
+            }
+
+            if (elements == null)
+            {
+                throw new ArgumentNullException(nameof(elements));
+            }
+
+            if (preconditions == null)
+            {
+                throw new ArgumentNullException(nameof(preconditions));
+            }
+
+            if (modifiers == null)
+            {
+                throw new ArgumentNullException(nameof(modifiers));
+            }
+
+            if (events == null)
+            {
+                throw new ArgumentNullException(nameof(events));
+            }
+
+            if (log == null)
+            {
+                throw new ArgumentNullException(nameof(log));
+            }
+
+            if (refresh == null)
+            {
+                throw new ArgumentNullException(nameof(refresh));
+            }
+
+            if (screen == null)
+            {
+                throw new ArgumentNullException(nameof(screen));
+            }
+
+            if (measures == null)
+            {
+                throw new ArgumentNullException(nameof(measures));
+            }
+
+            ToolDispatch dispatch = new ToolDispatch(
+                relay, receivers, lists, connection, pmx, bridged, recovery, modifiers, events, log,
+                refresh, screen, measures);
+            HashSet<string> refused = new HashSet<string>(
+                unresolved ?? Enumerable.Empty<string>(), StringComparer.Ordinal);
+            dispatch.IssuedReferences(calls, aggregations, refused);
+            RefuseReadingRefused(calls, preconditions, refused);
+            relay.RefuseTools(refused);
+            dispatch.HeldKinds(calls, aggregations, elements);
+            foreach (KeyValuePair<string, IList<ToolCall>> call in calls)
+            {
+                if (refused.Contains(call.Key))
+                {
+                    continue;
+                }
+
+                IList<ToolCall> bound = call.Value;
+                ResolvedPrecondition precondition = Required(preconditions, calls, call.Key);
+                methods.Add(
+                    call.Key,
+                    dispatch.Guarded(
+                        Edit(bound),
+                        ScreenRefresh.Needed(Edit(bound), bound.Select(c => c.RowKey)),
+                        context => dispatch.Invoke(context, bound, precondition)));
+            }
+
+            foreach (KeyValuePair<string, ToolFields> aggregation in aggregations)
+            {
+                ToolFields bound = aggregation.Value;
+                RequireNoPrecondition(preconditions, aggregation.Key);
+                methods.Add(
+                    aggregation.Key,
+                    dispatch.Guarded(
+                        bound.Receiver.Edit,
+                        ScreenRefresh.Needed(
+                            bound.Receiver.Edit, bound.Fields.Select(f => f.RowKey)),
+                        context => bound.Writes
+                            ? dispatch.Write(context, bound)
+                            : dispatch.Read(context, bound)));
+            }
+
+            foreach (KeyValuePair<string, ToolElements> element in elements)
+            {
+                ToolElements bound = element.Value;
+                RequireNoPrecondition(preconditions, element.Key);
+                methods.Add(
+                    element.Key,
+                    dispatch.Guarded(
+                        bound.Receiver.Edit,
+                        ScreenRefresh.Needed(bound.Receiver.Edit, new string[0]),
+                        context => Acting(dispatch, bound)(context)));
+            }
+
+            foreach (string name in refused)
+            {
+                string named = name;
+                methods.Add(
+                    named,
+                    context => ToolEnvelope.Failure(
+                        ToolEnvelope.NotApplicable, "このバージョンのSDKでは組み立てられなかったツール: " + named));
+            }
+        }
+
+        private static void RefuseReadingRefused(
+            IDictionary<string, IList<ToolCall>> calls,
+            IDictionary<string, ToolPrecondition> preconditions,
+            HashSet<string> refused)
+        {
+            if (refused.Count == 0)
+            {
+                return;
+            }
+
+            bool added = true;
+            while (added)
+            {
+                added = false;
+                foreach (string tool in calls.Keys)
+                {
+                    ToolPrecondition precondition;
+                    if (!refused.Contains(tool)
+                        && preconditions.TryGetValue(tool, out precondition)
+                        && precondition.Reading.Any(refused.Contains))
+                    {
+                        refused.Add(tool);
+                        added = true;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 生成物を預ける呼び出しの位置で受け取る引数を、生成物の型の書き込める項目のうち同じ名前で
+        /// 同じリストを指すものと組にする。組にできない引数があれば登録を止める。ただし
+        /// <paramref name="refused"/> が空でないときは、組にできない引数を持つツールを
+        /// <paramref name="refused"/> へ足して続ける。
+        /// </summary>
+        private void IssuedReferences(
+            IDictionary<string, IList<ToolCall>> calls,
+            IDictionary<string, ToolFields> aggregations,
+            HashSet<string> refused)
+        {
+            List<ToolField> writable = aggregations.Values
+                .Where(a => a.Writes)
+                .SelectMany(a => a.Sets)
+                .SelectMany(s => s.Fields)
+                .Where(f => f.Referenced != null && !f.Listed)
+                .ToList();
+            _writableAggregations.AddRange(
+                aggregations.Values.Where(a => a.Writes && a.Access.Kind == ToolAccessKind.Element));
+
+            foreach (KeyValuePair<string, IList<ToolCall>> named in calls)
+            {
+                foreach (ToolCall call in named.Value.Where(c => c.Issues != null))
+                {
+                    foreach (ToolArgument argument in call.Arguments.Where(a => !a.Injected && a.Referenced != null))
+                    {
+                        ToolField field = writable.FirstOrDefault(
+                            f => string.Equals(f.Name, argument.Name, StringComparison.Ordinal)
+                                && string.Equals(Declaring(f.RowKey), call.Issues.FullName, StringComparison.Ordinal)
+                                && string.Equals(
+                                    f.Referenced.RowKey, argument.Referenced.RowKey, StringComparison.Ordinal));
+                        if (field == null && refused.Count > 0)
+                        {
+                            refused.Add(named.Key);
+
+                            continue;
+                        }
+
+                        if (field == null)
+                        {
+                            throw new InvalidOperationException(
+                                named.Key + " の引数 " + argument.Name + " に当たる、"
+                                    + call.Issues.FullName + " の書き込める項目が無い。");
+                        }
+
+                        _issuedReferences[argument] = field;
+                    }
+                }
+            }
+        }
+
+        private static string Declaring(string rowKey)
+        {
+            int open = rowKey.IndexOf('(');
+            int dot = rowKey.LastIndexOf('.', open < 0 ? rowKey.Length - 1 : open);
+
+            return dot < 0 ? string.Empty : rowKey.Substring(0, dot);
+        }
+
+        /// <summary>
+        /// 呼ぶ前に確かめることを満たしているか。UIスレッドの中で呼ぶこと。満たしていなければ偽で、
+        /// <paramref name="refused"/> に断りを持たせる。
+        /// </summary>
+        private bool TryMet(
+            McpMethodContext context,
+            ResolvedPrecondition precondition,
+            object receiver,
+            out Refusal refused)
+        {
+            refused = null;
+            if (precondition == null)
+            {
+                return true;
+            }
+
+            string code;
+            string message;
+            if (PreconditionGate.TryAccept(
+                precondition.Kind,
+                Counted(context, precondition, receiver),
+                _modifiers.AnyHeld(),
+                Pointing(context),
+                out code,
+                out message))
+            {
+                return true;
+            }
+
+            refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+            return false;
+        }
+
+        private static IList<long> Pointing(McpMethodContext context)
+        {
+            object given;
+            if (!context.Params.TryGetValue(TargetNames.Element.Indices, out given))
+            {
+                return null;
+            }
+
+            object[] values = given as object[];
+            if (values == null)
+            {
+                return null;
+            }
+
+            List<long> pointed = new List<long>(values.Length);
+            foreach (object one in values)
+            {
+                long at;
+                if (!ValueInput.TryInteger(one, out at))
+                {
+                    return null;
+                }
+
+                pointed.Add(at);
+            }
+
+            return pointed;
+        }
+
+        /// <summary>
+        /// 確かめる材料の数。別の受け手から読むものは並びの長さを足し合わせ、同じ受け手の上で読む
+        /// ものはその値を数とする。1つでも読めなければ null。
+        /// </summary>
+        private int? Counted(
+            McpMethodContext context, ResolvedPrecondition precondition, object receiver)
+        {
+            int? picked = Picked(context, precondition);
+            if (picked == null)
+            {
+                return null;
+            }
+
+            int counted = picked.Value;
+            foreach (string rowKey in precondition.Counting)
+            {
+                object value;
+                SdkRelayRefusal refusal;
+                if (!_relay.TryInvoke(rowKey, receiver, new object[0], out value, out refusal)
+                    || !(value is int))
+                {
+                    return null;
+                }
+
+                counted += (int)value;
+            }
+
+            return counted;
+        }
+
+        /// <summary>いま選ばれているものの数。1つでも読めなければ null。</summary>
+        private int? Picked(McpMethodContext context, ResolvedPrecondition precondition)
+        {
+            int picked = 0;
+            foreach (ToolCall reading in precondition.Reading)
+            {
+                PmxTarget target;
+                IList<Spot> column;
+                Refusal unreadable;
+                if (!TryTake(context, reading.Receiver, false, null, false, out target, out unreadable, false, false)
+                    || !TryColumn(
+                        context,
+                        reading.Access,
+                        reading.Receiver,
+                        target,
+                        Pointed.None,
+                        Accepted(reading.Access, null, false),
+                        out column,
+                        out unreadable))
+                {
+                    return null;
+                }
+
+                object value;
+                SdkRelayRefusal refusal;
+                if (!_relay.TryInvoke(
+                    reading.RowKey, column[0].Item, new object[0], out value, out refusal))
+                {
+                    return null;
+                }
+
+                System.Collections.ICollection values = value as System.Collections.ICollection;
+                if (values == null)
+                {
+                    return null;
+                }
+
+                picked += values.Count;
+            }
+
+            return picked;
+        }
+
+        /// <summary>
+        /// そのツールが呼ぶ前に確かめること。持たなければ null。材料の名前はここで呼び出しへ解く。
+        /// 解けない名前が在れば組み立てで落とす。
+        /// </summary>
+        private static ResolvedPrecondition Required(
+            IDictionary<string, ToolPrecondition> preconditions,
+            IDictionary<string, IList<ToolCall>> calls,
+            string tool)
+        {
+            ToolPrecondition precondition;
+            if (!preconditions.TryGetValue(tool, out precondition))
+            {
+                return null;
+            }
+
+            List<ToolCall> reading = new List<ToolCall>();
+            foreach (string name in precondition.Reading)
+            {
+                IList<ToolCall> found;
+                if (!calls.TryGetValue(name, out found))
+                {
+                    throw new InvalidOperationException(
+                        "確かめる材料を得るツールが無い: " + name);
+                }
+
+                reading.AddRange(found);
+            }
+
+            RequireMaterials(precondition, reading, tool);
+            IList<ToolCall> overloads;
+            calls.TryGetValue(tool, out overloads);
+            foreach (string guarded in precondition.Guarded)
+            {
+                if (overloads == null || !overloads.Any(c => string.Equals(c.RowKey, guarded, StringComparison.Ordinal)))
+                {
+                    throw new InvalidOperationException(
+                        "呼ぶ前に確かめる呼び分けがそのツールに無い: " + tool + " の " + guarded);
+                }
+            }
+
+            return new ResolvedPrecondition(precondition.Kind, reading, precondition.Counting, precondition.Guarded);
+        }
+
+        private static void RequireMaterials(
+            ToolPrecondition precondition, IList<ToolCall> reading, string tool)
+        {
+            bool met;
+            switch (precondition.Kind)
+            {
+                case PreconditionKind.PickedObjects:
+                    met = reading.Count != 0 && precondition.Counting.Count == 0;
+                    break;
+
+                case PreconditionKind.SavedEdits:
+                    met = reading.Count == 0 && precondition.Counting.Count != 0;
+                    break;
+
+                case PreconditionKind.ListedParts:
+                case PreconditionKind.UndoHistory:
+                case PreconditionKind.TransformedBone:
+                    met = reading.Count == 0 && precondition.Counting.Count != 0;
+                    break;
+
+                case PreconditionKind.HeldModifiers:
+                    met = reading.Count == 0 && precondition.Counting.Count == 0;
+                    break;
+
+                default:
+                    met = false;
+                    break;
+            }
+
+            if (!met)
+            {
+                throw new InvalidOperationException(
+                    "呼ぶ前に確かめる材料がその種別に合わない: " + tool);
+            }
+        }
+
+        /// <summary>
+        /// 項目を集めるツールと要素を出し入れするツールは、呼ぶ前に確かめることを扱えない。持つ形が
+        /// 現れたら組み立てで落とす。
+        /// </summary>
+        private static void RequireNoPrecondition(
+            IDictionary<string, ToolPrecondition> preconditions, string tool)
+        {
+            if (preconditions.ContainsKey(tool))
+            {
+                throw new InvalidOperationException(
+                    "呼ぶ前に確かめることを扱えないツールが持っている: " + tool);
+            }
+        }
+
+        private sealed class ResolvedPrecondition
+        {
+            public ResolvedPrecondition(
+                PreconditionKind kind, IList<ToolCall> reading, IList<string> counting, IList<string> guarded)
+            {
+                Kind = kind;
+                Reading = reading;
+                Counting = counting;
+                Guarded = guarded;
+            }
+
+            public PreconditionKind Kind { get; }
+
+            public IList<ToolCall> Reading { get; }
+
+            public IList<string> Counting { get; }
+
+            public IList<string> Guarded { get; }
+
+            public bool Guards(string rowKey)
+            {
+                return Guarded.Count == 0 || Guarded.Contains(rowKey);
+            }
+        }
+
+        /// <summary>呼び分けが揃って持つ編集の分類。揃っていなければ組み立てが誤っている。</summary>
+        private static EditKind Edit(IList<ToolCall> calls)
+        {
+            EditKind[] kinds = calls.Select(c => c.Receiver.Edit).Distinct().ToArray();
+            if (kinds.Length != 1)
+            {
+                throw new InvalidOperationException(
+                    "呼び分けの編集の分類が揃っていない: " + calls[0].RowKey);
+            }
+
+            return kinds[0];
+        }
+
+        private McpMethod Guarded(EditKind kind, ScreenRefreshKind refresh, McpMethod inner)
+        {
+            return _barrier.Guard(kind, Shown(refresh, inner));
+        }
+
+        /// <summary>
+        /// 済んだ呼び出しのあとに、変えた中身をエディタの画面へ映す。断られた呼び出しは映さない。
+        /// 映せなかったことの知らせは、どちらの経路のぶんもここで応答へ移す。
+        /// </summary>
+        private McpMethod Shown(ScreenRefreshKind refresh, McpMethod inner)
+        {
+            return context =>
+            {
+                object answered = inner(context);
+                IDictionary<string, object> envelope = answered as IDictionary<string, object>;
+                if (envelope == null || !ToolEnvelope.Succeeded(envelope))
+                {
+                    return answered;
+                }
+
+                if (refresh != ScreenRefreshKind.None && !context.NotShown)
+                {
+                    bool shown = false;
+                    Exception failure;
+                    UiInvocation unavailable;
+                    context.NotShown = !Run(
+                            context, () => shown = _refresh.Apply(refresh), out failure,
+                            out unavailable)
+                        || failure != null
+                        || !shown;
+                }
+
+                IList<string> notices = ScreenRefresh.Noted(context.Notices, !context.NotShown);
+
+                return notices.Count == 0 ? answered : UndoBarrier.Noted(answered, notices);
+            };
+        }
+
+        /// <summary>止めることを頼まれているか。値の検証は前置きで済んでいる。</summary>
+        private static bool Suppressed(McpMethodContext context)
+        {
+            object value;
+
+            return context.Params.TryGetValue(SuppressName, out value)
+                && value is bool && (bool)value;
+        }
+
+        private object Invoke(
+            McpMethodContext context, IList<ToolCall> calls, ResolvedPrecondition precondition)
+        {
+            ToolCall call;
+            string code;
+            string message;
+            if (!TryOverload(context, calls, out call, out code, out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            return Invoke(context, call, precondition != null && precondition.Guards(call.RowKey) ? precondition : null);
+        }
+
+        /// <summary>
+        /// 渡された引数に合う呼び分け。1つしか持たないツールはそれを採る。2つ以上を持つツールは、
+        /// 受け取る引数がすべて渡されていて、渡された値をその引数として受け取れるもののうち、
+        /// 引数の多いものを採る。引数を受け取る呼び分けは、組を1つも渡さない要求には合わない。
+        /// </summary>
+        private static bool TryOverload(
+            McpMethodContext context,
+            IList<ToolCall> calls,
+            out ToolCall chosen,
+            out string code,
+            out string message)
+        {
+            chosen = calls[0];
+            code = null;
+            message = null;
+            if (calls.Count == 1)
+            {
+                return true;
+            }
+
+            if (calls[0].SelectorName != null)
+            {
+                return TrySelected(context, calls, out chosen, out code, out message);
+            }
+
+            IList<IDictionary<string, object>> sets = Sets(context, calls[0]);
+            foreach (ToolCall call in calls.OrderByDescending(c => c.Arguments.Count))
+            {
+                if (Fits(sets, Given(call)))
+                {
+                    chosen = call;
+
+                    return true;
+                }
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = "渡された引数に合う呼び分けが無い。";
+
+            return false;
+        }
+
+        private static bool TrySelected(
+            McpMethodContext context,
+            IList<ToolCall> calls,
+            out ToolCall chosen,
+            out string code,
+            out string message)
+        {
+            chosen = calls[0];
+            code = null;
+            message = null;
+            string name = calls[0].SelectorName;
+            object given;
+            string value = context.Params.TryGetValue(name, out given) ? given as string : null;
+            foreach (ToolCall call in calls
+                .Where(c => string.Equals(c.SelectorValue, value, StringComparison.Ordinal)))
+            {
+                chosen = call;
+
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = name + " は "
+                + string.Join("・", calls.Select(c => c.SelectorValue).OrderBy(v => v, StringComparer.Ordinal))
+                + " のどれかでなければならない。";
+
+            return false;
+        }
+
+        private static IList<IDictionary<string, object>> Sets(
+            McpMethodContext context, ToolCall call)
+        {
+            if (!Many(call.Access, call.Receiver))
+            {
+                return new[] { context.Params };
+            }
+
+            object given;
+            if (context.Params.TryGetValue(ArgsName, out given))
+            {
+                return new[] { given as IDictionary<string, object> };
+            }
+
+            if (!context.Params.TryGetValue(ArgsListName, out given))
+            {
+                return new IDictionary<string, object>[0];
+            }
+
+            object[] items = given as object[];
+
+            return items == null
+                ? new IDictionary<string, object>[0]
+                : items.Select(i => i as IDictionary<string, object>).ToList();
+        }
+
+        private static bool Fits(
+            IList<IDictionary<string, object>> sets, IList<ToolArgument> arguments)
+        {
+            return arguments.Count == 0
+                || (sets.Count != 0 && sets.All(s => arguments.All(a => Receivable(s, a))));
+        }
+
+        private static bool Receivable(IDictionary<string, object> set, ToolArgument argument)
+        {
+            object given;
+            if (set == null || !set.TryGetValue(argument.Name, out given))
+            {
+                return false;
+            }
+
+            object taken;
+            string code;
+            string message;
+            if (argument.Referenced != null)
+            {
+                return TryReference(argument, false, given, out taken, out code, out message);
+            }
+
+            if (argument.Held != null)
+            {
+                long id;
+
+                return argument.Type.IsArray ? Handles(given) : ValueInput.TryInteger(given, out id);
+            }
+
+            if (argument.Built != null)
+            {
+                return Built(given);
+            }
+
+            return ValueInput.TryFromJson(argument.Type, given, out taken, out code, out message);
+        }
+
+        private static bool Handles(object given)
+        {
+            object[] items = given as object[];
+
+            return items != null && items.All(ValueInput.IsNumber);
+        }
+
+        /// <summary>組から作る引数として受け取れる形か。1つの組と、組の並びのどちらも取る。</summary>
+        private static bool Built(object given)
+        {
+            if (given is IDictionary<string, object>)
+            {
+                return true;
+            }
+
+            object[] items = given as object[];
+
+            return items != null && items.All(i => i is IDictionary<string, object>);
+        }
+
+        /// <summary>SDKのメンバーを呼ぶ。対象の組へ及ぶ呼び出しは、その全件へ及ぶ。</summary>
+        private object Invoke(
+            McpMethodContext context, ToolCall call, ResolvedPrecondition precondition)
+        {
+            if (Many(call.Access, call.Receiver))
+            {
+                if (precondition != null)
+                {
+                    throw new InvalidOperationException(
+                        "呼ぶ前に確かめることを扱えない呼び出しが持っている: " + call.RowKey);
+                }
+
+                return InvokeEach(context, call);
+            }
+
+            return InvokeOnce(context, call, precondition);
+        }
+
+        /// <summary>
+        /// SDKのメンバーを、受け手そのものへ呼ぶ。ハンドルを発行する呼び出しは、頼まれた数だけ
+        /// 繰り返して、その全部を1つの応答で返す。
+        /// </summary>
+        private object InvokeOnce(
+            McpMethodContext context, ToolCall call, ResolvedPrecondition precondition)
+        {
+            string code;
+            string message;
+            bool confirm;
+            long? handle;
+            List<string> known = Given(call).Select(a => a.Name).ToList();
+            if (call.Danger != DangerKind.None && !EmptiesOnlyTheHeld(call))
+            {
+                known.Add(ConfirmName);
+            }
+
+            if (call.SelectorName != null)
+            {
+                known.Add(call.SelectorName);
+            }
+
+            bool issues = call.Issues != null;
+            bool counts = issues && call.RespondsMany;
+            if (counts)
+            {
+                known.Add(IssuanceInput.CountName);
+            }
+
+            if (call.Paged)
+            {
+                known.Add(OffsetName);
+                known.Add(LimitName);
+            }
+
+            if (Joins(call))
+            {
+                known.Add(RunsName);
+            }
+
+            known.AddRange(Choosing(call.Receiver));
+            int count = 1;
+            int offset = 0;
+            int limit = int.MaxValue;
+            bool runs = false;
+            int most = Most(context);
+            if (!TryOnlyKnown(context, Known(known, Accepts(call)), out code, out message)
+                || !TryView(context, out code, out message)
+                || !TryConfirm(context, out confirm, out code, out message)
+                || !TryPmxHandle(context, Accepts(call), out handle, out code, out message)
+                || !TryPassDanger(call, handle, confirm, out code, out message)
+                || (counts && !TryOptionalNumber(
+                    context, IssuanceInput.CountName, 1, ref count, out code, out message))
+                || (call.Paged && !TryOptionalNumber(context, OffsetName, 0, ref offset, out code, out message))
+                || (call.Paged && !TryOptionalNumber(context, LimitName, 1, ref limit, out code, out message))
+                || (Joins(call) && !TryRuns(context, out runs, out code, out message)))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            if (count > most)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.InvalidArgument,
+                    IssuanceInput.CountName + " は " + most + " 以下でなければならない。");
+            }
+
+            object[] arguments = new object[call.Arguments.Count];
+            for (int at = 0; at < call.Arguments.Count; at++)
+            {
+                object value;
+                if (!TryValue(context, call.Arguments[at], out value, out code, out message))
+                {
+                    return ToolEnvelope.Failure(code, message);
+                }
+
+                arguments[at] = value;
+            }
+
+            object[] positions = (object[])arguments.Clone();
+            object result = null;
+            object called = null;
+            int? readBack = null;
+            IDictionary<string, object> measured = null;
+            IList<string> unmoved = null;
+            Func<object, object, object, IDictionary<string, object>> measure;
+            bool measures = _measures.TryGetValue(call.RowKey, out measure);
+            List<object> results = new List<object>();
+            Refusal refused = null;
+            EditStage stage = EditStage.BeforeCommit;
+            Exception failure;
+            UiInvocation unavailable;
+            if (!Run(context, () =>
+            {
+                PmxTarget target;
+                IList<Spot> column;
+                if (!TryPositions(context, call, arguments, out refused)
+                    || !TryTake(context, call.Receiver, Targets(call), handle, false, out target, out refused, issues)
+                    || !TryColumn(
+                        context,
+                        call.Access,
+                        call.Receiver,
+                        target,
+                        Pointed.None,
+                        Accepted(call.Access, null, false),
+                        out column,
+                        out refused)
+                    || !TryBound(call, target, new[] { arguments }, out refused)
+                    || !TryMet(context, precondition, column[0].Item, out refused)
+                    || !TryPositionsOf(call, arguments, target, column[0].Item, out refused))
+                {
+                    return;
+                }
+
+                if (!VmdNames.TryCall(call.RowKey, arguments, out code, out message)
+                    || !VmdPoseStates.TryCall(call.RowKey, arguments, out code, out message)
+                    || !VmdSaving.TryCall(call.RowKey, column[0].Item, out code, out message))
+                {
+                    refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                    return;
+                }
+
+                called = column[0].Item;
+                stage = Changing(call.Receiver, target);
+                PmxTarget before = null;
+                if (measures && !TryCurrent(context, out before, out refused))
+                {
+                    return;
+                }
+
+                IDictionary<string, int> picked = measures && EditMeasure.Places(call.RowKey)
+                    ? EditMeasure.Picked(context.Screen, before.Pmx)
+                    : null;
+
+                int drawn = 0;
+                ReachedLists cloned = new ReachedLists();
+                for (int at = 0; at < count; at++)
+                {
+                    object value;
+                    SdkRelayRefusal refusal;
+                    if (!_relay.TryInvoke(
+                        call.RowKey, column[0].Item, arguments, out value, out refusal))
+                    {
+                        refused = Refusal.Of(call.RowKey, refusal);
+
+                        return;
+                    }
+
+                    UiModelCounts.Remember(call.RowKey, ArgumentNames(call), arguments, value);
+                    if (!TryProjected(call, value, out result, out refused))
+                    {
+                        return;
+                    }
+
+                    if (ReplacedModelSelection.Replaced(call.RowKey, value))
+                    {
+                        _screen.ClearSelections();
+                    }
+
+                    ClonedModelNodes.Relink(call.RowKey, column[0].Item, value);
+
+                    if (issues)
+                    {
+                        if (!TryDeferCloned(
+                            call, column[0].Item, value, target, cloned, out refused))
+                        {
+                            return;
+                        }
+
+                        DeferIssued(call, value, positions);
+                    }
+
+                    drawn += Drawn(call, result);
+                    if (issues && drawn > most)
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(
+                            ToolEnvelope.ResponseTooLarge,
+                            "発行したハンドルが応答の枠に収まらない: " + drawn
+                                + "(枠は " + most + ")"));
+
+                        return;
+                    }
+
+                    results.Add(result);
+                }
+
+                stage = Reflecting(call.Receiver, target, stage);
+                refused = Commit(context, call.Receiver, target);
+                if (refused == null
+                    && target != null
+                    && target.Current
+                    && ReplacedModelSelection.ReplacesCurrent(call.RowKey))
+                {
+                    _screen.ClearSelections();
+                    if (!_refresh.Apply(ScreenRefreshKind.Drawn))
+                    {
+                        context.NotShown = true;
+                    }
+                }
+
+                if (refused == null && call.ReadBack != null)
+                {
+                    object back;
+                    SdkRelayRefusal refusal;
+                    if (!_relay.TryInvoke(call.ReadBack, column[0].Item, new object[0], out back, out refusal))
+                    {
+                        refused = Refusal.Of(call.ReadBack, refusal);
+
+                        return;
+                    }
+
+                    Array positions = back as Array;
+                    if (positions == null)
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(
+                            ToolEnvelope.OperationFailed,
+                            "書き込んだが、読み返した値が位置の並びでなかった: " + call.ReadBack));
+
+                        return;
+                    }
+
+                    readBack = positions.Length;
+                }
+
+                PmxTarget after;
+                if (refused == null && measures)
+                {
+                    if (!TryCurrent(context, out after, out refused))
+                    {
+                        return;
+                    }
+
+                    measured = measure(called, before.Pmx, after.Pmx);
+                    unmoved = picked == null ? null : EditMeasure.Unmoved(call.RowKey, measured, picked);
+                }
+            }, out failure, out unavailable))
+            {
+                return ToolFailure.Unavailable(unavailable);
+            }
+
+            if (failure != null)
+            {
+                return ToolFailure.Failed(failure, stage);
+            }
+
+            if (refused != null)
+            {
+                return refused.Envelope;
+            }
+
+            if (call.Outputs.Count != 0)
+            {
+                return Written(call, result);
+            }
+
+            if (issues)
+            {
+                return Issued(context, call, results, called);
+            }
+
+            if (call.Paged)
+            {
+                return Paged(
+                    call, result, offset, limit, runs, ResponseSize.ValueChars(context.BudgetChars));
+            }
+
+            if (call.Projected != null)
+            {
+                return ToolEnvelope.Success(result);
+            }
+
+            if (readBack.HasValue)
+            {
+                return ToolEnvelope.Success(new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { SelectedName, readBack.Value },
+                });
+            }
+
+            if (measured != null)
+            {
+                return ToolEnvelope.Success(measured, unmoved);
+            }
+
+            if (call.Result == null)
+            {
+                return ToolEnvelope.Success(null);
+            }
+
+            try
+            {
+                return Written(call.Result, result);
+            }
+            finally
+            {
+                DrawnImages.Release(call.RowKey, result);
+            }
+        }
+
+        private static int Most(McpMethodContext context)
+        {
+            int most = ResponseSize.ValueChars(context.BudgetChars) / HandleChars;
+
+            return most < 1 ? 1 : most;
+        }
+
+        /// <summary>その呼び出し1度が作った生成物の数。並びを返す行では、その並びの件数になる。</summary>
+        private static int Drawn(ToolCall call, object result)
+        {
+            if (!call.ReturnsMany)
+            {
+                return 1;
+            }
+
+            System.Collections.ICollection listed = result as System.Collections.ICollection;
+            if (listed != null)
+            {
+                return listed.Count;
+            }
+
+            int drawn = 0;
+            System.Collections.IEnumerable row = result as System.Collections.IEnumerable;
+            if (row != null)
+            {
+                foreach (object one in row)
+                {
+                    drawn++;
+                }
+            }
+
+            return drawn;
+        }
+
+        /// <summary>
+        /// 頼まれた数だけ繰り返した生成物をまとめて台帳へ預け、そのハンドルの並びを返す。途中で
+        /// 断るときは、その呼び出しで預けたぶんを台帳から戻す。
+        /// </summary>
+        private object Issued(
+            McpMethodContext context, ToolCall call, IList<object> results, object receiver)
+        {
+            int issuedBefore = context.Handles.LastIssuedId;
+            List<object> issued = new List<object>(results.Count);
+            foreach (object result in results)
+            {
+                IList<object> made;
+                IDictionary<string, object> refused;
+                if (!TryMade(call, result, out made, out refused))
+                {
+                    context.Handles.ReleaseIssuedAfter(issuedBefore, context.Ui);
+
+                    return refused;
+                }
+
+                foreach (object one in made)
+                {
+                    issued.Add(One(context, call, one, receiver, 0, null));
+                }
+            }
+
+            return call.RespondsMany
+                ? ToolEnvelope.Success(issued.ToArray())
+                : ToolEnvelope.Success(issued[0]);
+        }
+
+        /// <summary>
+        /// 生成物を台帳へ預け、そのハンドルを返す。台帳は、解放するかリストへ加えて消費するまで
+        /// 生成物を保つ。
+        /// </summary>
+        private object Issued(
+            McpMethodContext context,
+            ToolCall call,
+            object result,
+            object receiver,
+            int at = 0,
+            int? held = null)
+        {
+            IList<object> made;
+            IDictionary<string, object> refused;
+            if (!TryMade(call, result, out made, out refused))
+            {
+                return refused;
+            }
+
+            List<object> issued = new List<object>(made.Count);
+            foreach (object one in made)
+            {
+                issued.Add(One(context, call, one, receiver, at, held));
+            }
+
+            return call.RespondsMany
+                ? ToolEnvelope.Success(issued.ToArray())
+                : ToolEnvelope.Success(issued[0]);
+        }
+
+        private static bool TryMade(
+            ToolCall call,
+            object result,
+            out IList<object> made,
+            out IDictionary<string, object> refused)
+        {
+            made = null;
+            refused = null;
+            if (result == null)
+            {
+                refused = ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "生成物を返さなかった: " + call.RowKey);
+
+                return false;
+            }
+
+            if (!call.ReturnsMany)
+            {
+                made = new[] { result };
+
+                return true;
+            }
+
+            System.Collections.IEnumerable row = result as System.Collections.IEnumerable;
+            if (row == null)
+            {
+                refused = ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "生成物を並べて返さなかった: " + call.RowKey);
+
+                return false;
+            }
+
+            List<object> each = new List<object>();
+            foreach (object one in row)
+            {
+                if (one == null)
+                {
+                    refused = ToolEnvelope.Failure(
+                        ToolEnvelope.NotApplicable, "生成物の並びに空きがある: " + call.RowKey);
+
+                    return false;
+                }
+
+                each.Add(one);
+            }
+
+            made = each;
+
+            return true;
+        }
+
+        private int One(
+            McpMethodContext context,
+            ToolCall call,
+            object made,
+            object receiver,
+            int at,
+            int? held)
+        {
+            Action detach = () => { };
+            int id = context.Handles.Issue(
+                call.Issues.FullName,
+                made,
+                ui =>
+                {
+                    detach();
+                    Releasing(call, made, receiver)(ui);
+                },
+                Involved(context, call, Passed(context, call, at), held));
+            detach = Listening(context, call.Issues.FullName, made, id);
+
+            return id;
+        }
+
+        private Action Listening(
+            McpMethodContext context, string typeName, object issued, int id)
+        {
+            EventAttach attach;
+            if (!_events.Attachments.TryGetValue(typeName, out attach))
+            {
+                return () => { };
+            }
+
+            return attach(issued, (type, args) =>
+            {
+                try
+                {
+                    if (context.Events.Enqueue(type, id, Read(type, args)) == null)
+                    {
+                        _log.Write("溜め場が閉じた後に届いたイベントを捨てた: type=" + type + " handle=" + id);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    _log.WriteException(
+                        "イベントを溜め場へ入れられなかった: type=" + type + " handle=" + id, exception);
+                }
+            });
+        }
+
+        private object Read(string type, object args)
+        {
+            PayloadReader read;
+            if (!_events.Payloads.TryGetValue(type, out read))
+            {
+                return null;
+            }
+
+            try
+            {
+                return read(args);
+            }
+            catch (InvalidOperationException exception)
+            {
+                _log.WriteException("イベント固有の値を写せなかった: type=" + type, exception);
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// その生成に関与したハンドル。ハンドルで受け取った引数と、ハンドルで指した受け手がこれに
+        /// 当たり、生成物はそれらより先に解放される。
+        /// </summary>
+        private static IEnumerable<int> Involved(
+            McpMethodContext context, ToolCall call, IDictionary<string, object> given, int? held)
+        {
+            List<int> involved = new List<int>();
+            if (held.HasValue)
+            {
+                involved.Add(held.Value);
+            }
+
+            foreach (ToolArgument argument in call.Arguments.Where(a => a.Held != null))
+            {
+                object json;
+                long id;
+                if (given.TryGetValue(argument.Name, out json) && ValueInput.TryInteger(json, out id))
+                {
+                    involved.Add((int)id);
+                }
+            }
+
+            return involved;
+        }
+
+        /// <summary>その位置の対象を指したハンドル。ハンドル以外で指した対象では null。</summary>
+        private static int? Held(Pointed pointed, int at)
+        {
+            if (pointed == null || !pointed.ByHandle || pointed.Elements == null)
+            {
+                return null;
+            }
+
+            IList<long> handles = pointed.Elements.Handles;
+
+            return handles != null && at < handles.Count ? (int?)handles[at] : null;
+        }
+
+        /// <summary>その呼び出しの引数を渡された組。器の中へ入れて渡す呼び出しはその器を見る。</summary>
+        private static IDictionary<string, object> Passed(
+            McpMethodContext context, ToolCall call, int at)
+        {
+            if (!Many(call.Access, call.Receiver))
+            {
+                return context.Params;
+            }
+
+            object single;
+            if (context.Params.TryGetValue(ArgsName, out single))
+            {
+                return single as IDictionary<string, object>
+                    ?? new Dictionary<string, object>(StringComparer.Ordinal);
+            }
+
+            object many;
+            object[] items = context.Params.TryGetValue(ArgsListName, out many)
+                ? many as object[]
+                : null;
+
+            return items != null && at < items.Length
+                ? items[at] as IDictionary<string, object>
+                    ?? new Dictionary<string, object>(StringComparer.Ordinal)
+                : new Dictionary<string, object>(StringComparer.Ordinal);
+        }
+
+        private Action<IUiInvoker> Releasing(ToolCall call, object result, object receiver)
+        {
+            if (call.Releases == null)
+            {
+                return ui => { };
+            }
+
+            object target = call.ReleasesIssued ? receiver : result;
+            object[] arguments = call.ReleasesIssued ? new[] { result } : new object[0];
+
+            return ui =>
+            {
+                UiInvocation ran = ui.TryInvokeOnUi(() =>
+                {
+                    object ignored;
+                    SdkRelayRefusal refusal;
+                    if (!_relay.TryInvoke(
+                        call.Releases, target, arguments, out ignored, out refusal))
+                    {
+                        throw new InvalidOperationException(
+                            "手放す呼び出しを断られた: " + call.Releases);
+                    }
+                });
+                if (!ran.DidRun)
+                {
+                    throw new InvalidOperationException(
+                        "手放す呼び出しをUIスレッドで行えなかった: " + call.Releases);
+                }
+            };
+        }
+
+        /// <summary>
+        /// SDKのメンバーを、解いた対象の全件へ呼ぶ。引数は全件へ同じ組を配るか、対象ごとの組の
+        /// 並びで受け取る。
+        /// </summary>
+        private object InvokeEach(McpMethodContext context, ToolCall call)
+        {
+            string code;
+            string message;
+            bool confirm;
+            long? handle;
+            Pointed pointed;
+            List<string> known = new List<string>();
+            if (Given(call).Count != 0)
+            {
+                known.Add(ArgsName);
+                known.Add(ArgsListName);
+            }
+
+            if (call.Danger != DangerKind.None && !EmptiesOnlyTheHeld(call))
+            {
+                known.Add(ConfirmName);
+            }
+
+            if (call.Paged)
+            {
+                known.Add(OffsetName);
+                known.Add(LimitName);
+            }
+
+            if (Joins(call))
+            {
+                known.Add(RunsName);
+            }
+
+            known.AddRange(Pointing(call.Access, true, call.Receiver));
+            int offset = 0;
+            int limit = int.MaxValue;
+            bool runs;
+            if (!TryOnlyKnown(context, Known(known, Accepts(call)), out code, out message)
+                || !TryConfirm(context, out confirm, out code, out message)
+                || !TryPmxHandle(context, Accepts(call), out handle, out code, out message)
+                || !TryPassDanger(call, handle, confirm, out code, out message)
+                || !TryOptionalNumber(context, OffsetName, 0, ref offset, out code, out message)
+                || !TryOptionalNumber(context, LimitName, 1, ref limit, out code, out message)
+                || !TryRuns(context, out runs, out code, out message)
+                || !TryPointed(
+                    context, call.Access, true, handle, out pointed, out code, out message,
+                    call.Receiver))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            IList<object[]> passing;
+            bool spread;
+            if (!TryPassed(context, call, out passing, out spread, out code, out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            int invoked = 0;
+            List<object> results = new List<object>();
+            List<object> receivers = new List<object>();
+            Refusal refused = null;
+            EditStage stage = EditStage.BeforeCommit;
+            Exception failure;
+            UiInvocation unavailable;
+            if (!Run(context, () =>
+            {
+                PmxTarget target;
+                IList<Spot> column;
+                if (!TryTake(
+                        context,
+                        call.Receiver,
+                        Targets(call),
+                        handle,
+                        pointed.Held && !Takes(call),
+                        out target,
+                        out refused,
+                        call.Issues != null)
+                    || !TryColumn(
+                        context,
+                        call.Access,
+                        call.Receiver,
+                        target,
+                        pointed,
+                        Accepted(call.Access, null, false),
+                        out column,
+                        out refused)
+                    || !TryOfItemType(column, call.Access, null, out refused)
+                    || !TryBound(call, target, passing, out refused))
+                {
+                    return;
+                }
+
+                if (!spread && passing.Count != column.Count)
+                {
+                    refused = new Refusal(ToolEnvelope.Failure(
+                        ToolEnvelope.InvalidArgument,
+                        ArgsListName + " の件数が対象の件数と合わない: " + ArgsListName + " は "
+                            + passing.Count + " 件、対象は " + column.Count + " 件。"));
+
+                    return;
+                }
+
+                foreach (object[] one in passing)
+                {
+                    if (!VmdNames.TryCall(call.RowKey, one, out code, out message))
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                        return;
+                    }
+                }
+
+                for (int at = 0; at < column.Count; at++)
+                {
+                    if (!VmdSaving.TryCall(call.RowKey, column[at].Item, out code, out message))
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                        return;
+                    }
+
+                    if (!VmePathPoints.TryCall(
+                        call.RowKey,
+                        column[at].Item,
+                        spread ? passing[0] : passing[at],
+                        out code,
+                        out message))
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                        return;
+                    }
+
+                    if (!VmeResults.TryCall(
+                        call.RowKey,
+                        column[at].Item,
+                        spread ? passing[0] : passing[at],
+                        out code,
+                        out message))
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                        return;
+                    }
+
+                    if (!TryPositionsOf(
+                        call, spread ? passing[0] : passing[at], target, column[at].Item, out refused))
+                    {
+                        return;
+                    }
+                }
+
+                stage = Changing(call.Receiver, target);
+                ReachedLists cloned = new ReachedLists();
+                for (int at = 0; at < column.Count; at++)
+                {
+                    object value;
+                    SdkRelayRefusal refusal;
+                    if (!_relay.TryInvoke(
+                        call.RowKey,
+                        column[at].Item,
+                        spread ? passing[0] : passing[at],
+                        out value,
+                        out refusal))
+                    {
+                        refused = Refusal.Of(call.RowKey, refusal);
+
+                        return;
+                    }
+
+                    object projected;
+                    if (!TryProjected(call, value, out projected, out refused))
+                    {
+                        return;
+                    }
+
+                    if (call.Issues != null
+                        && !TryDeferCloned(
+                            call, column[at].Item, value, target, cloned, out refused))
+                    {
+                        return;
+                    }
+
+                    results.Add(projected);
+                    receivers.Add(column[at].Item);
+                }
+
+                invoked = column.Count;
+                stage = Reflecting(call.Receiver, target, stage);
+                refused = Commit(context, call.Receiver, target);
+            }, out failure, out unavailable))
+            {
+                return ToolFailure.Unavailable(unavailable);
+            }
+
+            if (failure != null)
+            {
+                return ToolFailure.Failed(failure, stage);
+            }
+
+            if (refused != null)
+            {
+                return refused.Envelope;
+            }
+
+            if (call.Issues != null)
+            {
+                return Handed(context, call, results, receivers, pointed, invoked);
+            }
+
+            if (call.Result == null && call.Outputs.Count == 0)
+            {
+                return ToolEnvelope.Success(SetResponse.Invoked(invoked));
+            }
+
+            List<object> written = new List<object>(results.Count);
+            List<string> warnings = new List<string>();
+            int share = (ResponseSize.ValueChars(context.BudgetChars) - results.Count - 1)
+                / Math.Max(1, results.Count);
+            foreach (object one in results)
+            {
+                if (call.Projected != null && !call.Paged)
+                {
+                    written.Add(one);
+
+                    continue;
+                }
+
+                IDictionary<string, object> envelope = call.Paged
+                    ? Paged(call, one, offset, limit, runs, share)
+                    : call.Outputs.Count != 0
+                        ? Written(call, one)
+                        : Written(call.Result, one);
+                object value;
+                if (!envelope.TryGetValue(ToolEnvelope.ValueName, out value))
+                {
+                    return envelope;
+                }
+
+                written.Add(value);
+                object noted;
+                if (envelope.TryGetValue(ToolEnvelope.WarningsName, out noted))
+                {
+                    warnings.AddRange(((object[])noted).Cast<string>());
+                }
+            }
+
+            IList<object> answered = SetResponse.PerTarget(written, invoked);
+            if (call.Paged
+                && ResponseSize.Serializer.Serialize(answered).Length
+                    > ResponseSize.ValueChars(context.BudgetChars))
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.ResponseTooLarge,
+                    "対象ごとの応答を並べると値の枠に収まらない: " + invoked
+                        + " 件。handles を分けて渡す。");
+            }
+
+            return ToolEnvelope.Success(answered, warnings);
+        }
+
+        /// <summary>
+        /// 対象ごとの生成物を台帳へ預け、そのハンドルを対象の並びで返す。対象の組へ及ぶ呼び出しが
+        /// 生成物を返すときの応答で、1件ずつの発行は受け手ごとに行う。
+        /// </summary>
+        private object Handed(
+            McpMethodContext context,
+            ToolCall call,
+            IList<object> results,
+            IList<object> receivers,
+            Pointed pointed,
+            int invoked)
+        {
+            foreach (object one in results)
+            {
+                IList<object> made;
+                IDictionary<string, object> refused;
+                if (!TryMade(call, one, out made, out refused))
+                {
+                    return refused;
+                }
+            }
+
+            List<object> handed = new List<object>(results.Count);
+            for (int at = 0; at < results.Count; at++)
+            {
+                IDictionary<string, object> envelope = (IDictionary<string, object>)Issued(
+                    context, call, results[at], receivers[at], at, Held(pointed, at));
+                object value;
+                if (!envelope.TryGetValue(ToolEnvelope.ValueName, out value))
+                {
+                    return envelope;
+                }
+
+                handed.Add(value);
+            }
+
+            return ToolEnvelope.Success(SetResponse.PerTarget(handed, invoked));
+        }
+
+        /// <summary>要素のメソッドへ渡す引数。全件へ同じ組を配るか、対象ごとの組の並びを取る。</summary>
+        private static bool TryPassed(
+            McpMethodContext context,
+            ToolCall call,
+            out IList<object[]> passing,
+            out bool spread,
+            out string code,
+            out string message)
+        {
+            passing = null;
+            spread = true;
+            code = null;
+            message = null;
+            object single;
+            object many = null;
+            bool hasSingle = context.Params.TryGetValue(ArgsName, out single);
+            bool hasMany = context.Params.TryGetValue(ArgsListName, out many);
+            if (Given(call).Count == 0)
+            {
+                if (hasSingle || hasMany)
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = "引数を取らない呼び出しは " + ArgsName + " も " + ArgsListName
+                        + " も取らない。";
+
+                    return false;
+                }
+
+                passing = new[] { new object[call.Arguments.Count] };
+
+                return true;
+            }
+
+            if (hasSingle == hasMany)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ArgsName + " と " + ArgsListName + " のどちらか一方を渡す。";
+
+                return false;
+            }
+
+            if (hasSingle)
+            {
+                object[] taken;
+                if (!TryPass(context, call, single, out taken, out code, out message))
+                {
+                    return false;
+                }
+
+                passing = new[] { taken };
+
+                return true;
+            }
+
+            object[] items = many as object[];
+            if (items == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ArgsListName + " は引数の組の配列でなければならない。";
+
+                return false;
+            }
+
+            List<object[]> built = new List<object[]>();
+            foreach (object item in items)
+            {
+                object[] taken;
+                if (!TryPass(context, call, item, out taken, out code, out message))
+                {
+                    return false;
+                }
+
+                built.Add(taken);
+            }
+
+            passing = built;
+            spread = false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// ホストが自分で入れる引数と、位置で受け取る引数を解く。位置が指すのは相手にするPMXの
+        /// リストの中の要素で、関連が無いことは null で表す。
+        /// </summary>
+        private bool TryBound(
+            ToolCall call, PmxTarget target, IList<object[]> passing, out Refusal refused)
+        {
+            refused = null;
+            for (int at = 0; at < call.Arguments.Count; at++)
+            {
+                ToolArgument argument = call.Arguments[at];
+                if (argument.Injected)
+                {
+                    object given = Injected(argument, target);
+                    foreach (object[] one in passing)
+                    {
+                        one[at] = given;
+                    }
+
+                    continue;
+                }
+
+                if (argument.Referenced == null)
+                {
+                    continue;
+                }
+
+                IList<object> listed;
+                if (!TryListed(
+                    argument.Referenced, target, new ReachedLists(), out listed, out refused))
+                {
+                    return false;
+                }
+
+                foreach (object[] one in passing)
+                {
+                    if (one[at] == null)
+                    {
+                        continue;
+                    }
+
+                    int index = (int)one[at];
+                    string code;
+                    string message;
+                    if (!PositionInput.TryWithin(
+                        index, listed.Count, argument.Name, out code, out message, PositionInput.ListCountName))
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                        return false;
+                    }
+
+                    one[at] = listed[index];
+                }
+            }
+
+            return true;
+        }
+
+        private static bool TryGivenPosition(
+            ToolField field, object given, out object position, out string code, out string message)
+        {
+            position = null;
+            code = null;
+            message = null;
+            if (given == null && !field.RefusesNull)
+            {
+                return true;
+            }
+
+            int index;
+            if (given != null && !field.Listed && ValueInput.TryIndex(given, out index))
+            {
+                position = index;
+
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = field.Listed
+                ? field.Name + " は位置で指す並びなので、書き込みでは受け取らない。"
+                : field.Name + " は位置の整数でなければならない。";
+
+            return false;
+        }
+
+        /// <summary>
+        /// 書き込む組ごとに、位置で預かった値が指す実体を解く。1つでも解けなければ、どれも
+        /// 書き込まないまま断る。
+        /// </summary>
+        private bool TryPointing(
+            IList<Change> writing,
+            PmxTarget target,
+            out IList<object[]> pointing,
+            out Refusal refused)
+        {
+            pointing = null;
+            refused = null;
+            List<object[]> resolved = new List<object[]>(writing.Count);
+            ReachedLists reached = new ReachedLists();
+            foreach (Change one in writing)
+            {
+                object[] given = new object[one.Fields.Count];
+                for (int field = 0; field < one.Fields.Count; field++)
+                {
+                    if (!TryPointed(
+                        one.Fields[field],
+                        one.Values[field],
+                        target,
+                        reached,
+                        out given[field],
+                        out refused))
+                    {
+                        return false;
+                    }
+                }
+
+                resolved.Add(given);
+            }
+
+            pointing = resolved;
+
+            return true;
+        }
+
+        /// <summary>
+        /// 位置で預かった値が指す実体。指さない項目と null はそのまま渡す。相手がハンドルで持つ
+        /// 実体のときは解かず、預かりとして渡す。
+        /// </summary>
+        private bool TryPointed(
+            ToolField field,
+            object value,
+            PmxTarget target,
+            ReachedLists reached,
+            out object pointed,
+            out Refusal refused)
+        {
+            pointed = value;
+            refused = null;
+            if (field.Referenced == null || value == null)
+            {
+                return true;
+            }
+
+            if (target.Pmx == null)
+            {
+                pointed = new DeferredPosition(field, (int)value);
+
+                return true;
+            }
+
+            IList<object> listed;
+            if (!TryListed(field.Referenced, target, reached, out listed, out refused))
+            {
+                return false;
+            }
+
+            int index = (int)value;
+            string code;
+            string message;
+            if (!PositionInput.TryWithin(
+                index, listed.Count, field.Name, out code, out message, PositionInput.ListCountName))
+            {
+                refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                return false;
+            }
+
+            pointed = listed[index];
+
+            return true;
+        }
+
+        /// <summary>
+        /// 指している実体の、位置を数えるリストの中での位置。列に居ない実体と、指していない項目は
+        /// null で写る。
+        /// </summary>
+        private bool TryPosition(
+            ToolField field,
+            object value,
+            PmxTarget target,
+            ReachedLists reached,
+            out object json,
+            out Refusal refused)
+        {
+            json = null;
+            refused = null;
+            if (value == null)
+            {
+                return true;
+            }
+
+            System.Collections.IEnumerable given =
+                field.Listed ? (System.Collections.IEnumerable)value : null;
+            List<object> pointing = new List<object>();
+            foreach (object one in given ?? new[] { value })
+            {
+                pointing.Add(one);
+            }
+
+            if (given != null && pointing.Count == 0)
+            {
+                json = new object[0];
+
+                return true;
+            }
+
+            IList<object> listed;
+            if (!TryListed(field.Referenced, target, reached, out listed, out refused))
+            {
+                return false;
+            }
+
+            if (given == null)
+            {
+                json = reached.Position(field.Referenced, value);
+
+                return true;
+            }
+
+            List<object> positions = new List<object>();
+            foreach (object one in pointing)
+            {
+                positions.Add(reached.Position(field.Referenced, one));
+            }
+
+            json = positions.ToArray();
+
+            return true;
+        }
+
+        private void Forget(object item, string rowKey)
+        {
+            DeferredWrites held;
+            if (_deferred.TryGetValue(KeeperOf(item), out held))
+            {
+                held.Forget(item, rowKey);
+            }
+        }
+
+        private IList<string> Deferred(object item)
+        {
+            DeferredWrites held;
+
+            return _deferred.TryGetValue(KeeperOf(item), out held) ? held.Rows(item) : new string[0];
+        }
+
+        /// <summary>
+        /// ハンドルで持つ実体への、位置で指す項目の書き込みを預かる。子を親へ加えたあとは親が預かる。
+        /// </summary>
+        private void Defer(object keeper, DeferredWrite pending)
+        {
+            DeferredWrites held;
+            if (!_deferred.TryGetValue(keeper, out held))
+            {
+                held = new DeferredWrites();
+                _deferred.Add(keeper, held);
+            }
+
+            held.Put(pending);
+            _keeperOf.Remove(pending.Target);
+            _keeperOf.Add(pending.Target, keeper);
+        }
+
+        private object KeeperOf(object item)
+        {
+            object keeper;
+            DeferredWrites held;
+
+            return _keeperOf.TryGetValue(item, out keeper) && _deferred.TryGetValue(keeper, out held)
+                ? keeper
+                : item;
+        }
+
+        private bool TryDeferCloned(
+            ToolCall call,
+            object receiver,
+            object result,
+            PmxTarget target,
+            ReachedLists reached,
+            out Refusal refused)
+        {
+            refused = null;
+            IList<object> made;
+            IDictionary<string, object> ignored;
+            if (!call.RowKey.EndsWith(".Clone()", StringComparison.Ordinal)
+                || call.Access.Kind != ToolAccessKind.Element
+                || !TryMade(call, result, out made, out ignored))
+            {
+                return true;
+            }
+
+            bool held = target == null || target.Pmx == null;
+            List<ToolHop> path = Steps(call.Access);
+            foreach (object issued in made)
+            {
+                List<KeyValuePair<object, object>> pairs = new List<KeyValuePair<object, object>>();
+                foreach (ToolFields aggregation in _writableAggregations)
+                {
+                    List<ToolHop> steps = Steps(aggregation.Access);
+                    if (steps.Count < path.Count
+                        || path.Where((hop, at) => !SameHop(hop, steps[at])).Any())
+                    {
+                        continue;
+                    }
+
+                    List<ToolHop> rest = steps.Skip(path.Count).ToList();
+                    IList<object> copies;
+                    IList<object> sources = null;
+                    if (!TryDescend(issued, rest, out copies, out refused)
+                        || (held && !TryDescend(receiver, rest, out sources, out refused)))
+                    {
+                        return false;
+                    }
+
+                    for (int at = 0; at < copies.Count; at++)
+                    {
+                        IList<ToolField> fields = ReferenceFields(aggregation, copies[at]);
+                        if (held)
+                        {
+                            if (sources.Count == copies.Count && fields.Count != 0)
+                            {
+                                pairs.Add(new KeyValuePair<object, object>(sources[at], copies[at]));
+                            }
+
+                            continue;
+                        }
+
+                        foreach (ToolField field in fields)
+                        {
+                            if (!TryDeferReference(
+                                issued, copies[at], field, target, reached, out refused))
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                if (held)
+                {
+                    CopyDeferred(receiver, issued, pairs);
+                }
+            }
+
+            return true;
+        }
+
+        private static List<ToolHop> Steps(ToolAccess access)
+        {
+            List<ToolHop> steps = new List<ToolHop>(access.Parents);
+            steps.Add(new ToolHop(access.RowKey, access.Listed));
+
+            return steps;
+        }
+
+        private static bool SameHop(ToolHop left, ToolHop right)
+        {
+            return left.Listed == right.Listed
+                && string.Equals(left.RowKey, right.RowKey, StringComparison.Ordinal);
+        }
+
+        private bool TryDescend(
+            object start, IList<ToolHop> steps, out IList<object> found, out Refusal refused)
+        {
+            refused = null;
+            List<object> column = new List<object> { start };
+            foreach (ToolHop hop in steps)
+            {
+                List<object> next = new List<object>();
+                foreach (object owner in column)
+                {
+                    if (!TryStep(hop, owner, next, out refused))
+                    {
+                        found = null;
+
+                        return false;
+                    }
+                }
+
+                column = next;
+            }
+
+            found = column;
+
+            return true;
+        }
+
+        private static IList<ToolField> ReferenceFields(ToolFields aggregation, object element)
+        {
+            ToolFieldSet set;
+            if (aggregation.Access.Items.Count == 0)
+            {
+                set = aggregation.Access.IsElement(element) ? aggregation.Sets[0] : null;
+            }
+            else
+            {
+                ToolItem item = aggregation.Access.Items.FirstOrDefault(i => i.IsItem(element));
+                set = item == null ? null : SetOf(aggregation, item.ItemType);
+            }
+
+            return set == null
+                ? new ToolField[0]
+                : set.Fields.Where(f => f.Referenced != null && !f.Listed).ToList();
+        }
+
+        private bool TryDeferReference(
+            object keeper,
+            object element,
+            ToolField field,
+            PmxTarget target,
+            ReachedLists reached,
+            out Refusal refused)
+        {
+            refused = null;
+            object value;
+            SdkRelayRefusal refusal;
+            if (!_relay.TryInvoke(field.RowKey, element, new object[0], out value, out refusal))
+            {
+                refused = Refusal.Of(field.RowKey, refusal);
+
+                return false;
+            }
+
+            if (value == null)
+            {
+                return true;
+            }
+
+            IList<object> listed;
+            if (!TryListed(field.Referenced, target, reached, out listed, out refused))
+            {
+                return false;
+            }
+
+            object position = reached.Position(field.Referenced, value);
+            if (position != null)
+            {
+                Defer(keeper, new DeferredWrite(element, field, (int)position));
+            }
+
+            return true;
+        }
+
+        private void CopyDeferred(
+            object receiver, object issued, IList<KeyValuePair<object, object>> pairs)
+        {
+            DeferredWrites held;
+            if (!_deferred.TryGetValue(KeeperOf(receiver), out held))
+            {
+                return;
+            }
+
+            foreach (DeferredWrite pending in held.ToList())
+            {
+                foreach (KeyValuePair<object, object> pair in pairs)
+                {
+                    if (ReferenceEquals(pair.Key, pending.Target))
+                    {
+                        Defer(issued, new DeferredWrite(pair.Value, pending.Field, pending.Position));
+                    }
+                }
+            }
+        }
+
+        private void DeferIssued(ToolCall call, object issued, object[] positions)
+        {
+            if (issued == null)
+            {
+                return;
+            }
+
+            for (int at = 0; at < call.Arguments.Count; at++)
+            {
+                ToolField field;
+                if (positions[at] == null || !_issuedReferences.TryGetValue(call.Arguments[at], out field))
+                {
+                    continue;
+                }
+
+                Defer(issued, new DeferredWrite(issued, field, (int)positions[at]));
+            }
+        }
+
+        private void Carry(object item, object owner)
+        {
+            DeferredWrites held;
+            if (!_deferred.TryGetValue(item, out held))
+            {
+                DeferredWrites owning;
+                if (!_deferred.TryGetValue(owner, out owning))
+                {
+                    _deferred.Add(owner, new DeferredWrites());
+                }
+
+                _keeperOf.Remove(item);
+                _keeperOf.Add(item, owner);
+
+                return;
+            }
+
+            foreach (DeferredWrite pending in held)
+            {
+                Defer(owner, pending);
+            }
+
+            _deferred.Remove(item);
+        }
+
+        /// <summary>
+        /// 並びへ加える実体に預かりがあれば、加える先のPMXの中で位置を解いて書き込む。預かりを
+        /// 外すのは <see cref="Settle"/> が行う。
+        /// </summary>
+        private bool TryApplyDeferred(
+            object item, PmxTarget target, ReachedLists reached, out Refusal refused)
+        {
+            refused = null;
+            DeferredWrites held;
+            if (!_deferred.TryGetValue(item, out held))
+            {
+                return true;
+            }
+
+            foreach (DeferredWrite pending in held)
+            {
+                IList<object> listed;
+                if (!TryListed(pending.Field.Referenced, target, reached, out listed, out refused))
+                {
+                    return false;
+                }
+
+                string code;
+                string message;
+                if (!PositionInput.TryWithin(
+                    pending.Position,
+                    listed.Count,
+                    pending.Field.Name,
+                    out code,
+                    out message,
+                    PositionInput.ListCountName))
+                {
+                    refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                    return false;
+                }
+
+                object ignored;
+                SdkRelayRefusal refusal;
+                if (!_relay.TryInvoke(
+                    pending.Field.RowKey,
+                    pending.Target,
+                    new[] { listed[pending.Position] },
+                    out ignored,
+                    out refusal))
+                {
+                    refused = Refusal.Of(pending.Field.RowKey, refusal);
+
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>反映まで済んだ実体の預かりを外す。捨てられた複製へ解いたものは残す。</summary>
+        private void Settle(IEnumerable<object> applied)
+        {
+            foreach (object item in applied)
+            {
+                _deferred.Remove(item);
+            }
+        }
+
+        /// <summary>
+        /// その道が指すリストの要素。位置で受け取る引数は、この列の中の位置で指す。
+        /// <paramref name="reached"/> が同じ道を覚えていれば、辿り直さずにそれを返す。
+        /// </summary>
+        private bool TryListed(
+            ToolAccess access,
+            PmxTarget target,
+            ReachedLists reached,
+            out IList<object> listed,
+            out Refusal refused)
+        {
+            listed = null;
+            refused = null;
+            if (target.Pmx == null)
+            {
+                refused = new Refusal(ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable,
+                    "位置はPMXの中のリストで数えるので、ハンドルで指した相手には位置で指す項目を"
+                        + "渡せない。"));
+
+                return false;
+            }
+
+            if (reached.TryGet(access, out listed))
+            {
+                return true;
+            }
+
+            IList<object> owners;
+            if (!TryOwners(access, target, out owners, out refused))
+            {
+                return false;
+            }
+
+            List<object> found = new List<object>();
+            foreach (object owner in owners)
+            {
+                if (!TryStep(Step(access), owner, found, out refused))
+                {
+                    return false;
+                }
+            }
+
+            reached.Keep(access, found);
+            listed = found;
+
+            return true;
+        }
+
+        /// <summary>呼び出す側が渡す引数。ホストが自分で入れる引数はこれに入らない。</summary>
+        private static IList<ToolArgument> Given(ToolCall call)
+        {
+            return call.Arguments.Where(a => !a.Injected).ToList();
+        }
+
+        private static bool TryReference(
+            ToolArgument argument,
+            bool refusing,
+            object given,
+            out object position,
+            out string code,
+            out string message)
+        {
+            position = null;
+            code = null;
+            message = null;
+            if (given == null && !(refusing && argument.RefusesNull))
+            {
+                return true;
+            }
+
+            int index;
+            if (given != null && ValueInput.TryIndex(given, out index))
+            {
+                position = index;
+
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = argument.Name + " は位置の整数でなければならない。";
+
+            return false;
+        }
+
+        /// <summary>
+        /// ハンドルで受け取る引数を、そのハンドルが指す実体へ直す。指していなければ断る。
+        /// </summary>
+        private static bool TryHeldArgument(
+            McpMethodContext context,
+            ToolArgument argument,
+            object json,
+            out object value,
+            out string code,
+            out string message)
+        {
+            value = null;
+            code = null;
+            message = null;
+            if (!argument.Type.IsArray)
+            {
+                return TryOneHeld(context, argument, json, out value, out code, out message);
+            }
+
+            object[] items = json as object[];
+            if (items == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = argument.Name + " はハンドルの番号の配列でなければならない。";
+
+                return false;
+            }
+
+            Array taken = Array.CreateInstance(argument.Held, items.Length);
+            for (int at = 0; at < items.Length; at++)
+            {
+                object one;
+                if (!TryOneHeld(context, argument, items[at], out one, out code, out message))
+                {
+                    return false;
+                }
+
+                taken.SetValue(one, at);
+            }
+
+            value = taken;
+
+            return true;
+        }
+
+        /// <summary>ハンドル1件を、それが指す実体へ直す。指していなければ断る。</summary>
+        private static bool TryOneHeld(
+            McpMethodContext context,
+            ToolArgument argument,
+            object json,
+            out object value,
+            out string code,
+            out string message)
+        {
+            value = null;
+            code = null;
+            message = null;
+            long id;
+            if (!ValueInput.TryInteger(json, out id))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = argument.Name + " はハンドルの番号でなければならない。";
+
+                return false;
+            }
+
+            object found;
+            if (id >= int.MinValue && id <= int.MaxValue
+                && context.Handles.TryGet((int)id, out found) && argument.Holds(found))
+            {
+                value = found;
+
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidHandle;
+            message = argument.Name + " が指すハンドルは、この呼び出しが相手にする実体を指していない。";
+
+            return false;
+        }
+
+        /// <summary>
+        /// 組で受け取る引数を、SDKへ渡す実体へ組み立てる。並びを取る引数は要素ごとに組み立てる。
+        /// </summary>
+        private static bool TryBuilt(
+            ToolArgument argument,
+            object json,
+            out object value,
+            out string code,
+            out string message)
+        {
+            value = null;
+            code = null;
+            message = null;
+            if (!argument.Type.IsArray)
+            {
+                return TryOne(argument, argument.Type, json, out value, out code, out message);
+            }
+
+            object[] items = json as object[];
+            if (items == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = argument.Name + " は組の配列でなければならない。";
+
+                return false;
+            }
+
+            Type element = argument.Type.GetElementType();
+            Array built = Array.CreateInstance(element, items.Length);
+            for (int at = 0; at < items.Length; at++)
+            {
+                object one;
+                if (!TryOne(argument, element, items[at], out one, out code, out message))
+                {
+                    return false;
+                }
+
+                built.SetValue(one, at);
+            }
+
+            value = built;
+
+            return true;
+        }
+
+        /// <summary>組1つを実体へ組み立てる。知らない項目と足りない項目は断る。</summary>
+        private static bool TryOne(
+            ToolArgument argument,
+            Type type,
+            object json,
+            out object value,
+            out string code,
+            out string message)
+        {
+            value = null;
+            code = null;
+            message = null;
+            IDictionary<string, object> members = json as IDictionary<string, object>;
+            if (members == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = argument.Name + " は項目の組でなければならない。";
+
+                return false;
+            }
+
+            string unknown = members.Keys
+                .Where(n => !argument.Built.Members.Any(
+                    m => string.Equals(m.Name, n, StringComparison.Ordinal)))
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (unknown != null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = argument.Name + " が知らない項目を持っている: " + unknown;
+
+                return false;
+            }
+
+            object made = argument.Built.Create();
+            foreach (ToolValueMember member in argument.Built.Members)
+            {
+                object given;
+                if (!members.TryGetValue(member.Name, out given))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = argument.Name + " の項目が足りない: " + member.Name;
+
+                    return false;
+                }
+
+                object typed;
+                if (!ValueInput.TryFromJson(member.Type, given, out typed, out code, out message))
+                {
+                    code = code ?? ToolEnvelope.NotApplicable;
+                    message = message
+                        ?? (member.Name + " は値として受け取れない型を取る。");
+
+                    return false;
+                }
+
+                member.Write(made, typed);
+            }
+
+            value = made;
+
+            return true;
+        }
+
+        private static bool TryPass(
+            McpMethodContext context,
+            ToolCall call,
+            object given,
+            out object[] passed,
+            out string code,
+            out string message)
+        {
+            passed = null;
+            code = null;
+            message = null;
+            IDictionary<string, object> members = given as IDictionary<string, object>;
+            if (members == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ArgsName + " は引数の組でなければならない。";
+
+                return false;
+            }
+
+            string unknown = members.Keys
+                .Where(n => !Given(call).Any(
+                    a => string.Equals(a.Name, n, StringComparison.Ordinal)))
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (unknown != null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = "知らない項目を渡している: " + unknown;
+
+                return false;
+            }
+
+            object[] taken = new object[call.Arguments.Count];
+            for (int at = 0; at < call.Arguments.Count; at++)
+            {
+                ToolArgument argument = call.Arguments[at];
+                if (argument.Injected)
+                {
+                    continue;
+                }
+
+                object value;
+                if (!members.TryGetValue(argument.Name, out value))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = "引数が足りない: " + argument.Name;
+
+                    return false;
+                }
+
+                if (argument.Referenced != null)
+                {
+                    if (!TryReference(argument, true, value, out taken[at], out code, out message))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (argument.Held != null)
+                {
+                    if (!TryHeldArgument(
+                        context, argument, value, out taken[at], out code, out message))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (argument.Built != null)
+                {
+                    if (!TryBuilt(argument, value, out taken[at], out code, out message))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                object typed;
+                if (!ValueInput.TryFromJson(argument.Type, value, out typed, out code, out message))
+                {
+                    code = code ?? ToolEnvelope.NotApplicable;
+                    message = message ?? (argument.Name + " は値として受け取れない型を取る。");
+
+                    return false;
+                }
+
+                taken[at] = typed;
+            }
+
+            passed = taken;
+
+            return true;
+        }
+
+        private object Read(McpMethodContext context, ToolFields tool)
+        {
+            string code;
+            string message;
+            IList<string> requested;
+            IList<string> selected;
+            long? handle;
+            int offset = 0;
+            int limit = int.MaxValue;
+            IList<string> needles;
+            Pointed pointed;
+            ToolField named = NameField(tool);
+            List<string> known = new List<string> { FieldsName };
+            if (tool.Listing)
+            {
+                known.Add(OffsetName);
+                known.Add(LimitName);
+                if (named != null)
+                {
+                    known.Add(NameContainsName);
+                }
+            }
+
+            known.AddRange(Pointing(tool.Access, true, tool.Receiver));
+            known.AddRange(Choosing(tool.Receiver));
+            bool divided = Divided(tool);
+            if (!TryOnlyKnown(context, Known(known, tool.Receiver.Kind == ToolReceiverKind.Pmx), out code, out message)
+                || !TryView(context, out code, out message)
+                || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
+                || !TryOptionalNumber(context, OffsetName, 0, ref offset, out code, out message)
+                || !TryOptionalNumber(context, LimitName, 1, ref limit, out code, out message)
+                || !TryNameContains(context, out needles, out code, out message)
+                || !TryFields(context, out requested, out code, out message)
+                || !TryPointed(
+                    context, tool.Access, true, handle, out pointed, out code, out message,
+                    tool.Receiver)
+                || !FieldSelection.TryResolve(
+                    requested,
+                    tool.Fields.Select(f => f.Name).ToList(),
+                    Composed(tool.Access, pointed),
+                    out selected,
+                    out code,
+                    out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            if (tool.Listing)
+            {
+                pointed = WholeUnderParents(pointed, needles != null);
+            }
+
+            int total = 0;
+            int pointedCount = 0;
+            List<Spot> taken = new List<Spot>();
+            List<string> types = new List<string>();
+            List<IList<ToolField>> reading = new List<IList<ToolField>>();
+            List<object[]> values = new List<object[]>();
+            Refusal refused = null;
+            Exception failure;
+            UiInvocation unavailable;
+            if (!Run(context, () =>
+            {
+                PmxTarget target;
+                IList<Spot> column;
+                if (!TryTake(context, tool.Receiver, tool.Receiver.Kind == ToolReceiverKind.Pmx, handle, pointed.Held, out target, out refused)
+                    || !TryColumn(
+                        context,
+                        tool.Access,
+                        tool.Receiver,
+                        target,
+                        pointed,
+                        Accepted(tool.Access, null, divided),
+                        out column,
+                        out refused)
+                    || !TryOfDeclaredType(column, tool.Access, divided, out refused))
+                {
+                    return;
+                }
+
+                total = column.Count;
+                if (needles != null
+                    && !TryNarrow(column, named, needles, out column, out refused))
+                {
+                    return;
+                }
+
+                ReachedLists reached = new ReachedLists();
+                pointedCount = column.Count;
+                taken.AddRange(tool.Listing ? column.Skip(offset).Take(limit) : column);
+                foreach (Spot spot in taken)
+                {
+                    string itemType = tool.Access.Items.Count == 0
+                        ? null
+                        : Named(tool.Access, spot.Item);
+                    IList<ToolField> fields = Reading(tool, divided ? itemType : null, selected);
+                    object[] read = new object[fields.Count];
+                    for (int at = 0; at < fields.Count; at++)
+                    {
+                        object value;
+                        SdkRelayRefusal refusal;
+                        if (!VmePathPoints.TryRead(fields[at].RowKey, spot.Item, out value)
+                            && !_relay.TryInvoke(
+                                fields[at].RowKey, spot.Item, new object[0], out value, out refusal))
+                        {
+                            refused = Refusal.Of(fields[at].RowKey, refusal);
+
+                            return;
+                        }
+
+                        if (fields[at].Referenced != null
+                            && !TryPosition(
+                                fields[at], value, target, reached, out value, out refused))
+                        {
+                            return;
+                        }
+
+                        read[at] = value;
+                    }
+
+                    types.Add(itemType);
+                    reading.Add(fields);
+                    values.Add(read);
+                }
+            }, out failure, out unavailable))
+            {
+                return ToolFailure.Unavailable(unavailable);
+            }
+
+            if (failure != null)
+            {
+                return ToolFailure.Failed(failure, EditStage.BeforeCommit);
+            }
+
+            if (refused != null)
+            {
+                return refused.Envelope;
+            }
+
+            List<IDictionary<string, object>> items =
+                new List<IDictionary<string, object>>(taken.Count);
+            List<string> warnings = new List<string>();
+            for (int spot = 0; spot < taken.Count; spot++)
+            {
+                Dictionary<string, object> item =
+                    new Dictionary<string, object>(StringComparer.Ordinal);
+                foreach (string name in Composed(tool.Access, pointed))
+                {
+                    item.Add(name, Composed(name, taken[spot], types[spot]));
+                }
+
+                for (int at = 0; at < reading[spot].Count; at++)
+                {
+                    ToolField field = reading[spot][at];
+                    object json;
+                    IList<string> written;
+                    if (field.Referenced != null)
+                    {
+                        item.Add(field.Name, values[spot][at]);
+
+                        continue;
+                    }
+
+                    if (!ValueShape.TryToJson(
+                        field.Type,
+                        values[spot][at],
+                        ImageTransfer.DefaultMaxLongSide,
+                        out json,
+                        out written,
+                        out code,
+                        out message))
+                    {
+                        return Unwritable(field.Type, code, message);
+                    }
+
+                    item.Add(field.Name, json);
+                    warnings.AddRange(written);
+                }
+
+                items.Add(item);
+            }
+
+            return tool.Listing
+                ? Listed(context, items, total, pointedCount, offset, limit, warnings)
+                : ToolEnvelope.Success(items[0], warnings);
+        }
+
+        /// <summary>
+        /// 一覧の要素が名前を持つなら、その名前を読む項目。持たなければ null で、名前での絞り込みは
+        /// 受け取らない。
+        /// </summary>
+        private static ToolField NameField(ToolFields tool)
+        {
+            return tool.Fields.FirstOrDefault(
+                f => string.Equals(f.Name, NameFieldName, StringComparison.Ordinal)
+                    && f.Type == typeof(string));
+        }
+
+        /// <summary>
+        /// 名前が渡された文字列のどれかを含む要素だけを残す。名前を読めなければ偽で、
+        /// <paramref name="refused"/> に断りを持たせる。照合は序数で、大文字小文字を同じにしない。
+        /// </summary>
+        private bool TryNarrow(
+            IList<Spot> column,
+            ToolField named,
+            IList<string> needles,
+            out IList<Spot> kept,
+            out Refusal refused)
+        {
+            refused = null;
+            List<Spot> held = new List<Spot>();
+            foreach (Spot spot in column)
+            {
+                object value;
+                SdkRelayRefusal refusal;
+                if (!_relay.TryInvoke(named.RowKey, spot.Item, new object[0], out value, out refusal))
+                {
+                    kept = column;
+                    refused = Refusal.Of(named.RowKey, refusal);
+
+                    return false;
+                }
+
+                string name = value as string;
+                if (name != null
+                    && needles.Any(n => name.IndexOf(n, StringComparison.Ordinal) >= 0))
+                {
+                    held.Add(spot);
+                }
+            }
+
+            kept = held;
+
+            return true;
+        }
+
+        /// <summary>名前での絞り込みの頼み方。渡していなければ絞り込まないものとする。</summary>
+        private static bool TryNameContains(
+            McpMethodContext context, out IList<string> needles, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            needles = null;
+            object value;
+            if (!context.Params.TryGetValue(NameContainsName, out value))
+            {
+                return true;
+            }
+
+            object[] items = value as object[];
+            if (items == null
+                || items.Length == 0
+                || items.Any(i => !(i is string) || ((string)i).Length == 0))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = NameContainsName + " は1文字以上の文字列を1つ以上並べた配列でなければならない。";
+
+                return false;
+            }
+
+            needles = items.Cast<string>().ToList();
+
+            return true;
+        }
+
+        /// <summary>その要素から読む項目。選んだ名前のうち、その実行時の型が持つものを並びの順で採る。</summary>
+        private static IList<ToolField> Reading(
+            ToolFields tool, string itemType, IList<string> selected)
+        {
+            ToolFieldSet set = SetOf(tool, itemType);
+            if (set == null)
+            {
+                return new ToolField[0];
+            }
+
+            return selected
+                .Where(n => set.Fields.Any(f => string.Equals(f.Name, n, StringComparison.Ordinal)))
+                .Select(n => set.Fields.First(
+                    f => string.Equals(f.Name, n, StringComparison.Ordinal)))
+                .ToList();
+        }
+
+        private static object Composed(string name, Spot spot, string itemType)
+        {
+            if (string.Equals(name, ItemTypeName, StringComparison.Ordinal))
+            {
+                return itemType;
+            }
+
+            if (string.Equals(name, HandleName, StringComparison.Ordinal))
+            {
+                return spot.Handle;
+            }
+
+            if (string.Equals(name, IndexName, StringComparison.Ordinal))
+            {
+                return spot.Position;
+            }
+
+            if (string.Equals(name, ParentHandleName, StringComparison.Ordinal))
+            {
+                return spot.ParentHandle;
+            }
+
+            return string.Equals(name, ParentIndexName, StringComparison.Ordinal)
+                ? (object)spot.ParentIndex
+                : spot.IndexInParent;
+        }
+
+        private object Write(McpMethodContext context, ToolFields tool)
+        {
+            return tool.Listing ? WriteValue(context, tool) : WriteOne(context, tool);
+        }
+
+        private object WriteOne(McpMethodContext context, ToolFields tool)
+        {
+            string code;
+            string message;
+            if (!TryOnlyKnown(
+                    context,
+                    Known(
+                        tool.Sets[0].Fields.Select(f => f.Name).Concat(Choosing(tool.Receiver)).ToList(),
+                        tool.Receiver.Kind == ToolReceiverKind.Pmx),
+                    out code,
+                    out message)
+                || !TryView(context, out code, out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            List<ToolField> writing = tool.Sets[0].Fields
+                .Where(f => context.Params.ContainsKey(f.Name))
+                .ToList();
+            if (writing.Count != 1)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.InvalidArgument, "書き込む項目をちょうど1つ選ぶ。");
+            }
+
+            ToolField field = writing[0];
+            object value;
+            if (!TryValue(
+                context, new ToolArgument(field.Name, field.Type), out value, out code, out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            Refusal refused = null;
+            EditStage stage = Changing(tool.Receiver, null);
+            Exception failure;
+            UiInvocation unavailable;
+            if (!Run(context, () =>
+            {
+                object ignored;
+                SdkRelayRefusal refusal;
+                object receiver = Receiver(context, tool.Receiver, null);
+                if (!TryOpened(tool.Receiver, receiver, out refused))
+                {
+                    return;
+                }
+
+                if (!_relay.TryInvoke(
+                    field.RowKey,
+                    receiver,
+                    new[] { value },
+                    out ignored,
+                    out refusal))
+                {
+                    refused = Refusal.Of(field.RowKey, refusal);
+
+                    return;
+                }
+
+                object back;
+                string read;
+                if (_relay.TryInvoke(field.RowKey, receiver, new object[0], out back, out refusal)
+                    && (read = Differs(field.Type, value, back)) != null)
+                {
+                    refused = new Refusal(ToolEnvelope.Failure(
+                        ToolEnvelope.OperationFailed,
+                        "書き込んだが、" + field.Name + " を読み返すと " + read
+                            + " で、書いた値が保たれていない。"));
+                }
+            }, out failure, out unavailable))
+            {
+                return ToolFailure.Unavailable(unavailable);
+            }
+
+            if (failure != null)
+            {
+                return ToolFailure.Failed(failure, stage);
+            }
+
+            return refused != null
+                ? refused.Envelope
+                : ToolEnvelope.Success(SetResponse.Updated(1));
+        }
+
+        /// <summary>
+        /// 読み返した値が書いた値と違えば、読み返した値をJSONで綴ったもの。同じなら null。どちらも同じ型の
+        /// JSONへ写してから比べ、小数は有効数字7桁で比べる。写せない値と画像は比べずに null とする。
+        /// </summary>
+        private static string Differs(Type declared, object written, object back)
+        {
+            if (declared == typeof(System.Drawing.Bitmap))
+            {
+                return null;
+            }
+
+            object wrote;
+            object read;
+            IList<string> warnings;
+            string code;
+            string message;
+            if (!ValueShape.TryToJson(
+                    declared, written, ImageTransfer.SoleValueMaxLongSide, out wrote, out warnings, out code, out message)
+                || !ValueShape.TryToJson(
+                    declared, back, ImageTransfer.SoleValueMaxLongSide, out read, out warnings, out code, out message))
+            {
+                return null;
+            }
+
+            return Same(wrote, read) ? null : ResponseSize.Serializer.Serialize(read);
+        }
+
+        /// <summary>JSONへ写した2つの値が同じか。小数は有効数字7桁までを比べる。</summary>
+        private static bool Same(object left, object right)
+        {
+            IDictionary<string, object> leftMembers = left as IDictionary<string, object>;
+            IDictionary<string, object> rightMembers = right as IDictionary<string, object>;
+            if (leftMembers != null || rightMembers != null)
+            {
+                return leftMembers != null
+                    && rightMembers != null
+                    && leftMembers.Count == rightMembers.Count
+                    && leftMembers.All(member =>
+                        rightMembers.ContainsKey(member.Key) && Same(member.Value, rightMembers[member.Key]));
+            }
+
+            System.Collections.IList leftItems = left as System.Collections.IList;
+            System.Collections.IList rightItems = right as System.Collections.IList;
+            if (leftItems != null || rightItems != null)
+            {
+                return leftItems != null
+                    && rightItems != null
+                    && leftItems.Count == rightItems.Count
+                    && Enumerable.Range(0, leftItems.Count).All(at => Same(leftItems[at], rightItems[at]));
+            }
+
+            if (IsFraction(left) || IsFraction(right))
+            {
+                return ValueInput.IsNumber(left)
+                    && ValueInput.IsNumber(right)
+                    && string.Equals(
+                        Convert.ToDouble(left, CultureInfo.InvariantCulture).ToString("G7", CultureInfo.InvariantCulture),
+                        Convert.ToDouble(right, CultureInfo.InvariantCulture).ToString("G7", CultureInfo.InvariantCulture),
+                        StringComparison.Ordinal);
+            }
+
+            return Equals(left, right);
+        }
+
+        private static bool IsFraction(object value)
+        {
+            return value is float || value is double || value is decimal;
+        }
+
+        private object WriteValue(McpMethodContext context, ToolFields tool)
+        {
+            string code;
+            string message;
+            long? handle;
+            string itemType;
+            Pointed pointed;
+            List<string> known = new List<string> { ValueName };
+            if (Many(tool.Access, tool.Receiver))
+            {
+                known.Add(ValuesName);
+            }
+
+            if (Divided(tool))
+            {
+                known.Add(ItemTypeName);
+            }
+
+            known.AddRange(Pointing(tool.Access, true, tool.Receiver));
+            if (!TryOnlyKnown(context, Known(known, tool.Receiver.Kind == ToolReceiverKind.Pmx), out code, out message)
+                || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
+                || !TryItemType(context, tool, out itemType, out code, out message)
+                || !TryPointed(
+                    context, tool.Access, true, handle, out pointed, out code, out message,
+                    tool.Receiver))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            ToolFieldSet set = SetOf(tool, itemType);
+            if (set == null || set.Fields.Count == 0)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "書き込める項目を持たない型を指している。");
+            }
+
+            IList<Change> writing;
+            bool spread;
+            if (!TryChanges(context, tool, set, out writing, out spread, out code, out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            int updated = 0;
+            Refusal refused = null;
+            EditStage stage = EditStage.BeforeCommit;
+            IList<object[]> pointing = null;
+            Exception failure;
+            UiInvocation unavailable;
+            if (!Run(context, () =>
+            {
+                PmxTarget target;
+                IList<Spot> column;
+                if (!TryTake(context, tool.Receiver, tool.Receiver.Kind == ToolReceiverKind.Pmx, handle, pointed.Held, out target, out refused)
+                    || !TryColumn(
+                        context,
+                        tool.Access,
+                        tool.Receiver,
+                        target,
+                        pointed,
+                        Accepted(tool.Access, itemType, false),
+                        out column,
+                        out refused)
+                    || !TryOfItemType(column, tool.Access, itemType, out refused))
+                {
+                    return;
+                }
+
+                if (!spread && writing.Count != column.Count)
+                {
+                    refused = new Refusal(ToolEnvelope.Failure(
+                        ToolEnvelope.InvalidArgument,
+                        ValuesName + " の件数が対象の件数と合わない: " + ValuesName + " は "
+                            + writing.Count + " 件、対象は " + column.Count + " 件。"));
+
+                    return;
+                }
+
+                if (!TryPointing(writing, target, out pointing, out refused))
+                {
+                    return;
+                }
+
+                for (int at = 0; at < column.Count; at++)
+                {
+                    int which = spread ? 0 : at;
+                    for (int field = 0; field < writing[which].Fields.Count; field++)
+                    {
+                        string lacking;
+                        if (!VmePathPoints.TryWrite(
+                            writing[which].Fields[field].RowKey,
+                            column[at].Item,
+                            pointing[which][field],
+                            out lacking))
+                        {
+                            refused = new Refusal(
+                                ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, lacking));
+
+                            return;
+                        }
+                    }
+                }
+
+                stage = Changing(tool.Receiver, target);
+                BoneDestination destinations = new BoneDestination();
+                for (int at = 0; at < column.Count; at++)
+                {
+                    int which = spread ? 0 : at;
+                    Change one = writing[which];
+                    for (int field = 0; field < one.Fields.Count; field++)
+                    {
+                        DeferredPosition waiting = pointing[which][field] as DeferredPosition;
+                        if (waiting != null)
+                        {
+                            Defer(
+                                KeeperOf(column[at].Item),
+                                new DeferredWrite(column[at].Item, waiting.Field, waiting.Position));
+
+                            continue;
+                        }
+
+                        Forget(column[at].Item, one.Fields[field].RowKey);
+                        object ignored;
+                        SdkRelayRefusal refusal;
+                        if (!_relay.TryInvoke(
+                            one.Fields[field].RowKey,
+                            column[at].Item,
+                            new[] { pointing[which][field] },
+                            out ignored,
+                            out refusal))
+                        {
+                            refused = Refusal.Of(one.Fields[field].RowKey, refusal);
+
+                            return;
+                        }
+                    }
+
+                    destinations.Note(
+                        one.Fields.Select(f => f.RowKey),
+                        Deferred(column[at].Item),
+                        column[at].Item,
+                        column[at].Handle.HasValue
+                            ? "ハンドル " + column[at].Handle.Value
+                            : "位置 " + column[at].Position);
+                }
+
+                foreach (string notice in destinations.Notices())
+                {
+                    context.Notices.Add(notice);
+                }
+
+                updated = column.Count;
+                stage = Reflecting(tool.Receiver, target, stage);
+                refused = Commit(context, tool.Receiver, target, RootList(tool.Access), true)
+                    ?? CarryFilePath(tool.Receiver, target, writing, pointing);
+            }, out failure, out unavailable))
+            {
+                return ToolFailure.Unavailable(unavailable);
+            }
+
+            if (failure != null)
+            {
+                return ToolFailure.Failed(failure, stage);
+            }
+
+            return refused != null
+                ? refused.Envelope
+                : ToolEnvelope.Success(SetResponse.Updated(updated));
+        }
+
+        /// <summary>
+        /// 現在のPMXの複製へ書いたファイルパスを、エディタの現在のモデルへ書く。反映の行は
+        /// ファイルパスを写さない。
+        /// </summary>
+        private Refusal CarryFilePath(
+            ToolReceiver receiver, PmxTarget target, IList<Change> writing, IList<object[]> pointing)
+        {
+            if (!Reflects(receiver, target) || receiver.Bridged)
+            {
+                return null;
+            }
+
+            for (int which = 0; which < writing.Count; which++)
+            {
+                for (int field = 0; field < writing[which].Fields.Count; field++)
+                {
+                    if (!string.Equals(
+                        writing[which].Fields[field].RowKey, PmxFilePathRow, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    SdkReceiver found;
+                    if (!_receivers.TryGetValue(PmxConnectorType, out found))
+                    {
+                        return new Refusal(ToolEnvelope.Failure(
+                            ToolEnvelope.NotApplicable, "受け手を得る道が無い: " + PmxConnectorType));
+                    }
+
+                    object ignored;
+                    SdkRelayRefusal refusal;
+                    if (!_relay.TryInvoke(
+                        CurrentPathRow,
+                        found(_connection),
+                        new[] { pointing[which][field] },
+                        out ignored,
+                        out refusal))
+                    {
+                        return Refusal.Of(CurrentPathRow, refusal);
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 書き込む相手の実行時の型。型で分かれるツールだけが受け取り、分かれないツールでは
+        /// 名前を持たない1つの組を指す。
+        /// </summary>
+        private static bool TryItemType(
+            McpMethodContext context,
+            ToolFields tool,
+            out string itemType,
+            out string code,
+            out string message)
+        {
+            itemType = null;
+            code = null;
+            message = null;
+            if (!Divided(tool))
+            {
+                return true;
+            }
+
+            object value;
+            string given = context.Params.TryGetValue(ItemTypeName, out value)
+                ? value as string
+                : null;
+            if (given == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ItemTypeName + " は要素の実行時の型の名前でなければならない。";
+
+                return false;
+            }
+
+            if (!tool.Access.Items.Any(
+                i => string.Equals(i.ItemType, given, StringComparison.Ordinal)))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = "このリストが並べない型を指している: " + given;
+
+                return false;
+            }
+
+            itemType = given;
+
+            return true;
+        }
+
+        private object Add(McpMethodContext context, ToolElements tool)
+        {
+            return tool.Access.Parents.Count == 0 && tool.Access.Owner == null
+                ? AddToRoot(context, tool)
+                : AddToParents(context, tool);
+        }
+
+        private object AddToRoot(McpMethodContext context, ToolElements tool)
+        {
+            string code;
+            string message;
+            TargetRequest given;
+            ResolvedTargets resolved;
+            if (!TryOnlyKnown(
+                context,
+                new List<string> { TargetNames.Element.Handles },
+                out code,
+                out message)
+                || !TryTargets(context, TargetNames.Element, true, out given, out code, out message)
+                || !TargetSelection.TryResolve(
+                    given,
+                    TargetForm.Handles,
+                    0,
+                    id => Held(context, Accepted(tool.Access, null, true), id) != null,
+                    out resolved,
+                    out code,
+                    out message,
+                    TargetNames.Element))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            object[] items = resolved.Handles
+                .Select(id => Held(context, Accepted(tool.Access, null, true), id))
+                .ToArray();
+            int[] indices = new int[items.Length];
+            Refusal refused = null;
+            EditStage stage = EditStage.BeforeCommit;
+            Exception failure;
+            UiInvocation unavailable;
+            if (!Run(context, () =>
+            {
+                PmxTarget target;
+                SdkList list;
+                if (!TryTake(context, tool.Receiver, tool.Receiver.Kind == ToolReceiverKind.Pmx, null, false, out target, out refused)
+                    || !TryList(tool.Access.RowKey, out list, out refused))
+                {
+                    return;
+                }
+
+                stage = Changing(tool.Receiver, target);
+                ReachedLists reached = new ReachedLists();
+                for (int at = 0; at < items.Length; at++)
+                {
+                    if (!TryApplyDeferred(items[at], target, reached, out refused))
+                    {
+                        return;
+                    }
+
+                    list.Add(target.Pmx, items[at]);
+                    reached.Added(tool.Access.RowKey, true, items[at]);
+                    indices[at] = list.Count(target.Pmx) - 1;
+                }
+
+                stage = Reflecting(tool.Receiver, target, stage);
+                refused = Commit(context, tool.Receiver, target, RootList(tool.Access));
+                if (refused == null)
+                {
+                    Settle(items);
+                }
+            }, out failure, out unavailable))
+            {
+                return ToolFailure.Unavailable(unavailable);
+            }
+
+            if (failure != null)
+            {
+                return ToolFailure.Failed(failure, stage);
+            }
+
+            if (refused != null)
+            {
+                return refused.Envelope;
+            }
+
+            Release(context, resolved.Handles);
+
+            return ToolEnvelope.Success(SetResponse.Added(indices));
+        }
+
+        private object AddToParents(McpMethodContext context, ToolElements tool)
+        {
+            string code;
+            string message;
+            IList<Assignment> assignments;
+            bool byHandle;
+            if (!TryOnlyKnown(context, new List<string> { AssignmentsName }, out code, out message)
+                || !TryAssignments(context, tool, out assignments, out byHandle, out code, out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            List<int> indices = new List<int>();
+            Refusal refused = null;
+            EditStage stage = EditStage.BeforeCommit;
+            Exception failure;
+            UiInvocation unavailable;
+            if (!Run(context, () =>
+            {
+                PmxTarget target;
+                SdkList list;
+                IList<object> owners = null;
+                if (!TryTake(context, tool.Receiver, tool.Receiver.Kind == ToolReceiverKind.Pmx, null, byHandle, out target, out refused)
+                    || !TryList(tool.Access.RowKey, out list, out refused)
+                    || (!byHandle && !TryOwners(tool.Access, target, out owners, out refused)))
+                {
+                    return;
+                }
+
+                foreach (Assignment assignment in assignments)
+                {
+                    string code;
+                    string message;
+                    if (!byHandle
+                        && !PositionInput.TryWithin(
+                            assignment.Parent,
+                            owners.Count,
+                            ParentIndexName,
+                            out code,
+                            out message,
+                            "親の列の件数"))
+                    {
+                        refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                        return;
+                    }
+                }
+
+                stage = Changing(tool.Receiver, target);
+                ReachedLists reached = new ReachedLists();
+                foreach (Assignment assignment in assignments)
+                {
+                    object owner = byHandle ? assignment.Owner : owners[assignment.Parent];
+                    foreach (object item in assignment.Items)
+                    {
+                        if (!byHandle && !TryApplyDeferred(item, target, reached, out refused))
+                        {
+                            return;
+                        }
+
+                        list.Add(owner, item);
+                        reached.Added(tool.Access.RowKey, false, item);
+                        indices.Add(list.Count(owner) - 1);
+
+                        if (byHandle)
+                        {
+                            Carry(item, owner);
+                        }
+                    }
+                }
+
+                stage = Reflecting(tool.Receiver, target, stage);
+                refused = Commit(context, tool.Receiver, target, RootList(tool.Access));
+                if (refused == null)
+                {
+                    Settle(assignments.SelectMany(a => a.Items));
+                }
+            }, out failure, out unavailable))
+            {
+                return ToolFailure.Unavailable(unavailable);
+            }
+
+            if (failure != null)
+            {
+                return ToolFailure.Failed(failure, stage);
+            }
+
+            if (refused != null)
+            {
+                return refused.Envelope;
+            }
+
+            Release(context, assignments.SelectMany(a => a.Handles).ToList());
+
+            return ToolEnvelope.Success(SetResponse.Added(indices.ToArray()));
+        }
+
+        private static Func<McpMethodContext, object> Acting(
+            ToolDispatch dispatch, ToolElements tool)
+        {
+            switch (tool.Kind)
+            {
+                case ToolElementKind.Remove:
+                    return context => dispatch.Remove(context, tool);
+                case ToolElementKind.Hold:
+                    return context => dispatch.Hold(context, tool);
+                default:
+                    return context => dispatch.Add(context, tool);
+            }
+        }
+
+        /// <summary>
+        /// 所有するリストに在る、指した位置の要素を台帳へ預けてハンドルを返す。並びを変えず、反映も
+        /// しない。預けたハンドルは親のハンドルに連なる。親をハンドルで指していない呼び出しは断る。
+        /// </summary>
+        private object Hold(McpMethodContext context, ToolElements tool)
+        {
+            string code;
+            string message;
+            long? handle;
+            Pointed pointed;
+            List<string> known = new List<string>(Pointing(tool.Access, false, tool.Receiver));
+            if (!TryOnlyKnown(context, Known(known, tool.Receiver.Kind == ToolReceiverKind.Pmx), out code, out message)
+                || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
+                || !TryPointed(
+                    context, tool.Access, false, handle, out pointed, out code, out message,
+                    tool.Receiver))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            if (!pointed.ParentByHandle)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.InvalidArgument,
+                    TargetNames.Parent.Handles
+                        + " で指さなければならない——位置で辿った相手は複製なので、"
+                        + "その中の要素を預けると、書き換えても元のモデルへ届かない。");
+            }
+
+            IList<Spot> found = null;
+            Refusal refused = null;
+            Exception failure;
+            UiInvocation unavailable;
+            if (!Run(context, () =>
+            {
+                PmxTarget target;
+                SdkList list;
+                IList<Spot> column;
+                if (!TryTake(context, tool.Receiver, tool.Receiver.Kind == ToolReceiverKind.Pmx, handle, pointed.Held, out target, out refused, true)
+                    || !TryList(tool.Access.RowKey, out list, out refused)
+                    || !TryColumn(
+                        context,
+                        tool.Access,
+                        tool.Receiver,
+                        target,
+                        pointed,
+                        Accepted(tool.Access, null, false),
+                        out column,
+                        out refused)
+                    || !TryOfItemType(column, tool.Access, null, out refused))
+                {
+                    return;
+                }
+
+                found = column;
+            }, out failure, out unavailable))
+            {
+                return ToolFailure.Unavailable(unavailable);
+            }
+
+            if (failure != null)
+            {
+                return ToolFailure.Failed(failure, EditStage.BeforeCommit);
+            }
+
+            if (refused != null)
+            {
+                return refused.Envelope;
+            }
+
+            List<object> handed = new List<object>(found.Count);
+            foreach (Spot spot in found)
+            {
+                handed.Add((long)context.Handles.Issue(
+                    tool.Access.Element.FullName,
+                    spot.Item,
+                    () => { },
+                    spot.ParentHandle.HasValue
+                        ? new[] { (int)spot.ParentHandle.Value }
+                        : null));
+            }
+
+            return ToolEnvelope.Success(SetResponse.PerTarget(handed, handed.Count));
+        }
+
+        private object Remove(McpMethodContext context, ToolElements tool)
+        {
+            string code;
+            string message;
+            long? handle;
+            Pointed pointed;
+            List<string> known = new List<string>(Pointing(tool.Access, false, tool.Receiver));
+            if (!TryOnlyKnown(context, Known(known, tool.Receiver.Kind == ToolReceiverKind.Pmx), out code, out message)
+                || !TryPmxHandle(context, tool.Receiver.Kind == ToolReceiverKind.Pmx, out handle, out code, out message)
+                || !TryPointed(
+                    context, tool.Access, false, handle, out pointed, out code, out message,
+                    tool.Receiver))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            int removed = 0;
+            Refusal refused = null;
+            EditStage stage = EditStage.BeforeCommit;
+            Exception failure;
+            UiInvocation unavailable;
+            if (!Run(context, () =>
+            {
+                PmxTarget target;
+                SdkList list;
+                IList<Spot> column;
+                if (!TryTake(context, tool.Receiver, tool.Receiver.Kind == ToolReceiverKind.Pmx, handle, pointed.Held, out target, out refused)
+                    || !TryList(tool.Access.RowKey, out list, out refused)
+                    || !TryColumn(
+                        context,
+                        tool.Access,
+                        tool.Receiver,
+                        target,
+                        pointed,
+                        Accepted(tool.Access, null, false),
+                        out column,
+                        out refused)
+                    || !TryOfItemType(column, tool.Access, null, out refused))
+                {
+                    return;
+                }
+
+                stage = Changing(tool.Receiver, target);
+                foreach (Spot spot in column
+                    .OrderByDescending(s => s.IndexInParent)
+                    .ToList())
+                {
+                    list.RemoveAt(spot.Owner, spot.IndexInParent);
+                }
+
+                removed = column.Count;
+                stage = Reflecting(tool.Receiver, target, stage);
+                refused = Commit(context, tool.Receiver, target);
+            }, out failure, out unavailable))
+            {
+                return ToolFailure.Unavailable(unavailable);
+            }
+
+            if (failure != null)
+            {
+                return ToolFailure.Failed(failure, stage);
+            }
+
+            return refused != null
+                ? refused.Envelope
+                : ToolEnvelope.Success(SetResponse.Removed(removed));
+        }
+
+        private static void Release(McpMethodContext context, IEnumerable<long> handles)
+        {
+            HandleReleaseResult released;
+            context.Handles.TryReleaseAll(
+                handles.Select(id => (int)id).Where(context.Handles.IsValid).ToList(),
+                context.Ui,
+                out released);
+        }
+
+        private static object Listed(
+            McpMethodContext context,
+            IList<IDictionary<string, object>> items,
+            int total,
+            int pointed,
+            int offset,
+            int limit,
+            IList<string> warnings)
+        {
+            Page<IDictionary<string, object>> page;
+            if (!Paging.TryTake(
+                items,
+                0,
+                limit,
+                ResponseSize.ValueChars(context.BudgetChars),
+                taken => ResponseSize.Serializer.Serialize(ListedValue(taken, total, pointed, offset)).Length,
+                out page))
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.ResponseTooLarge, "値の枠に1件も収まらない。");
+            }
+
+            return ToolEnvelope.Success(
+                ListedValue(page.Items, total, pointed, offset),
+                warnings.Concat(page.Warnings).ToList());
+        }
+
+        private static IDictionary<string, object> ListedValue(
+            IList<IDictionary<string, object>> taken, int total, int pointed, int offset)
+        {
+            int next = offset + taken.Count;
+            Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { TotalName, total },
+                { ItemsName, taken.ToArray() },
+            };
+            if (next < pointed)
+            {
+                value.Add(NextOffsetName, next);
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// 並びを返す呼び出しの値を、<paramref name="offset"/> の位置から <paramref name="limit"/>
+        /// 件までに切り出して返す。<paramref name="valueChars"/> に収まらなければ収まる件数まで
+        /// 減らす。総数は切り出す前の件数で、続きがあるときだけ次に渡す位置を添える。項目を読み出した
+        /// 値は読み出した並びを、そのほかは値を写した並びを切り出す。
+        /// </summary>
+        private static IDictionary<string, object> Paged(
+            ToolCall call, object value, int offset, int limit, bool runs, int valueChars)
+        {
+            object json = value;
+            IList<string> warnings = new string[0];
+            string code;
+            string message;
+            if (call.Projected == null && !ValueShape.TryToJson(
+                call.Result,
+                value,
+                ImageTransfer.SoleValueMaxLongSide,
+                out json,
+                out warnings,
+                out code,
+                out message))
+            {
+                return ToolEnvelope.Failure(code, message);
+            }
+
+            IEnumerable listed = json as IEnumerable;
+            object[] whole = listed == null ? new object[0] : listed.Cast<object>().ToArray();
+            if (runs)
+            {
+                whole = PositionRuns.Joined(whole.Select(Convert.ToInt32)).ToArray();
+            }
+
+            string name = runs ? ItemRunsName : ItemsName;
+            Page<object> page;
+            if (!Paging.TryTake(
+                whole,
+                offset,
+                limit,
+                valueChars,
+                taken => ResponseSize.Serializer.Serialize(PageValue(name, whole.Length, offset, taken)).Length,
+                out page))
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.ResponseTooLarge, "値の枠に1件も収まらない。");
+            }
+
+            return ToolEnvelope.Success(
+                PageValue(name, whole.Length, offset, page.Items), warnings.Concat(page.Warnings).ToList());
+        }
+
+        private bool TryPositions(
+            McpMethodContext context, ToolCall call, object[] arguments, out Refusal refused)
+        {
+            refused = null;
+            if (!PositionArguments.TracksCurrent(call.RowKey))
+            {
+                return true;
+            }
+
+            PmxTarget current;
+            if (!TryCurrent(context, out current, out refused))
+            {
+                return false;
+            }
+
+            PEPlugin.Pmx.IPXPmx model = current.Pmx as PEPlugin.Pmx.IPXPmx;
+            string code;
+            string message;
+            if (model == null
+                || PositionArguments.TryCurrent(
+                    call.RowKey, ArgumentNames(call), arguments, model, out code, out message))
+            {
+                return true;
+            }
+
+            refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+            return false;
+        }
+
+        private bool TryPositionsOf(
+            ToolCall call, object[] arguments, PmxTarget target, object receiver, out Refusal refused)
+        {
+            refused = null;
+            if (!PositionArguments.TracksLater(call.RowKey))
+            {
+                return true;
+            }
+
+            IList<string> names = ArgumentNames(call);
+            int pmx = names.IndexOf("pmx");
+            PEPlugin.Pmx.IPXPmx model = (pmx >= 0 ? arguments[pmx] as PEPlugin.Pmx.IPXPmx : null)
+                ?? (target == null ? null : target.Pmx as PEPlugin.Pmx.IPXPmx);
+            string code;
+            string message;
+            if (PositionArguments.TryLater(
+                call.RowKey, names, arguments, model, receiver, ReadCount, out code, out message))
+            {
+                return true;
+            }
+
+            refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+            return false;
+        }
+
+        private int? ReadCount(string rowKey, object owner)
+        {
+            if (rowKey == PositionArguments.PathPointsRow)
+            {
+                PEPlugin.Vme.IPEVmePath path = owner as PEPlugin.Vme.IPEVmePath;
+
+                return path == null ? (int?)null : VmePathPoints.Count(path);
+            }
+
+            object value;
+            SdkRelayRefusal refusal;
+            if (!_relay.TryInvoke(rowKey, owner, new object[0], out value, out refusal))
+            {
+                return null;
+            }
+
+            if (value is int)
+            {
+                return (int)value;
+            }
+
+            ICollection collection = value as ICollection;
+
+            return collection == null ? (int?)null : collection.Count;
+        }
+
+        private static IList<string> ArgumentNames(ToolCall call)
+        {
+            return call.Arguments.Select(a => a.Name).ToList();
+        }
+
+        private bool TryCurrent(McpMethodContext context, out PmxTarget current, out Refusal refused)
+        {
+            string code;
+            string message;
+            if (!_pmx.TryTake(null, context.Handles, out current, out code, out message))
+            {
+                refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                return false;
+            }
+
+            refused = null;
+
+            return true;
+        }
+
+        private static bool Joins(ToolCall call)
+        {
+            return call.Paged && call.Projected == null && call.Result == typeof(int[]);
+        }
+
+        private static bool TryRuns(
+            McpMethodContext context, out bool runs, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            runs = false;
+            object given;
+            if (!context.Params.TryGetValue(RunsName, out given))
+            {
+                return true;
+            }
+
+            if (!(given is bool))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = RunsName + " は真か偽でなければならない。";
+
+                return false;
+            }
+
+            runs = (bool)given;
+
+            return true;
+        }
+
+        private static IDictionary<string, object> PageValue(
+            string name, int total, int offset, IList<object> taken)
+        {
+            Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { TotalName, total },
+                { name, taken.ToArray() },
+            };
+            int next = Math.Min(offset, total) + taken.Count;
+            if (next < total)
+            {
+                value.Add(NextOffsetName, next);
+            }
+
+            return value;
+        }
+
+        /// <summary>受け手をハンドルから得る呼び出しか。対象はハンドルでだけ指せる。</summary>
+        private static bool Handled(ToolReceiver receiver)
+        {
+            return receiver.Kind == ToolReceiverKind.Handle;
+        }
+
+        /// <summary>その呼び出しが対象の組へ及ぶか。1つだけを相手にする呼び出しは当たらない。</summary>
+        private static bool Many(ToolAccess access, ToolReceiver receiver)
+        {
+            return access.Kind == ToolAccessKind.Element || Handled(receiver);
+        }
+
+        /// <summary>その道が受け取る対象の指し方の名前。要素を相手にしない道は何も受け取らない。</summary>
+        private static IEnumerable<string> Pointing(
+            ToolAccess access, bool handles, ToolReceiver receiver = null)
+        {
+            if (receiver != null && Handled(receiver))
+            {
+                yield return TargetNames.Element.Handles;
+
+                yield break;
+            }
+
+            if (access.Kind != ToolAccessKind.Element)
+            {
+                yield break;
+            }
+
+            yield return TargetNames.Element.Indices;
+            yield return TargetNames.Element.Range;
+            yield return TargetNames.Element.All;
+            if (ScreenTargets.Selects(access) || ScreenTargets.SelectsAcross(access))
+            {
+                yield return TargetNames.Element.Selected;
+            }
+
+            if (ScreenTargets.SelectsAcross(access))
+            {
+                yield return TargetNames.Element.Numbered;
+            }
+
+            if (handles)
+            {
+                yield return TargetNames.Element.Handles;
+            }
+
+            if (access.Parents.Count != 0)
+            {
+                yield return TargetNames.Parent.Indices;
+                yield return TargetNames.Parent.Range;
+                yield return TargetNames.Parent.All;
+            }
+
+            if (access.Owner != null)
+            {
+                yield return TargetNames.Parent.Handles;
+            }
+        }
+
+        private static Pointed WholeUnderParents(Pointed pointed, bool narrowedByName)
+        {
+            if (pointed.Elements == null)
+            {
+                return pointed;
+            }
+
+            if (pointed.Parents == null)
+            {
+                return narrowedByName && !pointed.ByHandle && !TargetSelection.Points(pointed.Elements)
+                    ? new Pointed(new TargetRequest(all: true), null, false)
+                    : pointed;
+            }
+
+            if (!TargetSelection.Points(pointed.Parents))
+            {
+                return pointed.Elements.All == true
+                        ? new Pointed(
+                            pointed.Elements,
+                            new TargetRequest(all: true),
+                            pointed.ByHandle,
+                            pointed.ParentByHandle)
+                        : pointed;
+            }
+
+            if (TargetSelection.Points(pointed.Elements))
+            {
+                return pointed;
+            }
+
+            return new Pointed(
+                new TargetRequest(all: true),
+                pointed.Parents,
+                pointed.ByHandle,
+                pointed.ParentByHandle);
+        }
+
+        private static IList<string> Composed(ToolAccess access, Pointed pointed)
+        {
+            List<string> composed = new List<string>();
+            if (access.Items.Count != 0)
+            {
+                composed.Add(ItemTypeName);
+            }
+
+            if (pointed.ByHandle)
+            {
+                composed.Add(HandleName);
+
+                return composed;
+            }
+
+            if (access.Kind != ToolAccessKind.Element)
+            {
+                return composed;
+            }
+
+            if (access.Parents.Count == 0 && access.Owner == null)
+            {
+                composed.Add(IndexName);
+
+                return composed;
+            }
+
+            composed.Add(pointed.ParentByHandle ? ParentHandleName : ParentIndexName);
+            composed.Add(IndexInParentName);
+
+            return composed;
+        }
+
+        private static bool TryPointed(
+            McpMethodContext context,
+            ToolAccess access,
+            bool handles,
+            long? pmxHandle,
+            out Pointed pointed,
+            out string code,
+            out string message,
+            ToolReceiver receiver = null)
+        {
+            pointed = null;
+            code = null;
+            message = null;
+            if (receiver != null && Handled(receiver))
+            {
+                return TryHandled(context, out pointed, out code, out message);
+            }
+
+            if (access.Kind != ToolAccessKind.Element)
+            {
+                pointed = new Pointed(null, null, false);
+
+                return true;
+            }
+
+            TargetRequest elements;
+            TargetRequest parents = null;
+            if (!TryTargets(context, TargetNames.Element, handles, out elements, out code, out message))
+            {
+                return false;
+            }
+
+            if ((access.Parents.Count != 0 || access.Owner != null)
+                && !TryTargets(
+                    context,
+                    TargetNames.Parent,
+                    access.Owner != null,
+                    out parents,
+                    out code,
+                    out message))
+            {
+                return false;
+            }
+
+            if (access.Parents.Count == 0 && access.Owner != null && parents.Handles == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = TargetNames.Parent.Handles + " で親を指す。";
+
+                return false;
+            }
+
+            if (elements.Numbered != null)
+            {
+                if (elements.Handles != null || (parents != null && TargetSelection.Points(parents)))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = TargetNames.Element.Numbered
+                        + " は親の指し方・ハンドルと一緒に渡せない。全部の親の下を材質の順につないだ列の"
+                        + "位置で対象を指す。";
+
+                    return false;
+                }
+
+                parents = new TargetRequest(all: true);
+            }
+
+            bool byHandle = elements.Handles != null;
+            if (byHandle && parents != null && TargetSelection.Points(parents))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = "対象をハンドルで指した呼び出しは親の指し方を取らない。";
+
+                return false;
+            }
+
+            bool parentByHandle = parents != null && parents.Handles != null;
+            if ((byHandle || parentByHandle) && pmxHandle.HasValue)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = "対象をハンドルで指した呼び出しは " + PmxSession.HandleName + " を取らない。";
+
+                return false;
+            }
+
+            pointed = new Pointed(elements, parents, byHandle, parentByHandle);
+
+            return true;
+        }
+
+        private static bool TryHandled(
+            McpMethodContext context, out Pointed pointed, out string code, out string message)
+        {
+            pointed = null;
+            TargetRequest held;
+            if (!TryTargets(context, TargetNames.Element, true, out held, out code, out message))
+            {
+                return false;
+            }
+
+            if (held.Handles == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = TargetNames.Element.Handles + " で対象を指す。";
+
+                return false;
+            }
+
+            pointed = new Pointed(held, null, true);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 要求が指した対象の列。受け手そのものを相手にする道とPMXの子を相手にする道では1件、
+        /// 要素を相手にする道では解いた対象をその順で並べる。
+        /// </summary>
+        private bool TryColumn(
+            McpMethodContext context,
+            ToolAccess access,
+            ToolReceiver receiver,
+            PmxTarget target,
+            Pointed pointed,
+            Func<object, bool> accepted,
+            out IList<Spot> column,
+            out Refusal refused)
+        {
+            column = null;
+            refused = null;
+            if (Handled(receiver))
+            {
+                bool held = TryHeld(
+                    id => Held(context, receiver.Accepts, id), pointed, out column, out refused);
+
+                return held;
+            }
+
+            if (access.Kind == ToolAccessKind.Whole)
+            {
+                object whole = Receiver(context, receiver, target);
+                column = new[] { new Spot(null, 0, -1, -1, whole) };
+
+                return TryOpened(receiver, whole, out refused);
+            }
+
+            if (access.Kind == ToolAccessKind.Element && pointed.ByHandle)
+            {
+                bool held = TryHeld(
+                    id => Held(context, accepted, id), pointed, out column, out refused);
+
+                return held;
+            }
+
+            IList<object> owners;
+            IList<long> ids = null;
+            if (pointed.ParentByHandle)
+            {
+                if (!TryHeldOwners(context, access, pointed, out owners, out ids, out refused))
+                {
+                    return false;
+                }
+            }
+            else if (!TryOwners(access, target, out owners, out refused))
+            {
+                return false;
+            }
+
+            if (access.Kind == ToolAccessKind.Child)
+            {
+                List<object> child = new List<object>();
+                if (owners.Count != 0 && !TryStep(Step(access), owners[0], child, out refused))
+                {
+                    return false;
+                }
+
+                column = child.Select(one => new Spot(null, 0, -1, -1, one)).ToList();
+
+                return true;
+            }
+
+            IList<int> chosen;
+            if (pointed.ParentByHandle)
+            {
+                chosen = Enumerable.Range(0, owners.Count).ToArray();
+            }
+            else if (!TryChosen(pointed.Parents, owners.Count, out chosen, out refused))
+            {
+                return false;
+            }
+
+            bool holdingOnly = !pointed.ParentByHandle
+                && !access.Listed
+                && pointed.Parents != null
+                && pointed.Parents.Indices == null;
+            List<Spot> spots = new List<Spot>();
+            List<ParentGroup> groups = new List<ParentGroup>();
+            foreach (int parent in chosen)
+            {
+                if (holdingOnly && !StepPresence.Holds(access.RowKey, owners[parent]))
+                {
+                    continue;
+                }
+
+                List<object> reached = new List<object>();
+                if (!TryStep(Step(access), owners[parent], reached, out refused))
+                {
+                    return false;
+                }
+
+                groups.Add(new ParentGroup(
+                    spots.Count,
+                    reached.Count,
+                    ids == null
+                        ? "位置 " + parent.ToString(CultureInfo.InvariantCulture)
+                        : "ハンドル " + ids[parent].ToString(CultureInfo.InvariantCulture)));
+                for (int at = 0; at < reached.Count; at++)
+                {
+                    spots.Add(new Spot(
+                        owners[parent],
+                        spots.Count,
+                        ids == null ? parent : -1,
+                        access.Listed ? at : 0,
+                        reached[at],
+                        ids == null ? (long?)null : ids[parent]));
+                }
+            }
+
+            ResolvedTargets resolved;
+            string code;
+            string message;
+            TargetForm allowed = TargetForm.Indices | TargetForm.Range | TargetForm.All;
+            if (ScreenTargets.SelectsAcross(access))
+            {
+                allowed |= TargetForm.Numbered;
+            }
+
+            ScreenPick selected = null;
+            if (ScreenTargets.Selects(access))
+            {
+                allowed |= TargetForm.Selected;
+                selected = _screen.Pick(access.Element, spots.Count);
+            }
+
+            bool elsewhere = false;
+            if (ScreenTargets.SelectsAcross(access) && !pointed.ParentByHandle)
+            {
+                if (!TryAcross(access, owners, spots, out selected, out elsewhere, out refused))
+                {
+                    return false;
+                }
+
+                allowed |= TargetForm.Selected;
+            }
+
+            if (access.Listed && InsideEachParent(pointed.Elements) && groups.Count != 0)
+            {
+                return TryInsideEachParent(
+                    pointed.Elements, allowed, groups, selected, spots, out column, out refused);
+            }
+
+            if (!TargetSelection.TryResolve(
+                pointed.Elements,
+                allowed,
+                spots.Count,
+                id => false,
+                out resolved,
+                out code,
+                out message,
+                TargetNames.Element,
+                selected))
+            {
+                if (elsewhere && code == ToolEnvelope.NotApplicable)
+                {
+                    column = new Spot[0];
+
+                    return true;
+                }
+
+                refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                return false;
+            }
+
+            column = resolved.Indices.Select(i => spots[i]).ToList();
+
+            return true;
+        }
+
+        private static bool InsideEachParent(TargetRequest elements)
+        {
+            return elements != null
+                && (elements.Indices != null
+                    || elements.RangeStart.HasValue
+                    || elements.RangeCount.HasValue);
+        }
+
+        private static bool TryInsideEachParent(
+            TargetRequest elements,
+            TargetForm allowed,
+            IList<ParentGroup> groups,
+            ScreenPick selected,
+            IList<Spot> spots,
+            out IList<Spot> column,
+            out Refusal refused)
+        {
+            column = null;
+            refused = null;
+            List<Spot> found = new List<Spot>();
+            foreach (ParentGroup group in groups)
+            {
+                ResolvedTargets resolved;
+                string code;
+                string message;
+                if (!TargetSelection.TryResolve(
+                    elements,
+                    allowed,
+                    group.Count,
+                    id => false,
+                    out resolved,
+                    out code,
+                    out message,
+                    TargetNames.Element,
+                    selected))
+                {
+                    refused = new Refusal(ToolEnvelope.Failure(
+                        code,
+                        groups.Count == 1 ? message : "親(" + group.Label + ")の中で: " + message));
+
+                    return false;
+                }
+
+                found.AddRange(resolved.Indices.Select(at => spots[group.Start + at]));
+            }
+
+            column = found;
+
+            return true;
+        }
+
+        /// <summary>
+        /// 画面がモデル全体で数えて選んでいる面を、辿った面の並びの中の位置で読む手段を作る。
+        /// 指した親の外の面は外す。<paramref name="elsewhere"/> は、画面が面を選んでいるが、
+        /// そのどれも指した親の中に無いときに真。
+        /// </summary>
+        private bool TryAcross(
+            ToolAccess access,
+            IList<object> owners,
+            IList<Spot> spots,
+            out ScreenPick selected,
+            out bool elsewhere,
+            out Refusal refused)
+        {
+            selected = null;
+            elsewhere = false;
+            List<int> counts = new List<int>(owners.Count);
+            foreach (object owner in owners)
+            {
+                List<object> reached = new List<object>();
+                if (!TryStep(Step(access), owner, reached, out refused))
+                {
+                    return false;
+                }
+
+                counts.Add(reached.Count);
+            }
+
+            Dictionary<KeyValuePair<int, int>, int> placed =
+                new Dictionary<KeyValuePair<int, int>, int>();
+            for (int at = 0; at < spots.Count; at++)
+            {
+                placed[new KeyValuePair<int, int>(spots[at].ParentIndex, spots[at].IndexInParent)] = at;
+            }
+
+            ScreenTargets screen = _screen;
+            IList<KeyValuePair<int, int>> taken = screen.TakenFaces(counts);
+            elsewhere = taken.Count != 0 && !taken.Any(placed.ContainsKey);
+            selected = new ScreenPick(
+                () => screen.TakenFaces(counts)
+                    .Where(placed.ContainsKey)
+                    .Select(p => placed[p])
+                    .ToList(),
+                ScreenTargets.Picking(ElementKinds.Face));
+            refused = null;
+
+            return true;
+        }
+
+        /// <summary>
+        /// そのツールが実行時の型で分かれるか。型ごとの組を持つツールだけが、要求と応答で型を扱う。
+        /// </summary>
+        private static bool Divided(ToolFields tool)
+        {
+            return tool.Sets.Any(s => s.ItemType != null);
+        }
+
+        /// <summary>その実行時の型の項目の組。持たない型では null。</summary>
+        private static ToolFieldSet SetOf(ToolFields tool, string itemType)
+        {
+            return tool.Sets.FirstOrDefault(
+                s => string.Equals(s.ItemType, itemType, StringComparison.Ordinal));
+        }
+
+        /// <summary>その実体の実行時の型の名前。どの型にも当たらなければ分からないと綴る。</summary>
+        private static string Named(ToolAccess access, object item)
+        {
+            foreach (ToolItem one in access.Items)
+            {
+                if (one.IsItem(item))
+                {
+                    return one.ItemType;
+                }
+            }
+
+            return "知らない型";
+        }
+
+        /// <summary>
+        /// 型で分かれないツールの対象が、そのツールの宣言型であることを求める。分かれるツールでは
+        /// 何も求めない。
+        /// </summary>
+        private static bool TryOfDeclaredType(
+            IList<Spot> column, ToolAccess access, bool divided, out Refusal refused)
+        {
+            refused = null;
+
+            return access.Kind != ToolAccessKind.Element || divided
+                || TryOfItemType(column, access, null, out refused);
+        }
+
+        /// <summary>
+        /// 対象が、書き込む相手として指した実行時の型であることを求める。型で分かれないツールでは
+        /// 宣言型であることを求める。
+        /// </summary>
+        private static bool TryOfItemType(
+            IList<Spot> column, ToolAccess access, string itemType, out Refusal refused)
+        {
+            refused = null;
+            if (access.Kind != ToolAccessKind.Element)
+            {
+                return true;
+            }
+
+            if (itemType == null)
+            {
+                return TryOfType(
+                    column,
+                    access,
+                    access.IsElement,
+                    access.ItemType ?? access.Element.FullName,
+                    out refused);
+            }
+
+            ToolItem wanted = access.Items.First(
+                i => string.Equals(i.ItemType, itemType, StringComparison.Ordinal));
+
+            return TryOfType(column, access, wanted.IsItem, wanted.ItemType, out refused);
+        }
+
+        /// <summary>
+        /// 解いた対象の実行時の型が求める型と合うことを求める。合わない位置は適用できないとして
+        /// 断り、その位置と実行時の型を説明に含める。
+        /// </summary>
+        private static bool TryOfType(
+            IList<Spot> column,
+            ToolAccess access,
+            Func<object, bool> isItem,
+            string wanted,
+            out Refusal refused)
+        {
+            refused = null;
+            foreach (Spot spot in column)
+            {
+                if (isItem(spot.Item))
+                {
+                    continue;
+                }
+
+                refused = new Refusal(ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable,
+                    "対象の実行時の型が合わない: " + Placed(access, spot) + " は "
+                        + Named(access, spot.Item) + " で、求めるのは " + wanted + "。"));
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private static string Placed(ToolAccess access, Spot spot)
+        {
+            if (!access.Listed || spot.Owner == null || spot.IndexInParent < 0)
+            {
+                return "位置 " + spot.Position.ToString(CultureInfo.InvariantCulture);
+            }
+
+            string parent = spot.ParentHandle.HasValue
+                ? "親のハンドル " + spot.ParentHandle.Value.ToString(CultureInfo.InvariantCulture)
+                : "親 " + spot.ParentIndex.ToString(CultureInfo.InvariantCulture);
+
+            return parent + " の位置 " + spot.IndexInParent.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static ToolHop Step(ToolAccess access)
+        {
+            return new ToolHop(access.RowKey, access.Listed);
+        }
+
+        private static bool TryHeld(
+            Func<long, object> resolve,
+            Pointed pointed,
+            out IList<Spot> column,
+            out Refusal refused)
+        {
+            column = null;
+            refused = null;
+            ResolvedTargets resolved;
+            string code;
+            string message;
+            if (!TargetSelection.TryResolve(
+                pointed.Elements,
+                TargetForm.Handles,
+                0,
+                id => resolve(id) != null,
+                out resolved,
+                out code,
+                out message,
+                TargetNames.Element))
+            {
+                refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                return false;
+            }
+
+            column = resolved.Handles
+                .Select((id, at) => new Spot(null, at, -1, -1, resolve(id), null, id))
+                .ToList();
+
+            return true;
+        }
+
+        /// <summary>ハンドルで指した親の列。要求に現れた順に並べ、同じ並びのハンドルも返す。</summary>
+        private bool TryHeldOwners(
+            McpMethodContext context,
+            ToolAccess access,
+            Pointed pointed,
+            out IList<object> owners,
+            out IList<long> ids,
+            out Refusal refused)
+        {
+            owners = null;
+            ids = null;
+            refused = null;
+            ResolvedTargets resolved;
+            string code;
+            string message;
+            if (!TargetSelection.TryResolve(
+                pointed.Parents,
+                TargetForm.Handles,
+                0,
+                id => HeldOwner(context, access, id) != null,
+                out resolved,
+                out code,
+                out message,
+                TargetNames.Parent))
+            {
+                refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                return false;
+            }
+
+            ids = resolved.Handles;
+            owners = resolved.Handles.Select(id => HeldOwner(context, access, id)).ToList();
+
+            return true;
+        }
+
+        /// <summary>
+        /// 預かっている実体を、そのツールが受け付けるか。実行時の型で分かれるツールでは、読む側は
+        /// どの具象の型でもよく(<paramref name="anyItem"/>)、書く側は選んだ型に限る
+        /// (<paramref name="itemType"/>)。分かれないツールと要素のメソッドは、その宣言型に限る。
+        /// </summary>
+        private static Func<object, bool> Accepted(
+            ToolAccess access, string itemType, bool anyItem)
+        {
+            if (access.Kind != ToolAccessKind.Element)
+            {
+                return item => false;
+            }
+
+            if (anyItem && access.Items.Count != 0)
+            {
+                IList<Func<object, bool>> items =
+                    access.Items.Select(i => i.IsItem).ToList();
+
+                return item => items.Any(i => i(item));
+            }
+
+            return itemType == null
+                ? access.IsElement
+                : access.Items
+                    .First(i => string.Equals(i.ItemType, itemType, StringComparison.Ordinal))
+                    .IsItem;
+        }
+
+        /// <summary>親の列の中から、要求が指した親の位置。親を辿らない道では先頭の1件。</summary>
+        private static bool TryChosen(
+            TargetRequest parents, int count, out IList<int> chosen, out Refusal refused)
+        {
+            chosen = null;
+            refused = null;
+            if (parents == null)
+            {
+                chosen = new[] { 0 };
+
+                return true;
+            }
+
+            ResolvedTargets resolved;
+            string code;
+            string message;
+            if (!TargetSelection.TryResolve(
+                parents,
+                TargetForm.Indices | TargetForm.Range | TargetForm.All,
+                count,
+                id => false,
+                out resolved,
+                out code,
+                out message,
+                TargetNames.Parent))
+            {
+                refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+                return false;
+            }
+
+            chosen = resolved.Indices;
+
+            return true;
+        }
+
+        /// <summary>
+        /// 要素を並べるリストを持つ実体の列。親を辿らない道ではPMXそのもの1件で、辿る道では
+        /// 所有の経路を先頭から辿って平らに並べる。値を持たない段はそこで打ち切る。
+        /// </summary>
+        private bool TryOwners(
+            ToolAccess access, PmxTarget target, out IList<object> owners, out Refusal refused)
+        {
+            owners = null;
+            refused = null;
+            List<object> column = new List<object> { target.Pmx };
+            foreach (ToolHop hop in access.Parents)
+            {
+                List<object> next = new List<object>();
+                foreach (object owner in column)
+                {
+                    if (!TryStep(hop, owner, next, out refused))
+                    {
+                        return false;
+                    }
+                }
+
+                column = next;
+            }
+
+            owners = column;
+
+            return true;
+        }
+
+        private bool TryStep(ToolHop hop, object owner, IList<object> next, out Refusal refused)
+        {
+            refused = null;
+            if (hop.Listed)
+            {
+                SdkList list;
+                if (!TryList(hop.RowKey, out list, out refused))
+                {
+                    return false;
+                }
+
+                int count = list.Count(owner);
+                for (int at = 0; at < count; at++)
+                {
+                    object item = list.At(owner, at);
+                    if (item != null)
+                    {
+                        next.Add(item);
+                    }
+                }
+
+                return true;
+            }
+
+            object child;
+            SdkRelayRefusal refusal;
+            if (!_relay.TryInvoke(hop.RowKey, owner, new object[0], out child, out refusal))
+            {
+                refused = Refusal.Of(hop.RowKey, refusal);
+
+                return false;
+            }
+
+            if (child != null)
+            {
+                next.Add(child);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 更新が受け取る値の組。全件へ同じ組を配る指定と、対象ごとの組の並びのどちらかを取る。
+        /// 値の検証は対象を解く前にすべて済ませる。
+        /// </summary>
+        private static bool TryChanges(
+            McpMethodContext context,
+            ToolFields tool,
+            ToolFieldSet set,
+            out IList<Change> changes,
+            out bool spread,
+            out string code,
+            out string message)
+        {
+            changes = null;
+            spread = false;
+            code = null;
+            message = null;
+            object single;
+            object many = null;
+            bool hasSingle = context.Params.TryGetValue(ValueName, out single);
+            bool hasMany = Many(tool.Access, tool.Receiver)
+                && context.Params.TryGetValue(ValuesName, out many);
+            if (hasSingle == hasMany)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = Many(tool.Access, tool.Receiver)
+                    ? ValueName + " と " + ValuesName + " のどちらか一方を渡す。"
+                    : ValueName + " を渡す。";
+
+                return false;
+            }
+
+            List<Change> taken = new List<Change>();
+            if (hasSingle)
+            {
+                Change one;
+                if (!TryChange(set, single, out one, out code, out message))
+                {
+                    return false;
+                }
+
+                taken.Add(one);
+                spread = true;
+            }
+            else
+            {
+                object[] items = many as object[];
+                if (items == null)
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = ValuesName + " は値の組の配列でなければならない。";
+
+                    return false;
+                }
+
+                foreach (object item in items)
+                {
+                    Change one;
+                    if (!TryChange(set, item, out one, out code, out message))
+                    {
+                        return false;
+                    }
+
+                    taken.Add(one);
+                }
+            }
+
+            changes = taken;
+
+            return true;
+        }
+
+        private static bool TryChange(
+            ToolFieldSet set, object given, out Change change, out string code, out string message)
+        {
+            change = null;
+            code = null;
+            message = null;
+            IDictionary<string, object> members = given as IDictionary<string, object>;
+            if (members == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ValueName + " は項目の組でなければならない。";
+
+                return false;
+            }
+
+            string unknown = members.Keys
+                .Where(n => !set.Fields.Any(f => string.Equals(f.Name, n, StringComparison.Ordinal)))
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (unknown != null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = "知らない項目を渡している: " + unknown;
+
+                return false;
+            }
+
+            List<ToolField> writing = set.Fields
+                .Where(f => members.ContainsKey(f.Name))
+                .ToList();
+            List<object> values = new List<object>(writing.Count);
+            foreach (ToolField field in writing)
+            {
+                object value;
+                if (field.Referenced != null)
+                {
+                    if (!TryGivenPosition(field, members[field.Name], out value, out code,
+                        out message))
+                    {
+                        return false;
+                    }
+
+                    values.Add(value);
+
+                    continue;
+                }
+
+                if (!ValueInput.TryFromJson(
+                    field.Type, members[field.Name], out value, out code, out message))
+                {
+                    code = code ?? ToolEnvelope.NotApplicable;
+                    message = message ?? (field.Name + " は値として受け取れない型を取る。");
+
+                    return false;
+                }
+
+                values.Add(value);
+            }
+
+            change = new Change(writing, values);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 親ごとの組の並び。ハンドルは組をまたいで重ねられない。同じ親は2つ以上の組へ書けて、
+        /// その順に末尾へ加わる。
+        /// </summary>
+        private bool TryAssignments(
+            McpMethodContext context,
+            ToolElements tool,
+            out IList<Assignment> assignments,
+            out bool byHandle,
+            out string code,
+            out string message)
+        {
+            assignments = null;
+            byHandle = false;
+            code = null;
+            message = null;
+            object given;
+            object[] items = context.Params.TryGetValue(AssignmentsName, out given)
+                ? given as object[]
+                : null;
+            if (items == null || items.Length == 0)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = AssignmentsName + " は1件以上の組の配列でなければならない。";
+
+                return false;
+            }
+
+            HashSet<long> used = new HashSet<long>();
+            List<Assignment> built = new List<Assignment>();
+            foreach (object item in items)
+            {
+                Assignment one;
+                if (!TryAssignment(context, tool, item, used, out one, out code, out message))
+                {
+                    return false;
+                }
+
+                built.Add(one);
+            }
+
+            if (built.Any(a => a.Owner != null) && built.Any(a => a.Owner == null))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = AssignmentsName + " が親の指し方を混ぜている。全部の組が "
+                    + ParentIndexName + " を持つか、全部の組が " + ParentHandleName
+                    + " を持つかのどちらかにする。";
+
+                return false;
+            }
+
+            assignments = built;
+            byHandle = built[0].Owner != null;
+
+            return true;
+        }
+
+        private bool TryAssignment(
+            McpMethodContext context,
+            ToolElements tool,
+            object given,
+            ISet<long> used,
+            out Assignment assignment,
+            out string code,
+            out string message)
+        {
+            assignment = null;
+            code = null;
+            message = null;
+            IDictionary<string, object> members = given as IDictionary<string, object>;
+            if (members == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = AssignmentsName + " の組は項目の組でなければならない。";
+
+                return false;
+            }
+
+            string unknown = members.Keys
+                .Where(n => !string.Equals(n, ParentIndexName, StringComparison.Ordinal)
+                    && !string.Equals(n, ParentHandleName, StringComparison.Ordinal)
+                    && !string.Equals(n, TargetNames.Element.Handles, StringComparison.Ordinal))
+                .OrderBy(n => n, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (unknown != null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = "知らない項目を渡している: " + unknown;
+
+                return false;
+            }
+
+            int position;
+            object owner;
+            if (!TryParent(context, tool, members, out position, out owner, out code, out message))
+            {
+                return false;
+            }
+
+            object handles;
+            object[] listed = members.TryGetValue(TargetNames.Element.Handles, out handles)
+                ? handles as object[]
+                : null;
+            if (listed == null || listed.Length == 0)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = AssignmentsName + " の組は1件以上の "
+                    + TargetNames.Element.Handles + " を持つ。";
+
+                return false;
+            }
+
+            List<long> ids = new List<long>();
+            List<object> held = new List<object>();
+            foreach (object one in listed)
+            {
+                long id;
+                if (!ValueInput.TryInteger(one, out id))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = TargetNames.Element.Handles + " は整数の配列でなければならない。";
+
+                    return false;
+                }
+
+                if (!used.Add(id))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = "同じハンドルを二度以上指している: " + id;
+
+                    return false;
+                }
+
+                object item = Held(context, Accepted(tool.Access, null, true), id);
+                if (item == null)
+                {
+                    code = ToolEnvelope.InvalidHandle;
+                    message = "台帳に無いハンドルを指している: " + id;
+
+                    return false;
+                }
+
+                ids.Add(id);
+                held.Add(item);
+            }
+
+            assignment = new Assignment(position, owner, ids, held);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 組が指す親。位置で指す組は親の列の中の位置を、ハンドルで指す組は台帳の実体を持つ。
+        /// </summary>
+        private bool TryParent(
+            McpMethodContext context,
+            ToolElements tool,
+            IDictionary<string, object> members,
+            out int position,
+            out object owner,
+            out string code,
+            out string message)
+        {
+            position = -1;
+            owner = null;
+            code = null;
+            message = null;
+            object given;
+            bool byIndex = members.TryGetValue(ParentIndexName, out given)
+                && ValueInput.TryIndex(given, out position);
+            object held;
+            long id = 0;
+            bool byHandle = members.TryGetValue(ParentHandleName, out held)
+                && ValueInput.TryInteger(held, out id);
+            if (byIndex == byHandle)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = AssignmentsName + " の組は " + ParentIndexName + " と "
+                    + ParentHandleName + " のどちらか1つを持つ。";
+
+                return false;
+            }
+
+            if (byIndex)
+            {
+                if (tool.Access.Parents.Count == 0)
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = ParentIndexName
+                        + " はこのツールでは指定できない。親を位置で指す道が無いためである。";
+
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (tool.Access.Owner == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ParentHandleName
+                    + " はこのツールでは指定できない。親の型がハンドルを発行しないためである。";
+
+                return false;
+            }
+
+            owner = HeldOwner(context, tool.Access, id);
+            if (owner == null)
+            {
+                code = ToolEnvelope.InvalidHandle;
+                message = ParentHandleName + " が台帳に無いハンドルを指している: " + id;
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private object HeldOwner(McpMethodContext context, ToolAccess access, long id)
+        {
+            Func<object, bool> accepts;
+
+            return _heldKinds.TryGetValue(access.Owner.FullName, out accepts)
+                ? Held(context, accepts, id)
+                : Held(context, access.Owner, id);
+        }
+
+        private void HeldKinds(
+            IDictionary<string, IList<ToolCall>> calls,
+            IDictionary<string, ToolFields> aggregations,
+            IDictionary<string, ToolElements> elements)
+        {
+            IEnumerable<ToolReceiver> receivers = calls.Values.SelectMany(c => c).Select(c => c.Receiver)
+                .Concat(aggregations.Values.Select(a => a.Receiver))
+                .Concat(elements.Values.Select(e => e.Receiver));
+            foreach (ToolReceiver receiver in receivers.Where(
+                r => r.Kind == ToolReceiverKind.Handle && r.TypeName != null && r.Accepts != null))
+            {
+                if (!_heldKinds.ContainsKey(receiver.TypeName))
+                {
+                    _heldKinds.Add(receiver.TypeName, receiver.Accepts);
+                }
+            }
+        }
+
+        /// <summary>そのハンドルが指す、期待する型の実体。指していなければ null。</summary>
+        private static object Held(McpMethodContext context, Type type, long id)
+        {
+            object held;
+
+            return id >= int.MinValue && id <= int.MaxValue
+                && context.Handles.TryGet((int)id, type.FullName, out held)
+                    ? held
+                    : null;
+        }
+
+        /// <summary>
+        /// そのハンドルが指す、受け手にできる実体。指していなければ null。派生した型のハンドルは、
+        /// その基底の型を相手にする呼び出しでも通る。
+        /// </summary>
+        private static object Held(McpMethodContext context, Func<object, bool> accepts, long id)
+        {
+            object held;
+
+            return id >= int.MinValue && id <= int.MaxValue
+                && context.Handles.TryGet((int)id, out held)
+                && accepts(held)
+                    ? held
+                    : null;
+        }
+
+        /// <summary>
+        /// 相手にするPMX。PMXから得ない受け手と、対象をハンドルで指した呼び出しでは、複製を作らず
+        /// 何も決めない。
+        /// </summary>
+        private bool TryTake(
+            McpMethodContext context,
+            ToolReceiver receiver,
+            bool targets,
+            long? handle,
+            bool held,
+            out PmxTarget target,
+            out Refusal refused,
+            bool issuing = false,
+            bool ofTool = true)
+        {
+            target = null;
+            refused = null;
+            bool reading = receiver.Edit == EditKind.Read;
+            if (reading && ofTool)
+            {
+                Session(receiver).NoteRead();
+            }
+
+            if (!targets)
+            {
+                return true;
+            }
+
+            if (held)
+            {
+                target = new PmxTarget(null, false);
+
+                return true;
+            }
+
+            string code;
+            string message;
+            if (Session(receiver).TryTake(
+                handle,
+                context.Handles,
+                out target,
+                out code,
+                out message,
+                receiver.Edit == EditKind.DuplicateEdit,
+                reading && !issuing))
+            {
+                return true;
+            }
+
+            refused = new Refusal(ToolEnvelope.Failure(code, message));
+
+            return false;
+        }
+
+        private static bool Reflects(ToolReceiver receiver, PmxTarget target)
+        {
+            return receiver.Edit == EditKind.DuplicateEdit && target != null && target.Current;
+        }
+
+        private static EditStage Changing(ToolReceiver receiver, PmxTarget target)
+        {
+            if (receiver.Edit == EditKind.Read)
+            {
+                return EditStage.BeforeCommit;
+            }
+
+            return target != null && target.Current
+                ? EditStage.BeforeCommit
+                : EditStage.AtCommit;
+        }
+
+        /// <summary>
+        /// まとめて反映する段の位置。反映を持たない呼び出しでは、メンバーを呼ぶ段の位置のままである。
+        /// </summary>
+        private static EditStage Reflecting(ToolReceiver receiver, PmxTarget target, EditStage stage)
+        {
+            return Reflects(receiver, target) ? EditStage.AtCommit : stage;
+        }
+
+        /// <summary>
+        /// 複製編集型の呼び出しを、現在のPMXへ反映する。<paramref name="listRow"/> は変えた
+        /// リストの行で、分からなければ null。<paramref name="rewriting"/> は、そのリストの要素の
+        /// 件数も並びも変えずに中身だけを書き換えたときに真。
+        /// </summary>
+        private Refusal Commit(
+            McpMethodContext context,
+            ToolReceiver receiver,
+            PmxTarget target,
+            string listRow = null,
+            bool rewriting = false)
+        {
+            if (!Reflects(receiver, target))
+            {
+                return null;
+            }
+
+            string code;
+            string message;
+
+            return Session(receiver).TryCommit(
+                    target,
+                    Suppressed(context),
+                    context,
+                    Refresh(receiver),
+                    out code,
+                    out message,
+                    listRow,
+                    rewriting ? ScreenRefresh.RewrittenIn(listRow) : null)
+                ? null
+                : new Refusal(ToolEnvelope.Failure(code, message));
+        }
+
+        /// <summary>その道が辿る、PMXが直に持つリストの行。親の下の要素では最初の親のリスト。</summary>
+        private static string RootList(ToolAccess access)
+        {
+            return access.Parents.Count > 0 ? access.Parents[0].RowKey : access.RowKey;
+        }
+
+        private ScreenRefresh Refresh(ToolReceiver receiver)
+        {
+            // Cプラグイン連携の橋渡しからの反映では、エディタが自分でリストとモデルを作り直してから描き直す。
+            return receiver.Bridged ? _refresh.WithoutViews() : _refresh;
+        }
+
+        /// <summary>その受け手の複製編集の流れ。橋渡しから得る受け手は、そちらの流れを使う。</summary>
+        private PmxSession Session(ToolReceiver receiver)
+        {
+            return receiver.Bridged ? _bridged : _pmx;
+        }
+
+        /// <summary>その行のリストの中継。持たなければ偽で、断る内容を渡す。</summary>
+        private bool TryList(string rowKey, out SdkList list, out Refusal refused)
+        {
+            refused = null;
+            if (_lists.TryGetValue(rowKey, out list))
+            {
+                return true;
+            }
+
+            refused = new Refusal(ToolEnvelope.Failure(
+                ToolEnvelope.NotApplicable, "中継を持たないリスト: " + rowKey));
+
+            return false;
+        }
+
+        private object Injected(ToolArgument argument, PmxTarget target)
+        {
+            if (argument.Connector)
+            {
+                return _connection.Use();
+            }
+
+            if (argument.Resident != null)
+            {
+                SdkReceiver found;
+                if (!_receivers.TryGetValue(argument.Resident, out found))
+                {
+                    throw new InvalidOperationException(
+                        "受け手を得る道が無い: " + argument.Resident);
+                }
+
+                return found(_connection);
+            }
+
+            return target == null ? null : target.Pmx;
+        }
+
+        /// <summary>
+        /// 受け手。接続の道から得るものはビルド時に決めた道を辿り、PMXから得るものはその実体を
+        /// そのまま渡す。静的なメンバーは相手を取らない。
+        /// </summary>
+        private object Receiver(McpMethodContext context, ToolReceiver receiver, PmxTarget target)
+        {
+            if (receiver.Kind == ToolReceiverKind.Pmx)
+            {
+                return target == null ? null : target.Pmx;
+            }
+
+            if (receiver.TypeName == null)
+            {
+                return null;
+            }
+
+            object view;
+            string key = Choosing(receiver).Count > 0 && context.Params.TryGetValue(ViewName, out view)
+                ? ReceiverKey(receiver.TypeName, (string)view)
+                : receiver.TypeName;
+            SdkReceiver found;
+            if (!_receivers.TryGetValue(key, out found))
+            {
+                throw new InvalidOperationException("受け手を得る道が無い: " + key);
+            }
+
+            return found(_connection);
+        }
+
+        private static bool TryOpened(ToolReceiver receiver, object connector, out Refusal refused)
+        {
+            refused = null;
+            string window = string.Equals(receiver.TypeName, TransformViewType, StringComparison.Ordinal)
+                ? "TransformView"
+                : string.Equals(receiver.TypeName, SubViewType, StringComparison.Ordinal) ? "SubView" : null;
+            PEPlugin.View.IPEBaseWindowConnector view = connector as PEPlugin.View.IPEBaseWindowConnector;
+            if (window == null || view == null || view.Visible)
+            {
+                return true;
+            }
+
+            refused = new Refusal(ToolEnvelope.Failure(
+                ToolEnvelope.NotApplicable,
+                window + " が開いていない。" + UiOpenWindow.ToolName + " で開いてから呼ぶ。"));
+
+            return false;
+        }
+
+        /// <summary>受け手を選ぶために受け取る名前。表示設定の受け手だけがどのビューの設定かを受け取る。</summary>
+        private static IList<string> Choosing(ToolReceiver receiver)
+        {
+            return receiver.Kind == ToolReceiverKind.Connection
+                && string.Equals(receiver.TypeName, ViewSettingType, StringComparison.Ordinal)
+                    ? new[] { ViewName }
+                    : new string[0];
+        }
+
+        /// <summary>どのビューの設定かが渡されていれば、その値が <see cref="Views"/> のどれかであることを確かめる。</summary>
+        private static bool TryView(McpMethodContext context, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(ViewName, out given)
+                || (given is string && Array.IndexOf(Views, (string)given) >= 0))
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = ViewName + " は " + string.Join("・", Views) + " のどれかで与える。";
+
+            return false;
+        }
+
+        /// <summary>
+        /// SDKへの呼び出しをUIスレッドで行う。行えなければ偽を返し、落ちたときは
+        /// <paramref name="failure"/> にその例外を、行えなかったときは
+        /// <paramref name="unavailable"/> にその理由を持たせる。
+        /// </summary>
+        private static bool Run(
+            McpMethodContext context,
+            Action action,
+            out Exception failure,
+            out UiInvocation unavailable)
+        {
+            Exception caught = null;
+            UiInvocation invocation = context.Ui.TryInvokeOnUi(() =>
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception exception)
+                {
+                    caught = exception;
+                }
+            });
+            failure = caught;
+            unavailable = invocation;
+
+            return invocation.DidRun;
+        }
+
+        private static IList<string> Known(IList<string> names, bool targets)
+        {
+            List<string> known = new List<string>(names) { SuppressName };
+            if (targets)
+            {
+                known.Add(PmxSession.HandleName);
+            }
+
+            return known;
+        }
+
+        internal static bool Accepts(ToolCall call)
+        {
+            return Targets(call);
+        }
+
+        /// <summary>
+        /// 相手にするPMXそのものを引数として要る呼び出しか。受け手をハンドルで指していても、
+        /// 引数へ入れるPMXはいま相手にしているものを採る。
+        /// </summary>
+        private static bool Takes(ToolCall call)
+        {
+            return call.Arguments.Any(
+                a => (a.Injected && !a.Connector && a.Resident == null) || a.Referenced != null);
+        }
+
+        /// <summary>
+        /// 相手にするPMXが要る呼び出しか。PMXから受け手を得る道と、PMXを引数へ入れる行が当たる。
+        /// </summary>
+        private static bool Targets(ToolCall call)
+        {
+            return call.Receiver.Kind == ToolReceiverKind.Pmx || Takes(call);
+        }
+
+        /// <summary>知らない名前の引数を渡す要求を断る。名前の検証は適用より先に済ませる。</summary>
+        private static bool TryOnlyKnown(
+            McpMethodContext context,
+            IList<string> known,
+            out string code,
+            out string message)
+        {
+            return TargetInput.TryOnlyKnown(context.Params, known, out code, out message);
+        }
+
+        /// <summary>
+        /// 確認の要否。PMXを受け手に取る初期化は、ハンドルで指したPMXだけを空にし、確認を取らない。
+        /// ハンドルが無ければ断る。
+        /// </summary>
+        private static bool TryPassDanger(
+            ToolCall call, long? handle, bool confirm, out string code, out string message)
+        {
+            if (EmptiesOnlyTheHeld(call))
+            {
+                code = null;
+                message = null;
+                if (handle.HasValue)
+                {
+                    return true;
+                }
+
+                code = ToolEnvelope.InvalidArgument;
+                message = PmxSession.HandleName + " で空にするPMXを指す。開いているPMXを作り直すときは "
+                    + "session_initialize_pmx を呼ぶ。";
+
+                return false;
+            }
+
+            return ConfirmGate.TryPass(call.Danger, confirm, out code, out message);
+        }
+
+        private static bool EmptiesOnlyTheHeld(ToolCall call)
+        {
+            return call.Danger == DangerKind.Reset && call.Receiver.Kind == ToolReceiverKind.Pmx;
+        }
+
+        internal static bool TryConfirm(
+            McpMethodContext context, out bool confirm, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            confirm = false;
+            object value;
+            if (!context.Params.TryGetValue(ConfirmName, out value))
+            {
+                return true;
+            }
+
+            if (!(value is bool))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ConfirmName + " は真偽でなければならない。";
+
+                return false;
+            }
+
+            confirm = (bool)value;
+
+            return true;
+        }
+
+        private static bool TryPmxHandle(
+            McpMethodContext context,
+            bool targets,
+            out long? handle,
+            out string code,
+            out string message)
+        {
+            code = null;
+            message = null;
+            handle = null;
+            object value;
+            if (!targets || !context.Params.TryGetValue(PmxSession.HandleName, out value))
+            {
+                return true;
+            }
+
+            long taken;
+            if (!ValueInput.TryInteger(value, out taken))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = PmxSession.HandleName + " は整数でなければならない。";
+
+                return false;
+            }
+
+            handle = taken;
+
+            return true;
+        }
+
+        /// <summary>返す項目の頼み方。渡していなければ選んでいないものとする。</summary>
+        private static bool TryFields(
+            McpMethodContext context, out IList<string> requested, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            requested = null;
+            object value;
+            if (!context.Params.TryGetValue(FieldsName, out value))
+            {
+                return true;
+            }
+
+            object[] items = value as object[];
+            if (items == null || items.Any(i => !(i is string)))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = FieldsName + " は項目名の配列でなければならない。";
+
+                return false;
+            }
+
+            requested = items.Cast<string>().ToList();
+
+            return true;
+        }
+
+        private static bool TryTargets(
+            McpMethodContext context,
+            TargetNames names,
+            bool handles,
+            out TargetRequest request,
+            out string code,
+            out string message)
+        {
+            return TargetInput.TryTake(
+                context.Params, names, handles, out request, out code, out message);
+        }
+
+        private static bool TryValue(
+            McpMethodContext context,
+            ToolArgument argument,
+            out object value,
+            out string code,
+            out string message)
+        {
+            value = null;
+            code = null;
+            message = null;
+            if (argument.Injected)
+            {
+                return true;
+            }
+
+            object json;
+            if (!context.Params.TryGetValue(argument.Name, out json))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = argument.Name + " を渡していない。";
+
+                return false;
+            }
+
+            if (argument.Referenced != null)
+            {
+                return TryReference(argument, true, json, out value, out code, out message);
+            }
+
+            if (argument.Held != null)
+            {
+                return TryHeldArgument(context, argument, json, out value, out code, out message);
+            }
+
+            if (argument.Built != null)
+            {
+                return TryBuilt(argument, json, out value, out code, out message);
+            }
+
+            if (ValueInput.TryFromJson(argument.Type, json, out value, out code, out message))
+            {
+                return true;
+            }
+
+            if (code == null)
+            {
+                code = ToolEnvelope.NotApplicable;
+                message = argument.Name + " は値として受け取れない型を取る。";
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 出力に現れる引数を持つ呼び出しの応答。呼び出しが返した並びを、引数の名前の組へ直す。
+        /// </summary>
+        private static IDictionary<string, object> Written(ToolCall call, object result)
+        {
+            object[] values = result as object[];
+            if (values == null || values.Length != call.Outputs.Count)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "出力の引数の数が呼び出しの結果と合わない。");
+            }
+
+            Dictionary<string, object> members =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            List<string> warnings = new List<string>();
+            for (int at = 0; at < call.Outputs.Count; at++)
+            {
+                object json;
+                IList<string> written;
+                string code;
+                string message;
+                if (!ValueShape.TryToJson(
+                    call.Outputs[at].Type,
+                    values[at],
+                    ImageTransfer.DefaultMaxLongSide,
+                    out json,
+                    out written,
+                    out code,
+                    out message))
+                {
+                    return Unwritable(call.Outputs[at].Type, code, message);
+                }
+
+                members.Add(call.Outputs[at].Name, json);
+                warnings.AddRange(written);
+            }
+
+            return ToolEnvelope.Success(members, warnings);
+        }
+
+        /// <summary>
+        /// 返す値が値として写せない型なら、その中の項目を読んで組へ直す。写せる型ではそのまま返す。
+        /// UIスレッドの中で行う。
+        /// </summary>
+        private bool TryProjected(
+            ToolCall call, object value, out object projected, out Refusal refused)
+        {
+            refused = null;
+            if (call.Projected == null)
+            {
+                projected = value;
+
+                return true;
+            }
+
+            if (!call.ReturnsMany)
+            {
+                IDictionary<string, object> members;
+                if (!TryCarried(call.Projected, value, out members, out refused))
+                {
+                    projected = null;
+
+                    return false;
+                }
+
+                projected = members;
+
+                return true;
+            }
+
+            projected = null;
+            if (value == null)
+            {
+                return true;
+            }
+
+            System.Collections.IEnumerable each = value as System.Collections.IEnumerable;
+            if (each == null)
+            {
+                refused = new Refusal(ToolEnvelope.Failure(
+                    ToolEnvelope.NotApplicable, "値を並べて返さなかった: " + call.RowKey));
+
+                return false;
+            }
+
+            List<object> written = new List<object>();
+            foreach (object one in each)
+            {
+                IDictionary<string, object> carried;
+                if (!TryCarried(call.Projected, one, out carried, out refused))
+                {
+                    return false;
+                }
+
+                written.Add(carried);
+            }
+
+            projected = written.ToArray();
+
+            return true;
+        }
+
+        /// <summary>運搬用の型の項目を読んで組へ直す。中がまた運搬用の型なら、その中も同じに扱う。</summary>
+        private bool TryCarried(
+            IList<ToolField> fields,
+            object value,
+            out IDictionary<string, object> carried,
+            out Refusal refused)
+        {
+            carried = null;
+            refused = null;
+            if (value == null)
+            {
+                return true;
+            }
+
+            Dictionary<string, object> members =
+                new Dictionary<string, object>(StringComparer.Ordinal);
+            foreach (ToolField field in fields)
+            {
+                object read;
+                SdkRelayRefusal refusal;
+                if (!_relay.TryInvoke(field.RowKey, value, new object[0], out read, out refusal))
+                {
+                    refused = Refusal.Of(field.RowKey, refusal);
+
+                    return false;
+                }
+
+                if (field.Members != null)
+                {
+                    IDictionary<string, object> inner;
+                    if (!TryCarried(field.Members, read, out inner, out refused))
+                    {
+                        return false;
+                    }
+
+                    members.Add(field.Name, inner);
+
+                    continue;
+                }
+
+                object json;
+                IList<string> ignored;
+                string code;
+                string message;
+                if (!ValueShape.TryToJson(
+                    field.Type,
+                    read,
+                    ImageTransfer.DefaultMaxLongSide,
+                    out json,
+                    out ignored,
+                    out code,
+                    out message))
+                {
+                    refused = new Refusal(Unwritable(field.Type, code, message));
+
+                    return false;
+                }
+
+                members.Add(field.Name, json);
+            }
+
+            carried = members;
+
+            return true;
+        }
+
+        private static IDictionary<string, object> Written(Type declared, object value)
+        {
+            object json;
+            IList<string> warnings;
+            string code;
+            string message;
+            if (!ValueShape.TryToJson(
+                declared,
+                value,
+                ImageTransfer.SoleValueMaxLongSide,
+                out json,
+                out warnings,
+                out code,
+                out message))
+            {
+                return Unwritable(declared, code, message);
+            }
+
+            return ToolEnvelope.Success(json, warnings);
+        }
+
+        private static IDictionary<string, object> Unwritable(
+            Type declared, string code, string message)
+        {
+            return ToolEnvelope.Failure(
+                code ?? ToolEnvelope.NotApplicable,
+                message ?? ("返す値を写せない型を取る: " + declared.FullName));
+        }
+
+        /// <summary>
+        /// 省いてよい、<paramref name="least"/> 以上の整数を読む。省かれているか空なら
+        /// <paramref name="taken"/> を変えずに真を返す。読めなければ偽を返し、断る符号と内容を渡す。
+        /// </summary>
+        private static bool TryOptionalNumber(
+            McpMethodContext context, string name, int least, ref int taken, out string code, out string message)
+        {
+            code = null;
+            if (ComposedInput.TryNumber(context, name, least, ref taken, out message))
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+
+            return false;
+        }
+
+        private sealed class ParentGroup
+        {
+            public ParentGroup(int start, int count, string label)
+            {
+                Start = start;
+                Count = count;
+                Label = label;
+            }
+
+            public int Start { get; }
+
+            public int Count { get; }
+
+            public string Label { get; }
+        }
+
+        private sealed class Spot
+        {
+            public Spot(
+                object owner,
+                int position,
+                int parentIndex,
+                int indexInParent,
+                object item,
+                long? parentHandle = null,
+                long? handle = null)
+            {
+                Owner = owner;
+                Position = position;
+                ParentIndex = parentIndex;
+                IndexInParent = indexInParent;
+                Item = item;
+                ParentHandle = parentHandle;
+                Handle = handle;
+            }
+
+            /// <summary>親をまたいで平らにした列の中の位置。要求が対象を指す位置である。</summary>
+            public int Position { get; }
+
+            /// <summary>その対象を並べるリストを持つ実体。リストに属さない対象では null。</summary>
+            public object Owner { get; }
+
+            /// <summary>親の列の中の位置。親を辿らない道と、ハンドルで指した対象では -1。</summary>
+            public int ParentIndex { get; }
+
+            /// <summary>親の中の位置。ハンドルで指した対象では -1。</summary>
+            public int IndexInParent { get; }
+
+            /// <summary>親を指すハンドル。親を位置で指した呼び出しでは null。</summary>
+            public long? ParentHandle { get; }
+
+            /// <summary>その対象を指すハンドル。対象を位置で指した呼び出しでは null。</summary>
+            public long? Handle { get; }
+
+            public object Item { get; }
+        }
+
+        /// <summary>要素と親の指し方の指定。要素を相手にしない道では、どちらも持たない。</summary>
+        private sealed class Pointed
+        {
+            public Pointed(
+                TargetRequest elements,
+                TargetRequest parents,
+                bool byHandle,
+                bool parentByHandle = false)
+            {
+                Elements = elements;
+                Parents = parents;
+                ByHandle = byHandle;
+                ParentByHandle = parentByHandle;
+            }
+
+            /// <summary>要素の指し方。要素を相手にしない道では null。</summary>
+            public TargetRequest Elements { get; }
+
+            /// <summary>親の指し方。親を辿らない道では null。</summary>
+            public TargetRequest Parents { get; }
+
+            public bool ByHandle { get; }
+
+            public bool ParentByHandle { get; }
+
+            /// <summary>対象そのものをハンドルで指しているか。どのPMXを見るかを切り替えられない。</summary>
+            public bool Held
+            {
+                get { return ByHandle || ParentByHandle; }
+            }
+
+            /// <summary>何も指していない指定。要素を相手にしない道で使う。</summary>
+            public static Pointed None { get; } = new Pointed(null, null, false);
+        }
+
+        private sealed class Change
+        {
+            public Change(IList<ToolField> fields, IList<object> values)
+            {
+                Fields = fields;
+                Values = values;
+            }
+
+            public IList<ToolField> Fields { get; }
+
+            /// <summary>項目と同じ並びの、書き込む値。</summary>
+            public IList<object> Values { get; }
+        }
+
+        private sealed class Assignment
+        {
+            public Assignment(int parent, object owner, IList<long> handles, IList<object> items)
+            {
+                Parent = parent;
+                Owner = owner;
+                Handles = handles;
+                Items = items;
+            }
+
+            /// <summary>親の列の中の位置。親をハンドルで指した組では -1。</summary>
+            public int Parent { get; }
+
+            /// <summary>ハンドルが指す親。親を位置で指した組では null。</summary>
+            public object Owner { get; }
+
+            public IList<long> Handles { get; }
+
+            /// <summary>ハンドルと同じ並びの、加えるものの実体。</summary>
+            public IList<object> Items { get; }
+        }
+
+        /// <summary>UIスレッドの中で決まった断り。包みは同じスレッドの外で返す。</summary>
+        private sealed class Refusal
+        {
+            public Refusal(IDictionary<string, object> envelope)
+            {
+                Envelope = envelope;
+            }
+
+            public IDictionary<string, object> Envelope { get; }
+
+            public static Refusal Of(string rowKey, SdkRelayRefusal refusal)
+            {
+                return new Refusal(
+                    ToolEnvelope.Failure(ToolEnvelope.NotApplicable, Describe(rowKey, refusal)));
+            }
+
+            private static string Describe(string rowKey, SdkRelayRefusal refusal)
+            {
+                switch (refusal)
+                {
+                    case SdkRelayRefusal.Unknown:
+                        return "中継を持たない呼び出し: " + rowKey;
+
+                    case SdkRelayRefusal.Unresolved:
+                        return "このバージョンのSDKでは組み立てられなかった呼び出し: " + rowKey;
+
+                    case SdkRelayRefusal.Disabled:
+                        return "このバージョンのSDKに無くなった呼び出し: " + rowKey;
+
+                    default:
+                        return "断られた呼び出し: " + rowKey;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 位置を数えるリストを、1回の呼び出しの中で道ごとに一度だけ辿って覚えておく表。並びへ
+        /// 加えたら <see cref="Added"/> で知らせる。
+        /// </summary>
+        private sealed class ReachedLists
+        {
+            private readonly Dictionary<ToolAccess, List<object>> _lists =
+                new Dictionary<ToolAccess, List<object>>(ReferenceComparer<ToolAccess>.Instance);
+
+            private readonly Dictionary<ToolAccess, Dictionary<object, int>> _positions =
+                new Dictionary<ToolAccess, Dictionary<object, int>>(
+                    ReferenceComparer<ToolAccess>.Instance);
+
+            public bool TryGet(ToolAccess access, out IList<object> listed)
+            {
+                List<object> kept;
+                bool found = _lists.TryGetValue(access, out kept);
+                listed = kept;
+
+                return found;
+            }
+
+            public void Keep(ToolAccess access, List<object> listed)
+            {
+                _lists[access] = listed;
+                _positions.Remove(access);
+            }
+
+            /// <summary>その実体の、覚えた列の中で最初に現れる位置。列に居なければ null。</summary>
+            public object Position(ToolAccess access, object value)
+            {
+                Dictionary<object, int> positions;
+                if (!_positions.TryGetValue(access, out positions))
+                {
+                    positions = new Dictionary<object, int>(ReferenceComparer<object>.Instance);
+                    List<object> listed = _lists[access];
+                    for (int at = 0; at < listed.Count; at++)
+                    {
+                        if (!positions.ContainsKey(listed[at]))
+                        {
+                            positions.Add(listed[at], at);
+                        }
+                    }
+
+                    _positions.Add(access, positions);
+                }
+
+                int found;
+
+                return positions.TryGetValue(value, out found) ? (object)found : null;
+            }
+
+            /// <summary>
+            /// その行のリストの末尾へ1件加えたことを知らせる。PMXが直に持つその行の列は末尾へ
+            /// 足して覚え続け、その行を親の段に持つ列と、親を辿る先のその行の列は忘れる。
+            /// </summary>
+            public void Added(string rowKey, bool atRoot, object item)
+            {
+                foreach (ToolAccess access in _lists.Keys.ToList())
+                {
+                    bool same = string.Equals(access.RowKey, rowKey, StringComparison.Ordinal);
+                    if (same && atRoot && access.Parents.Count == 0)
+                    {
+                        _lists[access].Add(item);
+                        Dictionary<object, int> positions;
+                        if (_positions.TryGetValue(access, out positions)
+                            && !positions.ContainsKey(item))
+                        {
+                            positions.Add(item, _lists[access].Count - 1);
+                        }
+
+                        continue;
+                    }
+
+                    if (same || access.Parents.Any(
+                        hop => string.Equals(hop.RowKey, rowKey, StringComparison.Ordinal)))
+                    {
+                        _lists.Remove(access);
+                        _positions.Remove(access);
+                    }
+                }
+            }
+        }
+    }
+}

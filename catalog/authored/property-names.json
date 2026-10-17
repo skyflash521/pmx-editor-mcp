@@ -1,0 +1,619 @@
+{
+  "propertyNames": [
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IK",
+      "japaneseName": "IK設定",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "片方がIKの設定そのものを返し、もう片方が真偽値でIKボーンかどうかを表すという型の別で分けた。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXBone",
+      "memberName": "IsIK",
+      "japaneseName": "IKボーンかどうか",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "片方がIKの設定そのものを返し、もう片方が真偽値でIKボーンかどうかを表すという型の別で分けた。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "AHR",
+      "japaneseName": "アンカーの硬さ",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1451,
+        "lastLine": 1451
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "AST",
+      "japaneseName": "面積・角度の剛性係数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1469,
+        "lastLine": 1469
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "CHR",
+      "japaneseName": "剛体接触の硬さ",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1448,
+        "lastLine": 1448
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "C_IT",
+      "japaneseName": "クラスタ計算の反復回数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1465,
+        "lastLine": 1465
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "DF",
+      "japaneseName": "動摩擦係数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1446,
+        "lastLine": 1446
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "DG",
+      "japaneseName": "抗力係数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1442,
+        "lastLine": 1442
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "DP",
+      "japaneseName": "減衰係数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1441,
+        "lastLine": 1441
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "D_IT",
+      "japaneseName": "ずれ補正の反復回数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1464,
+        "lastLine": 1464
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "KHR",
+      "japaneseName": "運動体接触の硬さ",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1449,
+        "lastLine": 1449
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "LF",
+      "japaneseName": "揚力係数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1443,
+        "lastLine": 1443
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "MT",
+      "japaneseName": "姿勢維持係数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1447,
+        "lastLine": 1447
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "PR",
+      "japaneseName": "圧力係数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1444,
+        "lastLine": 1444
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "P_IT",
+      "japaneseName": "位置計算の反復回数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1463,
+        "lastLine": 1463
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SHR",
+      "japaneseName": "SoftBody接触の硬さ",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1450,
+        "lastLine": 1450
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SKHR_CL",
+      "japaneseName": "クラスタのSoftBody対運動体の硬さ",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1455,
+        "lastLine": 1455
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SK_SPLT_CL",
+      "japaneseName": "クラスタのSoftBody対運動体の力積分配",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "PMX仕様書 Lib/PMX仕様/PMX仕様.txt の1458行と1459行は、この2件にも剛体との対の説明を写していて区別が付かないので、メンバー名の SK・SS が硬さ側の SKHR_CL・SSHR_CL と対応することから名前を起こした。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SRHR_CL",
+      "japaneseName": "クラスタのSoftBody対剛体の硬さ",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1454,
+        "lastLine": 1454
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SR_SPLT_CL",
+      "japaneseName": "クラスタのSoftBody対剛体の力積分配",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1457,
+        "lastLine": 1457
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SSHR_CL",
+      "japaneseName": "クラスタのSoftBody対SoftBodyの硬さ",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1456,
+        "lastLine": 1456
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "SS_SPLT_CL",
+      "japaneseName": "クラスタのSoftBody対SoftBodyの力積分配",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "PMX仕様書 Lib/PMX仕様/PMX仕様.txt の1458行と1459行は、この2件にも剛体との対の説明を写していて区別が付かないので、メンバー名の SK・SS が硬さ側の SKHR_CL・SSHR_CL と対応することから名前を起こした。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "VC",
+      "japaneseName": "体積保存係数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1445,
+        "lastLine": 1445
+      },
+      "origin": "資料の綴り conversation は体積の係数の説明として文脈に合わず、綴りの近い conservation なら意味が通るので誤記と判断し、体積を保つ係数と読んで名付けた。誤記であることを示す記載は配布物の中に無く、この一文がその判断の記録である。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "VST",
+      "japaneseName": "体積剛性係数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1470,
+        "lastLine": 1470
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXSoftBody",
+      "memberName": "V_IT",
+      "japaneseName": "速度計算の反復回数",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PMX仕様/PMX仕様.txt",
+        "firstLine": 1462,
+        "lastLine": 1462
+      },
+      "origin": "PMX仕様書が挙げるBulletの設定構造体の該当フィールドの説明を日本語へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "UVA1",
+      "japaneseName": "追加UV1座標",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名の連番をそのまま名前へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "UVA2",
+      "japaneseName": "追加UV2座標",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名の連番をそのまま名前へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "UVA3",
+      "japaneseName": "追加UV3座標",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名の連番をそのまま名前へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.Pmx.IPXVertex",
+      "memberName": "UVA4",
+      "japaneseName": "追加UV4座標",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名の連番をそのまま名前へ移した。"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_Body",
+      "japaneseName": "追加表示-剛体(線)",
+      "basis": {
+        "kind": "documentSection",
+        "path": "readme.txt",
+        "firstLine": 1530,
+        "lastLine": 1530
+      },
+      "origin": "配布物のreadmeが表示設定の項目として線の表示と形の表示を並べているので、記載が同じ2件をその別で分けた。"
+    },
+    {
+      "declaringType": "PEPlugin.View.IPEViewSettingConnector",
+      "memberName": "Visible_SolidBody",
+      "japaneseName": "追加表示-剛体(形)",
+      "basis": {
+        "kind": "documentSection",
+        "path": "readme.txt",
+        "firstLine": 1531,
+        "lastLine": 1531
+      },
+      "origin": "配布物のreadmeが表示設定の項目として線の表示と形の表示を並べているので、記載が同じ2件をその別で分けた。"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected",
+      "memberName": "Body",
+      "japaneseName": "剛体が変更対象か",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt",
+        "firstLine": 143,
+        "lastLine": 143
+      },
+      "origin": "Cプラグインの解説が、選択状態が変わったときに変更対象を通知するイベントだと述べているので、各項目をその種別が変更対象かどうかとして名付けた。"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected",
+      "memberName": "Bone",
+      "japaneseName": "ボーンが変更対象か",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt",
+        "firstLine": 143,
+        "lastLine": 143
+      },
+      "origin": "Cプラグインの解説が、選択状態が変わったときに変更対象を通知するイベントだと述べているので、各項目をその種別が変更対象かどうかとして名付けた。"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected",
+      "memberName": "Face",
+      "japaneseName": "面が変更対象か",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt",
+        "firstLine": 143,
+        "lastLine": 143
+      },
+      "origin": "Cプラグインの解説が、選択状態が変わったときに変更対象を通知するイベントだと述べているので、各項目をその種別が変更対象かどうかとして名付けた。"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected",
+      "memberName": "Joint",
+      "japaneseName": "Jointが変更対象か",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt",
+        "firstLine": 143,
+        "lastLine": 143
+      },
+      "origin": "Cプラグインの解説が、選択状態が変わったときに変更対象を通知するイベントだと述べているので、各項目をその種別が変更対象かどうかとして名付けた。"
+    },
+    {
+      "declaringType": "PXCPlugin.Event.PXEventArgs+ViewObjectSelected",
+      "memberName": "Vertex",
+      "japaneseName": "頂点が変更対象か",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_Cプラグイン.txt",
+        "firstLine": 143,
+        "lastLine": 143
+      },
+      "origin": "Cプラグインの解説が、選択状態が変わったときに変更対象を通知するイベントだと述べているので、各項目をその種別が変更対象かどうかとして名付けた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "AmbientA",
+      "japaneseName": "環境色(変化前)",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "AmbientB",
+      "japaneseName": "環境色(変化後)",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "DiffuseA",
+      "japaneseName": "拡散色(変化前)",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "DiffuseB",
+      "japaneseName": "拡散色(変化後)",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "SpecularA",
+      "japaneseName": "反射色(変化前)",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "PXCPlugin.UIModel.PXUIModelHelper+MaterialColorEvPara",
+      "memberName": "SpecularB",
+      "japaneseName": "反射色(変化後)",
+      "basis": {
+        "kind": "documentSection",
+        "path": "Lib/PEPlugin/doc/プラグイン解説_UIモデル.txt",
+        "firstLine": 214,
+        "lastLine": 214
+      },
+      "origin": "UIモデルの解説がAからBへ色を変える設定だと述べているので、AとBを変化前と変化後に当てた。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "Alt",
+      "japaneseName": "Altキーの押下",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "Control",
+      "japaneseName": "Ctrlキーの押下",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "Handled",
+      "japaneseName": "イベントの処理済み",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "KeyCode",
+      "japaneseName": "キーコード",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "KeyData",
+      "japaneseName": "修飾キーを含むキーコード",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名と型だけでは対象が定まらないので、宣言型がキー入力とマウス操作のイベント引数であることを踏まえ、キーの値に修飾キーを含む側と含まない側があること・マウスの変化量がホイールの回転であること・ボタンが押されたボタンを指すことを当てた。これらを裏付ける記載は配布物の中に無く、この一文がその判断の記録である。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "KeyValue",
+      "japaneseName": "キーコードの整数値",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "Modifiers",
+      "japaneseName": "修飾キー",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "Shift",
+      "japaneseName": "Shiftキーの押下",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.KeyEventArgs",
+      "memberName": "SuppressKeyPress",
+      "japaneseName": "キー入力の抑止",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "Button",
+      "japaneseName": "押されたボタン",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名と型だけでは対象が定まらないので、宣言型がキー入力とマウス操作のイベント引数であることを踏まえ、キーの値に修飾キーを含む側と含まない側があること・マウスの変化量がホイールの回転であること・ボタンが押されたボタンを指すことを当てた。これらを裏付ける記載は配布物の中に無く、この一文がその判断の記録である。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "Clicks",
+      "japaneseName": "クリック回数",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "Delta",
+      "japaneseName": "ホイールの回転量",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "メンバー名と型だけでは対象が定まらないので、宣言型がキー入力とマウス操作のイベント引数であることを踏まえ、キーの値に修飾キーを含む側と含まない側があること・マウスの変化量がホイールの回転であること・ボタンが押されたボタンを指すことを当てた。これらを裏付ける記載は配布物の中に無く、この一文がその判断の記録である。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "Location",
+      "japaneseName": "カーソル位置",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "X",
+      "japaneseName": "カーソルのX座標",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    },
+    {
+      "declaringType": "System.Windows.Forms.MouseEventArgs",
+      "memberName": "Y",
+      "japaneseName": "カーソルのY座標",
+      "basis": {
+        "kind": "memberShape"
+      },
+      "origin": "宣言型・メンバー名・プロパティの型が示す対象をそのまま日本語にした。"
+    }
+  ]
+}

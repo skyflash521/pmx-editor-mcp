@@ -1,0 +1,213 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace PmxEditorMcp
+{
+    /// <summary>
+    /// このプロセスが出しているウィンドウを数え上げて、人の応答を待つ表示を探す。ウィンドウの文字列を
+    /// 得るのは、そのウィンドウのスレッドへの要求である。
+    /// </summary>
+    public sealed class DesktopModalWindowProbe : IModalWindowProbe
+    {
+        private const int MaxTextLength = 512;
+
+        private readonly TimeSpan _textLimit;
+
+        private delegate bool WindowVisitor(IntPtr window, IntPtr state);
+
+        public DesktopModalWindowProbe(TimeSpan textLimit)
+        {
+            if (textLimit <= TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(textLimit), "待つ長さの上限は正の長さで与える。");
+            }
+
+            _textLimit = textLimit;
+        }
+
+        /// <summary>出ているダイアログのタイトルと本文。出ていなければ null。</summary>
+        public string TryDescribe()
+        {
+            return ModalWindows.Describe(Windows());
+        }
+
+        /// <summary>ダイアログの中のラベル(Static)の文字を、空白で繋いだもの。</summary>
+        internal string Message(IntPtr window)
+        {
+            return Body(window);
+        }
+
+        internal string Said(IntPtr window)
+        {
+            return ModalWindows.Said(new WindowNote(Text(window), Body(window), true, true));
+        }
+
+        private IEnumerable<WindowNote> Windows()
+        {
+            List<WindowNote> notes = new List<WindowNote>();
+            using (Process self = Process.GetCurrentProcess())
+            {
+                foreach (ProcessThread thread in self.Threads)
+                {
+                    List<IntPtr> windows = new List<IntPtr>();
+                    EnumThreadWindows(
+                        (uint)thread.Id,
+                        (window, state) =>
+                        {
+                            windows.Add(window);
+
+                            return true;
+                        },
+                        IntPtr.Zero);
+                    foreach (IntPtr window in windows)
+                    {
+                        IntPtr owner = GetWindow(window, GetWindowOwner);
+                        bool holdsOwner = owner != IntPtr.Zero && !IsWindowEnabled(owner);
+                        bool visible = IsWindowVisible(window);
+                        string caption = visible && holdsOwner ? Text(window) : null;
+                        if (caption != null && AnsweringDialogs.Hides(owner, window, IsDialog(window)))
+                        {
+                            holdsOwner = false;
+                        }
+
+                        string body = visible && holdsOwner ? Body(window) : string.Empty;
+
+                        if (visible && holdsOwner
+                            && (!IsWindow(window) || !IsWindowVisible(window) || IsWindowEnabled(owner)))
+                        {
+                            visible = false;
+                            holdsOwner = false;
+                        }
+
+                        notes.Add(visible && holdsOwner
+                            ? new WindowNote(caption, body, true, true)
+                            : new WindowNote(string.Empty, string.Empty, visible, holdsOwner));
+                    }
+                }
+            }
+
+            return notes;
+        }
+
+        /// <summary>
+        /// ウィンドウが見せている本文。持たないウィンドウでは空になる。
+        /// </summary>
+        private string Body(IntPtr window)
+        {
+            List<IntPtr> children = new List<IntPtr>();
+            EnumChildWindows(
+                window,
+                (child, state) =>
+                {
+                    children.Add(child);
+
+                    return true;
+                },
+                IntPtr.Zero);
+            StringBuilder body = new StringBuilder();
+            foreach (IntPtr child in children)
+            {
+                if (!IsStatic(child))
+                {
+                    continue;
+                }
+
+                string text = Text(child);
+                if (text.Length == 0)
+                {
+                    continue;
+                }
+
+                if (body.Length != 0)
+                {
+                    body.Append(' ');
+                }
+
+                body.Append(text);
+            }
+
+            return body.ToString();
+        }
+
+        private static bool IsStatic(IntPtr window)
+        {
+            return IsClass(window, "Static");
+        }
+
+        private static bool IsDialog(IntPtr window)
+        {
+            return IsClass(window, "#32770");
+        }
+
+        private static bool IsClass(IntPtr window, string wanted)
+        {
+            StringBuilder name = new StringBuilder(MaxTextLength);
+            GetClassName(window, name, name.Capacity);
+
+            return string.Equals(name.ToString(), wanted, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// ウィンドウの文字列。上限までに応答が無ければ空とする。
+        /// </summary>
+        private string Text(IntPtr window)
+        {
+            StringBuilder text = new StringBuilder(MaxTextLength);
+            IntPtr answered;
+            IntPtr got = SendMessageTimeout(
+                window,
+                GetTextMessage,
+                new IntPtr(text.Capacity),
+                text,
+                AbortIfHung,
+                (uint)_textLimit.TotalMilliseconds,
+                out answered);
+
+            return got == IntPtr.Zero ? string.Empty : text.ToString();
+        }
+
+        private const uint GetWindowOwner = 4;
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumThreadWindows(
+            uint threadId, WindowVisitor visitor, IntPtr state);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumChildWindows(
+            IntPtr parent, WindowVisitor visitor, IntPtr state);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetWindow(IntPtr window, uint relation);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowVisible(IntPtr window);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindow(IntPtr window);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowEnabled(IntPtr window);
+
+        private const uint GetTextMessage = 0x000D;
+
+        /// <summary>応答しないウィンドウでは待たずに戻る。</summary>
+        private const uint AbortIfHung = 0x0002;
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern IntPtr SendMessageTimeout(
+            IntPtr window,
+            uint message,
+            IntPtr count,
+            StringBuilder text,
+            uint flags,
+            uint limitMilliseconds,
+            out IntPtr answered);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int GetClassName(IntPtr window, StringBuilder text, int count);
+    }
+}

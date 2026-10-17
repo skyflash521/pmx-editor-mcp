@@ -1,0 +1,646 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using PEPlugin.Pmx;
+
+namespace PmxEditorMcp
+{
+    public enum RelatedHandling
+    {
+        /// <summary>何も触らない。指す先を失った参照はそのまま残る。</summary>
+        Keep,
+
+        /// <summary>指す先を失った参照を直す。ウェイトは残るボーンへ移し、直せない参照は落とす。</summary>
+        Repair,
+
+        /// <summary>直すことに加えて、消した要素だけが使っていた要素も一緒に消す。</summary>
+        Cascade,
+    }
+
+    public static class ReferenceCleanup
+    {
+        public const string RelatedName = "related";
+
+        public const string Keep = "keep";
+
+        public const string Repair = "repair";
+
+        public const string Cascade = "cascade";
+
+        // SDEFは2つのボーンの間を補間するPMXの変形方式である。
+        private const int SdefBones = 2;
+
+        /// <summary>受け取れる値。スキーマが並べる順。</summary>
+        public static IList<string> Names
+        {
+            get
+            {
+                return new ReadOnlyCollection<string>(new[] { Keep, Repair, Cascade });
+            }
+        }
+
+        /// <summary>入力から始末の仕方を読む。省かれていれば <see cref="RelatedHandling.Repair"/>。</summary>
+        public static bool TryResolve(object given, out RelatedHandling handling, out string message)
+        {
+            handling = RelatedHandling.Repair;
+            message = null;
+            if (given == null)
+            {
+                return true;
+            }
+
+            switch (given as string)
+            {
+                case Keep:
+                    handling = RelatedHandling.Keep;
+
+                    return true;
+
+                case Repair:
+                    handling = RelatedHandling.Repair;
+
+                    return true;
+
+                case Cascade:
+                    handling = RelatedHandling.Cascade;
+
+                    return true;
+
+                default:
+                    message = RelatedName + " は次のどれかでなければならない: "
+                        + string.Join("・", Names.ToArray());
+
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// 指した要素を消したとき、それだけが使っていたために一緒に消える要素を、種類の名前ごとに
+        /// 集める。消す前のPMXを渡す。連なって不要になる要素も含み、指した要素そのものは返さない。
+        /// </summary>
+        public static IDictionary<string, IList<object>> Following(
+            object pmx, ElementKind kind, ICollection<object> removed)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (kind == null)
+            {
+                throw new ArgumentNullException(nameof(kind));
+            }
+
+            if (removed == null)
+            {
+                throw new ArgumentNullException(nameof(removed));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+            HashSet<object> seed = Held(removed);
+            HashSet<object> materials = Seeded(kind, ElementKinds.Material, seed);
+            HashSet<object> vertices = Seeded(kind, ElementKinds.Vertex, seed);
+            HashSet<object> morphs = Seeded(kind, ElementKinds.Morph, seed);
+            HashSet<object> bodies = Seeded(kind, ElementKinds.Body, seed);
+            HashSet<object> joints = Held(new object[0]);
+
+            for (bool grew = true; grew;)
+            {
+                grew = Grew(vertices, VerticesOnlyUsedBy(model, materials))
+                    | Grew(materials, MaterialsLosingEveryFace(model, vertices))
+                    | Grew(morphs, MorphsLosingEveryOffset(model, materials, vertices, morphs, bodies))
+                    | Grew(joints, JointsAttachedTo(model, bodies));
+            }
+
+            Dictionary<string, IList<object>> following =
+                new Dictionary<string, IList<object>>(StringComparer.Ordinal);
+            Add(following, ElementKinds.Vertex, model.Vertex.Cast<object>(), Apart(vertices, seed));
+            Add(following, ElementKinds.Material, model.Material.Cast<object>(), Apart(materials, seed));
+            Add(following, ElementKinds.Morph, model.Morph.Cast<object>(), Apart(morphs, seed));
+            Add(following, ElementKinds.Joint, model.Joint.Cast<object>(), Apart(joints, seed));
+
+            return following;
+        }
+
+        /// <summary>3つの頂点が揃っているか。揃っていない面はPMXの面として意味を持たない。</summary>
+        public static bool IsSoundFace(IPXFace face)
+        {
+            if (face == null)
+            {
+                throw new ArgumentNullException(nameof(face));
+            }
+
+            return face.Vertex1 != null
+                && face.Vertex2 != null
+                && face.Vertex3 != null
+                && !ReferenceEquals(face.Vertex1, face.Vertex2)
+                && !ReferenceEquals(face.Vertex2, face.Vertex3)
+                && !ReferenceEquals(face.Vertex3, face.Vertex1);
+        }
+
+        /// <summary>3つの頂点が揃っていない面を落とす。落とした数を返す。</summary>
+        public static int DropUnsoundFaces(object pmx)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            int dropped = 0;
+            foreach (IPXMaterial material in ((IPXPmx)pmx).Material)
+            {
+                for (int at = material.Faces.Count - 1; at >= 0; at--)
+                {
+                    if (IsSoundFace(material.Faces[at]))
+                    {
+                        continue;
+                    }
+
+                    material.Faces.RemoveAt(at);
+                    dropped++;
+                }
+            }
+
+            return dropped;
+        }
+
+        /// <summary>
+        /// 頂点を指したままの参照を、別の頂点へ付け替える。表に無い頂点を指す参照はそのままにする。
+        /// </summary>
+        public static void Repoint(object pmx, IDictionary<IPXVertex, IPXVertex> moved)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (moved == null)
+            {
+                throw new ArgumentNullException(nameof(moved));
+            }
+
+            Retarget(pmx, ElementKinds.Vertex, held => Moved(moved, (IPXVertex)held));
+        }
+
+        /// <summary>
+        /// 材質を指したままの参照を、別の材質へ付け替える。表に無い材質を指す参照はそのままにする。
+        /// </summary>
+        public static void Repoint(object pmx, IDictionary<IPXMaterial, IPXMaterial> moved)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (moved == null)
+            {
+                throw new ArgumentNullException(nameof(moved));
+            }
+
+            Retarget(pmx, ElementKinds.Material, held => Moved(moved, (IPXMaterial)held));
+        }
+
+        /// <summary>
+        /// モーフを指したままの参照を、別のモーフへ付け替える。表に無いモーフを指す参照はそのままにする。
+        /// </summary>
+        public static void Repoint(object pmx, IDictionary<IPXMorph, IPXMorph> moved)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (moved == null)
+            {
+                throw new ArgumentNullException(nameof(moved));
+            }
+
+            Retarget(pmx, ElementKinds.Morph, held => Moved(moved, (IPXMorph)held));
+        }
+
+        /// <summary>
+        /// ボーンを指したままの参照を、別のボーンへ付け替える。表に無いボーンを指す参照はそのままにする。
+        /// </summary>
+        public static void Repoint(object pmx, IDictionary<IPXBone, IPXBone> moved)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (moved == null)
+            {
+                throw new ArgumentNullException(nameof(moved));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+            IPXBone fallback = model.Bone.Count == 0 ? null : model.Bone[0];
+            List<KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>>> weighed =
+                new List<KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>>>();
+            foreach (IPXVertex vertex in model.Vertex)
+            {
+                IList<KeyValuePair<IPXBone, float>> held = VertexWeights.Read(vertex);
+                if (held.Any(share => moved.ContainsKey(share.Key)))
+                {
+                    weighed.Add(new KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>>(
+                        vertex,
+                        held.Select(share => new KeyValuePair<IPXBone, float>(
+                                Moved(moved, share.Key) ?? fallback, share.Value))
+                            .Where(share => share.Key != null)
+                            .ToList()));
+                }
+            }
+
+            Retarget(pmx, ElementKinds.Bone, held => Moved(moved, (IPXBone)held));
+            foreach (KeyValuePair<IPXVertex, IList<KeyValuePair<IPXBone, float>>> one in weighed)
+            {
+                Rewritten(one.Key, one.Value);
+            }
+        }
+
+        private static void Retarget(object pmx, string kind, Func<object, object> moved)
+        {
+            foreach (ReferenceEdge edge in ReferenceEdges.Into(kind))
+            {
+                edge.Retarget(pmx, moved);
+            }
+        }
+
+        /// <summary>
+        /// モデルが持つ枠のすべて。Root枠と表情枠も数に入り、この2つがこの順で先に並ぶ。
+        /// </summary>
+        public static IEnumerable<IPXNode> Nodes(object pmx)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+
+            return new[] { model.RootNode, model.ExpressionNode }
+                .Concat(SdkList.Without(model.Node, model.RootNode, model.ExpressionNode));
+        }
+
+        private static T Moved<T>(IDictionary<T, T> moved, T held)
+            where T : class
+        {
+            T found;
+
+            return held != null && moved.TryGetValue(held, out found) ? found : held;
+        }
+
+        /// <summary>
+        /// PMX全体を見て、並びに居ない要素を指したままの参照を直す。直した参照の数を返す。
+        /// </summary>
+        public static int Sweep(object pmx)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+            Dictionary<string, ISet<object>> live =
+                new Dictionary<string, ISet<object>>(StringComparer.Ordinal)
+                {
+                    { ElementKinds.Vertex, Held(model.Vertex.Cast<object>()) },
+                    { ElementKinds.Material, Held(model.Material.Cast<object>()) },
+                    { ElementKinds.Bone, Held(model.Bone.Cast<object>()) },
+                    { ElementKinds.Morph, Held(model.Morph.Cast<object>()) },
+                    { ElementKinds.Body, Held(model.Body.Cast<object>()) },
+                };
+
+            int repaired = 0;
+            foreach (ReferenceEdge edge in ReferenceEdges.All)
+            {
+                repaired += edge.Mend(model, live[edge.TargetKind]);
+            }
+
+            return repaired + SweepStrayNodeItems(model);
+        }
+
+        private static int SweepStrayNodeItems(IPXPmx model)
+        {
+            int repaired = 0;
+            foreach (IPXNode node in EveryNode(model))
+            {
+                for (int at = node.Items.Count - 1; at >= 0; at--)
+                {
+                    IPXNodeItem item = node.Items[at];
+                    if (item.IsBone || item.IsMorph)
+                    {
+                        continue;
+                    }
+
+                    node.Items.RemoveAt(at);
+                    repaired++;
+                }
+            }
+
+            return repaired;
+        }
+
+        /// <summary>
+        /// 並びに居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。同じボーンが重なったら
+        /// ウェイトを足してまとめる。直した頂点の数を返す。
+        /// </summary>
+        public static int RepairWeights(object pmx, IEnumerable<IPXVertex> vertices)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (vertices == null)
+            {
+                throw new ArgumentNullException(nameof(vertices));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+
+            return RepairWeights(model, Held(model.Bone.Cast<object>()), vertices);
+        }
+
+        /// <summary>
+        /// <paramref name="bones"/> に居ないボーンを指すウェイトを、残っている祖先のボーンへ移す。
+        /// 同じボーンが重なったらウェイトを足してまとめる。直した頂点の数を返す。
+        /// </summary>
+        public static int RepairWeights(
+            object pmx, ISet<object> bones, IEnumerable<IPXVertex> vertices)
+        {
+            if (pmx == null)
+            {
+                throw new ArgumentNullException(nameof(pmx));
+            }
+
+            if (bones == null)
+            {
+                throw new ArgumentNullException(nameof(bones));
+            }
+
+            if (vertices == null)
+            {
+                throw new ArgumentNullException(nameof(vertices));
+            }
+
+            IPXPmx model = (IPXPmx)pmx;
+            int repaired = 0;
+            IPXBone fallback = model.Bone.Count == 0 ? null : model.Bone[0];
+            foreach (IPXVertex vertex in vertices)
+            {
+                IList<KeyValuePair<IPXBone, float>> held = VertexWeights.Read(vertex);
+                if (!held.Any(share => !bones.Contains(share.Key)))
+                {
+                    continue;
+                }
+
+                Rewritten(vertex, held
+                    .Select(share => new KeyValuePair<IPXBone, float>(
+                        LandingBone(share.Key, bones, fallback), share.Value))
+                    .Where(share => share.Key != null)
+                    .ToList());
+                repaired++;
+            }
+
+            return repaired;
+        }
+
+        private static void Rewritten(IPXVertex vertex, IList<KeyValuePair<IPXBone, float>> placed)
+        {
+            IList<KeyValuePair<IPXBone, float>> kept = VertexWeights.Settled(placed);
+            if (vertex.SDEF && kept.Count == SdefBones)
+            {
+                kept = kept
+                    .OrderBy(share => Enumerable.Range(0, placed.Count)
+                        .First(at => ReferenceEquals(placed[at].Key, share.Key)))
+                    .ToList();
+            }
+
+            VertexWeights.Write(vertex, kept);
+            if (kept.Count < SdefBones)
+            {
+                vertex.SDEF = false;
+            }
+
+            if (kept.Count == 0)
+            {
+                vertex.QDEF = false;
+            }
+        }
+
+        /// <summary>
+        /// そのボーンが <paramref name="bones"/> に居ればそのまま、居なければ残っている最も近い祖先を
+        /// 返す。祖先も残っていなければ <paramref name="fallback"/> を返す。
+        /// </summary>
+        public static IPXBone LandingBone(IPXBone bone, ISet<object> bones, IPXBone fallback)
+        {
+            if (bone == null || bones.Contains(bone))
+            {
+                return bone;
+            }
+
+            for (IPXBone above = bone.Parent; above != null; above = above.Parent)
+            {
+                if (bones.Contains(above))
+                {
+                    return above;
+                }
+            }
+
+            return fallback;
+        }
+
+        public static bool PointsAtLive(
+            IPXMorphOffset offset,
+            ISet<object> vertices,
+            ISet<object> materials,
+            ISet<object> bones,
+            ISet<object> morphs,
+            ISet<object> bodies)
+        {
+            IPXVertexMorphOffset moved = offset as IPXVertexMorphOffset;
+            if (moved != null)
+            {
+                return Alive(moved.Vertex, vertices);
+            }
+
+            IPXUVMorphOffset slid = offset as IPXUVMorphOffset;
+            if (slid != null)
+            {
+                return Alive(slid.Vertex, vertices);
+            }
+
+            IPXBoneMorphOffset posed = offset as IPXBoneMorphOffset;
+            if (posed != null)
+            {
+                return Alive(posed.Bone, bones);
+            }
+
+            IPXGroupMorphOffset grouped = offset as IPXGroupMorphOffset;
+            if (grouped != null)
+            {
+                return Alive(grouped.Morph, morphs);
+            }
+
+            IPXImpulseMorphOffset pushed = offset as IPXImpulseMorphOffset;
+            if (pushed != null)
+            {
+                return pushed.Body == null || Alive(pushed.Body, bodies);
+            }
+
+            IPXMaterialMorphOffset painted = offset as IPXMaterialMorphOffset;
+
+            // 材質を指さない材質モーフのオフセットは全材質を指す。
+            return painted == null || painted.Material == null
+                || materials.Contains(painted.Material);
+        }
+
+        private static IEnumerable<IPXNode> EveryNode(IPXPmx model)
+        {
+            if (model.RootNode != null)
+            {
+                yield return model.RootNode;
+            }
+
+            if (model.ExpressionNode != null)
+            {
+                yield return model.ExpressionNode;
+            }
+
+            foreach (IPXNode node in model.Node)
+            {
+                yield return node;
+            }
+        }
+
+        private static HashSet<object> Seeded(
+            ElementKind kind, string name, HashSet<object> seed)
+        {
+            return string.Equals(kind.Name, name, StringComparison.Ordinal)
+                ? Held(seed)
+                : Held(new object[0]);
+        }
+
+        private static bool Grew(HashSet<object> held, IEnumerable<object> found)
+        {
+            bool grew = false;
+            foreach (object item in found)
+            {
+                grew |= held.Add(item);
+            }
+
+            return grew;
+        }
+
+        private static IList<object> Apart(HashSet<object> held, HashSet<object> seed)
+        {
+            return held.Where(item => !seed.Contains(item)).ToList();
+        }
+
+        private static IEnumerable<object> VerticesOnlyUsedBy(
+            IPXPmx model, HashSet<object> materials)
+        {
+            HashSet<object> elsewhere = Held(new object[0]);
+            HashSet<object> here = Held(new object[0]);
+            foreach (IPXMaterial material in model.Material)
+            {
+                HashSet<object> side = materials.Contains(material) ? here : elsewhere;
+                foreach (IPXFace face in material.Faces)
+                {
+                    side.Add(face.Vertex1);
+                    side.Add(face.Vertex2);
+                    side.Add(face.Vertex3);
+                }
+            }
+
+            return model.Vertex
+                .Cast<object>()
+                .Where(v => here.Contains(v) && !elsewhere.Contains(v));
+        }
+
+        private static IEnumerable<object> MaterialsLosingEveryFace(
+            IPXPmx model, HashSet<object> vertices)
+        {
+            return model.Material
+                .Where(m => m.Faces.Count > 0
+                    && m.Faces.All(f => vertices.Contains(f.Vertex1)
+                        || vertices.Contains(f.Vertex2)
+                        || vertices.Contains(f.Vertex3)))
+                .Cast<object>();
+        }
+
+        private static IEnumerable<object> MorphsLosingEveryOffset(
+            IPXPmx model,
+            HashSet<object> materials,
+            HashSet<object> vertices,
+            HashSet<object> morphs,
+            HashSet<object> bodies)
+        {
+            HashSet<object> liveVertices = Without(model.Vertex.Cast<object>(), vertices);
+            HashSet<object> liveMaterials = Without(model.Material.Cast<object>(), materials);
+            HashSet<object> liveMorphs = Without(model.Morph.Cast<object>(), morphs);
+            HashSet<object> liveBodies = Without(model.Body.Cast<object>(), bodies);
+            HashSet<object> bones = Held(model.Bone.Cast<object>());
+
+            return model.Morph
+                .Where(m => m.Offsets.Count > 0
+                    && m.Offsets.All(o => !PointsAtLive(
+                        o, liveVertices, liveMaterials, bones, liveMorphs, liveBodies)))
+                .Cast<object>();
+        }
+
+        private static IEnumerable<object> JointsAttachedTo(IPXPmx model, HashSet<object> bodies)
+        {
+            return model.Joint
+                .Where(j => bodies.Contains(j.BodyA) || bodies.Contains(j.BodyB))
+                .Cast<object>();
+        }
+
+        private static HashSet<object> Without(
+            IEnumerable<object> all, HashSet<object> going)
+        {
+            return Held(all.Where(item => !going.Contains(item)));
+        }
+
+        private static void Add(
+            IDictionary<string, IList<object>> following,
+            string name,
+            IEnumerable<object> all,
+            IList<object> chosen)
+        {
+            HashSet<object> held = Held(chosen);
+            IList<object> taken = all.Where(held.Contains).ToList();
+            if (taken.Count > 0)
+            {
+                following.Add(name, taken);
+            }
+        }
+
+        public static bool Alive(object item, ISet<object> live)
+        {
+            if (live == null)
+            {
+                throw new ArgumentNullException(nameof(live));
+            }
+
+            return item != null && live.Contains(item);
+        }
+
+        /// <summary>並びに居る相手を、同一性で引ける形にまとめる。</summary>
+        public static HashSet<object> Held(IEnumerable<object> items)
+        {
+            HashSet<object> held = new HashSet<object>(ReferenceComparer<object>.Instance);
+            foreach (object item in items)
+            {
+                if (item != null)
+                {
+                    held.Add(item);
+                }
+            }
+
+            return held;
+        }
+    }
+}

@@ -1,0 +1,208 @@
+{
+  "tools": [
+    {
+      "tool": "model_bone_morph_offset",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_bone_node_item",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_group_morph_offset",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_ik_link",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_impulse_morph_offset",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_morph_node_item",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_uv_morph_offset",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "model_vertex_morph_offset",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_add_vmd_visible_ik_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_bs_vme_bone",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_clone_vmd_ik_enable",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_clone_vmd_visible_ik_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_compare_to_vmd_visible_ik_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_create_group_bone_vme",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_create_group_morph_vme",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_create_vmd",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_d_vme_bone_state",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_direction_vme_bone_state",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_hold_vmd_camera_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vmd_light_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vmd_morph_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vmd_self_shadow_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vmd_visible_ik_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vme_bone",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_hold_vme_single_value_element",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_ik_vmd_visible_ik_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_list_vmd_ik_enables",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_list_vmd_visible_ik_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_p_vme_bone_state",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_position_vme_bone_state",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_r_vme_bone_state",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_remove_vmd_visible_ik_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_rotation_vme_bone_state",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_run_vme",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_s_vme_bone_state",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_scale_vme_bone_state",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_set_ik_vmd_visible_ik_key",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_t_vme_bone_state",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_to_bone_state_vme_bone",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_to_bs_vme_bone",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_translation_vme_bone_state",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "motion_update_vmd_ik_enables",
+      "reason": "noCase"
+    },
+    {
+      "tool": "motion_update_vmd_visible_ik_keys",
+      "reason": "noCase"
+    },
+    {
+      "tool": "session_close",
+      "reason": "noCase"
+    },
+    {
+      "tool": "session_initialize_pmd",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "session_initialize_pmx",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "view_create_text_control",
+      "reason": "noEffectCheck"
+    },
+    {
+      "tool": "view_set_mouse_drag_move",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_mouse_over_color",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_set_vme_event",
+      "reason": "noCase"
+    },
+    {
+      "tool": "view_ui_model_text_control",
+      "reason": "noEffectCheck"
+    }
+  ]
+}

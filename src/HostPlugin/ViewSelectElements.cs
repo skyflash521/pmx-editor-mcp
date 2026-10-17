@@ -1,0 +1,527 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using PEPlugin.Pmx;
+using PEPlugin.SDX;
+
+namespace PmxEditorMcp
+{
+    /// <summary>
+    /// 画面の選択を、全選択・反転・拡張・縮小・子の連なり・半モデルで置き換えるツール。
+    /// </summary>
+    public static class ViewSelectElements
+    {
+        public const string ToolName = "view_select_elements";
+
+        public const string All = "all";
+
+        public const string Invert = "invert";
+
+        public const string Expand = "expand";
+
+        public const string Reduce = "reduce";
+
+        public const string Connected = "connected";
+
+        public const string ChildChain = "childChain";
+
+        public const string HalfModel = "halfModel";
+
+        /// <summary>受け取れる操作。スキーマが並べる順。</summary>
+        public static IList<string> Operations
+        {
+            get
+            {
+                return new[] { All, Invert, Expand, Reduce, Connected, ChildChain, HalfModel };
+            }
+        }
+
+        public const string KindName = "kind";
+
+        public const string KindsName = "kinds";
+
+        public const string AxisName = "axis";
+
+        public const string NegativeX = "negativeX";
+
+        public const string NegativeY = "negativeY";
+
+        public const string NegativeZ = "negativeZ";
+
+        /// <summary>
+        /// 受け取れる軸。スキーマが並べる順。x・y・z はその軸の値が境以上の側を、negative の3つは
+        /// 境より小さい側を指す。
+        /// </summary>
+        public static IList<string> Axes
+        {
+            get
+            {
+                return new[]
+                {
+                    ModelEditVertices.AxisX,
+                    ModelEditVertices.AxisY,
+                    ModelEditVertices.AxisZ,
+                    NegativeX,
+                    NegativeY,
+                    NegativeZ,
+                };
+            }
+        }
+
+        public const string BoundaryName = "boundary";
+
+        public const string SelectedName = "selected";
+
+        public const string CountsName = "counts";
+
+        public static void AddTo(McpMethodTable methods, ComposedScreen screen)
+        {
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            if (screen == null)
+            {
+                throw new ArgumentNullException(nameof(screen));
+            }
+
+            List<string> known = new List<string>
+            {
+                ComposedOperation.OperationName,
+                KindName,
+                KindsName,
+                AxisName,
+                BoundaryName,
+                ViewSelection.ModeName,
+            };
+            methods.Add(
+                ToolName,
+                screen.Method(
+                    known,
+                    ScreenNeeds.View | ScreenNeeds.Pmx | ScreenNeeds.Setting | ScreenNeeds.ReadsPmx,
+                    ScreenRefreshKind.Drawn,
+                    Run));
+        }
+
+        private static ComposedEditResult Run(McpMethodContext context, ScreenParts parts)
+        {
+            IPXPmx model = (IPXPmx)parts.Pmx;
+            string operation;
+            string axis;
+            string mode;
+            string code;
+            string message;
+            IList<string> kinds;
+            float boundary;
+            if (!ComposedOperation.TryTake(
+                    context, Operations, out operation, out code, out message)
+                || !ViewSelection.TryMode(context, out mode, out code, out message)
+                || !TryKinds(context, operation, out kinds, out code, out message)
+                || !ComposedInput.TryChoice(
+                    context,
+                    AxisName,
+                    operation,
+                    new[] { HalfModel },
+                    Axes,
+                    out axis,
+                    out code,
+                    out message)
+                || !TryBoundary(context, operation, out boundary, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            int selected = 0;
+            int faces = 0;
+            IList<object> counts = new List<object>();
+            foreach (string kind in kinds)
+            {
+                int took = 0;
+                ComposedEditResult refused =
+                    Chosen(model, parts, operation, kind, axis, boundary, mode, ref took);
+                if (refused != null)
+                {
+                    return refused;
+                }
+
+                selected += took;
+                if (string.Equals(kind, ElementKinds.Face, StringComparison.Ordinal))
+                {
+                    faces += took;
+                }
+
+                counts.Add(new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { KindName, kind },
+                    { SelectedName, took },
+                });
+            }
+
+            return ComposedEditResult.Complete(
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { SelectedName, selected },
+                    { CountsName, counts },
+                },
+                faces == 0
+                    ? new string[0]
+                    : ScreenFaceVisibility.Warnings(parts.Setting, ElementKinds.Face));
+        }
+
+        /// <summary>選び直せたなら null を、断るなら断りを返す。</summary>
+        private static ComposedEditResult Chosen(
+            IPXPmx model,
+            ScreenParts parts,
+            string operation,
+            string kind,
+            string axis,
+            float boundary,
+            string mode,
+            ref int selected)
+        {
+            int count = ViewSelection.Count(model, kind);
+            IList<int> held = ViewSelection.Taken(parts.View, kind, count);
+            IList<int> made;
+            switch (operation)
+            {
+                case All:
+                    made = ViewSelection.Shown(parts.View, model, kind);
+
+                    break;
+
+                case Invert:
+                    made = ViewSelection.Shown(parts.View, model, kind).Except(held).ToList();
+
+                    break;
+
+                case ChildChain:
+                    if (!string.Equals(kind, ElementKinds.Bone, StringComparison.Ordinal))
+                    {
+                        return Only(ChildChain, ElementKinds.Bone);
+                    }
+
+                    made = Below(model, held);
+
+                    break;
+
+                case HalfModel:
+                    made = Halved(model, kind, axis, boundary)
+                        .Intersect(ViewSelection.Shown(parts.View, model, kind))
+                        .ToList();
+
+                    break;
+
+                case Connected:
+                    if (!string.Equals(kind, ElementKinds.Vertex, StringComparison.Ordinal))
+                    {
+                        return Only(Connected, ElementKinds.Vertex);
+                    }
+
+                    made = Reached(model, held);
+
+                    break;
+
+                default:
+                    if (!string.Equals(kind, ElementKinds.Vertex, StringComparison.Ordinal))
+                    {
+                        return Only(operation, ElementKinds.Vertex);
+                    }
+
+                    made = Touching(
+                        model, held, operation, ViewSelection.Shown(parts.View, model, kind));
+
+                    break;
+            }
+
+            made = ViewSelection.Combined(mode, held, made);
+            ViewSelection.Put(parts.View, kind, made);
+            selected += made.Count;
+
+            return null;
+        }
+
+        /// <summary>
+        /// 選び直す種類を読む。<paramref name="operation"/> が全選択か反転のときだけ kinds で
+        /// まとめて渡せる。
+        /// </summary>
+        private static bool TryKinds(
+            McpMethodContext context,
+            string operation,
+            out IList<string> kinds,
+            out string code,
+            out string message)
+        {
+            kinds = null;
+            if (!context.Params.ContainsKey(KindsName))
+            {
+                string kind;
+                if (!ViewSelection.TryKind(context, KindName, out kind, out code, out message))
+                {
+                    return false;
+                }
+
+                kinds = new[] { kind };
+
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            if (!string.Equals(operation, All, StringComparison.Ordinal)
+                && !string.Equals(operation, Invert, StringComparison.Ordinal))
+            {
+                message = KindsName + " を渡せるのは " + All + "・" + Invert + " のときだけである。";
+
+                return false;
+            }
+
+            if (context.Params.ContainsKey(KindName))
+            {
+                message = KindName + " と " + KindsName + " は、どちらか1つだけを渡す。";
+
+                return false;
+            }
+
+            object given;
+            context.Params.TryGetValue(KindsName, out given);
+            object[] items = given as object[];
+            if (items == null || items.Length == 0)
+            {
+                message = KindsName + " は、選ぶ要素の種類を1つ以上並べたものでなければならない。";
+
+                return false;
+            }
+
+            List<string> made = new List<string>();
+            foreach (object item in items)
+            {
+                string kind = item as string;
+                if (kind == null || !ViewSelection.Kinds.Contains(kind, StringComparer.Ordinal))
+                {
+                    message = KindsName + " は次のどれかを並べる: "
+                        + string.Join("・", ViewSelection.Kinds.ToArray());
+
+                    return false;
+                }
+
+                if (made.Contains(kind, StringComparer.Ordinal))
+                {
+                    message = KindsName + " へ同じ種類を二度並べている: " + kind;
+
+                    return false;
+                }
+
+                made.Add(kind);
+            }
+
+            code = null;
+            kinds = made;
+
+            return true;
+        }
+
+        private static ComposedEditResult Only(string operation, string kind)
+        {
+            return ComposedEditResult.Refuse(
+                ToolEnvelope.NotApplicable,
+                operation + " を当てられるのは " + kind + " の選択だけである。");
+        }
+
+        /// <summary>
+        /// 面で隣り合う頂点で選び直す。広げる操作は、選んでいる頂点を角に持つ面の頂点のうち
+        /// <paramref name="shown"/> にあるものを選び、どの面にも載らない頂点は選択から外れる。狭める
+        /// 操作は選んでいない頂点と面を共にする頂点を外す。
+        /// </summary>
+        private static IList<int> Touching(
+            IPXPmx model, IList<int> held, string operation, IList<int> shown)
+        {
+            bool widening = string.Equals(operation, Expand, StringComparison.Ordinal);
+            IDictionary<IPXVertex, int> at = Placed(model.Vertex);
+            HashSet<int> chosen = new HashSet<int>(held);
+            HashSet<int> found = new HashSet<int>();
+            foreach (IPXFace face in ViewSelection.Faces(model))
+            {
+                IList<int> corners = ViewSelection.Corners(face)
+                    .Where(vertex => vertex != null && at.ContainsKey(vertex))
+                    .Select(vertex => at[vertex])
+                    .ToList();
+                if (widening
+                    ? corners.Any(chosen.Contains)
+                    : corners.Any(corner => !chosen.Contains(corner)))
+                {
+                    found.UnionWith(corners);
+                }
+            }
+
+            return widening
+                ? shown.Where(found.Contains).ToList()
+                : chosen.Except(found).ToList();
+        }
+
+        private static IList<int> Reached(IPXPmx model, IList<int> held)
+        {
+            IDictionary<IPXVertex, int> at = Placed(model.Vertex);
+            Dictionary<int, List<int>> neighbours = new Dictionary<int, List<int>>();
+            foreach (IPXFace face in ViewSelection.Faces(model))
+            {
+                List<int> corners = ViewSelection.Corners(face)
+                    .Where(vertex => vertex != null && at.ContainsKey(vertex))
+                    .Select(vertex => at[vertex])
+                    .ToList();
+                foreach (int corner in corners)
+                {
+                    List<int> linked;
+                    if (!neighbours.TryGetValue(corner, out linked))
+                    {
+                        linked = new List<int>();
+                        neighbours.Add(corner, linked);
+                    }
+
+                    linked.AddRange(corners);
+                }
+            }
+
+            HashSet<int> reached = new HashSet<int>(held);
+            Stack<int> pending = new Stack<int>(held);
+            while (pending.Count > 0)
+            {
+                List<int> linked;
+                if (!neighbours.TryGetValue(pending.Pop(), out linked))
+                {
+                    continue;
+                }
+
+                foreach (int next in linked)
+                {
+                    if (reached.Add(next))
+                    {
+                        pending.Push(next);
+                    }
+                }
+            }
+
+            return reached.ToList();
+        }
+
+        private static IList<int> Below(IPXPmx model, IList<int> held)
+        {
+            IDictionary<IPXBone, int> at = Placed(model.Bone);
+            HashSet<int> chosen = new HashSet<int>(held);
+            List<int> made = new List<int>();
+            for (int position = 0; position < model.Bone.Count; position++)
+            {
+                if (chosen.Contains(position) || Descends(model.Bone[position], at, chosen))
+                {
+                    made.Add(position);
+                }
+            }
+
+            return made;
+        }
+
+        private static bool Descends(
+            IPXBone bone, IDictionary<IPXBone, int> at, ICollection<int> chosen)
+        {
+            HashSet<IPXBone> met = new HashSet<IPXBone>(ReferenceComparer<IPXBone>.Instance);
+            for (IPXBone above = bone.Parent; above != null && met.Add(above); above = above.Parent)
+            {
+                int position;
+                if (at.TryGetValue(above, out position) && chosen.Contains(position))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>その軸の片側に置かれている要素。面は3つの頂点がすべて片側にあるものを選ぶ。</summary>
+        private static IList<int> Halved(IPXPmx model, string kind, string axis, float boundary)
+        {
+            IList<IList<V3>> spots = ViewSelection.Spots(model, kind);
+
+            return Enumerable.Range(0, spots.Count)
+                .Where(at => spots[at].All(spot => Aside(spot, axis, boundary)))
+                .ToList();
+        }
+
+        /// <summary>その点が、指した軸の側にあるか。境の上にある点は x・y・z の側にだけ入る。</summary>
+        private static bool Aside(V3 spot, string axis, float boundary)
+        {
+            switch (axis)
+            {
+                case ModelEditVertices.AxisX:
+                    return spot.X >= boundary;
+
+                case ModelEditVertices.AxisY:
+                    return spot.Y >= boundary;
+
+                case ModelEditVertices.AxisZ:
+                    return spot.Z >= boundary;
+
+                case NegativeX:
+                    return spot.X < boundary;
+
+                case NegativeY:
+                    return spot.Y < boundary;
+
+                default:
+                    return spot.Z < boundary;
+            }
+        }
+
+        /// <summary>半モデルの境の値を読む。渡されなければ0。</summary>
+        private static bool TryBoundary(
+            McpMethodContext context,
+            string operation,
+            out float boundary,
+            out string code,
+            out string message)
+        {
+            boundary = 0f;
+            code = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(BoundaryName, out given))
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            if (!string.Equals(operation, HalfModel, StringComparison.Ordinal))
+            {
+                message = BoundaryName + " を渡せるのは " + HalfModel + " のときだけである。";
+
+                return false;
+            }
+
+            if (!ValueInput.TrySingle(given, out boundary))
+            {
+                message = BoundaryName + " は有限の数でなければならない。";
+
+                return false;
+            }
+
+            code = null;
+
+            return true;
+        }
+
+        private static IDictionary<T, int> Placed<T>(IList<T> items)
+            where T : class
+        {
+            Dictionary<T, int> made =
+                new Dictionary<T, int>(ReferenceComparer<T>.Instance);
+            for (int at = 0; at < items.Count; at++)
+            {
+                if (items[at] != null && !made.ContainsKey(items[at]))
+                {
+                    made.Add(items[at], at);
+                }
+            }
+
+            return made;
+        }
+    }
+}

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <!-- SDK が参照する SlimDX は、x64 の混在モードアセンブリである。 -->
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>PmxEditorMcp.SignatureDump</AssemblyName>
+    <RootNamespace>PmxEditorMcp.SignatureDump</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JsonSchema.Net" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\HostPlugin\ToolEnvelopeCodes.cs" Link="ToolEnvelopeCodes.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="AcceptanceScenarioSchema.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,481 @@
+using System;
+using System.Collections.Generic;
+using Xunit;
+
+namespace PmxEditorMcp.SignatureDump.Tests
+{
+    public sealed class ToolUsageNoteRuleTests
+    {
+        [Fact]
+        public void AListingCarriesTheWayToReadToTheEnd()
+        {
+            string note = Note(true, "indices", "range", "all", "offset", "limit");
+
+            Assert.Contains("all", note, StringComparison.Ordinal);
+            Assert.Contains("nextOffset", note, StringComparison.Ordinal);
+            Assert.Contains("offset", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingSaysThatTheTotalCountsThePointedElements()
+        {
+            string note = Note(true, "indices", "range", "all", "offset", "limit");
+
+            Assert.Contains("total は指した要素の数", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingThatTakesRunsSaysWhereTheRunsComeBack()
+        {
+            string note = Note(true, "offset", "limit", "runs");
+
+            Assert.Contains("itemRuns", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingUnderAParentSaysThatAllAloneListsUnderEveryParent()
+        {
+            string note = Note(
+                true, "parentIndices", "parentRange", "parentAll", "indices", "range", "all",
+                "offset", "limit");
+
+            Assert.Contains("all だけを渡せばすべての親の下を並べ", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingUnderAParentSaysThatPointingOnlyTheParentListsEverythingUnderIt()
+        {
+            string note = Note(
+                true, "parentIndices", "parentRange", "parentAll", "indices", "range", "all",
+                "offset", "limit");
+
+            Assert.Contains("親だけを指せばその親の下の要素をすべて並べる", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatPointsAtParentsAndPositionsSaysThePositionsAreCountedInsideEachParent()
+        {
+            string note = Note(
+                false, "parentIndices", "parentRange", "parentAll", "indices", "range", "all");
+
+            Assert.Contains(
+                "indices・range の位置は、指した親のそれぞれの中で数える。", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolWhoseParentsEachHoldOneChildDoesNotSayPositionsAreCountedInsideEachParent()
+        {
+            ToolSchema schema = Schema(
+                false, new[] { "parentIndices", "parentRange", "parentAll", "indices", "range", "all" });
+
+            Assert.DoesNotContain(
+                "それぞれの中で数える",
+                ToolUsageNoteRule.Compose(schema, false) ?? string.Empty,
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatPointsAtParentsByHandleSaysThePositionsAreCountedInsideEachParent()
+        {
+            string note = Note(false, "parentHandles", "indices", "range", "all");
+
+            Assert.Contains(
+                "indices・range の位置は、指した親のそれぞれの中で数える。", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatPointsAtNoParentDoesNotSayPositionsAreCountedInsideEachParent()
+        {
+            Assert.DoesNotContain(
+                "それぞれの中で数える",
+                Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatTakesModelIndicesSaysTheyCountOverTheWholeModelAndTakeNoParent()
+        {
+            string note = Note(false, "modelIndices");
+
+            Assert.Contains("modelIndices", note, StringComparison.Ordinal);
+            Assert.Contains("モデル全体で数えた通し番号", note, StringComparison.Ordinal);
+            Assert.Contains("親の指し方とは一緒に渡さない", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatDoesNotTakeModelIndicesDoesNotCarryIt()
+        {
+            Assert.DoesNotContain(
+                "modelIndices",
+                Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingWithNoParentDoesNotCarryTheParent()
+        {
+            Assert.DoesNotContain(
+                "親", Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatTakesRangeCarriesThatRangeIsNotClamped()
+        {
+            string note = Note(false, "indices", "range", "all");
+
+            Assert.Contains("range", note, StringComparison.Ordinal);
+            Assert.DoesNotContain("nextOffset", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingThatTakesRangeCarriesBoth()
+        {
+            string note = Note(true, "indices", "range", "all", "offset", "limit");
+
+            Assert.Contains("nextOffset", note, StringComparison.Ordinal);
+            Assert.Contains("range", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingThatTakesNameContainsCarriesWhatItNarrows()
+        {
+            string note = Note(true, "indices", "range", "all", "offset", "limit", "nameContains");
+
+            Assert.Contains(
+                "nameContains に並べた文字列のどれかを name に含む要素だけが残る。", note, StringComparison.Ordinal);
+            Assert.Contains("大文字小文字は区別し", note, StringComparison.Ordinal);
+            Assert.Contains("total は絞り込む前の件数のままになる。", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingThatMustPointAtElementsSaysThatNameContainsAloneNarrowsTheWholeList()
+        {
+            ToolSchema schema = new ToolSchema(
+                "model_list_vertices",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new[] { Item("all", "boolean", null, null), Item("nameContains", "text", null, null) },
+                        new[] { new SchemaChoice(new[] { "all" }, true) }),
+                },
+                Listed(),
+                null);
+
+            Assert.Contains(
+                "対象を指さずに nameContains を渡すと全件から絞り込む。",
+                ToolUsageNoteRule.Compose(schema), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingWithNoRequiredWayOfPointingDoesNotSayThatNameContainsAloneNarrowsTheWholeList()
+        {
+            Assert.DoesNotContain(
+                "nameContains を渡すと全件から絞り込む。",
+                Note(true, "indices", "range", "all", "offset", "limit", "nameContains"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatTakesSelectedSaysThatItTargetsWhatTheScreenHasSelected()
+        {
+            string note = Note(true, "indices", "range", "all", "selected", "offset", "limit");
+
+            Assert.Contains(
+                "selected に真を渡すと、画面がいま選んでいるものを対象にする。", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatDoesNotTakeSelectedDoesNotSayItTargetsTheScreenSelection()
+        {
+            Assert.DoesNotContain(
+                "画面がいま選んでいるもの",
+                Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TheNoteLookedUpByNameLeavesOutHowToPointAtTheScreenSelection()
+        {
+            ToolSchema schema = Schema(true, new[] { "indices", "all", "selected", "offset", "limit" });
+
+            string note = ToolUsageNoteRule.Of(schema.Tool, new ToolSchemaTable(new[] { schema }));
+
+            Assert.Contains("total は指した要素の数", note, StringComparison.Ordinal);
+            Assert.DoesNotContain("画面がいま選んでいるもの", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingWithoutNameContainsDoesNotCarryIt()
+        {
+            Assert.DoesNotContain(
+                "nameContains", Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatTakesViewSaysWhichViewsSettingEachValueReaches()
+        {
+            string note = Note(false, "path", "view");
+
+            Assert.Contains("view", note, StringComparison.Ordinal);
+            Assert.Contains("pmxView", note, StringComparison.Ordinal);
+            Assert.Contains("transformView", note, StringComparison.Ordinal);
+            Assert.Contains("subView", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatTakesNeitherCarriesNoNote()
+        {
+            Assert.Null(Note(false, "pmxHandle"));
+        }
+
+        [Fact]
+        public void ATargetingToolThatTakesNoRangeAndListsNothingCarriesNoNote()
+        {
+            Assert.Null(Note(false, "handles"));
+        }
+
+        [Fact]
+        public void AToolThatActsOnHeldThingsAndTakesAModelSaysWhichModelItUses()
+        {
+            string note = ToolUsageNoteRule.Compose(TakingAModel("handles", "pmxHandle"));
+
+            Assert.Contains("pmxHandle にPMXのハンドルを渡すと、そのPMXを使う", note, StringComparison.Ordinal);
+            Assert.Contains("渡さなければ編集中のモデルを使う", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolThatTakesAModelButNoHeldThingsDoesNotSayWhichModelItUses()
+        {
+            Assert.Null(ToolUsageNoteRule.Compose(TakingAModel("pmxHandle")));
+        }
+
+        [Fact]
+        public void AToolThatActsOnHeldThingsWithoutTakingAModelDoesNotSayWhichModelItUses()
+        {
+            Assert.Null(Note(false, "handles", "pmxHandle"));
+        }
+
+        [Fact]
+        public void AToolThatHandsBackHandlesSaysThatItMakesSomethingNew()
+        {
+            string note = ToolUsageNoteRule.Compose(Issuing());
+
+            Assert.Contains("新しく作る", note, StringComparison.Ordinal);
+            Assert.Contains("session_release_handle", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AListingDoesNotSayThatItMakesSomethingNew()
+        {
+            Assert.DoesNotContain(
+                "session_release_handle",
+                Note(true, "indices", "range", "all", "offset", "limit"),
+                StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnUpdateThatTakesValuesSaysHowTheyPairWithTheTargets()
+        {
+            string note = Note(false, "indices", "value", "values");
+
+            Assert.Contains("values は指した対象の並びの順に1件ずつ当て", note, StringComparison.Ordinal);
+            Assert.Contains("value は指した対象の全部へ同じ値を当てる", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void ACallThatTakesArgsListSaysHowItPairsWithTheTargets()
+        {
+            string note = Note(false, "handles", "args", "argsList");
+
+            Assert.Contains("argsList は指した対象の並びの順に1件ずつ当て", note, StringComparison.Ordinal);
+            Assert.Contains("args は指した対象の全部へ同じ引数を当てる", note, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TheArgumentsAreChecked()
+        {
+            Assert.Throws<ArgumentNullException>(() => ToolUsageNoteRule.Compose(null));
+        }
+
+        [Fact]
+        public void AToolThatTakesExactlyOneOfItsInputsSaysSo()
+        {
+            List<SchemaItem> inputs = new List<SchemaItem>
+            {
+                Item("selectedBoneIndex", "number", null, null),
+                Item("morphValue", "number", null, null),
+            };
+            ToolSchema schema = new ToolSchema(
+                "motion_update_transform_view_connector",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        inputs,
+                        new[] { new SchemaChoice(new[] { "selectedBoneIndex", "morphValue" }, true) }),
+                },
+                Item(null, "boolean", null, null),
+                null);
+
+            Assert.Contains("1回の呼び出しで1つだけ", ToolUsageNoteRule.Compose(schema), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AChoiceOfHowToPointDoesNotSayOnlyOneInputIsTaken()
+        {
+            List<SchemaItem> inputs = new List<SchemaItem>
+            {
+                Item("indices", "number", null, null),
+                Item("all", "boolean", null, null),
+                Item("offset", "number", null, null),
+            };
+            ToolSchema schema = new ToolSchema(
+                "model_list_vertices",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only", null, null, inputs, new[] { new SchemaChoice(new[] { "indices", "all" }, true) }),
+                },
+                Listed(),
+                null);
+
+            Assert.DoesNotContain("1回の呼び出しで1つだけ", ToolUsageNoteRule.Compose(schema), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AToolAnsweringOnlyTheSelectedCountSaysWhatItCounts()
+        {
+            ToolSchema schema = new ToolSchema(
+                "view_set_selected_bone_indices_pmd_view_connector",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only",
+                        null,
+                        null,
+                        new List<SchemaItem> { Item("indices", null, null, Item(null, "number", null, null)) },
+                        new SchemaChoice[0]),
+                },
+                Item(null, null, new List<SchemaItem> { Item("selected", "number", null, null) }, null),
+                null);
+
+            Assert.Contains("selected", ToolUsageNoteRule.Compose(schema), StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void AnItemThatSaysWhatNullMeansCarriesItToTheNote()
+        {
+            SchemaItem material = new SchemaItem(
+                null, null, null, "material", null, false, null, false, null, true, null, false,
+                null, false, nullMeaning: "全材質を指す");
+            ToolSchema schema = new ToolSchema(
+                "model_update_morph_offsets",
+                new[]
+                {
+                    new SchemaBranch(
+                        "only", null, null, new[] { material }, new SchemaChoice[0]),
+                },
+                Item(null, "boolean", null, null),
+                null);
+
+            Assert.Contains(
+                "material に null を渡すと全材質を指す。",
+                ToolUsageNoteRule.Compose(schema),
+                StringComparison.Ordinal);
+        }
+
+        private static string Note(bool listing, params string[] inputs)
+        {
+            return ToolUsageNoteRule.Compose(Schema(listing, inputs));
+        }
+
+        private static ToolSchema Schema(bool listing, string[] inputs)
+        {
+            List<SchemaItem> taken = new List<SchemaItem>();
+            foreach (string name in inputs)
+            {
+                taken.Add(Item(name, "number", null, null));
+            }
+
+            return new ToolSchema(
+                "model_list_vertices",
+                new[] { new SchemaBranch("only", null, null, taken, new SchemaChoice[0]) },
+                listing ? Listed() : Item(null, "boolean", null, null),
+                null);
+        }
+
+        private static ToolSchema TakingAModel(params string[] inputs)
+        {
+            List<SchemaItem> taken = new List<SchemaItem>();
+            foreach (string name in inputs)
+            {
+                taken.Add(Item(name, "number", null, null));
+            }
+
+            taken.Add(new SchemaItem(
+                null, null, null, "pmx", null, null, null, false, null, null, null, true, null));
+
+            return new ToolSchema(
+                "motion_init_vmd",
+                new[] { new SchemaBranch("held", null, null, taken, new SchemaChoice[0]) },
+                Item(null, "boolean", null, null),
+                null);
+        }
+
+        private static ToolSchema Issuing()
+        {
+            return new ToolSchema(
+                "model_material",
+                new[]
+                {
+                    new SchemaBranch(
+                        "plain",
+                        null,
+                        null,
+                        new List<SchemaItem> { Item("count", "number", null, null) },
+                        new SchemaChoice[0]),
+                },
+                Item(null, null, null, Item(null, "number", null, null)),
+                null);
+        }
+
+        private static SchemaItem Listed()
+        {
+            return Item(
+                null,
+                null,
+                new List<SchemaItem>
+                {
+                    Item("total", "number", null, null),
+                    Item("items", null, null, Item(null, "number", null, null)),
+                },
+                null);
+        }
+
+        private static SchemaItem Item(
+            string name, string shape, IList<SchemaItem> members, SchemaItem element)
+        {
+            return new SchemaItem(
+                shape,
+                members,
+                element,
+                name,
+                ItemOrigin.HostInput,
+                null,
+                null,
+                false,
+                null,
+                null,
+                null,
+                false,
+                null);
+        }
+    }
+}

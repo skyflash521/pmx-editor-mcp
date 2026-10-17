@@ -1,0 +1,1184 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.IO.Pipes;
+using System.Linq;
+using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
+using PmxEditorMcp.Contract.Tests;
+using Xunit;
+
+namespace PmxEditorMcp.Bridge.Tests
+{
+    public class HostIpcClientTests
+    {
+        private const string HostVersion = "1.0.0.0";
+
+        private const string HostOf = "(ホスト " + HostVersion + ")";
+
+        private const int BudgetChars = 100000;
+
+        /// <summary>テストが待つ上限。製品側が待つ上限を掛け忘れても有限時間で失敗させる。</summary>
+        private static readonly TimeSpan TestWait = TimeSpan.FromSeconds(30);
+
+        [Fact]
+        public void HandshakeProtocolNumberMatchesContract()
+        {
+            Assert.Equal(1, HostProtocol.Number);
+        }
+
+        [Fact]
+        public async Task FirstCallConnectsAndHandshakesBeforeSendingRequest()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            JsonNode result = (await client.CallAsync("ping", null, CancellationToken.None)).Result;
+
+            Assert.Equal("pong", (string)result);
+            Assert.Equal(2, host.Requests.Count);
+
+            JsonObject handshake = JsonNode.Parse(host.Requests[0]).AsObject();
+            Assert.Equal("handshake", (string)handshake["method"]);
+            Assert.Equal(HostProtocol.Number, (int)handshake["params"]["protocol"]);
+
+            JsonObject call = JsonNode.Parse(host.Requests[1]).AsObject();
+            Assert.Equal("ping", (string)call["method"]);
+        }
+
+        [Fact]
+        public async Task SubsequentCallsReuseConnectionWithoutHandshake()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "1"))
+                .Reply(request => Result(request, "2"))
+                .Start();
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            await client.CallAsync("first", null, CancellationToken.None);
+            await client.CallAsync("second", null, CancellationToken.None);
+
+            Assert.Equal(1, connector.ConnectCount);
+            Assert.Equal(3, host.Requests.Count);
+        }
+
+        [Fact]
+        public async Task ArgumentsArePassedThroughToRequest()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "null"))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            await client.CallAsync(
+                "move", new JsonObject { ["index"] = 7 }, CancellationToken.None);
+
+            JsonObject call = JsonNode.Parse(host.Requests[1]).AsObject();
+            Assert.Equal(7, (int)call["params"]["index"]);
+        }
+
+        [Theory]
+        // プロトコル番号の不一致は、ホストが切断を伴うエラーとして返す。
+        [InlineData(-32001, "プロトコル番号が一致しない")]
+        [InlineData(-32602, "引数が不正")]
+        public async Task HostErrorDuringHandshakeFailsAndClosesConnection(
+            int hostErrorCode, string hostMessage)
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(request => Error(request, hostErrorCode, hostMessage))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        [Theory]
+        [InlineData("null")]
+        [InlineData("\"ok\"")]
+        [InlineData("[1]")]
+        [InlineData("{\"protocol\":2,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}")]
+        [InlineData("{\"protocol\":\"1\",\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}")]
+        [InlineData("{\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}")]
+        [InlineData("{\"protocol\":1,\"budgetChars\":100000}")]
+        [InlineData("{\"protocol\":1,\"hostVersion\":5,\"budgetChars\":100000}")]
+        [InlineData("{\"protocol\":1,\"hostVersion\":\"1.0.0.0\"}")]
+        [InlineData("{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":\"100000\"}")]
+        public async Task HandshakeSuccessOutsideContractFailsAndClosesConnection(string result)
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(request => Result(request, result))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        [Theory]
+        // 別の要求の識別子・バージョンの不一致・解析できない本文。
+        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":OTHER_ID,\"result\":{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}}")]
+        [InlineData("{\"jsonrpc\":\"1.0\",\"id\":ID,\"result\":{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}}")]
+        [InlineData("これはJSONではない")]
+        public async Task HandshakeEnvelopeOutsideContractFailsAndClosesConnection(string response)
+        {
+            using FakeHost host = new FakeHost().Reply(WithRequestId(response)).Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task HandshakeResponseWithInvalidUtf8FailsAndClosesConnection()
+        {
+            using FakeHost host = new FakeHost()
+                .ReplyBytes(new byte[] { 0x82, 0xA0, (byte)'\n' })
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task HandshakeResponseOverLimitFailsAndClosesConnection()
+        {
+            using FakeHost host = new FakeHost().ReplyBytes(OversizedResponse()).Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task DisconnectWhileAwaitingHandshakeIsReturnedAsDisconnect()
+        {
+            using FakeHost host = new FakeHost().Disconnect().Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ConnectionLost, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task BudgetMismatchClosesConnectionShowingBothValues()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(200000))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.BudgetMismatch, error.Code);
+            Assert.Contains("200000", error.Message);
+            Assert.Contains("100000", error.Message);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task ADifferentToolMapClosesConnectionShowingBothDigests()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(request => Result(
+                    request,
+                    "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\","
+                        + "\"toolMapDigest\":\"0123456789abcdef\",\"budgetChars\":100000}"))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ToolDefinitionMismatch, error.Code);
+            Assert.Contains("0123456789abcdef", error.Message);
+            Assert.Contains(GeneratedToolDefinitions.ToolMapDigest, error.Message);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task AHandshakeWithoutADigestIsOutsideTheContract()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(request => Result(
+                    request,
+                    "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}"))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
+            Assert.Contains("toolMapDigest", error.Message);
+        }
+
+        [Fact]
+        public async Task ReconnectingToMatchingBudgetHostRestoresNormalOperation()
+        {
+            using FakeHost mismatched = new FakeHost().Reply(HandshakeResultOf(200000)).Start();
+            using FakeHost matched = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            FakeHostConnector connector = new FakeHostConnector(mismatched.PipeName, matched.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal(BridgeErrorCodes.BudgetMismatch, error.Code);
+
+            JsonNode result = (await client.CallAsync("ping", null, CancellationToken.None)).Result;
+
+            Assert.Equal("pong", (string)result);
+        }
+
+        [Fact]
+        public async Task CallAfterFailedHandshakeStartsFromNewConnection()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(request => Error(request, -32001, "プロトコル番号が一致しない"))
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
+            Assert.Equal(2, connector.ConnectCount);
+        }
+
+        [Theory]
+        [MemberData(nameof(KeepingHostErrorCodes))]
+        public async Task HostErrorThatKeepsTheConnectionKeepsItHereToo(int hostErrorCode)
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Error(request, hostErrorCode, "接続を保つエラー"))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("kept", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ForHostError(hostErrorCode), error.Code);
+            Assert.True(client.IsConnected);
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
+            Assert.Equal(1, connector.ConnectCount);
+        }
+
+        /// <summary>
+        /// 繋ぎ直したときは、前の接続でホストが名乗ったセッションを handshake で示す。示さなければ
+        /// ホストは新しいセッションを作り、前の接続で発行したハンドルが使えなくなる。
+        /// </summary>
+        [Fact]
+        public async Task ReconnectingPresentsTheSessionTheHostGaveBefore()
+        {
+            const string Session = "0123456789abcdef0123456789abcdef";
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeWithSession(BudgetChars, Session))
+                .Disconnect()
+                .Reply(HandshakeWithSession(BudgetChars, Session))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("lost", null, CancellationToken.None));
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
+
+            Assert.Equal(2, connector.ConnectCount);
+            JsonObject again = JsonNode.Parse(host.Requests[2]).AsObject();
+            Assert.Equal("handshake", (string)again["method"]);
+            JsonObject parameters = again["params"].AsObject();
+            Assert.True(parameters.ContainsKey("session"), "繋ぎ直した handshake がセッションを示していない。");
+            Assert.Equal(Session, (string)parameters["session"]);
+        }
+
+        [Theory]
+        [InlineData("null")]
+        [InlineData("5")]
+        [InlineData("{}")]
+        public async Task AHandshakeWhoseSessionIsNotAStringFailsAndClosesConnection(string session)
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(request => Result(
+                    request,
+                    "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\""
+                        + GeneratedToolDefinitions.ToolMapDigest + "\",\"budgetChars\":" + BudgetChars
+                        + ",\"session\":" + session + "}"))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        private static Func<string, string> HandshakeWithSession(int budgetChars, string session)
+        {
+            return request => Result(
+                request,
+                "{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\""
+                    + GeneratedToolDefinitions.ToolMapDigest + "\",\"budgetChars\":" + budgetChars
+                    + ",\"session\":\"" + session + "\"}");
+        }
+
+        [Fact]
+        public async Task HostErrorAfterHandshakeKeepsConnectionAndReturnsHostCode()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Error(request, -32601, "未知のメソッド"))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("missing", null, CancellationToken.None));
+
+            Assert.Equal("HOST_-32601", error.Code);
+            Assert.Equal("未知のメソッド", error.Message);
+            Assert.True(client.IsConnected);
+
+            // 接続を保っているので、続けて呼べる。
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
+        }
+
+        /// <summary>ホストと揃えて持つ取り決めの表で、ホストが応答のあと切断するとしたコード。</summary>
+        public static IEnumerable<object[]> DisconnectingHostErrorCodes()
+        {
+            return HostBridgeContract.HostErrorCodes
+                .Where(entry => entry.Disconnects)
+                .Select(entry => new object[] { entry.Code });
+        }
+
+        /// <summary>ホストと揃えて持つ取り決めの表で、ホストが応答のあとも接続を保つとしたコード。</summary>
+        public static IEnumerable<object[]> KeepingHostErrorCodes()
+        {
+            return HostBridgeContract.HostErrorCodes
+                .Where(entry => !entry.Disconnects)
+                .Select(entry => new object[] { entry.Code });
+        }
+
+        [Theory]
+        [MemberData(nameof(DisconnectingHostErrorCodes))]
+        public async Task HostErrorRequiringDisconnectDropsConnection(int hostErrorCode)
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Error(request, hostErrorCode, "切断を伴うエラー"))
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("boom", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ForHostError(hostErrorCode), error.Code);
+            Assert.False(client.IsConnected);
+
+            // 捨てた接続を引きずらないので、次の呼び出しは新しい接続からやり直せる。
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
+            Assert.Equal(2, connector.ConnectCount);
+        }
+
+        [Fact]
+        public async Task DisconnectWhileAwaitingResponseIsReturnedAsDisconnect()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Disconnect()
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ConnectionLost, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task CallAfterDisconnectStartsFromNewConnection()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Disconnect()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
+            Assert.Equal(2, connector.ConnectCount);
+        }
+
+        [Theory]
+        // 別の要求の識別子・結果とエラーの同居・どちらも無い・解析できない本文。識別子の照合
+        // だけで落ちないよう、不一致を見るケース以外は要求の識別子に合わせる。
+        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":OTHER_ID,\"result\":1}")]
+        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":ID,\"result\":1,\"error\":{\"code\":-1,\"message\":\"x\"}}")]
+        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":ID}")]
+        [InlineData("これはJSONではない")]
+        public async Task ResponseOutsideContractAfterHandshakeClosesConnectionAsProtocolViolation(string response)
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(WithRequestId(response))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ProtocolError, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task InvalidUtf8AfterHandshakeClosesConnectionAsProtocolViolation()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .ReplyBytes(new byte[] { 0x82, 0xA0, (byte)'\n' })
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ProtocolError, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task ResponseOverLimitAfterHandshakeClosesConnectionAsProtocolViolation()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .ReplyBytes(OversizedResponse())
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ProtocolError, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task CallAfterProtocolViolationStartsFromNewConnection()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply("これはJSONではない")
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
+            Assert.Equal(2, connector.ConnectCount);
+        }
+
+        [Fact]
+        public async Task OversizedRequestIsReportedWithoutSendingAndKeepsConnection()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            JsonObject oversized = new JsonObject
+            {
+                ["text"] = new string('a', BridgeMessageChannel.DefaultMaxMessageBytes),
+            };
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("store", oversized, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.RequestTooLarge, error.Code);
+            Assert.True(client.IsConnected);
+
+            // 送られていないので、ホストが見た要求は handshake だけである。
+            Assert.Single(host.Requests);
+
+            // 接続を保っているので、続けて呼べる。
+            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
+        }
+
+        [Fact]
+        public async Task DisposeReleasesHeldConnection()
+        {
+            // パイプの同時接続は1本なので、破棄が接続を手放していなければ次の接続は成立しない。
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            HostIpcClient first = Connect(host);
+            await first.CallAsync("ping", null, CancellationToken.None);
+            first.Dispose();
+
+            Assert.False(first.IsConnected);
+
+            using HostIpcClient second = Connect(host);
+            Assert.Equal("pong", (string)(await second.CallAsync("ping", null, CancellationToken.None)).Result);
+        }
+
+        [Fact]
+        public async Task ConnectorFailureIsReturnedToCaller()
+        {
+            RefusingConnector connector = new RefusingConnector();
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
+            Assert.False(client.IsConnected);
+        }
+
+        /// <summary>
+        /// 待つ上限の既定。実時間を使わずに固定する——与えた上限で打ち切ることは、短い上限を
+        /// 渡す下の件が確かめる。
+        /// </summary>
+        [Fact]
+        public void TheConnectWaitLimitDefaultsToFiveSeconds()
+        {
+            Assert.Equal(TimeSpan.FromSeconds(5), NamedPipeHostConnector.ConnectWaitLimit);
+        }
+
+        [Fact]
+        public async Task PipeThatIsNotListeningFailsToConnectWithoutWaiting()
+        {
+            // 待つ上限は短い値を与える。既定の5秒を待ち切ると、この1件だけで実時間を5秒使う。
+            TimeSpan limit = TimeSpan.FromMilliseconds(300);
+
+            // 接続先の決定だけを固定し、パイプを開く処理は製品と同じものを通す。
+            string absent = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(selected => absent, limit);
+
+            Stopwatch elapsed = Stopwatch.StartNew();
+            BridgeException error = await ThrowsWithin<BridgeException>(
+                () => connector.ConnectAsync(null, CancellationToken.None));
+            elapsed.Stop();
+
+            Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
+            Assert.Contains(absent, error.Message);
+
+            // パイプ名だけを検査すると、原因を1つに断定する本文へ戻しても通ってしまう。
+            // 観測した事実と、原因が1つに絞られていないことの両方を固定する。
+            // 語ごとに検査すると、同じ候補を断定文で並べ直した本文も通ってしまう。挙げた
+            // 候補以外の原因もありうるので、観測した事実から候補の列挙を経て断定していない
+            // ことを示す語尾までを、一続きの文として固定する。
+            Assert.Contains(
+                Seconds(limit) + " 秒以内に接続できなかった。接続先のエディタが終了している、"
+                    + "またはエディタでホストが停止している可能性がある。",
+                error.Message);
+
+            Assert.InRange(
+                elapsed.Elapsed,
+                limit - TimeSpan.FromMilliseconds(100),
+                TimeSpan.FromTicks(NamedPipeHostConnector.ConnectWaitLimit.Ticks / 2));
+        }
+
+        [Fact]
+        public async Task NameRejectedByOsFailsToConnect()
+        {
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(
+                selected => string.Empty, NamedPipeHostConnector.OpenNamedPipeAsync);
+
+            BridgeException error = await ThrowsWithin<BridgeException>(
+                () => connector.ConnectAsync(null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
+        }
+
+        [Fact]
+        public async Task CancellationDuringConnectIsReturnedAsCancellationNotFailure()
+        {
+            string absent = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(
+                selected => absent, NamedPipeHostConnector.OpenNamedPipeAsync);
+
+            using CancellationTokenSource connecting = new CancellationTokenSource();
+            Task<HostConnection> opening = connector.ConnectAsync(null, connecting.Token);
+
+            await Task.Delay(TimeSpan.FromMilliseconds(300));
+            connecting.Cancel();
+
+            await WithinTestWait(Assert.ThrowsAnyAsync<OperationCanceledException>(() => opening));
+        }
+
+        [Fact]
+        public async Task PipeAppearingSlightlyLateIsAcceptedWithinLimit()
+        {
+            string pipeName = "pmx-editor-mcp-test-" + Guid.NewGuid().ToString("N");
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(selected => pipeName, TestWait);
+
+            Task<HostConnection> connecting = connector.ConnectAsync(null, CancellationToken.None);
+
+            await Task.Delay(TimeSpan.FromMilliseconds(300));
+            using NamedPipeServerStream listening = new NamedPipeServerStream(
+                pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+            Task accepting = listening.WaitForConnectionAsync();
+
+            using Stream opened = (await WithinTestWait(connecting)).Stream;
+
+            await WithinTestWait(accepting);
+            Assert.True(listening.IsConnected);
+        }
+
+        [Theory]
+        [InlineData(typeof(IOException))]
+        [InlineData(typeof(UnauthorizedAccessException))]
+        [InlineData(typeof(ArgumentException))]
+        public async Task PipeThatCannotBeOpenedIsReturnedAsConnectFailure(Type failure)
+        {
+            // 接続先の決定も差し替える。実行環境に待ち受けているホストが無い・複数あると、パイプを
+            // 開く手前の分岐で終わってしまい、確かめたい変換へ届かない。
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(
+                selected => "pmx-editor-mcp-0",
+                (pipeName, cancellationToken) =>
+                    Task.FromException<Stream>((Exception)Activator.CreateInstance(failure)));
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => connector.ConnectAsync(null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
+        }
+
+        [Fact]
+        public async Task TargetIsResolvedAgainOnEveryConnect()
+        {
+            int resolved = 0;
+            List<string> opened = new List<string>();
+
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(
+                selected => "pmx-editor-mcp-" + (++resolved).ToString(CultureInfo.InvariantCulture),
+                (pipeName, cancellationToken) =>
+                {
+                    opened.Add(pipeName);
+                    return Task.FromException<Stream>(new IOException());
+                });
+
+            await Assert.ThrowsAsync<BridgeException>(
+                () => connector.ConnectAsync(null, CancellationToken.None));
+            await Assert.ThrowsAsync<BridgeException>(
+                () => connector.ConnectAsync(null, CancellationToken.None));
+
+            Assert.Equal(new string[] { "pmx-editor-mcp-1", "pmx-editor-mcp-2" }, opened);
+        }
+
+        [Fact]
+        public async Task SelectedTargetIsHandedToTheResolver()
+        {
+            List<string> asked = new List<string>();
+
+            NamedPipeHostConnector connector = new NamedPipeHostConnector(
+                selected =>
+                {
+                    asked.Add(selected);
+                    return selected ?? "pmx-editor-mcp-1";
+                },
+                (pipeName, cancellationToken) => Task.FromException<Stream>(new IOException()));
+
+            await Assert.ThrowsAsync<BridgeException>(
+                () => connector.ConnectAsync("pmx-editor-mcp-10", CancellationToken.None));
+            await Assert.ThrowsAsync<BridgeException>(
+                () => connector.ConnectAsync(null, CancellationToken.None));
+
+            Assert.Equal(new string[] { "pmx-editor-mcp-10", null }, asked);
+        }
+
+        /// <summary>待機の上限を、本文に現れるのと同じ表記で得る。</summary>
+        private static string Seconds(TimeSpan limit)
+        {
+            return limit.TotalSeconds.ToString(CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>上限付きで例外を待つ。製品側が待つ上限を掛け忘れても有限時間で失敗する。</summary>
+        private static async Task<TException> ThrowsWithin<TException>(Func<Task> action)
+            where TException : Exception
+        {
+            Task<TException> throwing = Assert.ThrowsAnyAsync<TException>(action);
+
+            return await WithinTestWait(throwing);
+        }
+
+        private static async Task<T> WithinTestWait<T>(Task<T> pending)
+        {
+            await WithinTestWait((Task)pending);
+            return await pending;
+        }
+
+        private static async Task WithinTestWait(Task pending)
+        {
+            Task finished = await Task.WhenAny(pending, Task.Delay(TestWait));
+
+            Assert.True(ReferenceEquals(finished, pending), "待機上限内に終わらなかった。");
+            await pending;
+        }
+
+        [Fact]
+        public async Task AResponseThatCannotBeReadClosesTheConnectionAndReportsAProtocolError()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
+                () => client.CallAsync<string>(
+                    "ping",
+                    null,
+                    _ => throw new FormatException("ツールの応答が包みの形でない。"),
+                    CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.ProtocolError, error.Code);
+            Assert.Equal("ツールの応答が包みの形でない。", error.Message);
+            Assert.False(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task AReadResponseIsReturned()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+            using HostIpcClient client = Connect(host);
+
+            string read = await client.CallAsync(
+                "ping", null, response => (string)response.Result, CancellationToken.None);
+
+            Assert.Equal("pong", read);
+            Assert.True(client.IsConnected);
+        }
+
+        [Fact]
+        public async Task CallingWithAReaderRequiresAReader()
+        {
+            using FakeHost host = new FakeHost().Start();
+            using HostIpcClient client = Connect(host);
+
+            await Assert.ThrowsAsync<ArgumentNullException>(
+                () => client.CallAsync<string>("ping", null, null, CancellationToken.None));
+        }
+
+        private static HostIpcClient Connect(FakeHost host)
+        {
+            return new HostIpcClient(new FakeHostConnector(host.PipeName), BudgetChars);
+        }
+
+        [Fact]
+        public async Task FirstNoticeOnlyAnnouncesTarget()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = Connect(host);
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(Announced(host.PipeName), response.TargetNotice);
+        }
+
+        [Fact]
+        public async Task NoticeNamesTheHostVersionTheHandshakeReturned()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars, "2.3.4.5"))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = Connect(host);
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.StartsWith("接続先: " + host.PipeName, response.TargetNotice, StringComparison.Ordinal);
+            Assert.Contains("2.3.4.5", response.TargetNotice, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public async Task ChangedTargetNoticeNamesTheHostVersionOfTheNewTarget()
+        {
+            using FakeHost left = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars, "1.1.1.1"))
+                .Reply(request => Result(request, "\"pong\""))
+                .Disconnect()
+                .Start();
+
+            using FakeHost right = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars, "2.2.2.2"))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = new HostIpcClient(
+                new FakeHostConnector(left.PipeName, right.PipeName), BudgetChars);
+
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+            await ThrowsWithin<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+            HostCallResult moved = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.StartsWith("接続先が変わった: ", moved.TargetNotice, StringComparison.Ordinal);
+            Assert.Contains("2.2.2.2", moved.TargetNotice, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public async Task NoticeKeepsOnlyAnnouncingWhenTargetIsUnchanged()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = Connect(host);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(Announced(host.PipeName), response.TargetNotice);
+        }
+
+        [Fact]
+        public async Task ChangedTargetIsReportedWithPreviousTarget()
+        {
+            using FakeHost left = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Disconnect()
+                .Start();
+
+            using FakeHost right = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = new HostIpcClient(
+                new FakeHostConnector(left.PipeName, right.PipeName), BudgetChars);
+
+            HostCallResult first = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+            Assert.Equal(Announced(left.PipeName), first.TargetNotice);
+
+            await ThrowsWithin<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+
+            HostCallResult moved = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(
+                "接続先が変わった: " + left.PipeName + " から " + right.PipeName + HostOf
+                    + " へ。以前の応答は別のエディタのものである。",
+                moved.TargetNotice);
+        }
+
+        [Fact]
+        public async Task SelectionMovesTheConnectionAndLaterCallsStayOnTheSelectedHost()
+        {
+            using FakeHost left = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using FakeHost right = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using HostIpcClient client = Connect(left);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            HostCallResult selected = await WithinTestWait(
+                client.SelectAsync(right.PipeName, CancellationToken.None));
+            Assert.Equal(
+                "接続先が変わった: " + left.PipeName + " から " + right.PipeName + HostOf
+                    + " へ。以前の応答は別のエディタのものである。",
+                selected.TargetNotice);
+
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(Announced(right.PipeName), response.TargetNotice);
+            Assert.Equal(2, left.Requests.Count);
+            Assert.Equal(2, right.Requests.Count);
+            Assert.Equal(right.PipeName, client.SelectedPipeName);
+        }
+
+        [Fact]
+        public async Task ReconnectingAfterSelectionAsksOnlyForTheSelectedHost()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Disconnect()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            FakeHostConnector connector = new FakeHostConnector("pmx-editor-mcp-test-unselected");
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+
+            await WithinTestWait(client.SelectAsync(host.PipeName, CancellationToken.None));
+            await ThrowsWithin<BridgeException>(
+                () => client.CallAsync("ping", null, CancellationToken.None));
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            // 繋ぎ直しで選び直しを忘れる作りは、選んでいないときの接続先へ向かう。
+            Assert.Equal(new string[] { host.PipeName, host.PipeName }, connector.SelectedPipeNames);
+        }
+
+        [Fact]
+        public async Task SelectingTheConnectedHostKeepsTheConnection()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            HostCallResult selected = await WithinTestWait(
+                client.SelectAsync(host.PipeName, CancellationToken.None));
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(Announced(host.PipeName), selected.TargetNotice);
+            Assert.Equal(1, connector.ConnectCount);
+            Assert.Equal(host.PipeName, client.SelectedPipeName);
+        }
+
+        [Fact]
+        public async Task FailedSelectionKeepsTheCurrentConnectionAndSelection()
+        {
+            using FakeHost host = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            RefusingSelectionConnector connector = new RefusingSelectionConnector(host.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            BridgeException error = await ThrowsWithin<BridgeException>(
+                () => client.SelectAsync("pmx-editor-mcp-10", CancellationToken.None));
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.NoEditor, error.Code);
+            Assert.Equal(Announced(host.PipeName), response.TargetNotice);
+            Assert.Null(client.SelectedPipeName);
+            Assert.Equal(3, host.Requests.Count);
+        }
+
+        [Fact]
+        public async Task SelectionWhoseHandshakeIsRefusedKeepsTheCurrentConnectionAndSelection()
+        {
+            using FakeHost current = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using FakeHost refusing = new FakeHost()
+                .Reply(request => Error(request, -32001, "protocol mismatch"))
+                .Start();
+
+            FakeHostConnector connector = new FakeHostConnector(current.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            BridgeException error = await ThrowsWithin<BridgeException>(
+                () => client.SelectAsync(refusing.PipeName, CancellationToken.None));
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(BridgeErrorCodes.HandshakeMismatch, error.Code);
+            Assert.Equal(Announced(current.PipeName), response.TargetNotice);
+            Assert.Null(client.SelectedPipeName);
+            Assert.Equal(3, current.Requests.Count);
+            Assert.Equal(2, connector.ConnectCount);
+        }
+
+        [Fact]
+        public async Task SelectionCancelledDuringHandshakeKeepsTheCurrentConnectionAndSelection()
+        {
+            using FakeHost current = new FakeHost()
+                .Reply(HandshakeResultOf(BudgetChars))
+                .Reply(request => Result(request, "\"pong\""))
+                .Reply(request => Result(request, "\"pong\""))
+                .Start();
+
+            using FakeHost stalling = new FakeHost()
+                .Stall()
+                .Start();
+
+            FakeHostConnector connector = new FakeHostConnector(current.PipeName);
+            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
+            await WithinTestWait(client.CallAsync("ping", null, CancellationToken.None));
+
+            using CancellationTokenSource cancelling = new CancellationTokenSource();
+            Task<HostCallResult> selecting = client.SelectAsync(stalling.PipeName, cancelling.Token);
+            await Task.Delay(TimeSpan.FromMilliseconds(300));
+            cancelling.Cancel();
+            await ThrowsWithin<OperationCanceledException>(() => selecting);
+
+            HostCallResult response = await WithinTestWait(
+                client.CallAsync("ping", null, CancellationToken.None));
+
+            Assert.Equal(Announced(current.PipeName), response.TargetNotice);
+            Assert.Null(client.SelectedPipeName);
+            Assert.Equal(3, current.Requests.Count);
+        }
+
+        /// <summary>ハンドシェイクの成功応答を、受け取った要求の識別子に合わせて組み立てる。</summary>
+        private static Func<string, string> HandshakeResultOf(int budgetChars)
+        {
+            return HandshakeResultOf(budgetChars, HostVersion);
+        }
+
+        private static string Announced(string pipeName)
+        {
+            return "接続先: " + pipeName + HostOf;
+        }
+
+        private static Func<string, string> HandshakeResultOf(int budgetChars, string hostVersion)
+        {
+            return request => Result(
+                request,
+                "{\"protocol\":1,\"hostVersion\":\"" + hostVersion + "\",\"toolMapDigest\":\""
+                    + GeneratedToolDefinitions.ToolMapDigest + "\",\"budgetChars\":" + budgetChars + "}");
+        }
+
+        /// <summary>
+        /// 応答の雛形の中の ID を受け取った要求の識別子へ、OTHER_ID をそれとは別の識別子へ
+        /// 置き換える。識別子の決め方は実装の裁量なので、テストが特定の値を当て込まない。
+        /// </summary>
+        private static Func<string, string> WithRequestId(string template)
+        {
+            return request => template
+                .Replace("OTHER_ID", (IdOf(request) + 1).ToString(CultureInfo.InvariantCulture))
+                .Replace("ID", IdOf(request).ToString(CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>本文の上限を1バイト超える応答を作る。</summary>
+        private static byte[] OversizedResponse()
+        {
+            byte[] payload = new byte[BridgeMessageChannel.DefaultMaxMessageBytes + 2];
+            Array.Fill(payload, (byte)'a');
+            payload[payload.Length - 1] = (byte)'\n';
+            return payload;
+        }
+
+        private static string Result(string request, string result)
+        {
+            return "{\"jsonrpc\":\"2.0\",\"id\":" + IdOf(request) + ",\"result\":" + result + "}";
+        }
+
+        private static string Error(string request, int code, string message)
+        {
+            return "{\"jsonrpc\":\"2.0\",\"id\":" + IdOf(request)
+                + ",\"error\":{\"code\":" + code + ",\"message\":\"" + message + "\"}}";
+        }
+
+        private static int IdOf(string request)
+        {
+            return (int)JsonNode.Parse(request).AsObject()["id"];
+        }
+
+        /// <summary>接続の確立に失敗したことを知らせる接続役。</summary>
+        private sealed class RefusingConnector : IHostConnector
+        {
+            public Task<HostConnection> ConnectAsync(
+                string selectedPipeName, CancellationToken cancellationToken)
+            {
+                throw new BridgeException(BridgeErrorCodes.ConnectFailed, "接続を確立できない。");
+            }
+        }
+
+        /// <summary>選ばれていないときだけ繋ぎ、選ばれた接続先は起動していないとして断る接続役。</summary>
+        private sealed class RefusingSelectionConnector : IHostConnector
+        {
+            private readonly FakeHostConnector _unselected;
+
+            public RefusingSelectionConnector(string pipeName)
+            {
+                _unselected = new FakeHostConnector(pipeName);
+            }
+
+            public Task<HostConnection> ConnectAsync(
+                string selectedPipeName, CancellationToken cancellationToken)
+            {
+                if (selectedPipeName != null)
+                {
+                    throw new BridgeException(BridgeErrorCodes.NoEditor, "起動していない。");
+                }
+
+                return _unselected.ConnectAsync(null, cancellationToken);
+            }
+        }
+    }
+}

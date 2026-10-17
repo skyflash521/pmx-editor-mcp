@@ -1,0 +1,384 @@
+using System;
+using System.IO;
+using System.Linq;
+
+namespace PmxEditorMcp.SignatureDump
+{
+    /// <summary>下位コマンドの名前で実行を振り分ける。</summary>
+    public static class CommandRunner
+    {
+        /// <summary>SDKの公開APIを列挙して書き出す。</summary>
+        public const string SignaturesCommand = "signatures";
+
+        /// <summary>台帳の非対応記載を公開シグネチャの集合として凍結して書き出す。</summary>
+        public const string ExcludedBaselineCommand = "excluded-baseline";
+
+        /// <summary>凍結した組と列挙から除外一覧を確定して書き出す。</summary>
+        public const string ExcludedSignaturesCommand = "excluded-signatures";
+
+        /// <summary>台帳と正本が公開APIを過不足なく覆っていることを照合する。</summary>
+        public const string LedgerCoverageCommand = "ledger-coverage";
+
+        /// <summary>日本語名の正本が規則どおりに付いていることを照合する。</summary>
+        public const string PropertyNamesCommand = "property-names";
+
+        /// <summary>型役割表の正本が規則どおりに割り当てられていることを照合する。</summary>
+        public const string TypeRolesCommand = "type-roles";
+
+        /// <summary>共通契約割当の正本が規則どおりに割り当てられていることを照合する。</summary>
+        public const string CommonAssignmentsCommand = "common-assignments";
+
+        /// <summary>値の表現の表が、値として写せる型を過不足なく覆っていることを照合する。</summary>
+        public const string ValueShapesCommand = "value-shapes";
+
+        /// <summary>危険操作に当たるシグネチャが、決め方と台帳で一致していることを照合する。</summary>
+        public const string DangerousOperationsCommand = "dangerous-operations";
+
+        /// <summary>能力対応表の行が、シグネチャと台帳と特別規則の表に合うことを照合する。</summary>
+        public const string ToolMapCommand = "tool-map";
+
+        /// <summary>提供対象のシグネチャと能力対応表の行が過不足なく対応することを照合する。</summary>
+        public const string MapCoverageCommand = "map-coverage";
+
+        /// <summary>スキーマ正本が、能力対応表と表現の綴りに合うことを照合する。</summary>
+        public const string ToolSchemasCommand = "tool-schemas";
+
+        /// <summary>組み立てたツールの説明文が、上限と出所修飾の規則に合うことを照合する。</summary>
+        public const string ToolDescriptionsCommand = "tool-descriptions";
+
+        /// <summary>型ごとのサンプル値が、値を写す型と表現に合うことを照合する。</summary>
+        public const string SampleValuesCommand = "sample-values";
+
+        /// <summary>行のシグネチャの引数・受け手・戻り値がスキーマ正本と対応することを照合する。</summary>
+        public const string SchemaCorrespondenceCommand = "schema-correspondence";
+
+        /// <summary>能力対応表とスキーマ正本が、写像の規則に合うことを照合する。</summary>
+        public const string ToolMappingCommand = "tool-mapping";
+
+        /// <summary>行キーからSDKのメンバーを直接呼ぶ中継をC#の本文として書き出す。</summary>
+        public const string RelaySourceCommand = "relay-source";
+
+        /// <summary>ツールの名前から呼ぶ行へ結び付ける表をC#として書き出す。</summary>
+        public const string ToolBindingsCommand = "tool-bindings";
+
+        /// <summary>ツール定義を組み立ててブリッジへ組み込むC#として書き出す。</summary>
+        public const string ToolDefinitionsCommand = "tool-definitions";
+
+        /// <summary>用途の作業ごとの検索が、その作業に要るツールを引き当てることを照合する。</summary>
+        public const string DiscoveryCommand = "discovery";
+
+        /// <summary>実機のエディタへ投げる検査を組み立てて書き出す。</summary>
+        public const string E2eCasesCommand = "e2e-cases";
+
+        /// <summary>能力対応表の2つの版から、中身の変わった行のキーを書き出す。</summary>
+        public const string ChangedRowsCommand = "changed-rows";
+
+        /// <summary>受入シナリオが、登録される定義に合うことを照合する。</summary>
+        public const string AcceptanceCasesCommand = "acceptance-cases";
+
+        /// <summary>スキーマ正本のツールが実機の検査に覆われることを照合する。</summary>
+        public const string ToolCoverageCommand = "tool-coverage";
+
+        /// <summary>配布物が実行時リフレクションを持たないことを照合する。</summary>
+        public const string ReflectionFreeCommand = "reflection-free";
+
+        /// <summary>同梱する第三者ライセンス表示を、出荷台帳と転記元から組み立てて書き出す。</summary>
+        public const string ThirdPartyCommand = "thirdparty";
+
+        /// <summary>画面の構造の台帳を、組み込むC#として書き出す。</summary>
+        public const string UiStructureSourceCommand = "ui-structure-source";
+
+        public static int Run(string[] args, TextWriter output, TextWriter error)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (output == null)
+            {
+                throw new ArgumentNullException(nameof(output));
+            }
+
+            if (error == null)
+            {
+                throw new ArgumentNullException(nameof(error));
+            }
+
+            try
+            {
+                return Dispatch(args, output, error);
+            }
+            catch (Exception exception)
+            {
+                error.WriteLine(exception.ToString());
+                return ExitCodes.Unresolved;
+            }
+        }
+
+        private static int Dispatch(string[] args, TextWriter output, TextWriter error)
+        {
+            if (args.Length == 0)
+            {
+                error.WriteLine("下位コマンドを指定する。");
+                WriteUsage(error);
+                return ExitCodes.InvalidArguments;
+            }
+
+            string[] rest = args.Skip(1).ToArray();
+            if (string.Equals(args[0], SignaturesCommand, StringComparison.Ordinal))
+            {
+                return SignatureDumpRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ExcludedBaselineCommand, StringComparison.Ordinal))
+            {
+                return ExcludedBaselineRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ExcludedSignaturesCommand, StringComparison.Ordinal))
+            {
+                return ExcludedSignatureRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], LedgerCoverageCommand, StringComparison.Ordinal))
+            {
+                return LedgerCoverageRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], PropertyNamesCommand, StringComparison.Ordinal))
+            {
+                return PropertyNameRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], TypeRolesCommand, StringComparison.Ordinal))
+            {
+                return TypeRoleRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], CommonAssignmentsCommand, StringComparison.Ordinal))
+            {
+                return CommonAssignmentRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ValueShapesCommand, StringComparison.Ordinal))
+            {
+                return ValueShapeRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], DangerousOperationsCommand, StringComparison.Ordinal))
+            {
+                return DangerousOperationRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ToolMapCommand, StringComparison.Ordinal))
+            {
+                return ToolMapRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], MapCoverageCommand, StringComparison.Ordinal))
+            {
+                return MapCoverageRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ToolSchemasCommand, StringComparison.Ordinal))
+            {
+                return ToolSchemaRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ToolDescriptionsCommand, StringComparison.Ordinal))
+            {
+                return ToolDescriptionRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], SampleValuesCommand, StringComparison.Ordinal))
+            {
+                return SampleValueRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], DiscoveryCommand, StringComparison.Ordinal))
+            {
+                return DiscoveryRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], SchemaCorrespondenceCommand, StringComparison.Ordinal))
+            {
+                return SchemaCorrespondenceRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ToolMappingCommand, StringComparison.Ordinal))
+            {
+                return ToolMappingRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], RelaySourceCommand, StringComparison.Ordinal))
+            {
+                return RelaySourceRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ToolBindingsCommand, StringComparison.Ordinal))
+            {
+                return ToolBindingRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ToolDefinitionsCommand, StringComparison.Ordinal))
+            {
+                return ToolDefinitionRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], E2eCasesCommand, StringComparison.Ordinal))
+            {
+                return E2eCaseRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ChangedRowsCommand, StringComparison.Ordinal))
+            {
+                return ChangedRowRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], AcceptanceCasesCommand, StringComparison.Ordinal))
+            {
+                return AcceptanceScenarioRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ToolCoverageCommand, StringComparison.Ordinal))
+            {
+                return ToolCoverageRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ReflectionFreeCommand, StringComparison.Ordinal))
+            {
+                return ReflectionFreeRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], ThirdPartyCommand, StringComparison.Ordinal))
+            {
+                return ThirdPartyNoticeRunner.Run(rest, output, error);
+            }
+
+            if (string.Equals(args[0], UiStructureSourceCommand, StringComparison.Ordinal))
+            {
+                return UiStructureSourceRunner.Run(rest, output, error);
+            }
+
+            error.WriteLine("知らない下位コマンド: " + args[0]);
+            WriteUsage(error);
+            return ExitCodes.InvalidArguments;
+        }
+
+        private static void WriteUsage(TextWriter error)
+        {
+            error.WriteLine(SignaturesCommand + " <PMXエディタ導入ディレクトリ> <書き出し先パス>");
+            error.WriteLine(
+                ExcludedBaselineCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <凍結した除外の組の正本のパス>"
+                    + " <書き出し先パス>");
+            error.WriteLine(
+                ExcludedSignaturesCommand
+                    + " <PMXエディタ導入ディレクトリ> <ベースライン正本のパス> <書き出し先パス>");
+            error.WriteLine(
+                LedgerCoverageCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <対象外一覧のパス>");
+            error.WriteLine(
+                PropertyNamesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <日本語名の正本のパス>");
+            error.WriteLine(
+                TypeRolesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <型役割表の正本のパス>");
+            error.WriteLine(
+                CommonAssignmentsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <型役割表の正本のパス> <共通契約割当の正本のパス>");
+            error.WriteLine(
+                ValueShapesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <共通契約の正本のパス>");
+            error.WriteLine(
+                DangerousOperationsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>");
+            error.WriteLine(
+                ToolMapCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <型役割表の正本のパス> <共通契約割当の正本のパス> <能力対応表の正本のパス>");
+            error.WriteLine(
+                MapCoverageCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <除外一覧のパス>"
+                    + " <型役割表の正本のパス> <能力対応表の正本のパス>");
+            error.WriteLine(
+                ToolSchemasCommand
+                    + " <共通契約の正本のパス> <能力対応表の正本のパス> <スキーマ正本のパス>");
+            error.WriteLine(
+                ToolDescriptionsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
+                    + " <型役割表の正本のパス> <日本語名の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス>");
+            error.WriteLine(
+                SampleValuesCommand
+                    + " <PMXエディタ導入ディレクトリ> <共通契約の正本のパス>"
+                    + " <サンプル値の正本のパス>");
+            error.WriteLine(
+                SchemaCorrespondenceCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <型役割表の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス>");
+            error.WriteLine(
+                ToolMappingCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
+                        + " <型役割表の正本のパス> <共通契約割当の正本のパス>"
+                        + " <能力対応表の正本のパス> <スキーマ正本のパス>");
+            error.WriteLine(
+                RelaySourceCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力対応表の正本のパス> <能力台帳のパス>"
+                    + " <書き出し先パス>");
+            error.WriteLine(
+                ToolBindingsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <型役割表の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス> <スキーマ正本のパス>"
+                    + " <共通契約の正本のパス> <書き出し先パス>");
+            error.WriteLine(
+                ToolDefinitionsCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
+                    + " <型役割表の正本のパス> <日本語名の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス> <書き出し先パス>");
+            error.WriteLine(
+                E2eCasesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
+                    + " <型役割表の正本のパス> <日本語名の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス> <サンプル値の正本のパス> <書き出し先パス>");
+            error.WriteLine(
+                ChangedRowsCommand
+                    + " <前の能力対応表の正本のパス> <いまの能力対応表の正本のパス>");
+            error.WriteLine(
+                AcceptanceCasesCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
+                    + " <型役割表の正本のパス> <日本語名の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス> <受入シナリオの正本のパス> <突き合わせの題材のパス>");
+            error.WriteLine(
+                DiscoveryCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
+                    + " <型役割表の正本のパス> <日本語名の正本のパス> <共通契約割当の正本のパス>"
+                    + " <能力対応表の正本のパス> <用途の作業の正本のパス> <スキーマ正本のパス>");
+            error.WriteLine(
+                ToolCoverageCommand
+                    + " <PMXエディタ導入ディレクトリ> <能力台帳のパス> <共通契約の正本のパス>"
+                    + " <型役割表の正本のパス> <日本語名の正本のパス>"
+                    + " <共通契約割当の正本のパス> <能力対応表の正本のパス>"
+                    + " <スキーマ正本のパス> <サンプル値の正本のパス>"
+                    + " <受入シナリオの正本のパス> <覆えないツールの正本のパス>");
+            error.WriteLine(
+                ReflectionFreeCommand + " <PMXエディタ導入ディレクトリ> <検査するアセンブリのパス>");
+            error.WriteLine(
+                ThirdPartyCommand
+                    + " <書き出し先パス> <標準の本文の置き場> <出荷台帳のパス>...");
+            error.WriteLine(
+                UiStructureSourceCommand + " <画面の構造の台帳のパス> <書き出し先パス>");
+        }
+    }
+}

@@ -1,0 +1,395 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+
+namespace PmxEditorMcp.SignatureDump
+{
+    /// <summary>型をどう写像するかを決める役割。判定はこの順に評価し、最初に当たったものにする。</summary>
+    public enum TypeRole
+    {
+        /// <summary>呼び出し側が実体を用意せずに呼べる、機能への接続点。</summary>
+        Connector,
+
+        /// <summary>公開イベントのハンドラの型引数に現れる型。</summary>
+        EventArgs,
+
+        /// <summary>ハンドルでのみ操作する型。</summary>
+        HandleTarget,
+
+        /// <summary>現在のPMX状態・エディタ状態の一部として編集・取得できる型。</summary>
+        OperationTarget,
+
+        /// <summary>上記以外で、入力または結果にのみ現れる型。</summary>
+        Dto,
+    }
+
+    /// <summary>担当群の書き方。正本へ書く値であり、ツール名の接頭辞でもある。</summary>
+    public static class ToolGroups
+    {
+        private static readonly Dictionary<string, CapabilityOwner> Tokens =
+            new Dictionary<string, CapabilityOwner>(StringComparer.Ordinal)
+            {
+                { "model", CapabilityOwner.Model },
+                { "session", CapabilityOwner.Session },
+                { "view", CapabilityOwner.View },
+                { "motion", CapabilityOwner.MotionTransform },
+            };
+
+        /// <summary>書き方から担当を引く表。</summary>
+        public static IDictionary<string, CapabilityOwner> ByToken
+        {
+            get { return new ReadOnlyDictionary<string, CapabilityOwner>(Tokens); }
+        }
+
+        /// <summary>担当の書き方。担当を持たないものは書き方を持たない。</summary>
+        public static string TokenOf(CapabilityOwner owner)
+        {
+            foreach (KeyValuePair<string, CapabilityOwner> pair in Tokens)
+            {
+                if (pair.Value == owner)
+                {
+                    return pair.Key;
+                }
+            }
+
+            throw new ArgumentException("担当群の書き方が無い。", nameof(owner));
+        }
+    }
+
+    /// <summary>型ごとのツールのはたらき。ツール名の動詞句はこの語と要素名詞からなる。</summary>
+    public enum ToolVerb
+    {
+        /// <summary>コネクタ型のプロパティを1つに集めた取得。</summary>
+        Get,
+
+        /// <summary>対象集合の要素を並べる取得。</summary>
+        List,
+
+        /// <summary>プロパティの更新。</summary>
+        Update,
+
+        /// <summary>所有するリストへ要素を入れる。</summary>
+        Add,
+
+        /// <summary>所有するリストから要素を出す。</summary>
+        Remove,
+
+        /// <summary>所有するリストに在る要素を、ハンドルで指せるようにする。</summary>
+        Hold,
+    }
+
+    /// <summary>型役割表の型ごとの項目1件。</summary>
+    public sealed class TypeRoleRecord
+    {
+        public TypeRoleRecord(
+            string typeName,
+            TypeRole role,
+            string basis,
+            string elementNoun = "",
+            string elementNounPlural = "",
+            CapabilityOwner group = CapabilityOwner.None)
+        {
+            PropertyRecord.RequireText(typeName, nameof(typeName));
+            PropertyRecord.RequireText(basis, nameof(basis));
+            if (elementNoun == null)
+            {
+                throw new ArgumentNullException(nameof(elementNoun));
+            }
+
+            if (elementNounPlural == null)
+            {
+                throw new ArgumentNullException(nameof(elementNounPlural));
+            }
+
+            if (!HasIndependentTool(role) && group != CapabilityOwner.None)
+            {
+                throw new ArgumentException(
+                    "独立したツールを持つ役割だけが担当群を持つ。", nameof(group));
+            }
+
+            TypeName = typeName;
+            Role = role;
+            Basis = basis;
+            Group = group;
+            ElementNoun = elementNoun;
+            ElementNounPlural = elementNounPlural;
+        }
+
+        public string TypeName { get; }
+
+        public TypeRole Role { get; }
+
+        public string Basis { get; }
+
+        /// <summary>ツール名と説明文が対象を指すのに使う名詞。持たない役割では空。</summary>
+        public string ElementNoun { get; }
+
+        /// <summary>集合を扱うツール名が使う複数形。持たない役割では空。</summary>
+        public string ElementNounPlural { get; }
+
+        /// <summary>
+        /// その型のツールが属する担当群。持たない役割と、台帳が決める型では
+        /// <see cref="CapabilityOwner.None"/>。
+        /// </summary>
+        public CapabilityOwner Group { get; }
+
+        /// <summary>その役割が、対象を名指しする独立したツールを持つか。</summary>
+        public static bool HasIndependentTool(TypeRole role)
+        {
+            return role != TypeRole.EventArgs && role != TypeRole.Dto;
+        }
+    }
+
+    /// <summary>ハンドルをどこから発行するか。</summary>
+    public enum HandleIssuanceKind
+    {
+        /// <summary>公開コンストラクタ。レシーバーを持たない。</summary>
+        Constructor,
+
+        /// <summary>コネクタ型のメソッド。</summary>
+        Factory,
+
+        /// <summary>ハンドル操作型のメソッド。レシーバーのハンドルに対して発行する。</summary>
+        ReceiverBound,
+    }
+
+    /// <summary>ハンドルを返しうるシグネチャ1件の判定。</summary>
+    public sealed class HandleIssuanceRecord
+    {
+        public HandleIssuanceRecord(string signatureKey, bool issues, string basis)
+        {
+            PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
+            PropertyRecord.RequireText(basis, nameof(basis));
+
+            SignatureKey = signatureKey;
+            Issues = issues;
+            Basis = basis;
+        }
+
+        public string SignatureKey { get; }
+
+        /// <summary>新しいハンドルを発行するか。既にあるものを返すだけなら偽。</summary>
+        public bool Issues { get; }
+
+        public string Basis { get; }
+    }
+
+    /// <summary>要素を並べるリスト1件の判定。</summary>
+    public sealed class ElementCollectionRecord
+    {
+        public ElementCollectionRecord(
+            string signatureKey,
+            bool owns,
+            string basis,
+            IList<string> ownerPath = null)
+        {
+            PropertyRecord.RequireText(signatureKey, nameof(signatureKey));
+            PropertyRecord.RequireText(basis, nameof(basis));
+            IList<string> path = ownerPath ?? new List<string>();
+            if (owns != (path.Count != 0))
+            {
+                throw new ArgumentException(
+                    "所有するときだけ段の列を持つ。", owns ? nameof(ownerPath) : nameof(owns));
+            }
+
+            SignatureKey = signatureKey;
+            Owns = owns;
+            Basis = basis;
+            OwnerPath = new ReadOnlyCollection<string>(path);
+        }
+
+        public string SignatureKey { get; }
+
+        /// <summary>要素を所有するか。他所が所有する要素を指すだけなら偽。</summary>
+        public bool Owns { get; }
+
+        public string Basis { get; }
+
+        /// <summary>そのリストへ至る段の列。所有しないリストでは空。</summary>
+        public IList<string> OwnerPath { get; }
+
+    }
+
+    /// <summary>
+    /// 型役割表の正本。型ごとの役割と、ハンドル発行の判定と、要素を並べるリストの判定からなる。
+    /// </summary>
+    public sealed class TypeRoleTable
+    {
+        public TypeRoleTable(
+            IList<TypeRoleRecord> types,
+            IList<HandleIssuanceRecord> issuances,
+            IList<ElementCollectionRecord> collections)
+        {
+            if (types == null)
+            {
+                throw new ArgumentNullException(nameof(types));
+            }
+
+            if (issuances == null)
+            {
+                throw new ArgumentNullException(nameof(issuances));
+            }
+
+            if (collections == null)
+            {
+                throw new ArgumentNullException(nameof(collections));
+            }
+
+            Types = new ReadOnlyCollection<TypeRoleRecord>(types);
+            Issuances = new ReadOnlyCollection<HandleIssuanceRecord>(issuances);
+            Collections = new ReadOnlyCollection<ElementCollectionRecord>(collections);
+        }
+
+        public IList<TypeRoleRecord> Types { get; }
+
+        public IList<HandleIssuanceRecord> Issuances { get; }
+
+        public IList<ElementCollectionRecord> Collections { get; }
+    }
+
+    /// <summary>起こした名前が拠る意味の根拠の種類。</summary>
+    public enum NameBasisKind
+    {
+        /// <summary>配布物の資料が意味を説明している。</summary>
+        DocumentSection,
+
+        /// <summary>資料が意味を説明しておらず、宣言型・メンバー名・プロパティの型に拠る。</summary>
+        MemberShape,
+    }
+
+    /// <summary>起こした名前が拠る意味の根拠。種類ごとのファクトリメソッドで作る。</summary>
+    public sealed class NameBasis
+    {
+        private NameBasis(NameBasisKind kind, string path, int firstLine, int lastLine)
+        {
+            Kind = kind;
+            Path = path;
+            FirstLine = firstLine;
+            LastLine = lastLine;
+        }
+
+        public NameBasisKind Kind { get; }
+
+        /// <summary>配布物からの相対パス。<see cref="NameBasisKind.MemberShape"/> では空。</summary>
+        public string Path { get; }
+
+        /// <summary>1から数える開始行。<see cref="NameBasisKind.MemberShape"/> では0。</summary>
+        public int FirstLine { get; }
+
+        /// <summary>1から数える終了行。両端を含む。<see cref="NameBasisKind.MemberShape"/> では0。</summary>
+        public int LastLine { get; }
+
+        /// <summary>配布物の資料の範囲を根拠とする1件を作る。</summary>
+        public static NameBasis FromDocumentSection(string path, int firstLine, int lastLine)
+        {
+            if (path == null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            if (path.Trim().Length == 0)
+            {
+                throw new ArgumentException("空にも空白だけにもできない。", nameof(path));
+            }
+
+            if (firstLine < 1)
+            {
+                throw new ArgumentException("行は1から数える。", nameof(firstLine));
+            }
+
+            if (lastLine < firstLine)
+            {
+                throw new ArgumentException("終了行が開始行より前にある。", nameof(lastLine));
+            }
+
+            return new NameBasis(NameBasisKind.DocumentSection, path, firstLine, lastLine);
+        }
+
+        /// <summary>宣言型・メンバー名・プロパティの型を根拠とする1件を作る。</summary>
+        public static NameBasis FromMemberShape()
+        {
+            return new NameBasis(NameBasisKind.MemberShape, string.Empty, 0, 0);
+        }
+    }
+
+    /// <summary>型役割表が日本語名を持つ、読み取り可能な公開プロパティ1件。</summary>
+    public sealed class PropertyRecord
+    {
+        public PropertyRecord(string declaringType, string memberName, string propertyType)
+        {
+            RequireText(declaringType, nameof(declaringType));
+            RequireText(memberName, nameof(memberName));
+            RequireText(propertyType, nameof(propertyType));
+
+            DeclaringType = declaringType;
+            MemberName = memberName;
+            PropertyType = propertyType;
+        }
+
+        public string DeclaringType { get; }
+
+        public string MemberName { get; }
+
+        public string PropertyType { get; }
+
+        /// <summary>列挙結果と表の項目を突き合わせる鍵。</summary>
+        public string Key
+        {
+            get { return DeclaringType + "|" + MemberName + "|" + PropertyType; }
+        }
+
+        internal static void RequireText(string value, string name)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(name);
+            }
+
+            if (value.Trim().Length == 0)
+            {
+                throw new ArgumentException("空にも空白だけにもできない。", name);
+            }
+        }
+    }
+
+    /// <summary>日本語名を起こしたプロパティ1件。記載を引ける項目は表に現れない。</summary>
+    public sealed class PropertyNameRecord
+    {
+        public PropertyNameRecord(
+            string declaringType, string memberName, string japaneseName, NameBasis basis, string origin)
+        {
+            PropertyRecord.RequireText(declaringType, nameof(declaringType));
+            PropertyRecord.RequireText(memberName, nameof(memberName));
+            PropertyRecord.RequireText(japaneseName, nameof(japaneseName));
+            if (basis == null)
+            {
+                throw new ArgumentNullException(nameof(basis));
+            }
+
+            PropertyRecord.RequireText(origin, nameof(origin));
+
+            DeclaringType = declaringType;
+            MemberName = memberName;
+            JapaneseName = japaneseName;
+            Basis = basis;
+            Origin = origin;
+        }
+
+        public string DeclaringType { get; }
+
+        public string MemberName { get; }
+
+        /// <summary>列挙結果と表の項目を突き合わせる鍵。プロパティの型は入れない。</summary>
+        public string Key
+        {
+            get { return DeclaringType + "|" + MemberName; }
+        }
+
+        public string JapaneseName { get; }
+
+        public NameBasis Basis { get; }
+
+        /// <summary>名前の由来の一文。</summary>
+        public string Origin { get; }
+    }
+}

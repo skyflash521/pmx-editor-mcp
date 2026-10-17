@@ -1,0 +1,23 @@
+<!--
+  発行で解決した資産を出荷台帳として書き出す。第三者ライセンス表示の母集団になる。
+
+  単一ファイルへ束ねた後の実行ファイルからは中身を数え直せないので、束ねる前の入力を数える。
+  ここで数える ResolvedFileToPublish は、パッケージから来る資産だけでなく、自己完結の発行が
+  取り込むランタイムパックの構成物も持つ——それらはパッケージの一覧には現れない。
+
+  通常のビルドへ混ぜないために、この的は CustomAfterMicrosoftCommonTargets で差し込んで使う。
+  差し込まれても、書き出し先が渡されなければ何もしない。
+-->
+<Project>
+  <Target Name="WriteShippingLedger"
+          AfterTargets="ComputeResolvedFilesToPublishList"
+          Condition="'$(ShippingLedgerPath)' != ''">
+    <ItemGroup>
+      <ShippingLedgerLine Include="root=$(NuGetPackageRoot)" />
+      <ShippingLedgerLine
+          Include="@(ResolvedFileToPublish->'asset=%(RelativePath)|%(NuGetPackageId)|%(NuGetPackageVersion)')" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(ShippingLedgerPath)" Lines="@(ShippingLedgerLine)"
+                      Overwrite="true" WriteOnlyWhenDifferent="false" />
+  </Target>
+</Project>

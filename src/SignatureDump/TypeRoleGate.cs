@@ -1,0 +1,251 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PmxEditorMcp.SignatureDump
+{
+    public static class TypeRoleGate
+    {
+        /// <summary>
+        /// 規則に反していれば <see cref="InvalidOperationException"/>。
+        /// <paramref name="roleTypes"/> は表が覆うべき型の集合で、接続の根とその経路上の型を
+        /// 含めて渡すこと。<paramref name="connectorCandidates"/> には
+        /// <see cref="TypeRoleEvidence.ConnectorCandidates"/> の結果を渡すこと。
+        /// <paramref name="issuanceCandidates"/> には
+        /// <see cref="HandleIssuanceEvidence.Candidates"/> の結果を、
+        /// <paramref name="collectionCandidates"/> には
+        /// <see cref="ElementCollectionEvidence.Candidates"/> の結果を渡すこと。
+        /// </summary>
+        public static void Require(
+            TypeRoleTable table,
+            ISet<string> roleTypes,
+            IEnumerable<string> connectionRoots,
+            ISet<string> eventArgumentTypes,
+            ICollection<string> connectorCandidates,
+            IDictionary<string, HandleIssuanceKind> issuanceCandidates,
+            IDictionary<string, string> collectionCandidates)
+        {
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            if (roleTypes == null)
+            {
+                throw new ArgumentNullException(nameof(roleTypes));
+            }
+
+            if (connectionRoots == null)
+            {
+                throw new ArgumentNullException(nameof(connectionRoots));
+            }
+
+            if (eventArgumentTypes == null)
+            {
+                throw new ArgumentNullException(nameof(eventArgumentTypes));
+            }
+
+            if (connectorCandidates == null)
+            {
+                throw new ArgumentNullException(nameof(connectorCandidates));
+            }
+
+            if (issuanceCandidates == null)
+            {
+                throw new ArgumentNullException(nameof(issuanceCandidates));
+            }
+
+            if (collectionCandidates == null)
+            {
+                throw new ArgumentNullException(nameof(collectionCandidates));
+            }
+
+            IList<TypeRoleRecord> records = table.Types;
+            RequireSameTypes(records, roleTypes, connectionRoots);
+            RequireRootsAreConnectors(records, connectionRoots);
+            RequireEventArgumentsMatchTheEvidence(records, eventArgumentTypes);
+            RequireConnectorsNeedNoInstanceFromTheCaller(records, connectorCandidates);
+            RequireIssuancesMatchTheEvidence(table.Issuances, issuanceCandidates);
+            RequireCollectionsMatchTheEvidence(table.Collections, collectionCandidates);
+        }
+
+        /// <summary>
+        /// 表の型と役割対象を一対一で突き合わせる。これが無いと、型を丸ごと書き落としても、対象外の型を
+        /// 混ぜても、残った項目だけが条件を満たして通る。
+        /// </summary>
+        private static void RequireSameTypes(
+            IList<TypeRoleRecord> records, ISet<string> roleTypes, IEnumerable<string> connectionRoots)
+        {
+            HashSet<string> listed = new HashSet<string>(StringComparer.Ordinal);
+            foreach (TypeRoleRecord record in records)
+            {
+                if (!listed.Add(record.TypeName))
+                {
+                    throw new InvalidOperationException("表に同じ型が二度在る: " + record.TypeName);
+                }
+            }
+
+            string missing = roleTypes.Except(listed, StringComparer.Ordinal)
+                .OrderBy(n => n, StringComparer.Ordinal).FirstOrDefault();
+            if (missing != null)
+            {
+                throw new InvalidOperationException("表に無い型が在る: " + missing);
+            }
+
+            string extra = listed.Except(roleTypes, StringComparer.Ordinal)
+                .Except(connectionRoots, StringComparer.Ordinal)
+                .OrderBy(n => n, StringComparer.Ordinal).FirstOrDefault();
+            if (extra != null)
+            {
+                throw new InvalidOperationException("役割対象に無い型が在る: " + extra);
+            }
+        }
+
+        /// <summary>接続の根は、表がコネクタ型として持つことを課す。</summary>
+        private static void RequireRootsAreConnectors(
+            IList<TypeRoleRecord> records, IEnumerable<string> connectionRoots)
+        {
+            IDictionary<string, TypeRole> roles = records
+                .ToDictionary(r => r.TypeName, r => r.Role, StringComparer.Ordinal);
+            foreach (string root in connectionRoots)
+            {
+                TypeRole role;
+                if (!roles.TryGetValue(root, out role))
+                {
+                    throw new InvalidOperationException("接続の根が表に無い: " + root);
+                }
+
+                if (role != TypeRole.Connector)
+                {
+                    throw new InvalidOperationException("接続の根をコネクタ型にしていない: " + root);
+                }
+            }
+        }
+
+        /// <summary>イベント引数型は両向きで突き合わせる。</summary>
+        private static void RequireEventArgumentsMatchTheEvidence(
+            IList<TypeRoleRecord> records, ISet<string> eventArgumentTypes)
+        {
+            foreach (TypeRoleRecord record in records)
+            {
+                bool isEvidence = eventArgumentTypes.Contains(record.TypeName);
+                bool isDeclared = record.Role == TypeRole.EventArgs;
+                if (isEvidence && !isDeclared)
+                {
+                    throw new InvalidOperationException(
+                        "イベントのハンドラ引数なのにイベント引数型にしていない: " + record.TypeName);
+                }
+
+                if (isDeclared && !isEvidence)
+                {
+                    throw new InvalidOperationException(
+                        "イベントのハンドラ引数に現れない型をイベント引数型にしている: " + record.TypeName);
+                }
+            }
+        }
+
+        /// <summary>
+        /// コネクタ型は、呼び出し側が実体を用意せずに呼べる型でなければならない。この集合に在ること
+        /// はその必要条件で、在るからといってコネクタ型とは限らない。
+        /// </summary>
+        private static void RequireConnectorsNeedNoInstanceFromTheCaller(
+            IList<TypeRoleRecord> records, ICollection<string> connectorCandidates)
+        {
+            foreach (TypeRoleRecord record in records
+                .Where(r => r.Role == TypeRole.Connector
+                    && !connectorCandidates.Contains(r.TypeName)))
+            {
+                throw new InvalidOperationException(
+                    "呼び出し側が実体を用意しなければ呼べない型をコネクタ型にしている: "
+                        + record.TypeName);
+            }
+        }
+
+        /// <summary>
+        /// ハンドルを返しうるシグネチャの集合が、列挙と一対一であることを求める。
+        /// </summary>
+        private static void RequireIssuancesMatchTheEvidence(
+            IList<HandleIssuanceRecord> records,
+            IDictionary<string, HandleIssuanceKind> candidates)
+        {
+            HashSet<string> listed = new HashSet<string>(StringComparer.Ordinal);
+            foreach (HandleIssuanceRecord record in records)
+            {
+                if (!listed.Add(record.SignatureKey))
+                {
+                    throw new InvalidOperationException(
+                        "表に同じ行キーが二度在る: " + record.SignatureKey);
+                }
+
+                if (!candidates.ContainsKey(record.SignatureKey))
+                {
+                    throw new InvalidOperationException(
+                        "ハンドルを返さないシグネチャが表に在る: " + record.SignatureKey);
+                }
+            }
+
+            string missing = candidates.Keys.Except(listed, StringComparer.Ordinal)
+                .OrderBy(k => k, StringComparer.Ordinal).FirstOrDefault();
+            if (missing != null)
+            {
+                throw new InvalidOperationException("表に無いシグネチャが在る: " + missing);
+            }
+        }
+
+        /// <summary>
+        /// 要素を並べるリストの集合が列挙と一対一で、要素の型ごとに所有するリストが1つを超えず、
+        /// 指すだけのリストの要素に所有するリストが在ることを求める。
+        /// </summary>
+        private static void RequireCollectionsMatchTheEvidence(
+            IList<ElementCollectionRecord> records, IDictionary<string, string> candidates)
+        {
+            HashSet<string> listed = new HashSet<string>(StringComparer.Ordinal);
+            Dictionary<string, string> ownerOf = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (ElementCollectionRecord record in records)
+            {
+                if (!listed.Add(record.SignatureKey))
+                {
+                    throw new InvalidOperationException(
+                        "表に同じ行キーが二度在る: " + record.SignatureKey);
+                }
+
+                string element;
+                if (!candidates.TryGetValue(record.SignatureKey, out element))
+                {
+                    throw new InvalidOperationException(
+                        "要素を並べるリストでないシグネチャが表に在る: " + record.SignatureKey);
+                }
+
+                if (!record.Owns)
+                {
+                    continue;
+                }
+
+                string other;
+                if (ownerOf.TryGetValue(element, out other))
+                {
+                    throw new InvalidOperationException(
+                        "同じ要素の型を所有するリストが二つ在る: " + other + " と " + record.SignatureKey
+                            + "(" + element + ")");
+                }
+
+                ownerOf.Add(element, record.SignatureKey);
+            }
+
+            string missing = candidates.Keys.Except(listed, StringComparer.Ordinal)
+                .OrderBy(k => k, StringComparer.Ordinal).FirstOrDefault();
+            if (missing != null)
+            {
+                throw new InvalidOperationException("表に無いリストが在る: " + missing);
+            }
+
+            foreach (ElementCollectionRecord record in records
+                .Where(r => !r.Owns && !ownerOf.ContainsKey(candidates[r.SignatureKey])))
+            {
+                throw new InvalidOperationException(
+                    "所有するリストの無い要素を指すリストが在る: " + record.SignatureKey
+                        + "(" + candidates[record.SignatureKey] + ")");
+            }
+        }
+    }
+}

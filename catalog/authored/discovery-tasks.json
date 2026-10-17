@@ -1,0 +1,291 @@
+{
+  "tasks": [
+    {
+      "task": "モデルの構造の把握",
+      "searches": [
+        [
+          "動作 list / 出所 PEPlugin.Pmx"
+        ]
+      ],
+      "tools": [
+        "model_list_bodies",
+        "model_list_bones",
+        "model_list_faces",
+        "model_list_headers",
+        "model_list_ik_links",
+        "model_list_iks",
+        "model_list_joints",
+        "model_list_materials",
+        "model_list_model_infos",
+        "model_list_morph_offsets",
+        "model_list_morphs",
+        "model_list_node_items",
+        "model_list_nodes",
+        "model_list_pmxes",
+        "model_list_soft_bodies",
+        "model_list_soft_body_anchors",
+        "model_list_vertices"
+      ]
+    },
+    {
+      "task": "要素の一括編集と元に戻す",
+      "searches": [
+        [
+          "対象 vertex / 動作 add"
+        ],
+        [
+          "対象 bone / 動作 add"
+        ],
+        [
+          "対象 material / 動作 add"
+        ],
+        [
+          "対象 morph / 動作 add"
+        ],
+        [
+          "対象 body / 動作 add"
+        ],
+        [
+          "対象 joint / 動作 add"
+        ],
+        [
+          "対象 node / 動作 add"
+        ],
+        [
+          "対象 soft_body / 動作 add"
+        ],
+        [
+          "対象 vertex / 動作 remove"
+        ],
+        [
+          "対象 bone / 動作 remove"
+        ],
+        [
+          "対象 material / 動作 remove"
+        ],
+        [
+          "対象 morph / 動作 remove"
+        ],
+        [
+          "対象 body / 動作 remove"
+        ],
+        [
+          "対象 joint / 動作 remove"
+        ],
+        [
+          "対象 node / 動作 remove"
+        ],
+        [
+          "対象 soft_body / 動作 remove"
+        ],
+        [
+          "対象 vertex / 動作 update"
+        ],
+        [
+          "対象 bone / 動作 update"
+        ],
+        [
+          "対象 material / 動作 update"
+        ],
+        [
+          "対象 morph / 動作 update"
+        ],
+        [
+          "対象 morph_offset / 動作 update"
+        ],
+        [
+          "対象 body / 動作 update"
+        ],
+        [
+          "対象 joint / 動作 update"
+        ],
+        [
+          "対象 node / 動作 update"
+        ],
+        [
+          "対象 node_item / 動作 update"
+        ],
+        [
+          "対象 soft_body / 動作 update"
+        ],
+        [
+          "対象 soft_body_anchor / 動作 update"
+        ],
+        [
+          "動作 undo"
+        ]
+      ],
+      "tools": [
+        "model_add_bodies",
+        "model_add_bones",
+        "model_add_joints",
+        "model_add_materials",
+        "model_add_morphs",
+        "model_add_nodes",
+        "model_add_soft_bodies",
+        "model_add_vertices",
+        "model_remove_bodies",
+        "model_remove_bones",
+        "model_remove_joints",
+        "model_remove_materials",
+        "model_remove_morphs",
+        "model_remove_nodes",
+        "model_remove_soft_bodies",
+        "model_remove_vertices",
+        "model_update_bodies",
+        "model_update_bones",
+        "model_update_joints",
+        "model_update_materials",
+        "model_update_morph_offsets",
+        "model_update_morphs",
+        "model_update_node_items",
+        "model_update_nodes",
+        "model_update_soft_bodies",
+        "model_update_soft_body_anchors",
+        "model_update_vertices",
+        "session_undo"
+      ]
+    },
+    {
+      "task": "保存と読み込み",
+      "searches": [
+        [
+          "動作 open_pmx_file"
+        ],
+        [
+          "動作 save_pmx_file"
+        ],
+        [
+          "対象 pmx / 動作 from_file"
+        ],
+        [
+          "対象 pmx / 動作 to_file"
+        ]
+      ],
+      "tools": [
+        "model_from_file_pmx",
+        "model_to_file_pmx",
+        "session_open_pmx_file",
+        "session_save_pmx_file"
+      ]
+    },
+    {
+      "task": "見た目の確認",
+      "searches": [
+        [
+          "カメラの一括設定"
+        ],
+        [
+          "キャプチャ"
+        ]
+      ],
+      "tools": [
+        "motion_get_client_image",
+        "view_get_client_image_pmd_view_connector",
+        "view_get_client_image_sub_view_connector",
+        "view_set_camera_view"
+      ]
+    },
+    {
+      "task": "モーションの構築",
+      "searches": [
+        [
+          "動作 create_vmd"
+        ],
+        [
+          "対象 vmd_bone_key / 動作 add"
+        ],
+        [
+          "VMDファイルへ保存"
+        ],
+        [
+          "ハンドルを解放"
+        ]
+      ],
+      "tools": [
+        "motion_add_vmd_bone_keys",
+        "motion_create_vmd",
+        "motion_create_vmd_bas_camera_key",
+        "motion_create_vmd_bone_key",
+        "motion_create_vmd_bone_pose_state",
+        "motion_create_vmd_ipl",
+        "motion_create_vmd_light_key",
+        "motion_create_vmd_morph_key",
+        "motion_create_vmd_self_shadow_key",
+        "motion_to_file_vmd",
+        "session_release_handle"
+      ]
+    },
+    {
+      "task": "画面の操作の受け取り",
+      "searches": [
+        [
+          "イベントリスナ生成"
+        ],
+        [
+          "イベントを取り出す"
+        ]
+      ],
+      "tools": [
+        "view_create_view_event_listener_event_connector",
+        "view_poll_events"
+      ]
+    },
+    {
+      "task": "種類をまたいだ要素の平行移動",
+      "searches": [
+        [
+          "平行移動"
+        ]
+      ],
+      "tools": [
+        "model_place_elements"
+      ]
+    },
+    {
+      "task": "TransformView の姿勢の焼き込み",
+      "searches": [
+        [
+          "焼き込"
+        ]
+      ],
+      "tools": [
+        "motion_apply_current_pose"
+      ]
+    },
+    {
+      "task": "VMD の1フレームの姿勢を TransformView へ当てる",
+      "searches": [
+        [
+          "VMD の1フレームの姿勢"
+        ]
+      ],
+      "tools": [
+        "motion_set_transform_view_vmd_frame"
+      ]
+    },
+    {
+      "task": "TransformView の姿勢の初期化",
+      "searches": [
+        [
+          "姿勢とモーフの値を初期化"
+        ]
+      ],
+      "tools": [
+        "motion_reset_transform"
+      ]
+    },
+    {
+      "task": "隠しモーフにする・隠しモーフを解除する・隠しモーフかどうかを調べる",
+      "searches": [
+        [
+          "隠しモーフ"
+        ]
+      ],
+      "tools": [
+        "model_list_morphs",
+        "model_update_morphs"
+      ]
+    }
+  ]
+}

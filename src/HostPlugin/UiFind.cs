@@ -1,0 +1,249 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using PmxEditorMcp.SignatureDump;
+
+namespace PmxEditorMcp
+{
+    /// <summary>文言で画面の部品を探し、主画面からその部品までの道筋を返すツール。</summary>
+    public static class UiFind
+    {
+        public const string ToolName = "editor_find_operation";
+
+        public const string TextsName = "texts";
+
+        public const string LimitName = "limit";
+
+        public const string OffsetName = "offset";
+
+        public const int DefaultLimit = 50;
+
+        private const string TotalName = "total";
+
+        private const string MatchesName = "matches";
+
+        private const string RouteName = "route";
+
+        private const string UnreachableName = "unreachable";
+
+        private const string MessageName = "message";
+
+        private const string NextOffsetName = "nextOffset";
+
+        /// <summary>並びの中で、当たり1件の手前に置く区切りの文字数。</summary>
+        private const int SeparatorChars = 1;
+
+        public static void AddTo(McpMethodTable methods)
+        {
+            if (methods == null)
+            {
+                throw new ArgumentNullException(nameof(methods));
+            }
+
+            methods.Add(ToolName, Find);
+        }
+
+        private static object Find(McpMethodContext context)
+        {
+            object given;
+            object[] taken = context.Params.TryGetValue(TextsName, out given) ? given as object[] : null;
+            if (taken == null
+                || taken.Length == 0
+                || taken.Any(t => !(t is string) || ((string)t).Length == 0))
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.InvalidArgument,
+                    TextsName + " は1文字以上の文字列を1つ以上並べた配列でなければならない。");
+            }
+
+            IList<string> wanted = taken.Cast<string>().ToList();
+
+            int limit;
+            string message;
+            if (!TryLimit(context, out limit, out message))
+            {
+                return ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, message);
+            }
+
+            int offset = 0;
+            if (!ComposedInput.TryNumber(context, OffsetName, 0, ref offset, out message))
+            {
+                return ToolEnvelope.Failure(ToolEnvelope.InvalidArgument, message);
+            }
+
+            IList<IDictionary<string, object>> found = Matches(wanted);
+            int room = ResponseSize.ValueChars(context.BudgetChars) - Wrapper(found.Count);
+            List<IDictionary<string, object>> written = new List<IDictionary<string, object>>();
+            int used = 0;
+            for (int at = offset; at < found.Count && written.Count < limit; at++)
+            {
+                int size = ResponseSize.Serializer.Serialize(found[at]).Length + SeparatorChars;
+                if (used + size > room)
+                {
+                    break;
+                }
+
+                used += size;
+                written.Add(found[at]);
+            }
+
+            if (written.Count == 0 && offset < found.Count)
+            {
+                return ToolEnvelope.Failure(
+                    ToolEnvelope.ResponseTooLarge,
+                    "当たりが1件も値の枠に収まらない。" + TextsName + " を絞るか、応答の枠を広げる。");
+            }
+
+            Dictionary<string, object> value = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { UiStructureCatalog.EditorVersionName, UiStructureCatalog.EditorVersion },
+                { TotalName, found.Count },
+                { MatchesName, written.ToArray() },
+            };
+            int next = offset + written.Count;
+            if (next < found.Count)
+            {
+                value.Add(NextOffsetName, next);
+            }
+
+            return ToolEnvelope.Success(value);
+        }
+
+        /// <summary>
+        /// 当たりを包む分の文字数。並びを空にして、数の項目を採りうるいちばん長い値で書いたものを
+        /// 採る。
+        /// </summary>
+        private static int Wrapper(int total)
+        {
+            return ResponseSize.Serializer.Serialize(new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { UiStructureCatalog.EditorVersionName, UiStructureCatalog.EditorVersion },
+                { TotalName, total },
+                { MatchesName, new object[0] },
+                { NextOffsetName, int.MaxValue },
+            }).Length;
+        }
+
+        private static IList<IDictionary<string, object>> Matches(IList<string> wanted)
+        {
+            List<IDictionary<string, object>> found = new List<IDictionary<string, object>>();
+            foreach (IDictionary<string, object> window in UiStructureCatalog.Windows())
+            {
+                string form = UiStructureCatalog.Text(window, UiStructureCatalog.FormName);
+                string title = UiStructureCatalog.Text(window, UiStructureCatalog.TitleName);
+                if (Holds(title, wanted))
+                {
+                    found.Add(Match(form, title, new List<IDictionary<string, object>>(), null));
+                }
+
+                Walk(
+                    UiStructureCatalog.Node(window, UiStructureCatalog.RootName),
+                    new List<IDictionary<string, object>>(),
+                    form,
+                    title,
+                    wanted,
+                    found);
+
+                foreach (string said in UiStructureCatalog.Texts(window, UiStructureCatalog.MessagesName))
+                {
+                    if (Holds(said, wanted))
+                    {
+                        found.Add(Match(form, title, null, said));
+                    }
+                }
+            }
+
+            return found;
+        }
+
+        private static void Walk(
+            IDictionary<string, object> node,
+            IList<IDictionary<string, object>> path,
+            string form,
+            string title,
+            IList<string> wanted,
+            IList<IDictionary<string, object>> found)
+        {
+            foreach (IDictionary<string, object> child in UiStructureCatalog.Children(node))
+            {
+                List<IDictionary<string, object>> below =
+                    new List<IDictionary<string, object>>(path) { Step(child) };
+                if (Holds(UiStructureCatalog.Text(child, UiStructureCatalog.TextName), wanted)
+                    || Holds(UiStructureCatalog.Text(child, UiStructureCatalog.ToolTipName), wanted))
+                {
+                    found.Add(Match(form, title, below, null));
+                }
+
+                Walk(child, below, form, title, wanted, found);
+            }
+        }
+
+        private static bool Holds(string haystack, IList<string> wanted)
+        {
+            return wanted.Any(w => TextMatch.Contains(haystack, w));
+        }
+
+        private static IDictionary<string, object> Step(IDictionary<string, object> node)
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { UiStructureCatalog.TypeName, UiStructureCatalog.Text(node, UiStructureCatalog.TypeName) },
+                { UiStructureCatalog.NameName, UiStructureCatalog.Text(node, UiStructureCatalog.NameName) },
+                { UiStructureCatalog.TextName, UiStructureCatalog.Text(node, UiStructureCatalog.TextName) },
+            };
+        }
+
+        private static IDictionary<string, object> Match(
+            string form, string title, IList<IDictionary<string, object>> path, string said)
+        {
+            Dictionary<string, object> match = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { UiStructureCatalog.FormName, form },
+            };
+            if (title != null)
+            {
+                match.Add(UiStructureCatalog.TitleName, title);
+            }
+
+            if (said != null)
+            {
+                match.Add(MessageName, said);
+            }
+            else
+            {
+                match.Add(UiStructureCatalog.PathName, Listed(path));
+            }
+
+            IList<IDictionary<string, object>> route = UiStructureRoute.To(form);
+            if (route == null)
+            {
+                match.Add(UnreachableName, true);
+            }
+            else
+            {
+                match.Add(RouteName, Listed(route));
+            }
+
+            return match;
+        }
+
+        private static object[] Listed(IList<IDictionary<string, object>> given)
+        {
+            object[] listed = new object[given.Count];
+            for (int at = 0; at < given.Count; at++)
+            {
+                listed[at] = given[at];
+            }
+
+            return listed;
+        }
+
+        private static bool TryLimit(McpMethodContext context, out int limit, out string message)
+        {
+            limit = DefaultLimit;
+
+            return ComposedInput.TryNumber(context, LimitName, 1, ref limit, out message);
+        }
+    }
+}
