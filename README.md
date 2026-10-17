@@ -32,6 +32,7 @@ PMXエディタをMCP経由で操作可能にするプラグイン。
 | 製品の要求 | [docs/conventions/requirements.md](docs/conventions/requirements.md) |
 | 規約 | [docs/conventions/](docs/conventions/) |
 | 検査と生成が読むデータ | [catalog/](catalog/) |
+| 変更履歴 | [CHANGELOG.md](CHANGELOG.md) |
 
 ### 必要なもの
 
