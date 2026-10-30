@@ -339,6 +339,26 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ExcludingABoneAndLimitingToOneKeepsTheFirstOfTheTiedBones()
+        {
+            IList<IPXBone> bones = Bones("一", "二", "三", "元");
+            Triangle(bones[0], bones[1], bones[2]);
+            FakeVertex target = Target(0.25f, 0.1f, 0.5f, bones[3]);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(
+                FromTheSurface(
+                    ComposedEditFixture.Given("indices", new object[] { 3 }),
+                    ComposedEditFixture.Given(ExcludeBones, new object[] { 2 }),
+                    ComposedEditFixture.Given(MaxBones, 1)));
+
+            Assert.Same(Now(bones[0]), Now(target).Bone1);
+            Near(1.0, Now(target).Weight1);
+            Near(0.0, Share(target, bones[1]));
+            Near(0.0, Share(target, bones[2]));
+            Assert.Equal(1, value[ModelEditWeights.ChangedName]);
+        }
+
+        [Fact]
         public void AnExcludedBoneOutsideTheListIsRefused()
         {
             IList<IPXBone> bones = Bones("一", "元");

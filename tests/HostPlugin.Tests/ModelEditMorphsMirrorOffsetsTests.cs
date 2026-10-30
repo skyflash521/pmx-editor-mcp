@@ -148,6 +148,22 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AMorphWhoseTwoPartnerOffsetsAreBothRewrittenIsCountedOnce()
+        {
+            int handle = Pairs();
+            Morph("左目", MorphKind.Vertex, Moved(0, First), Moved(1, new V3(1f, 2f, 3f)), Moved(2, Second));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(
+                Run(Full(handle, "x", new[] { 0 }, new[] { 0, 1 })));
+
+            Assert.Equal(1, value[Changed]);
+            Assert.Equal(3, _fixture.Model.Morph[0].Offsets.Count);
+            AssertVertexOffset(0, 0, -1f, 2f, 3f);
+            AssertVertexOffset(0, 1, -0.5f, -0.25f, 0.75f);
+            AssertVertexOffset(0, 2, Second.X, Second.Y, Second.Z);
+        }
+
+        [Fact]
         public void AVertexWithNoVertexAtItsMirroredSpotGetsNothingAdded()
         {
             int handle = Standard("x");

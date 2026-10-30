@@ -48,6 +48,8 @@ namespace PmxEditorMcp.Tests
 
         private static readonly V3 AxisTo = new V3(AxisLength, 0f, 0f);
 
+        private static readonly V3 ShortAxisTo = new V3(4f, 0f, 0f);
+
         private static readonly V3 AcrossY = new V3(0f, 1f, 0f);
 
         private static readonly V3 SlantFrom = new V3(1f, -1f, 2f);
@@ -419,6 +421,77 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
+        [InlineData("positive", 3, new[] { 6.0, -1.0, 0.0, 4.0, -2.0, 1.0 })]
+        [InlineData("negative", 2, new[] { 3.0, -2.0, 0.0, 2.0, -4.0, 0.5 })]
+        [InlineData("both", 5, new[] { 6.0, -2.0, 0.0, 4.0, -4.0, 1.0 })]
+        [InlineData(null, 5, new[] { 6.0, -2.0, 0.0, 4.0, -4.0, 1.0 })]
+        public void OnlyTheVerticesASideMovesAreCountedAsChanged(string side, int changed, double[] wanted)
+        {
+            V3[] before = PlaceAll(
+                new V3(2f, 3f, 5f),
+                new V3(2f, -1f, 5f),
+                new V3(2f, 0f, 0f),
+                new V3(1f, 2f, 0f),
+                new V3(3f, -2f, -2f),
+                new V3(2f, 0.5f, 1f));
+            List<KeyValuePair<string, object>> given = Full(
+                before.Length, AxisFrom, ShortAxisTo, AcrossY, new object[] { Knot(0.0, 2.0), Knot(1.0, 2.0) });
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(
+                Run(side == null ? given : With(given, Side, side)));
+
+            Assert.Equal(changed, value[Changed]);
+            AssertAcross(before, wanted);
+        }
+
+        [Fact]
+        public void AVertexOnAConstantCenterStaysAndIsNotCountedAsChanged()
+        {
+            V3[] before = PlaceAll(
+                new V3(2f, 4f, 0f),
+                new V3(2f, 0f, 0f),
+                new V3(2f, 2f, 0f),
+                new V3(2f, 2.5f, 7f));
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Run(Full(
+                before.Length,
+                AxisFrom,
+                ShortAxisTo,
+                AcrossY,
+                new object[] { Knot(0.0, 0.5, 2.0), Knot(1.0, 0.5, 2.0) })));
+
+            Assert.Equal(3, value[Changed]);
+            AssertAcross(before, new[] { 3.0, 1.0, 2.0, 2.25 });
+        }
+
+        [Theory]
+        [InlineData(null, new[] { 5.0, 5.0, 8.0, -4.0, 2.0, 3.0, 11.0, 8.0 })]
+        [InlineData("positive", new[] { 5.0, 5.0, 8.0, 0.0, 2.0, 3.0, 11.0, 8.0 })]
+        [InlineData("negative", new[] { 3.0, 3.0, 4.0, -4.0, 2.0, 3.0, 5.0, 4.0 })]
+        public void ASideIsTakenAgainstTheInterpolatedCenterRatherThanTheAxis(string side, double[] wanted)
+        {
+            V3[] before = PlaceAll(
+                new V3(0f, 3f, 0f),
+                new V3(1f, 3f, 0f),
+                new V3(2f, 4f, 0f),
+                new V3(2f, 0f, 0f),
+                new V3(2f, 2f, 0f),
+                new V3(3f, 3f, 0f),
+                new V3(4f, 5f, 0f),
+                new V3(2f, 4f, 9f));
+            List<KeyValuePair<string, object>> given = Full(
+                before.Length,
+                AxisFrom,
+                ShortAxisTo,
+                AcrossY,
+                new object[] { Knot(0.25, 2.0, 1.0), Knot(0.75, 4.0, 3.0) });
+
+            ComposedEditFixture.Value(Run(side == null ? given : With(given, Side, side)));
+
+            AssertAcross(before, wanted);
+        }
+
+        [Theory]
         [InlineData("left")]
         [InlineData("")]
         [InlineData(1)]
@@ -532,6 +605,16 @@ namespace PmxEditorMcp.Tests
             }
         }
 
+        private V3[] PlaceAll(params V3[] places)
+        {
+            foreach (V3 place in places)
+            {
+                _fixture.Model.Vertex.Add(new FakeVertex(place.X, place.Y, place.Z));
+            }
+
+            return Positions();
+        }
+
         private static FakeVertex Slanted(double s, float across, float other)
         {
             V3 place = SlantedPlace(s, across, other);
@@ -642,6 +725,16 @@ namespace PmxEditorMcp.Tests
                 {
                     Assert.Equal(Math.Sign(end - start), Math.Sign(scales[at] - scales[at - 1]));
                 }
+            }
+        }
+
+        private void AssertAcross(V3[] before, double[] wanted)
+        {
+            V3[] after = Positions();
+            Assert.Equal(wanted.Length, after.Length);
+            for (int at = 0; at < wanted.Length; at++)
+            {
+                AssertNear(new V3(before[at].X, (float)wanted[at], before[at].Z), after[at]);
             }
         }
 

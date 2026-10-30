@@ -200,6 +200,36 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void SwappingTheSidesSwapsTheMaterialsOfAPairAndALimitThatReachesTheEndLeavesNoNextOffset()
+        {
+            Triangle(0, -10, -10, 0, 10, -10, 0, 0, 10, 0);
+            Triangle(1, 0, -5, -5, 0, -5, 5, 0, 5, 0);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                A(1), B(0), ComposedEditFixture.Given("offset", 0), ComposedEditFixture.Given("limit", 1)));
+
+            Assert.Equal(1, value["count"]);
+            IDictionary<string, object> pair = Pairs(value).Single();
+            Assert.Equal(1, pair["material"]);
+            Assert.Equal(0, pair["otherMaterial"]);
+            Assert.False(value.ContainsKey("nextOffset"));
+        }
+
+        [Fact]
+        public void AnOffsetAtTheEndListsNoPairsButKeepsTheCount()
+        {
+            Triangle(0, -10, -10, 0, 10, -10, 0, 0, 10, 0);
+            Triangle(1, 0, -5, -5, 0, -5, 5, 0, 5, 0);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Find(
+                A(0), B(1), ComposedEditFixture.Given("offset", 1)));
+
+            Assert.Equal(1, value["count"]);
+            Assert.Empty(Pairs(value));
+            Assert.False(value.ContainsKey("nextOffset"));
+        }
+
+        [Fact]
         public void PairsOfTheSameDepthComeInTheOrderOfTheirPositions()
         {
             Triangle(0, -20, -20, 0, 20, -20, 0, 0, 20, 0);
