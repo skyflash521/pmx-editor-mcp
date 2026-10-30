@@ -1,0 +1,13 @@
+{
+  "solution": {
+    "path": "PmxEditorMcp.sln",
+    "projects": [
+      "src\\Bridge\\PmxEditorMcp.Bridge.csproj",
+      "src\\HostPlugin\\PmxEditorMcp.HostPlugin.csproj",
+      "tests\\Bridge.Tests\\PmxEditorMcp.Bridge.Tests.csproj",
+      "tests\\HostPlugin.ModalTests\\PmxEditorMcp.HostPlugin.ModalTests.csproj",
+      "tests\\HostPlugin.SavingItemTests\\PmxEditorMcp.HostPlugin.SavingItemTests.csproj",
+      "tests\\HostPlugin.Tests\\PmxEditorMcp.HostPlugin.Tests.csproj"
+    ]
+  }
+}

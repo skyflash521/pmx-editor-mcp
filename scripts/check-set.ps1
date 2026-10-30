@@ -1115,7 +1115,15 @@ $checks['テスト'] = New-Check `
     -LimitSeconds 62 `
     -Needs $buildOutput `
     -Stage 3 `
-    -Run @('dotnet', 'test', 'PmxEditorMcp.sln', '--no-build')
+    -Run @('dotnet', 'test', 'PmxEditorMcp.WithEditor.slnf', '--no-build')
+$checks['テスト(SDK不要)'] = New-Check `
+    -Groups @('定義', 'コード') `
+    -LimitSeconds 30 `
+    -Needs $noArtifact `
+    -Stage 3 `
+    -Bundle $msbuildBundle `
+    -WithoutEditor `
+    -Run @('dotnet', 'test', 'tests/SignatureDump.Tests/PmxEditorMcp.SignatureDump.Tests.csproj')
 $checks['台帳とSDKの照合'] = New-Check `
     -Groups @('定義') `
     -LimitSeconds 3 `
