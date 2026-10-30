@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 
 namespace PmxEditorMcp.Tests
@@ -123,6 +124,11 @@ namespace PmxEditorMcp.Tests
         public override int Read(byte[] buffer, int offset, int count)
         {
             return _input.Read(buffer, offset, count);
+        }
+
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Read(buffer, offset, count));
         }
 
         public override void Write(byte[] buffer, int offset, int count)
