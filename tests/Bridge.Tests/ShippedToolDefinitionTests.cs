@@ -53,8 +53,12 @@ namespace PmxEditorMcp.Bridge.Tests
                 new string[0],
                 definitions.Select(d => d.Name).Where(n => !sources.ContainsKey(n)).ToArray());
             IList<string>[] found = new IList<string>[definitions.Length];
-            DedicatedParallel.For(0, definitions.Length, at =>
+            int[] heaviestFirst = Enumerable.Range(0, definitions.Length)
+                .OrderByDescending(at => definitions[at].InputSchema.Length)
+                .ToArray();
+            DedicatedParallel.For(0, heaviestFirst.Length, turn =>
             {
+                int at = heaviestFirst[turn];
                 found[at] = Violations(definitions[at], Branches(sources[definitions[at].Name]));
             });
             List<string> violations = found.SelectMany(f => f).ToList();
@@ -70,15 +74,19 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             List<string> violations = new List<string>();
             JsonSchema schema = JsonSchema.FromText(definition.InputSchema);
-            JsonObject properties =
-                SchemaRefs.Inlined(JsonNode.Parse(definition.InputSchema))["properties"].AsObject();
+            JsonNode root = SchemaRefs.Inlined(JsonNode.Parse(definition.InputSchema));
+            JsonObject properties = root["properties"].AsObject();
+            MemberVerdicts members = new MemberVerdicts(root);
             HashSet<string> tried = new HashSet<string>(StringComparer.Ordinal);
             IEnumerable<JsonObject> inputs = Inputs(properties, branches, false)
                 .Concat(Inputs(properties, branches, true));
             foreach (JsonObject input in inputs)
             {
                 string written = input.ToJsonString();
-                if (!tried.Add(written) || branches.Any(b => b.Fits(input)) || !Takes(schema, written))
+                if (!tried.Add(written)
+                    || branches.Any(b => b.Fits(input))
+                    || members.Refuse(input)
+                    || !members.TakesWhole(schema, input, written))
                 {
                     continue;
                 }
@@ -87,6 +95,148 @@ namespace PmxEditorMcp.Bridge.Tests
             }
 
             return violations;
+        }
+
+        private sealed class MemberVerdicts
+        {
+            private static readonly string[] Composing = { "allOf", "anyOf", "oneOf" };
+
+            private readonly JsonObject _properties;
+            private readonly bool _closed;
+
+            private readonly bool _shapedByNamesAndValues;
+            private readonly ISet<string> _valuedNames = new HashSet<string>(StringComparer.Ordinal);
+            private readonly JsonSchema _rest;
+            private readonly Dictionary<string, bool> _byShapes = new Dictionary<string, bool>(StringComparer.Ordinal);
+            private readonly Dictionary<string, JsonSchema> _schemas = new Dictionary<string, JsonSchema>(StringComparer.Ordinal);
+            private readonly Dictionary<string, bool> _taken = new Dictionary<string, bool>(StringComparer.Ordinal);
+
+            public MemberVerdicts(JsonNode root)
+            {
+                _properties = root["properties"].AsObject();
+                _closed = root["additionalProperties"] is JsonValue closed
+                    && closed.GetValueKind() == JsonValueKind.False;
+                _shapedByNamesAndValues = root.AsObject().All(
+                    p => p.Key == "properties" || p.Key == "$defs" || Shaping(p.Key, p.Value, _valuedNames));
+                JsonObject rest = root.DeepClone().AsObject();
+                rest.Remove("properties");
+                rest.Remove("additionalProperties");
+                _rest = _closed ? JsonSchema.FromText(rest.ToJsonString()) : null;
+            }
+
+            public bool TakesWhole(JsonSchema schema, JsonObject input, string written)
+            {
+                JsonSchema judged = _rest ?? schema;
+                if (!_shapedByNamesAndValues)
+                {
+                    return ShippedToolDefinitionTests.Takes(judged, written);
+                }
+
+                string shape = string.Join(
+                    ",",
+                    input.OrderBy(m => m.Key, StringComparer.Ordinal).Select(
+                        m => _valuedNames.Contains(m.Key)
+                            ? m.Key + "=" + (m.Value == null ? "null" : m.Value.ToJsonString())
+                            : m.Key));
+                bool taken;
+                if (!_byShapes.TryGetValue(shape, out taken))
+                {
+                    taken = ShippedToolDefinitionTests.Takes(judged, written);
+                    _byShapes.Add(shape, taken);
+                }
+
+                return taken;
+            }
+
+            private static bool Shaping(string keyword, JsonNode value, ISet<string> valued)
+            {
+                switch (keyword)
+                {
+                    case "type":
+                        return value is JsonValue type && type.GetValueKind() == JsonValueKind.String
+                            && type.GetValue<string>() == "object";
+
+                    case "additionalProperties":
+                        return value is JsonValue flag
+                            && (flag.GetValueKind() == JsonValueKind.False || flag.GetValueKind() == JsonValueKind.True);
+
+                    case "required":
+                        return value is JsonArray;
+
+                    case "properties":
+                        if (!(value is JsonObject named))
+                        {
+                            return false;
+                        }
+
+                        foreach (KeyValuePair<string, JsonNode> member in named)
+                        {
+                            if (!(member.Value is JsonObject empty && empty.Count == 0)
+                                && !(member.Value is JsonValue any && any.GetValueKind() == JsonValueKind.True))
+                            {
+                                valued.Add(member.Key);
+                            }
+                        }
+
+                        return true;
+
+                    case "not":
+                    case "if":
+                    case "then":
+                    case "else":
+                        return value is JsonObject part && Shaped(part, valued);
+
+                    default:
+                        return Composing.Contains(keyword)
+                            && value is JsonArray parts
+                            && parts.All(part => part is JsonObject held && Shaped(held, valued));
+                }
+            }
+
+            private static bool Shaped(JsonObject schema, ISet<string> valued)
+            {
+                return schema.All(p => Shaping(p.Key, p.Value, valued));
+            }
+
+            public bool Refuse(JsonObject input)
+            {
+                foreach (KeyValuePair<string, JsonNode> member in input)
+                {
+                    JsonNode declared;
+                    if (!_properties.TryGetPropertyValue(member.Key, out declared))
+                    {
+                        if (_closed)
+                        {
+                            return true;
+                        }
+
+                        continue;
+                    }
+
+                    string value = member.Value == null ? "null" : member.Value.ToJsonString();
+                    string key = member.Key + "=" + value;
+                    bool taken;
+                    if (!_taken.TryGetValue(key, out taken))
+                    {
+                        JsonSchema part;
+                        if (!_schemas.TryGetValue(member.Key, out part))
+                        {
+                            part = JsonSchema.FromText(declared.ToJsonString());
+                            _schemas.Add(member.Key, part);
+                        }
+
+                        taken = Takes(part, value);
+                        _taken.Add(key, taken);
+                    }
+
+                    if (!taken)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
         }
 
         [Fact]
@@ -302,9 +452,21 @@ namespace PmxEditorMcp.Bridge.Tests
             DedicatedParallel.For(0, definitions.Length, at =>
             {
                 GeneratedToolDefinition definition = definitions[at];
+                JsonNode root = JsonNode.Parse(definition.InputSchema);
+                if (!root["properties"].AsObject().ContainsKey(ConfirmName)
+                    && root["additionalProperties"] is JsonValue closed
+                    && closed.GetValueKind() == JsonValueKind.False)
+                {
+                    if (confirmedByTheHost.Contains(definition.Name))
+                    {
+                        found[at] = definition.Name + ": ホストが確認を要るのに、確認を要る入力を通さない";
+                    }
+
+                    return;
+                }
+
                 JsonSchema schema = JsonSchema.FromText(definition.InputSchema);
-                JsonObject properties =
-                    SchemaRefs.Inlined(JsonNode.Parse(definition.InputSchema))["properties"].AsObject();
+                JsonObject properties = SchemaRefs.Inlined(root)["properties"].AsObject();
                 bool takenOnlyWithConfirm = false;
                 bool takenWithoutConfirm = false;
                 HashSet<string> tried = new HashSet<string>(StringComparer.Ordinal);
