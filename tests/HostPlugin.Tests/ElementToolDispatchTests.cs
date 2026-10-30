@@ -291,6 +291,23 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void SeveralRunsComeBackInTheOrderTheRequestGave()
+        {
+            foreach (string label in new[] { "一", "二", "三", "四", "五" })
+            {
+                _model.Items.Add(new Item { Label = label });
+            }
+
+            IDictionary<string, object> envelope = Call(
+                "model_list_items",
+                Arguments("ranges", new object[] { Run(3, 2), Run(0, 1) }));
+
+            Assert.Equal(
+                new[] { "四", "五", "一" },
+                Items(Value(envelope)).Select(i => i["label"]).ToArray());
+        }
+
+        [Fact]
         public void TheTotalCountsOnlyThePointedPositions()
         {
             _model.Items.Add(new Item { Label = "一" });
@@ -2923,6 +2940,15 @@ namespace PmxEditorMcp.Tests
                     TargetNames.Element.Handles, new object[] { handle },
                     ToolDispatch.ValueName, Value("mate", position)),
                 handles);
+        }
+
+        private static IDictionary<string, object> Run(int start, int count)
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { TargetInput.StartName, start },
+                { TargetInput.CountName, count },
+            };
         }
 
         private static IDictionary<string, object> Value(string name, object value)

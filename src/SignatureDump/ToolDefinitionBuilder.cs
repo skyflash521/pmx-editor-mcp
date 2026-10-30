@@ -107,7 +107,7 @@ namespace PmxEditorMcp.SignatureDump
 
         private static readonly string[] HandleListNames = { "handles", "parentHandles" };
 
-        private static readonly string[] RangeNames = { "range", "parentRange" };
+        private static readonly string[] RangeNames = { "range", "ranges", "parentRange" };
 
         private static readonly string[] WholeNames = { "all", "parentAll", "selected" };
 
@@ -356,7 +356,9 @@ namespace PmxEditorMcp.SignatureDump
 
             public Place MemberOf(string container)
             {
-                return new Place(false, container, false) { UnderTop = Top };
+                return container == null && InArray
+                    ? new Place(false, Container, false) { UnderTop = UnderTop }
+                    : new Place(false, container, false) { UnderTop = Top };
             }
 
             public Place ElementOf(string container)

@@ -4242,6 +4242,7 @@ namespace PmxEditorMcp
 
             yield return TargetNames.Element.Indices;
             yield return TargetNames.Element.Range;
+            yield return TargetNames.Element.Ranges;
             yield return TargetNames.Element.All;
             if (ScreenTargets.Selects(access) || ScreenTargets.SelectsAcross(access))
             {
@@ -4634,7 +4635,8 @@ namespace PmxEditorMcp
             return elements != null
                 && (elements.Indices != null
                     || elements.RangeStart.HasValue
-                    || elements.RangeCount.HasValue);
+                    || elements.RangeCount.HasValue
+                    || elements.Ranges != null);
         }
 
         private static bool TryInsideEachParent(

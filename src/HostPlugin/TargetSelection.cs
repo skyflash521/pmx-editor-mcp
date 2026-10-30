@@ -26,6 +26,21 @@ namespace PmxEditorMcp
         Selected = 16,
 
         Numbered = 32,
+
+        Ranges = 64,
+    }
+
+    public sealed class TargetRun
+    {
+        public TargetRun(int start, int count)
+        {
+            Start = start;
+            Count = count;
+        }
+
+        public int Start { get; }
+
+        public int Count { get; }
     }
 
     /// <summary>1つの集合を指す項目の名前。解く集合に合わせてこれを渡す。</summary>
@@ -37,7 +52,8 @@ namespace PmxEditorMcp
             string all,
             string handles,
             string selected = null,
-            string numbered = null)
+            string numbered = null,
+            string ranges = null)
         {
             if (string.IsNullOrWhiteSpace(indices))
             {
@@ -65,10 +81,11 @@ namespace PmxEditorMcp
             Handles = handles;
             Selected = selected;
             Numbered = numbered;
+            Ranges = ranges;
         }
 
         public static TargetNames Element { get; } =
-            new TargetNames("indices", "range", "all", "handles", "selected", "modelIndices");
+            new TargetNames("indices", "range", "all", "handles", "selected", "modelIndices", "ranges");
 
         public static TargetNames Parent { get; } =
             new TargetNames("parentIndices", "parentRange", "parentAll", "parentHandles");
@@ -85,6 +102,9 @@ namespace PmxEditorMcp
         public string Selected { get; }
 
         public string Numbered { get; }
+
+        /// <summary>組の並びを指す名前。その組が組の並びを受け付けないなら null。</summary>
+        public string Ranges { get; }
     }
 
     /// <summary>要求が持ってきた集合の指定。持たない形は null を渡す。</summary>
@@ -97,7 +117,8 @@ namespace PmxEditorMcp
             bool? all = null,
             IList<long> handles = null,
             bool? selected = null,
-            IList<int> numbered = null)
+            IList<int> numbered = null,
+            IList<TargetRun> ranges = null)
         {
             Indices = indices;
             RangeStart = rangeStart;
@@ -106,6 +127,7 @@ namespace PmxEditorMcp
             Handles = handles;
             Selected = selected;
             Numbered = numbered;
+            Ranges = ranges;
         }
 
         /// <summary>位置の配列。指定が無ければ null。</summary>
@@ -127,6 +149,9 @@ namespace PmxEditorMcp
         public bool? Selected { get; }
 
         public IList<int> Numbered { get; }
+
+        /// <summary>始まりの位置と件数の組の並び。指定が無ければ null。</summary>
+        public IList<TargetRun> Ranges { get; }
     }
 
     public sealed class ResolvedTargets
@@ -208,6 +233,10 @@ namespace PmxEditorMcp
                 allowed &= ~TargetForm.Numbered;
             }
 
+            allowed = (allowed & TargetForm.Range) == TargetForm.Range && names.Ranges != null
+                ? allowed | TargetForm.Ranges
+                : allowed & ~TargetForm.Ranges;
+
             if ((allowed & TargetForm.Selected) == TargetForm.Selected && selected == null)
             {
                 throw new ArgumentNullException(nameof(selected));
@@ -239,6 +268,10 @@ namespace PmxEditorMcp
                     return TryResolveRange(
                         request.RangeStart, request.RangeCount, listCount, names,
                         out resolved, out code, out message);
+
+                case TargetForm.Ranges:
+                    return TryResolveRanges(
+                        request.Ranges, listCount, names, out resolved, out code, out message);
 
                 case TargetForm.All:
                     return TryResolveAll(
@@ -297,6 +330,11 @@ namespace PmxEditorMcp
             if (request.Numbered != null)
             {
                 given |= TargetForm.Numbered;
+            }
+
+            if (request.Ranges != null)
+            {
+                given |= TargetForm.Ranges;
             }
 
             return given;
@@ -425,6 +463,56 @@ namespace PmxEditorMcp
             return true;
         }
 
+        private static bool TryResolveRanges(
+            IList<TargetRun> runs,
+            int listCount,
+            TargetNames names,
+            out ResolvedTargets resolved,
+            out string code,
+            out string message)
+        {
+            resolved = null;
+            code = null;
+            message = null;
+
+            if (runs.Count == 0)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = names.Ranges + " が空である。空だと対象が決まらない。";
+                return false;
+            }
+
+            foreach (TargetRun run in runs)
+            {
+                if (!PositionInput.TryRange(run.Start, run.Count, listCount, names.Ranges, out code, out message))
+                {
+                    return false;
+                }
+            }
+
+            TargetRun[] sorted = runs.OrderBy(run => run.Start).ToArray();
+            for (int at = 1; at < sorted.Length; at++)
+            {
+                if (sorted[at].Start < sorted[at - 1].Start + sorted[at - 1].Count)
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = string.Format(
+                        CultureInfo.InvariantCulture,
+                        "{0} が同じ位置を二度指している: {1}",
+                        names.Ranges,
+                        sorted[at].Start);
+                    return false;
+                }
+            }
+
+            resolved = new ResolvedTargets(
+                TargetForm.Ranges,
+                runs.SelectMany(run => Enumerable.Range(run.Start, run.Count)).ToArray(),
+                null);
+
+            return true;
+        }
+
         private static bool TryResolveAll(
             bool all,
             int listCount,
@@ -544,6 +632,7 @@ namespace PmxEditorMcp
             yield return TargetForm.Handles;
             yield return TargetForm.Selected;
             yield return TargetForm.Numbered;
+            yield return TargetForm.Ranges;
         }
 
         private static string AllowedText(TargetForm allowed, TargetNames names)
@@ -576,6 +665,9 @@ namespace PmxEditorMcp
 
                 case TargetForm.Numbered:
                     return names.Numbered;
+
+                case TargetForm.Ranges:
+                    return names.Ranges;
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(form), form, "知らない指し方。");

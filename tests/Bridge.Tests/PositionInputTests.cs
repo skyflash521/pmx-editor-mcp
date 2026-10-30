@@ -165,12 +165,14 @@ namespace PmxEditorMcp.Bridge.Tests
                 return;
             }
 
-            string name = item["name"] == null ? null : item["name"].GetValue<string>();
+            string name = item["name"] == null ? container : item["name"].GetValue<string>();
             bool number = item["shape"] != null && item["shape"].GetValue<string>() == "number";
             if (number
                 && ((top && name == "offset")
                     || name == "parentIndex"
-                    || (name == "start" && container != null && container.EndsWith("ange", StringComparison.Ordinal))))
+                    || (name == "start" && container != null
+                        && (container.EndsWith("ange", StringComparison.Ordinal)
+                            || container.EndsWith("anges", StringComparison.Ordinal)))))
             {
                 paths.Add(path);
             }

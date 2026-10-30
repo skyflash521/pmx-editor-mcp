@@ -863,6 +863,10 @@ namespace PmxEditorMcp.Bridge.Tests
 
         private static readonly Func<JsonNode, bool> IsPosition = IsIntegerIn(0, int.MaxValue);
 
+        private static readonly Func<JsonNode, bool> IsRange = value => value is JsonObject given
+            && given.ContainsKey("start") && IsPosition(given["start"])
+            && given.ContainsKey("count") && IsIntegerIn(1, int.MaxValue)(given["count"]);
+
         private static Func<JsonNode, bool> NullOr(Func<JsonNode, bool> rule)
         {
             return value => value == null || rule(value);
@@ -966,6 +970,8 @@ namespace PmxEditorMcp.Bridge.Tests
             private static readonly string[] PropertyValueNames = { "value", "values" };
 
             private static readonly string[] RangeNames = { "range", "parentRange" };
+
+            private const string RangesName = "ranges";
 
             private static readonly string[] PositionListNames =
                 { "indices", "modelIndices", "parentIndices" };
@@ -1256,9 +1262,14 @@ namespace PmxEditorMcp.Bridge.Tests
                 {
                     census.Count(HostTypeCensus.Checked);
 
-                    return value => value is JsonObject given
-                        && given.ContainsKey("start") && IsPosition(given["start"])
-                        && given.ContainsKey("count") && IsIntegerIn(1, int.MaxValue)(given["count"]);
+                    return IsRange;
+                }
+
+                if (top && name == RangesName && item["element"] != null && item["element"]["members"] != null)
+                {
+                    census.Count(HostTypeCensus.Checked);
+
+                    return value => value is JsonArray runs && runs.Count > 0 && runs.All(IsRange);
                 }
 
                 if (item["element"] != null)

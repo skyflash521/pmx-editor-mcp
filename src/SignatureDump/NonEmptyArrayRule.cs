@@ -20,6 +20,7 @@ namespace PmxEditorMcp.SignatureDump
             "parentHandles",
             "parentIndices",
             "ramp",
+            "ranges",
             "refIndices",
             "surfaceMaterialIndices",
             "targets",
