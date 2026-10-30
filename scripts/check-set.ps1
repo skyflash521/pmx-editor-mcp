@@ -1120,7 +1120,7 @@ $checks['テスト(SDK不要)'] = New-Check `
     -Groups @('定義', 'コード') `
     -LimitSeconds 30 `
     -Needs $noArtifact `
-    -Stage 3 `
+    -Stage 4 `
     -Bundle $msbuildBundle `
     -WithoutEditor `
     -Run @('dotnet', 'test', 'tests/SignatureDump.Tests/PmxEditorMcp.SignatureDump.Tests.csproj')
