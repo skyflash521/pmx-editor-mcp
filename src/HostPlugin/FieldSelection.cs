@@ -16,7 +16,8 @@ namespace PmxEditorMcp
             IList<string> always,
             out IList<string> selected,
             out string code,
-            out string message)
+            out string message,
+            IList<string> identifying = null)
         {
             if (readable == null)
             {
@@ -63,6 +64,7 @@ namespace PmxEditorMcp
             }
 
             HashSet<string> constant = new HashSet<string>(always, StringComparer.Ordinal);
+            constant.UnionWith(identifying ?? new string[0]);
             foreach (string name in requested)
             {
                 if (!known.Contains(name) && !constant.Contains(name))

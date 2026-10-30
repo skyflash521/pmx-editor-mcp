@@ -102,6 +102,11 @@ namespace PmxEditorMcp
         /// <summary>ハンドル1件が応答で使う文字数。IDの十進表記の最大の桁数と区切りの1文字。</summary>
         private const int HandleChars = 11;
 
+        private static readonly string[] Identifiers =
+        {
+            ItemTypeName, HandleName, IndexName, ParentIndexName, ParentHandleName, IndexInParentName,
+        };
+
         private readonly SdkRelayTable _relay;
 
         private readonly EventBindingTable _events;
@@ -2919,7 +2924,8 @@ namespace PmxEditorMcp
                     Composed(tool.Access, pointed),
                     out selected,
                     out code,
-                    out message))
+                    out message,
+                    Identifiers))
             {
                 return ToolEnvelope.Failure(code, message);
             }

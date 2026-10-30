@@ -308,6 +308,22 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AnIdentifierThatThePointingDoesNotCarryCanStillBeAskedForAndAddsNothing()
+        {
+            _model.Items.Add(new Item { Label = "一" });
+            _model.Items.Add(new Item { Label = "二" });
+
+            IDictionary<string, object> item = Items(Value(Call(
+                "model_list_items",
+                Arguments(
+                    TargetNames.Element.Indices, new object[] { 1 },
+                    ToolDispatch.FieldsName, new object[] { "label", ToolDispatch.HandleName })))).Single();
+
+            Assert.Equal(new[] { ToolDispatch.IndexName, "label" }, item.Keys.ToArray());
+            Assert.Equal("二", item["label"]);
+        }
+
+        [Fact]
         public void TheTotalCountsOnlyThePointedPositions()
         {
             _model.Items.Add(new Item { Label = "一" });
