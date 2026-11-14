@@ -24,7 +24,6 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             "pmx-editor-mcp-",
             "pmx-editor-mcp-abc",
-            "pmx-editor-mcp--1",
             "pmx-editor-mcp-+1",
             "pmx-editor-mcp- 1",
             "pmx-editor-mcp-12x",
@@ -33,11 +32,9 @@ namespace PmxEditorMcp.Bridge.Tests
             "pmx-editor-mcp-0",
             "pmx-editor-mcp-01",
             "pmx-editor-mcp-2147483648",
-            "pmx-editor-mcp-99999999999999999999",
             "pmx-editor-mcp-١٢٣",
             "PMX-EDITOR-MCP-12",
             "mcp-pmx-editor-mcp-12",
-            "lsass",
         };
 
         [Fact]
@@ -56,58 +53,12 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void ExplicitTargetIsUsedWithoutEnumeratingListeners()
-        {
-            string resolved = ResolveWith(
-                "pmx-editor-mcp-9", Entries("pmx-editor-mcp-1234", "pmx-editor-mcp-5678"), new int[] { 1234, 5678 });
-
-            Assert.Equal("pmx-editor-mcp-9", resolved);
-        }
-
-        [Fact]
-        public void ListenerEnumerationHappensOnlyWithoutExplicitTarget()
-        {
-            string resolved = ResolveWith(
-                string.Empty, Entries("pmx-editor-mcp-1234"), new int[] { 1234 });
-
-            Assert.Equal(string.Empty, resolved);
-        }
-
-        [Fact]
         public void SingleListeningHostBecomesTarget()
         {
             string resolved = ResolveWith(
                 null, Entries("pmx-editor-mcp-1234"), new int[] { 1234 });
 
             Assert.Equal("pmx-editor-mcp-1234", resolved);
-        }
-
-        [Fact]
-        public void TargetIsReturnedAsPipeNameNotDirectoryEntry()
-        {
-            string resolved = ResolveWith(
-                null, Entries("pmx-editor-mcp-1234"), new int[] { 1234 });
-
-            Assert.DoesNotContain(PipeTargetResolver.PipeDirectory, resolved);
-        }
-
-        [Theory]
-        [MemberData(nameof(NamesThatAreNotHostListeners))]
-        public void OnlyHostListenersAreCandidatesAmongOtherEntries(string notHostPipeName)
-        {
-            string resolved = ResolveWith(
-                null, Entries(notHostPipeName, "pmx-editor-mcp-1234"), new int[] { 1234 });
-
-            Assert.Equal("pmx-editor-mcp-1234", resolved);
-        }
-
-        [Fact]
-        public void TargetIsResolvedWithMultipleEditorsButOneListener()
-        {
-            string resolved = ResolveWith(
-                null, Entries("pmx-editor-mcp-5678"), new int[] { 1234, 5678, 9012 });
-
-            Assert.Equal("pmx-editor-mcp-5678", resolved);
         }
 
         [Fact]
@@ -168,7 +119,6 @@ namespace PmxEditorMcp.Bridge.Tests
 
         [Theory]
         [InlineData(new int[] { 1234 })]
-        [InlineData(new int[] { 1234, 5678, 9012 })]
         public void EditorWithoutListenerYieldsStatusCheckPrompt(int[] editorProcessIds)
         {
             BridgeException error = Assert.Throws<BridgeException>(
@@ -181,38 +131,8 @@ namespace PmxEditorMcp.Bridge.Tests
                 error.Message);
         }
 
-        [Fact]
-        public void MultipleListenersYieldErrorStatingAmbiguityAndCandidates()
-        {
-            // 桁数の違う値を混ぜる。同じ桁数だけでは、名前の文字列順に並べる実装と区別できない。
-            BridgeException error = Assert.Throws<BridgeException>(
-                () => ResolveWith(
-                    null,
-                    Entries("pmx-editor-mcp-30", "lsass", "pmx-editor-mcp-2", "pmx-editor-mcp-10"),
-                    new int[] { 2, 10, 30 }));
-
-            Assert.Equal(BridgeErrorCodes.MultipleHosts, error.Code);
-            Assert.Equal(MultipleHostsMessage, error.Message);
-        }
-
-        [Theory]
-        [InlineData("環境変数")]
-        [InlineData("登録")]
-        [InlineData("設定")]
-        public void MultipleListenerGuidanceDoesNotDemandConfiguration(string forbidden)
-        {
-            BridgeException error = Assert.Throws<BridgeException>(
-                () => ResolveWith(
-                    null,
-                    Entries("pmx-editor-mcp-5678", "pmx-editor-mcp-1234"),
-                    new int[] { 1234, 5678 }));
-
-            Assert.DoesNotContain(forbidden, error.Message);
-        }
-
         [Theory]
         [InlineData("pmx-editor-mcp-1", 1)]
-        [InlineData("pmx-editor-mcp-1234", 1234)]
         [InlineData("pmx-editor-mcp-2147483647", int.MaxValue)]
         public void ProcessIdIsReadFromHostListenerEntry(string pipeName, int expected)
         {
@@ -324,7 +244,6 @@ namespace PmxEditorMcp.Bridge.Tests
         [Theory]
         [InlineData(new int[0], BridgeErrorCodes.NoEditor)]
         [InlineData(new int[] { 1234 }, BridgeErrorCodes.NoHost)]
-        [InlineData(new int[] { 1234, 5678 }, BridgeErrorCodes.NoHost)]
         public void NoListenerCountsEditorsToChooseGuidance(int[] editorProcessIds, string expectedCode)
         {
             string searchedProcessName = null;

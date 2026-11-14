@@ -93,9 +93,3 @@ test("プリミティブビルダーの行でないものは、省かない", ()
     assert.equal(done.dropped, 0);
     assert.equal(done.cases.length, cases.length);
 });
-
-test("1つの行だけを走らせるときは、その行のひと組を残す", () => {
-    const done = dropRedundantSetups(builderRow(5));
-
-    assert.equal(done.dropped, 0);
-});

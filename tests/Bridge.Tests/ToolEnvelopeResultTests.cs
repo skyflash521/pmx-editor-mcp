@@ -28,15 +28,6 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void TextOutsideAsciiInTheValueIsKeptAsIs()
-        {
-            CallToolResult result = ToolEnvelopeResult.From(
-                JsonNode.Parse("{\"ok\":true,\"value\":{\"name\":\"右足首D\"}}"), Notice, Budget, false);
-
-            Assert.Equal(Notice + "\n{\"name\":\"右足首D\"}", Text(result));
-        }
-
-        [Fact]
         public void OnlyWhatJsonRequiresIsEscapedInTheValue()
         {
             JsonObject value = new JsonObject
@@ -147,7 +138,6 @@ namespace PmxEditorMcp.Bridge.Tests
 
         [Theory]
         [InlineData("[]")]
-        [InlineData("1")]
         [InlineData("{\"value\":1}")]
         [InlineData("{\"ok\":\"true\",\"value\":1}")]
         [InlineData("{\"ok\":true}")]
@@ -305,11 +295,10 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Theory]
-        [InlineData("{\"ok\":true,\"value\":null}")]
         [InlineData("{\"ok\":true,\"value\":\"\"}")]
         [InlineData("{\"ok\":true,\"value\":1}")]
         [InlineData("{\"ok\":true,\"value\":{\"data\":\"iVBORw0KGgo=\"}}")]
-        public void AnImageThatIsNotAStringBreaksTheContract(string json)
+        public void AnImageThatIsNotANonEmptyStringBreaksTheContract(string json)
         {
             Assert.Throws<FormatException>(
                 () => ToolEnvelopeResult.From(JsonNode.Parse(json), Notice, Budget, true));

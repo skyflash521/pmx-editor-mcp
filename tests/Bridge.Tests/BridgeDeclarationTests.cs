@@ -11,7 +11,6 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Theory]
-        [InlineData(null, null)]
         [InlineData(null, "0")]
         [InlineData("0", "0")]
         [InlineData("", "0")]

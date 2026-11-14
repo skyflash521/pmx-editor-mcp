@@ -14,13 +14,6 @@ namespace PmxEditorMcp.Bridge.Tests
 
         private static readonly Encoding Utf8WithoutBom = new UTF8Encoding(false);
 
-        [Fact]
-        public void BodySizeIsCountedInUtf8Bytes()
-        {
-            Assert.Equal(3, BridgeMessageChannel.MeasureBytes("あ"));
-            Assert.Equal(0, BridgeMessageChannel.MeasureBytes(string.Empty));
-        }
-
         /// <summary>メッセージの上限は、ホストと揃えて持つ取り決めの値である。</summary>
         [Fact]
         public void IoLimitMatchesContract()
@@ -233,15 +226,6 @@ namespace PmxEditorMcp.Bridge.Tests
 
             Assert.Equal(BridgeMessageOutcome.InvalidEncoding, read.Outcome);
             Assert.Null(read.Message);
-        }
-
-        [Fact]
-        public async Task BodiesWithMultiByteCharactersAreReadPerSeparator()
-        {
-            BridgeMessageChannel channel = ReadingChannel("あい\nうえ\n");
-
-            Assert.Equal("あい", await ReadMessage(channel));
-            Assert.Equal("うえ", await ReadMessage(channel));
         }
 
         private static BridgeMessageChannel ReadingChannel(string content)

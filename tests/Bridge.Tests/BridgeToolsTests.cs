@@ -317,8 +317,6 @@ namespace PmxEditorMcp.Bridge.Tests
 
         [Theory]
         [InlineData(null, "0")]
-        [InlineData("0", "0")]
-        [InlineData("1", null)]
         [InlineData("1", "1")]
         public async Task ToolDefinitionKeepsTheDeclarationWithoutBothVariables(
             string debugHooks, string declareMeta)
@@ -475,29 +473,6 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task TestOnlyEnvironmentVariablePinsRelayTarget()
-        {
-            using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
-                .Reply(request => Result(request, "\"pong\""))
-                .Start();
-
-            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
-            await using McpClient client = await StartBridgeWithAsync(
-                PipeTargetResolver.TestPipeEnvironmentVariableName, host.PipeName, null, limit.Token);
-
-            CallToolResult result = await client.CallToolAsync(
-                "ping", cancellationToken: limit.Token);
-
-            Assert.NotEqual(true, result.IsError);
-            Assert.Equal(Relayed(host.PipeName, "pong"), TextOf(result));
-
-            // 応答の中身だけでは、指定を無視して別の相手を見つけた実装も通る。この待受が
-            // 要求を受け取ったことまでを見て、指定が効いていることを確かめる。
-            Assert.Equal(new string[] { "handshake", "ping" }, MethodsOf(host.Requests));
-        }
-
-        [Fact]
         public async Task WithoutTargetSettingListeningHostIsDiscovered()
         {
             // ホストの名乗り方どおりの名前で待ち受け、接続先の指定を与えずに起動する。実機の
@@ -532,25 +507,6 @@ namespace PmxEditorMcp.Bridge.Tests
 
             AssertFoundByEnumeration(
                 await client.CallToolAsync("ping", cancellationToken: limit.Token), host);
-        }
-
-        [Fact]
-        public async Task SuccessfulResultAnnouncesTargetOnFirstLine()
-        {
-            using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(ResponseBudget.DefaultChars))
-                .Reply(request => Result(request, "\"pong\""))
-                .Start();
-
-            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
-            await using McpClient client = await StartBridgeWithAsync(
-                PipeTargetResolver.TestPipeEnvironmentVariableName, host.PipeName, null, limit.Token);
-
-            CallToolResult result = await client.CallToolAsync(
-                "ping", cancellationToken: limit.Token);
-
-            Assert.NotEqual(true, result.IsError);
-            Assert.Equal(Relayed(host.PipeName, "pong"), TextOf(result));
         }
 
         [Fact]

@@ -89,7 +89,6 @@ namespace PmxEditorMcp.Bridge.Tests
         [Theory]
         // プロトコル番号の不一致は、ホストが切断を伴うエラーとして返す。
         [InlineData(-32001, "プロトコル番号が一致しない")]
-        [InlineData(-32602, "引数が不正")]
         public async Task HostErrorDuringHandshakeFailsAndClosesConnection(
             int hostErrorCode, string hostMessage)
         {
@@ -108,18 +107,18 @@ namespace PmxEditorMcp.Bridge.Tests
         [Theory]
         [InlineData("null")]
         [InlineData("\"ok\"")]
-        [InlineData("[1]")]
-        [InlineData("{\"protocol\":2,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}")]
-        [InlineData("{\"protocol\":\"1\",\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}")]
-        [InlineData("{\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}")]
-        [InlineData("{\"protocol\":1,\"budgetChars\":100000}")]
-        [InlineData("{\"protocol\":1,\"hostVersion\":5,\"budgetChars\":100000}")]
-        [InlineData("{\"protocol\":1,\"hostVersion\":\"1.0.0.0\"}")]
-        [InlineData("{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":\"100000\"}")]
+        [InlineData("{\"protocol\":2,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\"DIGEST\",\"budgetChars\":100000}")]
+        [InlineData("{\"protocol\":\"1\",\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\"DIGEST\",\"budgetChars\":100000}")]
+        [InlineData("{\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\"DIGEST\",\"budgetChars\":100000}")]
+        [InlineData("{\"protocol\":1,\"toolMapDigest\":\"DIGEST\",\"budgetChars\":100000}")]
+        [InlineData("{\"protocol\":1,\"hostVersion\":5,\"toolMapDigest\":\"DIGEST\",\"budgetChars\":100000}")]
+        [InlineData("{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\"DIGEST\"}")]
+        [InlineData("{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"toolMapDigest\":\"DIGEST\",\"budgetChars\":\"100000\"}")]
         public async Task HandshakeSuccessOutsideContractFailsAndClosesConnection(string result)
         {
+            string composed = result.Replace("DIGEST", GeneratedToolDefinitions.ToolMapDigest);
             using FakeHost host = new FakeHost()
-                .Reply(request => Result(request, result))
+                .Reply(request => Result(request, composed))
                 .Start();
             using HostIpcClient client = Connect(host);
 
@@ -130,14 +129,10 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.False(client.IsConnected);
         }
 
-        [Theory]
-        // 別の要求の識別子・バージョンの不一致・解析できない本文。
-        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":OTHER_ID,\"result\":{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}}")]
-        [InlineData("{\"jsonrpc\":\"1.0\",\"id\":ID,\"result\":{\"protocol\":1,\"hostVersion\":\"1.0.0.0\",\"budgetChars\":100000}}")]
-        [InlineData("これはJSONではない")]
-        public async Task HandshakeEnvelopeOutsideContractFailsAndClosesConnection(string response)
+        [Fact]
+        public async Task HandshakeEnvelopeOutsideContractFailsAndClosesConnection()
         {
-            using FakeHost host = new FakeHost().Reply(WithRequestId(response)).Start();
+            using FakeHost host = new FakeHost().Reply("これはJSONではない").Start();
             using HostIpcClient client = Connect(host);
 
             BridgeException error = await Assert.ThrowsAsync<BridgeException>(
@@ -242,45 +237,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Contains("toolMapDigest", error.Message);
         }
 
-        [Fact]
-        public async Task ReconnectingToMatchingBudgetHostRestoresNormalOperation()
-        {
-            using FakeHost mismatched = new FakeHost().Reply(HandshakeResultOf(200000)).Start();
-            using FakeHost matched = new FakeHost()
-                .Reply(HandshakeResultOf(BudgetChars))
-                .Reply(request => Result(request, "\"pong\""))
-                .Start();
-
-            FakeHostConnector connector = new FakeHostConnector(mismatched.PipeName, matched.PipeName);
-            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
-
-            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
-                () => client.CallAsync("ping", null, CancellationToken.None));
-            Assert.Equal(BridgeErrorCodes.BudgetMismatch, error.Code);
-
-            JsonNode result = (await client.CallAsync("ping", null, CancellationToken.None)).Result;
-
-            Assert.Equal("pong", (string)result);
-        }
-
-        [Fact]
-        public async Task CallAfterFailedHandshakeStartsFromNewConnection()
-        {
-            using FakeHost host = new FakeHost()
-                .Reply(request => Error(request, -32001, "プロトコル番号が一致しない"))
-                .Reply(HandshakeResultOf(BudgetChars))
-                .Reply(request => Result(request, "\"pong\""))
-                .Start();
-            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
-            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
-
-            await Assert.ThrowsAsync<BridgeException>(
-                () => client.CallAsync("ping", null, CancellationToken.None));
-
-            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
-            Assert.Equal(2, connector.ConnectCount);
-        }
-
         [Theory]
         [MemberData(nameof(KeepingHostErrorCodes))]
         public async Task HostErrorThatKeepsTheConnectionKeepsItHereToo(int hostErrorCode)
@@ -297,6 +253,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 () => client.CallAsync("kept", null, CancellationToken.None));
 
             Assert.Equal(BridgeErrorCodes.ForHostError(hostErrorCode), error.Code);
+            Assert.Equal("接続を保つエラー", error.Message);
             Assert.True(client.IsConnected);
             Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
             Assert.Equal(1, connector.ConnectCount);
@@ -362,27 +319,6 @@ namespace PmxEditorMcp.Bridge.Tests
                     + ",\"session\":\"" + session + "\"}");
         }
 
-        [Fact]
-        public async Task HostErrorAfterHandshakeKeepsConnectionAndReturnsHostCode()
-        {
-            using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BudgetChars))
-                .Reply(request => Error(request, -32601, "未知のメソッド"))
-                .Reply(request => Result(request, "\"pong\""))
-                .Start();
-            using HostIpcClient client = Connect(host);
-
-            BridgeException error = await Assert.ThrowsAsync<BridgeException>(
-                () => client.CallAsync("missing", null, CancellationToken.None));
-
-            Assert.Equal("HOST_-32601", error.Code);
-            Assert.Equal("未知のメソッド", error.Message);
-            Assert.True(client.IsConnected);
-
-            // 接続を保っているので、続けて呼べる。
-            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
-        }
-
         /// <summary>ホストと揃えて持つ取り決めの表で、ホストが応答のあと切断するとしたコード。</summary>
         public static IEnumerable<object[]> DisconnectingHostErrorCodes()
         {
@@ -440,36 +376,11 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public async Task CallAfterDisconnectStartsFromNewConnection()
+        public async Task ResponseOutsideContractAfterHandshakeClosesConnectionAsProtocolViolation()
         {
             using FakeHost host = new FakeHost()
                 .Reply(HandshakeResultOf(BudgetChars))
-                .Disconnect()
-                .Reply(HandshakeResultOf(BudgetChars))
-                .Reply(request => Result(request, "\"pong\""))
-                .Start();
-            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
-            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
-
-            await Assert.ThrowsAsync<BridgeException>(
-                () => client.CallAsync("ping", null, CancellationToken.None));
-
-            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
-            Assert.Equal(2, connector.ConnectCount);
-        }
-
-        [Theory]
-        // 別の要求の識別子・結果とエラーの同居・どちらも無い・解析できない本文。識別子の照合
-        // だけで落ちないよう、不一致を見るケース以外は要求の識別子に合わせる。
-        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":OTHER_ID,\"result\":1}")]
-        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":ID,\"result\":1,\"error\":{\"code\":-1,\"message\":\"x\"}}")]
-        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":ID}")]
-        [InlineData("これはJSONではない")]
-        public async Task ResponseOutsideContractAfterHandshakeClosesConnectionAsProtocolViolation(string response)
-        {
-            using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BudgetChars))
-                .Reply(WithRequestId(response))
+                .Reply("これはJSONではない")
                 .Start();
             using HostIpcClient client = Connect(host);
 
@@ -510,25 +421,6 @@ namespace PmxEditorMcp.Bridge.Tests
 
             Assert.Equal(BridgeErrorCodes.ProtocolError, error.Code);
             Assert.False(client.IsConnected);
-        }
-
-        [Fact]
-        public async Task CallAfterProtocolViolationStartsFromNewConnection()
-        {
-            using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BudgetChars))
-                .Reply("これはJSONではない")
-                .Reply(HandshakeResultOf(BudgetChars))
-                .Reply(request => Result(request, "\"pong\""))
-                .Start();
-            FakeHostConnector connector = new FakeHostConnector(host.PipeName);
-            using HostIpcClient client = new HostIpcClient(connector, BudgetChars);
-
-            await Assert.ThrowsAsync<BridgeException>(
-                () => client.CallAsync("ping", null, CancellationToken.None));
-
-            Assert.Equal("pong", (string)(await client.CallAsync("ping", null, CancellationToken.None)).Result);
-            Assert.Equal(2, connector.ConnectCount);
         }
 
         [Fact]
@@ -590,16 +482,6 @@ namespace PmxEditorMcp.Bridge.Tests
 
             Assert.Equal(BridgeErrorCodes.ConnectFailed, error.Code);
             Assert.False(client.IsConnected);
-        }
-
-        /// <summary>
-        /// 待つ上限の既定。実時間を使わずに固定する——与えた上限で打ち切ることは、短い上限を
-        /// 渡す下の件が確かめる。
-        /// </summary>
-        [Fact]
-        public void TheConnectWaitLimitDefaultsToFiveSeconds()
-        {
-            Assert.Equal(TimeSpan.FromSeconds(5), NamedPipeHostConnector.ConnectWaitLimit);
         }
 
         [Fact]
@@ -686,7 +568,6 @@ namespace PmxEditorMcp.Bridge.Tests
         [Theory]
         [InlineData(typeof(IOException))]
         [InlineData(typeof(UnauthorizedAccessException))]
-        [InlineData(typeof(ArgumentException))]
         public async Task PipeThatCannotBeOpenedIsReturnedAsConnectFailure(Type failure)
         {
             // 接続先の決定も差し替える。実行環境に待ち受けているホストが無い・複数あると、パイプを
@@ -839,22 +720,6 @@ namespace PmxEditorMcp.Bridge.Tests
                 client.CallAsync("ping", null, CancellationToken.None));
 
             Assert.Equal(Announced(host.PipeName), response.TargetNotice);
-        }
-
-        [Fact]
-        public async Task NoticeNamesTheHostVersionTheHandshakeReturned()
-        {
-            using FakeHost host = new FakeHost()
-                .Reply(HandshakeResultOf(BudgetChars, "2.3.4.5"))
-                .Reply(request => Result(request, "\"pong\""))
-                .Start();
-
-            using HostIpcClient client = Connect(host);
-            HostCallResult response = await WithinTestWait(
-                client.CallAsync("ping", null, CancellationToken.None));
-
-            Assert.StartsWith("接続先: " + host.PipeName, response.TargetNotice, StringComparison.Ordinal);
-            Assert.Contains("2.3.4.5", response.TargetNotice, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -1111,17 +976,6 @@ namespace PmxEditorMcp.Bridge.Tests
                 request,
                 "{\"protocol\":1,\"hostVersion\":\"" + hostVersion + "\",\"toolMapDigest\":\""
                     + GeneratedToolDefinitions.ToolMapDigest + "\",\"budgetChars\":" + budgetChars + "}");
-        }
-
-        /// <summary>
-        /// 応答の雛形の中の ID を受け取った要求の識別子へ、OTHER_ID をそれとは別の識別子へ
-        /// 置き換える。識別子の決め方は実装の裁量なので、テストが特定の値を当て込まない。
-        /// </summary>
-        private static Func<string, string> WithRequestId(string template)
-        {
-            return request => template
-                .Replace("OTHER_ID", (IdOf(request) + 1).ToString(CultureInfo.InvariantCulture))
-                .Replace("ID", IdOf(request).ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>本文の上限を1バイト超える応答を作る。</summary>

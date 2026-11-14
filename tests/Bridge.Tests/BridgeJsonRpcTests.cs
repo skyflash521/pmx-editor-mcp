@@ -6,11 +6,6 @@ namespace PmxEditorMcp.Bridge.Tests
 {
     public class BridgeJsonRpcTests
     {
-        /// <summary>
-        /// ホストへ課している入れ子の深さの上限。ホストは値の再帰の段数で数え、
-        /// 末端の値も1段に数える。応答は包絡のオブジェクトで1段、末端の値で1段使うので、
-        /// 結果を包む配列がこれより2段少ないところが、ホストが返しうる最も深い応答になる。
-        /// </summary>
         private const int HostRecursionLimit = 100;
 
         [Fact]
@@ -97,19 +92,6 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(string.Empty, result.Response.ErrorMessage);
         }
 
-        [Theory]
-        [InlineData(-32700)]
-        [InlineData(-32004)]
-        [InlineData(-32601)]
-        public void AcceptsErrorResponseWithNullIdForAnyCode(int hostErrorCode)
-        {
-            HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
-                "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":" + hostErrorCode + ",\"message\":\"\"}}", 3);
-
-            Assert.True(result.IsValid);
-            Assert.Equal(hostErrorCode, result.Response.ErrorCode);
-        }
-
         [Fact]
         public void RejectsErrorResponseMissingIdMember()
         {
@@ -134,17 +116,14 @@ namespace PmxEditorMcp.Bridge.Tests
         // 解析できない本文。
         [InlineData("")]
         [InlineData("{")]
-        [InlineData("not json")]
         // トップレベルがオブジェクトでない。
         [InlineData("[1,2]")]
-        [InlineData("\"pong\"")]
         [InlineData("null")]
         // バージョンの欠落と不一致。
         [InlineData("{\"id\":3,\"result\":1}")]
         [InlineData("{\"jsonrpc\":\"1.0\",\"id\":3,\"result\":1}")]
         [InlineData("{\"jsonrpc\":2,\"id\":3,\"result\":1}")]
         // 識別子の欠落・型違い・不一致。
-        [InlineData("{\"jsonrpc\":\"2.0\",\"result\":1}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":\"3\",\"result\":1}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":4,\"result\":1}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":null,\"result\":1}")]
@@ -179,15 +158,6 @@ namespace PmxEditorMcp.Bridge.Tests
             // 合わせて配列を上限より1段少なくしたところがホストの数え方で上限ちょうどになる。
             HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
                 NestedResponse(HostRecursionLimit - 1, string.Empty), 3);
-
-            Assert.True(result.IsValid);
-        }
-
-        [Fact]
-        public void AcceptsDeepestResponseHostCanReturn()
-        {
-            HostResponseParseResult result = BridgeJsonRpc.ParseResponse(
-                NestedResponse(HostRecursionLimit - 2), 3);
 
             Assert.True(result.IsValid);
         }

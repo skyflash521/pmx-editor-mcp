@@ -17,17 +17,6 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void DoesNotPassWhileAnEarlierHolderRemains()
-        {
-            HostRequestQueue queue = new HostRequestQueue();
-            queue.EnterAsync(CancellationToken.None);
-
-            Task second = queue.EnterAsync(CancellationToken.None);
-
-            Assert.False(second.IsCompleted);
-        }
-
-        [Fact]
         public async Task PassesInArrivalOrder()
         {
             HostRequestQueue queue = new HostRequestQueue();

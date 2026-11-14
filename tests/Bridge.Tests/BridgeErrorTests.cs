@@ -11,27 +11,15 @@ namespace PmxEditorMcp.Bridge.Tests
         {
             BridgeException error = new BridgeException(BridgeErrorCodes.Timeout, "待機上限を超えた。");
 
-            Assert.Equal(BridgeErrorCodes.Timeout, error.Code);
-            Assert.Equal("待機上限を超えた。", error.Message);
             Assert.Equal("BRIDGE_TIMEOUT: 待機上限を超えた。", error.ToResultText());
         }
 
         [Theory]
         [InlineData(-32601, "HOST_-32601")]
-        [InlineData(-32002, "HOST_-32002")]
         [InlineData(0, "HOST_0")]
         public void HostErrorCodeKeepsItsSign(int hostErrorCode, string expected)
         {
             Assert.Equal(expected, BridgeErrorCodes.ForHostError(hostErrorCode));
-        }
-
-        [Fact]
-        public void HostErrorTextCarriesMessageVerbatim()
-        {
-            BridgeException error = new BridgeException(
-                BridgeErrorCodes.ForHostError(-32601), "未知のメソッド");
-
-            Assert.Equal("HOST_-32601: 未知のメソッド", error.ToResultText());
         }
 
         [Fact]

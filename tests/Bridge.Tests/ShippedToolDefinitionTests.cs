@@ -261,7 +261,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void CreatingAMotionWithOnlyTheMorphNamesIsNotTaken()
+        public void CreatingAMotionTakesTheBoneNamesAndTheMorphNamesOnlyTogether()
         {
             JsonSchema schema = SchemaOf("motion_create_vmd");
 

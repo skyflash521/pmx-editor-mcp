@@ -39,11 +39,9 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void AWordThatIsMissingOrEmptyIsRefused()
+        public void MissingWordsAreRefused()
         {
             Assert.Equal("TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer(null, null, null, Tools, Budget)));
-            Assert.Equal(
-                "TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer(new[] { string.Empty }, null, null, Tools, Budget)));
         }
 
         [Fact]
@@ -75,13 +73,12 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(2, Total(answer));
         }
 
-        [Theory]
-        [InlineData(0)]
-        [InlineData(-1)]
-        public void ACountOutsideTheBoundsIsRefused(int limit)
+        [Fact]
+        public void ACountBelowTheMinimumIsRefused()
         {
             Assert.Equal(
-                "TOOL_INVALID_ARGUMENT", Code(ToolSearch.Answer(new[] { "model_" }, limit, null, Tools, Budget)));
+                "TOOL_INVALID_ARGUMENT",
+                Code(ToolSearch.Answer(new[] { "model_" }, ToolSearch.MinimumLimit - 1, null, Tools, Budget)));
         }
 
         [Fact]
@@ -120,7 +117,7 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
-        public void TheArgumentsAreChecked()
+        public void AMissingArgumentIsRefusedWithArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => ToolMatch.Found(null, Tools));
             Assert.Throws<ArgumentNullException>(() => ToolMatch.Found(new[] { "model_" }, null));

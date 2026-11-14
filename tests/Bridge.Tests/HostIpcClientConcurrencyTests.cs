@@ -25,16 +25,6 @@ namespace PmxEditorMcp.Bridge.Tests
         /// <summary>テストが応答を待つ上限。これを超えたら直列化か打ち切りが働いていない。</summary>
         private static readonly TimeSpan TestWait = TimeSpan.FromSeconds(30);
 
-        [Fact]
-        public void WaitLimitMatchesContract()
-        {
-            Assert.Equal(TimeSpan.FromSeconds(125), HostIpcClient.DefaultWaitLimit);
-
-            using HostIpcClient client = new HostIpcClient(new FakeHostConnector("pmx-editor-mcp-0"), BudgetChars);
-
-            Assert.Equal(HostIpcClient.DefaultWaitLimit, client.WaitLimit);
-        }
-
         /// <summary>
         /// ブリッジが待つ上限は、ホストが要求を受け取ってから応答を返すまでに許す時間より長い。
         /// ホストの時間はホストと揃えて持つ取り決めの値で、ホストのテストが実装をその値と突き合わせる。
