@@ -87,6 +87,28 @@ namespace PmxEditorMcp.Bridge.Tests
         }
 
         [Fact]
+        public async Task TheUpdateGuideAnswersWithoutAnEditorAndNamesTheOfficialSource()
+        {
+            using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
+            McpClient client = _shared.Client;
+
+            CallToolResult result = await client.CallToolAsync(
+                FixedToolTable.HowToUpdateName, cancellationToken: limit.Token);
+            string said = TextOf(result);
+
+            Assert.True(result.IsError != true, said);
+            System.Text.Json.Nodes.JsonObject value =
+                System.Text.Json.Nodes.JsonNode.Parse(said).AsObject();
+            Assert.Equal(
+                typeof(BridgeServer).Assembly.GetName().Version.ToString(3),
+                (string)value["installedVersion"]);
+            Assert.Equal(UpdateGuide.RepositoryUrl, (string)value["repository"]);
+            Assert.Equal(UpdateGuide.LatestReleaseUrl, (string)value["latestRelease"]);
+            Assert.True(Path.IsPathRooted((string)value["installDirectory"]), said);
+            Assert.False(string.IsNullOrEmpty((string)value["steps"]), said);
+        }
+
+        [Fact]
         public async Task TheBaseRelayAndEveryGeneratedDefinitionAreRegistered()
         {
             using CancellationTokenSource limit = new CancellationTokenSource(TestWait);
@@ -809,6 +831,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 FixedToolTable.FindToolName,
                 FixedToolTable.ListEditorsName,
                 FixedToolTable.SelectEditorName,
+                FixedToolTable.HowToUpdateName,
             };
             names.AddRange(GeneratedToolDefinitions.Create().Select(d => d.Name));
             if (debugHooks)

@@ -50,6 +50,10 @@ namespace PmxEditorMcp.Bridge
                 {
                     tools.Add(SelectEditor(client, declared, fixedTool.Value));
                 }
+                else if (fixedTool.Key == FixedToolTable.HowToUpdateName)
+                {
+                    tools.Add(HowToUpdate(client, declared, fixedTool.Value));
+                }
                 else
                 {
                     tools.Add(Relay(client, declared, fixedTool.Key, fixedTool.Value));
@@ -190,6 +194,29 @@ namespace PmxEditorMcp.Bridge
                 string.Empty,
                 client.BudgetChars,
                 false);
+        }
+
+        private static McpServerTool HowToUpdate(
+            HostIpcClient client, bool declared, string description)
+        {
+            return McpServerTool.Create(
+                () => ToolEnvelopeResult.From(
+                    new JsonObject
+                    {
+                        [ToolEnvelope.OkName] = true,
+                        [ToolEnvelope.ValueName] = UpdateGuide.Describe(AppContext.BaseDirectory),
+                    },
+                    string.Empty,
+                    client.BudgetChars,
+                    false),
+                new McpServerToolCreateOptions
+                {
+                    Name = FixedToolTable.HowToUpdateName,
+                    Description = description,
+                    Meta = declared
+                        ? new JsonObject { [ResultSizeMetaKey] = client.BudgetChars }
+                        : null,
+                });
         }
 
         private static McpServerTool SelectEditor(

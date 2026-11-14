@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Protocol;
+using PmxEditorMcp.SignatureDump;
 
 namespace PmxEditorMcp.Bridge
 {
@@ -19,6 +20,8 @@ namespace PmxEditorMcp.Bridge
             "続きは返った nextOffset を offset へ渡して読む。" +
             "PMXエディタが複数動いているときは、list_editors で見分け、select_editor で" +
             "接続先を選んでから呼ぶ。" +
+            "pmx-editor-mcp 自身のアップデート・アンインストールを指示されたら、" +
+            FixedToolTable.HowToUpdateName + " を呼んでその手順に従う。" +
             "model_ はモデルの中身をどう読み書きするか——頂点と面・材質・ボーンとモーフ・剛体とJoint——を" +
             "受け持つ。" +
             "motion_ はモーションをどう組み立てるか——VMDのキー・ボーンとモーフの動き・カメラと照明——を" +

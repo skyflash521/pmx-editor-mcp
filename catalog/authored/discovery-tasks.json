@@ -286,6 +286,20 @@
         "model_list_morphs",
         "model_update_morphs"
       ]
+    },
+    {
+      "task": "pmx-editor-mcp 自身の更新とアンインストール",
+      "searches": [
+        [
+          "アップデート"
+        ],
+        [
+          "アンインストール"
+        ]
+      ],
+      "tools": [
+        "how_to_update"
+      ]
     }
   ]
 }

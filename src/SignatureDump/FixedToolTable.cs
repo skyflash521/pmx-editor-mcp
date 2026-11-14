@@ -29,6 +29,8 @@ namespace PmxEditorMcp.SignatureDump
 
         public const string SelectEditorProcessIdParameter = "processId";
 
+        public const string HowToUpdateName = "how_to_update";
+
         public const string LargeTextName = "debug_large_text";
 
         /// <summary>引数の名前と型と必須かどうか、既定と取りうる範囲を書き、説明は持たない。</summary>
@@ -100,6 +102,16 @@ namespace PmxEditorMcp.SignatureDump
                             + "呼び出しはそのエディタへだけ送る。選んだエディタが終了しても、ほかの"
                             + "エディタへは繋がない。エディタが複数動いているときは、呼び出しの前に"
                             + "これで接続先を選ぶ。待ち受けているホストが無いエディタは選べない。"
+                    },
+                    {
+                        HowToUpdateName,
+                        "pmx-editor-mcp 自身を更新(アップデート)・アンインストールする手がかりを返す。"
+                            + "入っているバージョン(installedVersion)・導入先(installDirectory)・"
+                            + "インストール指示書のパス(installGuide)・公式のリポジトリ(repository)・"
+                            + "最新のリリースを返すAPIのURL(latestRelease)・従う手順(steps)を返す。"
+                            + "エディタが起動していなくても答え、ネットへは出ない。pmx-editor-mcp の"
+                            + "アップデート・アンインストールを指示されたとき、入っているバージョンを"
+                            + "問われたときは、まずこれを呼ぶ。"
                     },
                 };
             if (debugHooks)

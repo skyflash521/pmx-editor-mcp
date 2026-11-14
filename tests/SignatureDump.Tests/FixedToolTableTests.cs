@@ -13,6 +13,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new[]
                 {
                     FixedToolTable.FindToolName,
+                    FixedToolTable.HowToUpdateName,
                     FixedToolTable.ListEditorsName,
                     FixedToolTable.PingName,
                     FixedToolTable.SdkStatusName,
