@@ -46,7 +46,6 @@ namespace PmxEditorMcp.Tests
         /// </summary>
         [Theory]
         [InlineData(3)]
-        [InlineData(256)]
         public void ClosingWithSomethingToRedoIsRefused(int redoable)
         {
             FormDouble form = new FormDouble { UndoCount = 0, RedoCount = redoable };

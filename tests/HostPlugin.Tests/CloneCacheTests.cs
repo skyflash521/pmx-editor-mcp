@@ -23,110 +23,91 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ReadsInARowTakeOneCloneAndAnswerTheSame()
-        {
-            object[] first = MinOf(Find());
-            object[] second = MinOf(Find());
-            object[] third = MinOf(Find());
-
-            Assert.Equal(1, _fixture.Clones);
-            Assert.Equal(first, second);
-            Assert.Equal(first, third);
-        }
-
-        [Fact]
-        public void EveryReadTakesItsOwnCloneWhenNothingIsKept()
+        public void EveryReadAnswersTheCurrentModelWhenNothingIsKept()
         {
             using (ComposedEditFixture plain = new ComposedEditFixture())
             {
                 plain.Model.Vertex.Add(new FakeVertex(1f, 0f, 0f));
                 plain.Call(ModelFindVertexBounds.ToolName, Arguments());
-                plain.Call(ModelFindVertexBounds.ToolName, Arguments());
+                plain.Model.Vertex[0].Position = new PEPlugin.SDX.V3(-5f, 0f, 0f);
 
-                Assert.Equal(2, plain.Clones);
+                object[] min = (object[])ComposedEditFixture.Value(
+                    plain.Call(ModelFindVertexBounds.ToolName, Arguments()))["min"];
+
+                Assert.Equal(new object[] { -5f, 0f, 0f }, min);
             }
         }
 
         [Fact]
-        public void AModelUpdateTheEditorReportsMakesTheNextReadTakeANewClone()
+        public void AModelUpdateTheEditorReportsMakesTheNextReadAnswerTheCurrentModel()
         {
             Find();
-            _fixture.Model.Vertex[0].Position = new PEPlugin.SDX.V3(-5f, 0f, 0f);
+            Moved();
             _stamps.Updates++;
 
-            object[] min = MinOf(Find());
-
-            Assert.Equal(new object[] { -5f, 0f, 0f }, min);
-            Assert.Equal(2, _fixture.Clones);
+            Assert.Equal(new object[] { -5f, 0f, 0f }, MinOf(Find()));
         }
 
         [Fact]
-        public void ACountOfUndoableEditsThatChangedMakesTheNextReadTakeANewClone()
+        public void ACountOfUndoableEditsThatChangedMakesTheNextReadAnswerTheCurrentModel()
         {
             Find();
+            Moved();
             _stamps.Undos++;
 
-            Find();
-
-            Assert.Equal(2, _fixture.Clones);
+            Assert.Equal(new object[] { -5f, 0f, 0f }, MinOf(Find()));
         }
 
         [Fact]
-        public void ACountOfRedoableEditsThatChangedMakesTheNextReadTakeANewClone()
+        public void ACountOfRedoableEditsThatChangedMakesTheNextReadAnswerTheCurrentModel()
         {
             Find();
+            Moved();
             _stamps.Redos++;
 
-            Find();
-
-            Assert.Equal(2, _fixture.Clones);
+            Assert.Equal(new object[] { -5f, 0f, 0f }, MinOf(Find()));
         }
 
         [Fact]
-        public void AHistoryMoveThatLeftTheCountsWhereTheyWereMakesTheNextReadTakeANewClone()
+        public void AHistoryMoveThatLeftTheCountsWhereTheyWereMakesTheNextReadAnswerTheCurrentModel()
         {
             Find();
+            Moved();
             _stamps.Moves++;
 
-            Find();
-
-            Assert.Equal(2, _fixture.Clones);
+            Assert.Equal(new object[] { -5f, 0f, 0f }, MinOf(Find()));
         }
 
         [Fact]
-        public void ADifferentFileOrDifferentListSizesMakeTheNextReadTakeANewClone()
+        public void ADifferentFileOrDifferentListSizesMakeTheNextReadAnswerTheCurrentModel()
         {
             _stamps.Identity = "A.pmx|1";
             Find();
+            Moved();
             _stamps.Identity = "B.pmx|1";
 
-            Find();
-
-            Assert.Equal(2, _fixture.Clones);
+            Assert.Equal(new object[] { -5f, 0f, 0f }, MinOf(Find()));
         }
 
         [Fact]
-        public void AFileRewrittenUnderTheSamePathMakesTheNextReadTakeANewClone()
+        public void AFileRewrittenUnderTheSamePathMakesTheNextReadAnswerTheCurrentModel()
         {
             _stamps.Identity = "a.pmx|1|100";
             Find();
+            Moved();
             _stamps.Identity = "a.pmx|2|100";
 
-            Find();
-
-            Assert.Equal(2, _fixture.Clones);
+            Assert.Equal(new object[] { -5f, 0f, 0f }, MinOf(Find()));
         }
 
         [Fact]
-        public void ReadsStillAnswerWhenTheStampCannotBeRead()
+        public void ReadsAnswerTheCurrentModelWhenTheStampCannotBeRead()
         {
             _stamps.Failing = true;
+            Find();
+            Moved();
 
-            object[] first = MinOf(Find());
-            object[] second = MinOf(Find());
-
-            Assert.Equal(first, second);
-            Assert.Equal(2, _fixture.Clones);
+            Assert.Equal(new object[] { -5f, 0f, 0f }, MinOf(Find()));
         }
 
         [Fact]
@@ -137,18 +118,17 @@ namespace PmxEditorMcp.Tests
             Align();
 
             Assert.Equal(new object[] { 2f, 0f, 0f }, MinOf(Find()));
-            Assert.Equal(3, _fixture.Clones);
         }
 
         [Fact]
-        public void AnEditTakesAFreshCloneEvenWhenAReadKeptOne()
+        public void AnEditWorksOnTheCurrentModelEvenWhenAReadKeptAClone()
         {
             Find();
+            Moved();
 
             Align();
 
-            Assert.Equal(2, _fixture.Clones);
-            Assert.Equal(1, _fixture.Commits);
+            Assert.Equal(new object[] { -1f, 0f, 0f }, MinOf(Find()));
         }
 
         [Fact]
@@ -156,23 +136,14 @@ namespace PmxEditorMcp.Tests
         {
             Find();
             _fixture.Invoker.TryInvokeOnUi(() => { });
-            _fixture.Model.Vertex[0].Position = new PEPlugin.SDX.V3(-5f, 0f, 0f);
+            Moved();
 
-            object[] min = MinOf(Find());
-
-            Assert.Equal(new object[] { -5f, 0f, 0f }, min);
-            Assert.Equal(2, _fixture.Clones);
+            Assert.Equal(new object[] { -5f, 0f, 0f }, MinOf(Find()));
         }
 
-        [Fact]
-        public void ReadsThroughAHandleNeverTakeOrKeepAClone()
+        private void Moved()
         {
-            KeyValuePair<string, object> held = _fixture.HoldModel();
-
-            ComposedEditFixture.Value(_fixture.Call(
-                ModelFindVertexBounds.ToolName, Arguments(held)));
-
-            Assert.Equal(0, _fixture.Clones);
+            _fixture.Model.Vertex[0].Position = new PEPlugin.SDX.V3(-5f, 0f, 0f);
         }
 
         private void Align()

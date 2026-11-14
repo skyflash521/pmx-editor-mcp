@@ -31,13 +31,13 @@ namespace PmxEditorMcp.Tests
         public void TheNodeListPutsTheNodesInTheOrderTheFileHoldsThem()
         {
             _fixture.Model.Node.Add(new FakeNode("手"));
+            _fixture.Model.Node.Add(new FakeNode("足"));
 
             IList<IDictionary<string, object>> items = Items(_fixture.Call(
                 "model_list_nodes", ComposedEditFixture.Given("all", true)));
 
             Assert.Equal(
-                ReferenceCleanup.Nodes(_fixture.Model).Select(n => n.Name).ToArray(),
-                items.Select(i => (string)i["name"]).ToArray());
+                new object[] { "Root", "表情", "手", "足" }, items.Select(i => i["name"]).ToArray());
         }
 
         [Fact]

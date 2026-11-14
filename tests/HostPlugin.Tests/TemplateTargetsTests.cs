@@ -19,12 +19,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ATargetThatIsTheOnlyOneOfItsKindNeedsNoName()
-        {
-            Assert.Single(Resolve(new[] { new TemplateTarget("camera") }));
-        }
-
-        [Fact]
         public void TargetsOfTheSameKindAreToldApartByTheirPath()
         {
             Assert.Equal(

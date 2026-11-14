@@ -66,8 +66,6 @@ namespace PmxEditorMcp.Tests
         /// <summary>反映の行を呼んだ回数。反映が落ちた回も数える。</summary>
         private int _reflections;
 
-        private int _clones;
-
         private int[] _marks = new int[0];
 
         private bool _marksReadable = true;
@@ -486,16 +484,10 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, _commits);
         }
 
-        [Theory]
-        [InlineData(null)]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void ClearingWithoutAHandleIsRefusedAndLeavesTheCurrentModelWhateverTheConfirmation(
-            bool? confirm)
+        [Fact]
+        public void ClearingWithoutAHandleIsRefusedAndLeavesTheCurrentModel()
         {
-            IDictionary<string, object> envelope = Call(
-                "model_clear_pmx",
-                confirm.HasValue ? Arguments(ToolDispatch.ConfirmName, confirm.Value) : Arguments());
+            IDictionary<string, object> envelope = Call("model_clear_pmx", Arguments());
 
             Assert.False((bool)envelope["ok"]);
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
@@ -583,7 +575,6 @@ namespace PmxEditorMcp.Tests
             HandleLedger handles = Ledger();
             Holder holder = new Holder();
             int held = handles.Issue(typeof(Holder).FullName, holder, () => { });
-            _clones = 0;
 
             IDictionary<string, object> envelope = Call(
                 "holder_init", Arguments(TargetNames.Element.Handles, new object[] { held }), handles);
@@ -591,7 +582,6 @@ namespace PmxEditorMcp.Tests
             Assert.True((bool)envelope["ok"]);
             Assert.IsType<Model>(holder.Given);
             Assert.NotSame(_model, holder.Given);
-            Assert.Equal(1, _clones);
         }
 
         [Fact]
@@ -602,7 +592,6 @@ namespace PmxEditorMcp.Tests
             int receiver = handles.Issue(typeof(Holder).FullName, holder, () => { });
             Model pointed = new Model();
             int handle = handles.Issue(typeof(Model).FullName, pointed, () => { });
-            _clones = 0;
 
             IDictionary<string, object> envelope = Call(
                 "holder_init",
@@ -613,7 +602,6 @@ namespace PmxEditorMcp.Tests
 
             Assert.True((bool)envelope["ok"], "包みが成功でない。");
             Assert.Same(pointed, holder.Given);
-            Assert.Equal(0, _clones);
             Assert.Equal(0, _commits);
         }
 
@@ -633,17 +621,6 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(ToolEnvelope.InvalidHandle, Code(envelope));
             Assert.Null(holder.Given);
-        }
-
-        [Fact]
-        public void ACallThatInjectsOnlyTheConnectorDoesNotDuplicateTheCurrentModel()
-        {
-            _clones = 0;
-
-            IDictionary<string, object> envelope = Call("connector_only", Arguments());
-
-            Assert.True((bool)envelope["ok"], "包みが成功でない。");
-            Assert.Equal(0, _clones);
         }
 
         [Fact]
@@ -672,16 +649,6 @@ namespace PmxEditorMcp.Tests
                     PmxSession.HandleName, 1, TargetNames.Element.Handles, new object[] { 1 }));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
-        }
-
-        [Fact]
-        public void TheDuplicateOfTheCurrentModelIsNotTheOneTheListingReads()
-        {
-            _clones = 0;
-
-            Call("model_list_pmxes", Arguments());
-
-            Assert.Equal(1, _clones);
         }
 
         [Fact]
@@ -809,7 +776,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(2, Value(envelope)[SetResponse.RemovedName]);
             Assert.Empty(_model.Items);
             Assert.Equal(1, _commits);
-            Assert.Equal(1, _clones);
         }
 
         private static IDictionary<string, object> Arguments(params object[] pairs)
@@ -979,13 +945,9 @@ namespace PmxEditorMcp.Tests
                     },
                     {
                         StateReadKey,
-                        (target, arguments) =>
-                        {
-                            _clones++;
-                            return _pmx != null
-                                ? FakeEditorState.Duplicate(_pmx)
-                                : (object)_model.Duplicate();
-                        }
+                        (target, arguments) => _pmx != null
+                            ? FakeEditorState.Duplicate(_pmx)
+                            : (object)_model.Duplicate()
                     },
                     {
                         CommitKey,

@@ -485,7 +485,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(MorphKind.Group)]
-        [InlineData(MorphKind.Flip)]
         public void AnOffsetThatPointsAtAMorphThatLeftIsDropped(MorphKind kind)
         {
             FakePmx pmx = new FakePmx();

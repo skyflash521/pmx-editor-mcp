@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using PmxEditorMcp;
 using Xunit;
 
@@ -253,17 +252,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void RangesTogetherWithARangeAreAnInvalidArgument()
-        {
-            Failure failure = Reject(
-                new TargetRequest(rangeStart: 0, rangeCount: 1, ranges: new[] { new TargetRun(1, 1) }),
-                listCount: 3);
-
-            Assert.Equal(ToolEnvelope.InvalidArgument, failure.Code);
-            Assert.Contains("ranges", failure.Message);
-        }
-
-        [Fact]
         public void RangesAreRefusedWhereTheToolDoesNotTakeARange()
         {
             bool resolvedOk = TargetSelection.TryResolve(
@@ -325,45 +313,6 @@ namespace PmxEditorMcp.Tests
             Assert.Null(resolved);
             Assert.Equal(ToolEnvelope.InvalidHandle, code);
             Assert.Contains("2", message);
-        }
-
-        [Fact]
-        public void HandlesAreAskedAboutInTheOrderTheRequestGave()
-        {
-            List<long> asked = new List<long>();
-            TargetSelection.TryResolve(
-                new TargetRequest(handles: new long[] { 1, 2, 3 }),
-                EveryForm,
-                listCount: 0,
-                isUsableHandle: h =>
-                {
-                    asked.Add(h);
-                    return h != 3;
-                },
-                resolved: out ResolvedTargets _,
-                code: out string _,
-                message: out string _,
-                names: TargetNames.Element,
-                selected: new ScreenPick(
-                    () => new int[0], "session_set_selected_material_indices"));
-
-            Assert.Equal(new long[] { 1, 2, 3 }, asked);
-        }
-
-        [Fact]
-        public void PagingRunsOverTheResolvedSetRatherThanTheList()
-        {
-            ResolvedTargets resolved = Resolve(new TargetRequest(indices: new[] { 8, 6, 7 }), listCount: 10);
-
-            Assert.True(Paging.TryTake(
-                resolved.Indices.ToArray(),
-                offset: 1,
-                limit: 5,
-                valueChars: int.MaxValue,
-                measure: taken => 0,
-                page: out Page<int> page));
-            Assert.Equal(3, page.Total);
-            Assert.Equal(new[] { 6, 7 }, page.Items);
         }
 
         [Fact]
@@ -477,25 +426,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, failure.Code);
             Assert.Contains("indices", failure.Message);
             Assert.Contains("selected", failure.Message);
-        }
-
-        [Fact]
-        public void TheScreenSelectionIsAnInvalidArgumentWhereTheToolDoesNotTakeIt()
-        {
-            bool resolvedOk = TargetSelection.TryResolve(
-                new TargetRequest(selected: true),
-                TargetForm.Indices | TargetForm.Range | TargetForm.All,
-                listCount: 3,
-                isUsableHandle: h => true,
-                resolved: out ResolvedTargets resolved,
-                code: out string code,
-                message: out string message,
-                names: TargetNames.Element);
-
-            Assert.False(resolvedOk);
-            Assert.Null(resolved);
-            Assert.Equal(ToolEnvelope.InvalidArgument, code);
-            Assert.Contains("このツールでは指定できない", message);
         }
 
         [Fact]

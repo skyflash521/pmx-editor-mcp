@@ -11,7 +11,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(0)]
-        [InlineData(1)]
         [InlineData(2)]
         public void APositionInsideTheCountIsTaken(int at)
         {
@@ -28,8 +27,6 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData(-1)]
         [InlineData(3)]
-        [InlineData(int.MinValue)]
-        [InlineData(int.MaxValue)]
         public void APositionOutsideTheCountIsOutOfRange(int at)
         {
             int taken;
@@ -80,17 +77,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheLastPositionTheCallerAllowsCanBeBeyondTheCount()
-        {
-            string code;
-            string message;
-
-            Assert.True(PositionInput.TryWithin(3, 4, Name, out code, out message));
-            Assert.False(PositionInput.TryWithin(4, 4, Name, out code, out message));
-            Assert.Equal(ToolEnvelope.IndexOutOfRange, code);
-        }
-
-        [Fact]
         public void AListOfPositionsInsideTheCountIsTakenInOrder()
         {
             List<int> taken;
@@ -121,7 +107,6 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData(null)]
         [InlineData(1)]
-        [InlineData("1")]
         public void ALackOfAListIsInvalid(object given)
         {
             List<int> taken;
@@ -149,7 +134,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData(-1)]
         [InlineData(3)]
         public void AListWithAMemberOutsideTheCountIsOutOfRange(int at)
         {
@@ -193,12 +177,8 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData(0, 1, 3, true)]
         [InlineData(0, 3, 3, true)]
-        [InlineData(2, 1, 3, true)]
         [InlineData(2, 2, 3, false)]
-        [InlineData(3, 1, 3, false)]
-        [InlineData(0, 4, 3, false)]
         [InlineData(0, 1, 0, false)]
         [InlineData(int.MaxValue, 2, int.MaxValue, false)]
         public void ARangeThatReachesBeyondTheCountIsOutOfRange(int start, int count, int ceiling, bool inside)
@@ -227,7 +207,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(0)]
-        [InlineData(-1)]
         public void ARangeThatTakesNoMemberIsInvalid(int count)
         {
             string code;

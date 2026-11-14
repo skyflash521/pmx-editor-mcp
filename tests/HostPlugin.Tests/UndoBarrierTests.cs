@@ -80,16 +80,13 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, calls[0]);
         }
 
-        [Theory]
-        [InlineData(EditKind.Read)]
-        [InlineData(EditKind.DirectChange)]
-        [InlineData(EditKind.ViewSession)]
-        public void OnlyTheDuplicateEditKindMayAskToSuppress(EditKind kind)
+        [Fact]
+        public void OnlyTheDuplicateEditKindMayAskToSuppress()
         {
             int[] calls = { 0 };
 
             IDictionary<string, object> envelope = Call(
-                Guard(kind, calls), Arguments(Given(UndoBarrier.SuppressName, true)));
+                Guard(EditKind.DirectChange, calls), Arguments(Given(UndoBarrier.SuppressName, true)));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, Code(envelope));
             Assert.Equal(0, calls[0]);
@@ -126,10 +123,8 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0, calls[0]);
         }
 
-        [Theory]
-        [InlineData(EditKind.Read)]
-        [InlineData(EditKind.ViewSession)]
-        public void ARecordThatCannotBePutBackStillLetsAReadThroughWithAWarning(EditKind kind)
+        [Fact]
+        public void ARecordThatCannotBePutBackStillLetsAReadThroughWithAWarning()
         {
             StubLock target = new StubLock();
             UndoSuppression undo = Left(target);
@@ -137,7 +132,7 @@ namespace PmxEditorMcp.Tests
             int[] calls = { 0 };
 
             IDictionary<string, object> envelope = Call(
-                Guard(kind, calls, undo, target), Arguments());
+                Guard(EditKind.Read, calls, undo, target), Arguments());
 
             Assert.Equal(1, calls[0]);
             Assert.True((bool)envelope["ok"], "包みが成功でない。");

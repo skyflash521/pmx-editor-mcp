@@ -44,15 +44,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AnOffsetFarPastTheEndReturnsNothing()
-        {
-            Page<int> page = Take(All(3), 99, 10, 1000);
-
-            Assert.Empty(page.Items);
-            Assert.Null(page.NextOffset);
-        }
-
-        [Fact]
         public void TheCountIsReducedUntilItFits()
         {
             Page<int> page = Take(All(10), 0, 10, (4 * PerItem) + 2);

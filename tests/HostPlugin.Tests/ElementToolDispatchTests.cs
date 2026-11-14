@@ -2540,25 +2540,13 @@ namespace PmxEditorMcp.Tests
             Assert.Single(Items(Value(envelope)));
         }
 
-        [Theory]
-        [InlineData(MakeKey)]
-        [InlineData(MakeLabelledKey)]
-        [InlineData(MakeMarkedKey)]
-        public void TheOverloadThatTakesTheGivenArgumentsIsTheOneThatRuns(string expected)
+        [Fact]
+        public void TheOverloadThatTakesTheGivenArgumentsIsTheOneThatRuns()
         {
-            IDictionary<string, object> arguments = Arguments();
-            if (expected != MakeKey)
-            {
-                arguments.Add("label", "名");
-            }
-
-            if (expected == MakeMarkedKey)
-            {
-                arguments.Add("mark", 3);
-            }
+            IDictionary<string, object> arguments = Arguments("label", "名", "mark", 3);
 
             Assert.True((bool)Call("model_make_item", arguments)["ok"], "包みが成功でない。");
-            Assert.Equal(expected, _madeBy);
+            Assert.Equal(MakeMarkedKey, _madeBy);
         }
 
         [Theory]

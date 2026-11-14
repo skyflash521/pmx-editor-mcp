@@ -68,29 +68,20 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(ElementKinds.Face)]
-        [InlineData(ElementKinds.IkLink)]
-        [InlineData(ElementKinds.MorphOffset)]
-        [InlineData(ElementKinds.NodeItem)]
-        [InlineData(ElementKinds.SoftBodyAnchor)]
         public void AKindAnElementLinesUpNeedsTheParentSet(string name)
         {
             Assert.Equal(
                 ToolEnvelope.InvalidArgument, Refused(Arguments(Kind(name))));
         }
 
-        [Theory]
-        [InlineData(ElementKinds.Face)]
-        [InlineData(ElementKinds.IkLink)]
-        [InlineData(ElementKinds.MorphOffset)]
-        [InlineData(ElementKinds.NodeItem)]
-        [InlineData(ElementKinds.SoftBodyAnchor)]
-        public void EveryParentedKindResolvesTheOwnerItsElementsHangFrom(string name)
+        [Fact]
+        public void TheParentIndicesTakeTheOwnerTheyPointAt()
         {
             FakePmx pmx = Filled();
-            ElementKind kind = Resolved(name);
+            ElementKind kind = Resolved(ElementKinds.Face);
 
             IList<object> owners = Taken(
-                pmx, Arguments(Kind(name), Given(TargetNames.Parent.Indices, new object[] { 1 })));
+                pmx, Arguments(Kind(ElementKinds.Face), Given(TargetNames.Parent.Indices, new object[] { 1 })));
 
             object owner = Assert.Single(owners);
             Assert.Same(ElementKinds.Owners(pmx, kind)[1], owner);

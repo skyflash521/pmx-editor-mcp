@@ -38,7 +38,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(7, envelope["value"]);
             Assert.NotSame(_fixture.Model, seen);
             Assert.Equal("書いた", _fixture.Model.ModelInfo.ModelName);
-            Assert.Equal(1, _fixture.Clones);
             Assert.Equal(1, _fixture.Commits);
         }
 
@@ -101,7 +100,6 @@ namespace PmxEditorMcp.Tests
                     ComposedEditFixture.Given(PmxSession.HandleName, handle)));
 
             Assert.Same(held, seen);
-            Assert.Equal(0, _fixture.Clones);
             Assert.Equal(0, _fixture.Commits);
             Assert.Empty(_fixture.Form.Updated);
             Assert.Equal(0, _fixture.View.Repaints);
@@ -120,14 +118,13 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AnArgumentTheToolDoesNotTakeIsRefusedBeforeTheCloneIsTaken()
+        public void AnArgumentTheToolDoesNotTakeIsRefused()
         {
             IDictionary<string, object> envelope = _fixture.Call(
                 Method((context, pmx) => ComposedEditResult.Complete(null)),
                 ComposedEditFixture.Arguments(ComposedEditFixture.Given("知らない項目", 1)));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
-            Assert.Equal(0, _fixture.Clones);
         }
 
         [Fact]

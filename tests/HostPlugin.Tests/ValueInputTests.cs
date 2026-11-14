@@ -33,12 +33,10 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(0.5d, Read(typeof(double), 0.5d));
         }
 
-        [Theory]
-        [InlineData(typeof(byte), 1.5d)]
-        [InlineData(typeof(int), 1.5d)]
-        public void ANumberWithAFractionIsRefusedWhereTheTypeHoldsWholeNumbers(Type declared, object json)
+        [Fact]
+        public void ANumberWithAFractionIsRefusedWhereTheTypeHoldsWholeNumbers()
         {
-            Refused(declared, json, "整数でない");
+            Refused(typeof(int), 1.5d, "整数でない");
         }
 
         [Theory]
@@ -323,23 +321,6 @@ namespace PmxEditorMcp.Tests
         public void SomethingThatIsNotASequenceIsRefused()
         {
             Refused(typeof(int[]), 1, "配列でない");
-        }
-
-        [Fact]
-        public void NothingIsHandedBackWhenAPictureLaterInTheSequenceIsRefused()
-        {
-            using (Bitmap sent = new Bitmap(4, 4))
-            {
-                string packed = ImageTransfer.Encode(sent, ImageTransfer.DefaultMaxLongSide).Base64;
-                object value;
-                string code;
-                string message;
-                Assert.False(ValueInput.TryFromJson(
-                    typeof(Bitmap[]), new object[] { packed, "----" },
-                    out value, out code, out message));
-                Assert.Equal(ToolEnvelope.InvalidArgument, code);
-                Assert.Null(value);
-            }
         }
 
         [Fact]

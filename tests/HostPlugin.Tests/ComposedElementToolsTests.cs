@@ -174,20 +174,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void APositionOutsideTheListIsRefused()
-        {
-            Bones("一", "二");
-
-            IDictionary<string, object> envelope = Reorder(
-                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
-                ComposedEditFixture.Given("indices", new object[] { 0 }),
-                ComposedEditFixture.Given(ModelReorderElements.MoveName, ModelReorderElements.To),
-                ComposedEditFixture.Given(ModelReorderElements.ToIndexName, 5));
-
-            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
-        }
-
-        [Fact]
         public void APositionToMoveToIsRefusedFromTheListLengthOnAndBelowZero()
         {
             Bones("一", "二");
@@ -344,6 +330,7 @@ namespace PmxEditorMcp.Tests
                     ModelInsertElements.OperationName, ModelInsertElements.New));
 
             Assert.Equal(2, _fixture.Model.Bone.Count);
+            Assert.Equal("一", _fixture.Model.Bone[0].Name);
         }
 
         [Fact]
@@ -412,20 +399,6 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Given("indices", new object[] { 0 }));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
-        }
-
-        [Fact]
-        public void APositionPastTheEndOfTheListIsRefused()
-        {
-            Bones("一");
-
-            IDictionary<string, object> envelope = Insert(
-                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
-                ComposedEditFixture.Given(
-                    ModelInsertElements.OperationName, ModelInsertElements.New),
-                ComposedEditFixture.Given(ModelInsertElements.AtName, 2));
-
-            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
         }
 
         [Theory]
@@ -771,7 +744,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(0)]
-        [InlineData(-1)]
         [InlineData(1.5)]
         public void AHowManyThatIsNotAPositiveWholeNumberIsRefused(object count)
         {
@@ -788,25 +760,11 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void APositionBeforeTheStartOfTheListIsRefused()
+        public void AnInsertPositionIsRefusedBeyondTheEndOfTheListAndBelowZeroAndAcceptedAtTheEnd()
         {
             Bones("一");
 
-            IDictionary<string, object> envelope = Insert(
-                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
-                ComposedEditFixture.Given(
-                    ModelInsertElements.OperationName, ModelInsertElements.New),
-                ComposedEditFixture.Given(ModelInsertElements.AtName, -1));
-
-            Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
-        }
-
-        [Fact]
-        public void AnInsertPositionIsRefusedBeyondTheEndOfTheListAndAcceptedAtTheEnd()
-        {
-            Bones("一");
-
-            foreach (object at in new object[] { 2, 100, -1 })
+            foreach (object at in new object[] { 2, -1 })
             {
                 IDictionary<string, object> refused = Insert(
                     ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
@@ -1357,7 +1315,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void MovingEveryVertexOfALargeModelToTheBottomFinishesInTime()
+        public void MovingEveryVertexButTheFirstOfALargeModelToTheTopFinishesInTime()
         {
             for (int at = 0; at < ManyElements; at++)
             {

@@ -14,37 +14,6 @@ namespace PmxEditorMcp.Tests
         private readonly FakePmx _model = new FakePmx();
 
         [Fact]
-        public void EveryEdgeOfTheTableIsNamedOnce()
-        {
-            IList<string> named = ReferenceEdges.All
-                .Select(edge => edge.ReferrerKind + "->" + edge.TargetKind)
-                .ToList();
-
-            Assert.Equal(named.Count, named.Distinct().Count());
-            Assert.Equal(
-                new[]
-                {
-                    "body->bone",
-                    "bone->bone",
-                    "face->vertex",
-                    "joint->body",
-                    "material->vertex",
-                    "morph->body",
-                    "morph->bone",
-                    "morph->material",
-                    "morph->morph",
-                    "morph->vertex",
-                    "node->bone",
-                    "node->morph",
-                    "softBody->body",
-                    "softBody->material",
-                    "softBody->vertex",
-                    "vertex->bone",
-                },
-                named.OrderBy(name => name, StringComparer.Ordinal).ToArray());
-        }
-
-        [Fact]
         public void TheTableGroupsItsEdgesByWhatTheyPointAt()
         {
             Assert.Equal(

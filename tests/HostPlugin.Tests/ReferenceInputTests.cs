@@ -38,7 +38,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ThePositionIsCheckedAgainstTheReferencedListNotTheOwningList()
+        public void TheRefusalStatesTheCountOfTheReferencedList()
         {
             Refused(new[] { 2 }, 2, ToolEnvelope.IndexOutOfRange, "参照先のリストの件数は 2");
         }

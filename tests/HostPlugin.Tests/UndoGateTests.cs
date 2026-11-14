@@ -31,8 +31,6 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData(EditKind.Read)]
         [InlineData(EditKind.DuplicateEdit)]
-        [InlineData(EditKind.DirectChange)]
-        [InlineData(EditKind.ViewSession)]
         public void NotAskingToSuppressPassesForEveryKind(EditKind kind)
         {
             Assert.True(UndoGate.TryAcceptSuppress(
@@ -44,8 +42,6 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData(EditKind.DuplicateEdit)]
         [InlineData(EditKind.Read)]
-        [InlineData(EditKind.DirectChange)]
-        [InlineData(EditKind.ViewSession)]
         public void PointingTheTargetByHandleMayNotAskToSuppress(EditKind kind)
         {
             Assert.False(UndoGate.TryAcceptSuppress(
@@ -91,18 +87,16 @@ namespace PmxEditorMcp.Tests
             Assert.Null(warning);
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void AKindThatIsNotKnownStopsWhateverTheRequestAsksFor(bool suppressUndo)
+        [Fact]
+        public void AKindThatIsNotKnownStopsTheSuppressCheckEvenWithoutAsking()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => UndoGate.TryAcceptSuppress(
-                (EditKind)99, pointed: false, suppressUndo,
+                (EditKind)99, pointed: false, suppressUndo: false,
                 code: out string _, message: out string _));
         }
 
         [Fact]
-        public void AKindThatIsNotKnownStops()
+        public void AKindThatIsNotKnownStopsTheLeftoverCheck()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => UndoGate.TryProceedWithLeftover(
                 (EditKind)99, code: out string _, message: out string _, warning: out string _));

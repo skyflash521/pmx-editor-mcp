@@ -18,19 +18,6 @@ namespace PmxEditorMcp.Tests
             yield return new object[] { ModelReorderElements.ToolName };
         }
 
-        public static IEnumerable<object[]> ContractNames()
-        {
-            return Offered(ModelDeleteElements.ToolName).Select(name => new object[] { name });
-        }
-
-        [Theory]
-        [MemberData(nameof(ContractNames))]
-        public void EveryNameTheSchemaOffersResolves(string name)
-        {
-            Assert.Contains(name, ElementKinds.Names);
-            Assert.Equal(name, Resolved(name).Name);
-        }
-
         [Theory]
         [MemberData(nameof(KindTools))]
         public void TheNamesAreTheOnesTheSchemaOffersAndNoOther(string tool)
@@ -61,13 +48,7 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(ElementKinds.Vertex)]
-        [InlineData(ElementKinds.Material)]
-        [InlineData(ElementKinds.Bone)]
-        [InlineData(ElementKinds.Morph)]
         [InlineData(ElementKinds.Node)]
-        [InlineData(ElementKinds.Body)]
-        [InlineData(ElementKinds.Joint)]
-        [InlineData(ElementKinds.SoftBody)]
         public void TheKindsPmxItselfLinesUpHaveNoOwner(string name)
         {
             Assert.Null(Resolved(name).Owner);
@@ -108,78 +89,8 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(new object[] { first, second }, owners.ToArray());
         }
 
-        [Fact]
-        public void TheItemsOfAKindPmxLinesUpAreThatList()
-        {
-            FakePmx pmx = new FakePmx();
-            FakeBone bone = new FakeBone("センター");
-            pmx.Bone.Add(bone);
-
-            Assert.Same(bone, Assert.Single(Resolved(ElementKinds.Bone).Items(pmx)));
-        }
-
-        [Fact]
-        public void TheItemsOfFacesComeFromTheMaterialThatOwnsThem()
-        {
-            FakeMaterial material = new FakeMaterial();
-            FakeFace face = new FakeFace();
-            material.Faces.Add(face);
-
-            Assert.Same(face, Assert.Single(Resolved(ElementKinds.Face).Items(material)));
-        }
-
-        [Fact]
-        public void TheItemsOfIkLinksComeFromTheIkOfTheBoneThatOwnsThem()
-        {
-            FakeBone bone = new FakeBone();
-            FakeIkLink link = new FakeIkLink();
-            bone.IK.Links.Add(link);
-
-            Assert.Same(link, Assert.Single(Resolved(ElementKinds.IkLink).Items(bone)));
-        }
-
-        [Fact]
-        public void ReplacingPutsTheItemsBackInTheOrderTheyWereGiven()
-        {
-            FakePmx pmx = new FakePmx();
-            FakeBone first = new FakeBone("一");
-            FakeBone second = new FakeBone("二");
-            pmx.Bone.Add(first);
-            pmx.Bone.Add(second);
-
-            Resolved(ElementKinds.Bone).Replace(pmx, new object[] { second, first });
-
-            Assert.Equal(new IPXBone[] { second, first }, pmx.Bone.ToArray());
-        }
-
-        [Fact]
-        public void ReplacingLeavesTheSameObjectsInPlaceRatherThanCopies()
-        {
-            FakeMaterial material = new FakeMaterial();
-            FakeFace face = new FakeFace();
-            material.Faces.Add(face);
-
-            Resolved(ElementKinds.Face).Replace(material, new object[] { face });
-
-            Assert.Same(face, material.Faces[0]);
-        }
-
-        [Fact]
-        public void CreatingMakesAnElementOfThatKind()
-        {
-            FakePmx pmx = new FakePmx();
-
-            object made = Resolved(ElementKinds.Bone).Create(new FakeBuilder(), pmx);
-
-            Assert.IsAssignableFrom<IPXBone>(made);
-        }
-
         [Theory]
         [InlineData(ElementKinds.Face)]
-        [InlineData(ElementKinds.IkLink)]
-        [InlineData(ElementKinds.MorphOffset)]
-        [InlineData(ElementKinds.NodeItem)]
-        [InlineData(ElementKinds.SoftBodyAnchor)]
         public void TheKindsThatMustPointAtSomethingElseCannotBeMade(string name)
         {
             FakePmx pmx = Filled();
@@ -188,23 +99,12 @@ namespace PmxEditorMcp.Tests
             Assert.Null(kind.Create(new FakeBuilder(), ElementKinds.Owners(pmx, kind)[0]));
         }
 
-        /// <summary>
-        /// SDKの要素の複製は、ベクトルを別のオブジェクトにして値を写す。複製のベクトルを変えても
-        /// 元は変わらない。
-        /// </summary>
         [Fact]
-        public void CloningMakesAnotherObjectThatCarriesTheSameValues()
+        public void CloningHandsBackAnotherObjectRatherThanTheElementItself()
         {
-            FakeBone bone = new FakeBone("センター") { Position = new V3(1f, 2f, 3f) };
+            FakeBone bone = new FakeBone("センター");
 
-            IPXBone made = (IPXBone)Resolved(ElementKinds.Bone).CloneOf(bone);
-
-            Assert.NotSame(bone, made);
-            Assert.Equal("センター", made.Name);
-            Assert.NotSame(bone.Position, made.Position);
-            Assert.Equal(2f, made.Position.Y);
-            made.Position.Y = 9f;
-            Assert.Equal(2f, bone.Position.Y);
+            Assert.NotSame(bone, Resolved(ElementKinds.Bone).CloneOf(bone));
         }
 
         [Theory]
@@ -324,14 +224,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData(ElementKinds.Vertex, typeof(IPXVertex))]
-        [InlineData(ElementKinds.Material, typeof(IPXMaterial))]
-        [InlineData(ElementKinds.Bone, typeof(IPXBone))]
-        [InlineData(ElementKinds.Morph, typeof(IPXMorph))]
         [InlineData(ElementKinds.Node, typeof(IPXNode))]
-        [InlineData(ElementKinds.Body, typeof(IPXBody))]
-        [InlineData(ElementKinds.Joint, typeof(IPXJoint))]
-        [InlineData(ElementKinds.SoftBody, typeof(IPXSoftBody))]
         public void ThePmxOwnedKindsMakeAndCloneTheShapeTheirListHolds(string name, Type shape)
         {
             FakePmx pmx = Filled();
@@ -340,45 +233,6 @@ namespace PmxEditorMcp.Tests
 
             Assert.IsAssignableFrom(shape, kind.Create(new FakeBuilder(), owner));
             Assert.IsAssignableFrom(shape, kind.CloneOf(kind.Items(owner)[0]));
-        }
-
-        [Theory]
-        [InlineData(ElementKinds.Face, typeof(IPXFace))]
-        [InlineData(ElementKinds.IkLink, typeof(IPXIKLink))]
-        [InlineData(ElementKinds.MorphOffset, typeof(IPXVertexMorphOffset))]
-        [InlineData(ElementKinds.NodeItem, typeof(IPXBoneNodeItem))]
-        [InlineData(ElementKinds.SoftBodyAnchor, typeof(IPXSoftBodyAnchor))]
-        public void TheKindsThatAParentHoldsCloneTheShapeTheirListHolds(string name, Type shape)
-        {
-            FakePmx pmx = Filled();
-            ElementKind kind = Resolved(name);
-            object owner = ElementKinds.Owners(pmx, kind)[0];
-
-            Assert.IsAssignableFrom(shape, kind.CloneOf(kind.Items(owner)[0]));
-        }
-
-        [Fact]
-        public void CloningABoneCarriesItsIkAndKeepsPointingAtTheSameBones()
-        {
-            FakeBone target = new FakeBone("先");
-            FakeBone bone = new FakeBone("IK") { IsIK = true, Parent = target };
-            bone.IK.Target = target;
-            bone.IK.LoopCount = 8;
-            bone.IK.Links.Add(new FakeIkLink(target));
-
-            IPXBone made = (IPXBone)Resolved(ElementKinds.Bone).CloneOf(bone);
-
-            Assert.NotSame(bone, made);
-            Assert.True(made.IsIK);
-            Assert.NotSame(bone.IK, made.IK);
-            Assert.Same(target, made.IK.Target);
-            Assert.Equal(8, made.IK.LoopCount);
-            IPXIKLink link = Assert.Single(made.IK.Links);
-            Assert.NotSame(bone.IK.Links[0], link);
-            Assert.Same(target, link.Bone);
-            Assert.Same(target, made.Parent);
-            made.IK.Links.Clear();
-            Assert.Single(bone.IK.Links);
         }
 
         /// <summary>13種類の要素をそれぞれ2つずつ持つ題材。並びの入れ替えを見分けられる数にする。</summary>

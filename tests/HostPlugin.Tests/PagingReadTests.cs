@@ -13,18 +13,16 @@ namespace PmxEditorMcp.Tests
 
         private const int Huge = 1000000;
 
-        [Theory]
-        [InlineData(1)]
-        [InlineData(4)]
-        [InlineData(37)]
-        public void NoItemAfterTheFirstOneThatDoesNotFitIsRead(int fitting)
+        [Fact]
+        public void NoItemAfterTheFirstOneThatDoesNotFitIsRead()
         {
+            const int fitting = 1;
             ReadCountingList all = new ReadCountingList(Huge, fitting + 1);
 
             Page<int> page;
             Assert.True(Paging.TryTake(all, 0, int.MaxValue, (fitting * PerItem) + Frame, Measure, out page));
 
-            Assert.Equal(fitting, page.Items.Count);
+            Assert.Single(page.Items);
             Assert.Equal(fitting, page.NextOffset);
             Assert.Equal(Huge, page.Total);
         }

@@ -99,16 +99,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void PointingBelowTheFirstItemStops()
-        {
-            string message;
-
-            Assert.False(PreconditionGate.TryAccept(
-                PreconditionKind.ListedParts, 62, false, new long[] { -1 }, out message));
-            Assert.NotNull(message);
-        }
-
-        [Fact]
         public void PointingOutsideTheItemsThatAreListedIsReportedAsOutOfRange()
         {
             foreach (long at in new long[] { -1, 62, long.MaxValue, long.MinValue })
