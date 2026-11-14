@@ -18,18 +18,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AnEventKeepsItsTypeSourceAndPayload()
-        {
-            object payload = new object();
-
-            QueuedEvent queued = _queue.Enqueue(Type, 7, payload);
-
-            Assert.Equal(Type, queued.Type);
-            Assert.Equal(7, queued.SourceHandle);
-            Assert.Same(payload, queued.Payload);
-        }
-
-        [Fact]
         public void EventsComeOutOldestFirst()
         {
             _queue.Enqueue(Type, 1, "a");

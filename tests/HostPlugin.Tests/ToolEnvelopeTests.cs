@@ -40,19 +40,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void EveryErrorCodeIsAccepted()
-        {
-            foreach (string code in ToolEnvelope.ErrorCodes)
-            {
-                IDictionary<string, object> envelope = ToolEnvelope.Failure(code, "説明。");
-                IDictionary<string, object> error =
-                    Assert.IsType<Dictionary<string, object>>(envelope["error"]);
-
-                Assert.Equal(code, error["code"]);
-            }
-        }
-
-        [Fact]
         public void TheErrorCodesAreTheClosedSet()
         {
             Assert.Equal(

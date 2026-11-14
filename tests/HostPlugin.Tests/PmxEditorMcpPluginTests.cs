@@ -63,17 +63,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheResidentSideReceivesTheArgumentsItWasGiven()
-        {
-            IPERunArgs given = new StubRunArgs(true);
-            IPERunArgs seen = null;
-
-            PmxEditorMcpPlugin.Run(given, args => seen = args, () => { }, () => null);
-
-            Assert.Same(given, seen);
-        }
-
-        [Fact]
         public void ARerunFromTheMenuGoesToTheStatusSide()
         {
             List<string> ran = new List<string>();

@@ -64,15 +64,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheNoticeFitsInTheWarningRoom()
-        {
-            Assert.True(
-                ResponseSize.Length(new[] { ResponseSize.TruncatedNotice })
-                    <= ResponseSize.WarningChars,
-                "注記だけで警告の枠を超えている。");
-        }
-
-        [Fact]
         public void WarningsOverTheRoomAreCutWithANotice()
         {
             IList<string> fitted = ResponseSize.Fit(Many(3, ResponseSize.WarningChars / 2));

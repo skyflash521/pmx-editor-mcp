@@ -21,14 +21,5 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(GeneratedTools.Payloads().Count, together.Payloads.Count);
             Assert.NotNull(together.Relay);
         }
-
-        [Fact]
-        public void EachTableIsBuiltOnce()
-        {
-            HostTables together = HostTables.Start();
-
-            Assert.Same(together.Calls, together.Calls);
-            Assert.Same(together.Aggregations, together.Aggregations);
-        }
     }
 }

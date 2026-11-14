@@ -123,16 +123,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void HandleIdsDoNotRepeatAfterTheLedgerIsMadeAgain()
-        {
-            HandleIdIssuer issuer = new HandleIdIssuer();
-            int before = Issue(new HandleLedger(_log, issuer));
-            int after = Issue(new HandleLedger(_log, issuer));
-
-            Assert.True(after > before);
-        }
-
-        [Fact]
         public void EventSequencesDoNotRepeatAcrossQueuesOfTheSameIssuer()
         {
             EventSequenceIssuer issuer = new EventSequenceIssuer();

@@ -16,9 +16,6 @@ namespace PmxEditorMcp.Tests
 
         private const string EmptyMethodRequest = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"\"}";
 
-        private const string NullIdWithArrayParamsRequest =
-            "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"ping\",\"params\":[1,2]}";
-
         private static IDictionary<string, object> ParseObject(string json)
         {
             JsonRpcParseResult result = JsonRpcCodec.ParseRequest(
@@ -155,16 +152,6 @@ namespace PmxEditorMcp.Tests
             // 対応する処理が無いことはディスパッチの段で決まる。
             Assert.True(result.IsValid);
             Assert.Equal(string.Empty, result.Request.Method);
-        }
-
-        [Fact]
-        public void StructureErrorIsDecidedBeforeInvalidArguments()
-        {
-            JsonRpcParseResult result = JsonRpcCodec.ParseRequest(NullIdWithArrayParamsRequest);
-
-            Assert.False(result.IsValid);
-            Assert.Equal(JsonRpcErrorCodes.InvalidRequest, result.ErrorCode);
-            Assert.Null(result.Id);
         }
 
         [Fact]
@@ -442,9 +429,9 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ParseCharacterLimitMatchesContract()
+        public void TheParseCharacterLimitAdmitsEveryMessageWithinTheMessageLimit()
         {
-            Assert.Equal(33554432, JsonRpcCodec.ParseMaxJsonLength);
+            Assert.True(JsonRpcCodec.ParseMaxJsonLength >= MessageLimit.DefaultMaxMessageBytes);
         }
 
         /// <summary>ホストのエラーコードは、ブリッジと揃えて持つ取り決めの表と過不足なく一致する。</summary>

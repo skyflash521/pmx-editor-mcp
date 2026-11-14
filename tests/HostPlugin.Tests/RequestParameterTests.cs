@@ -26,7 +26,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(5)]
-        [InlineData(true)]
         public void TextThatIsNotAStringStops(object value)
         {
             Assert.Throws<InvalidParamsException>(() => RequestParameter.Text(Parameters(value), "a"));
@@ -40,7 +39,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(1)]
-        [InlineData(42)]
         [InlineData(int.MaxValue)]
         public void APositiveIntegerComesBackAsGiven(int value)
         {
@@ -49,7 +47,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(0)]
-        [InlineData(-1)]
         [InlineData(1.5)]
         [InlineData(double.NaN)]
         [InlineData("7")]

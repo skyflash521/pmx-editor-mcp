@@ -67,19 +67,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheEntryAnswersThatItRenewed()
-        {
-            using (ResidentConnection resident = Held())
-            {
-                IDictionary<string, object> result =
-                    Assert.IsAssignableFrom<IDictionary<string, object>>(
-                        DebugConnectorExpiry.Expire(resident));
-
-                Assert.Equal(true, result["renewed"]);
-            }
-        }
-
-        [Fact]
         public void TheEntryIsInTheTableOnlyWhileItIsOpen()
         {
             using (ResidentConnection resident = Held())

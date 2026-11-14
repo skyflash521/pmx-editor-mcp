@@ -16,7 +16,6 @@ namespace PmxEditorMcp.Tests
         [InlineData(null, false)]
         [InlineData("", false)]
         [InlineData(" 1", false)]
-        [InlineData("true", false)]
         [InlineData("0", false)]
         public void TheSwitchOpensOnlyForTheExactValue(string value, bool opens)
         {

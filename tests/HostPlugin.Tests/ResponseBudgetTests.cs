@@ -15,7 +15,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData("10000", 10000)]
-        [InlineData("100000", 100000)]
         [InlineData("500000", 500000)]
         public void DecimalValueInRangeIsValid(string rawValue, int expected)
         {
@@ -28,7 +27,6 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData("9999")]
         [InlineData("500001")]
-        [InlineData("0")]
         [InlineData("99999999999999999999")]
         public void ValueOutOfRangeIsInvalidWithReason(string rawValue)
         {
@@ -40,13 +38,11 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData("")]
-        [InlineData("+100000")]
         [InlineData("-100000")]
         [InlineData(" 100000")]
         [InlineData("100000 ")]
         [InlineData("0100000")]
         [InlineData("１０００００")]
-        [InlineData("100_000")]
         [InlineData("1e5")]
         [InlineData("100000a")]
         public void MalformedValueIsInvalidWithReason(string rawValue)

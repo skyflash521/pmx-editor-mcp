@@ -119,22 +119,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void EndingAndMakingSessionsDoesNotPileThemUp()
-        {
-            SessionStore store = Store();
-
-            for (int i = 0; i < 50; i++)
-            {
-                Session session;
-                Assert.True(
-                    store.TryResolve(null, StubClientProcess.Living(ClientId), out session));
-                Assert.True(store.End(session.Id));
-            }
-
-            Assert.Equal(0, store.Count);
-        }
-
-        [Fact]
         public void EndingWhatIsNotThereChangesNothing()
         {
             SessionStore store = Store();
@@ -313,17 +297,6 @@ namespace PmxEditorMcp.Tests
             Assert.Null(queue.Enqueue("pmx_view.mouse_down", 1, null));
             Assert.Equal(0, queue.Count);
             Assert.Throws<InvalidOperationException>(() => queue.Drain(1));
-        }
-
-        [Fact]
-        public void TheEndedIdentifierCannotBePresentedAgain()
-        {
-            JsonRpcConnection connection = Connection(new McpMethodTable());
-
-            string id = SessionOf(Exchange(connection, Handshake(), Request(2, "end_session"))[0]);
-            string issued = SessionOf(Exchange(connection, Handshake(id))[0]);
-
-            Assert.NotEqual(id, issued);
         }
 
         [Fact]

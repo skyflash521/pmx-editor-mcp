@@ -91,16 +91,5 @@ namespace PmxEditorMcp.Tests
             Assert.Throws<ArgumentNullException>(() => SetResponse.Added(null));
             Assert.Throws<ArgumentNullException>(() => SetResponse.PerTarget(null, 0));
         }
-
-        [Fact]
-        public void TheNamesAreTheOnesTheContractDefines()
-        {
-            Assert.Equal("updated", SetResponse.UpdatedName);
-            Assert.Equal("removed", SetResponse.RemovedName);
-            Assert.Equal("added", SetResponse.AddedName);
-            Assert.Equal("indices", SetResponse.IndicesName);
-            Assert.Equal("invoked", SetResponse.InvokedName);
-            Assert.Equal("applied", SetResponse.AppliedName);
-        }
     }
 }

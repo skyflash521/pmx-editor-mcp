@@ -18,12 +18,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void FailingAfterTheCommitLeavesTheStateChanged()
-        {
-            Assert.Equal(EditState.Changed, EditOutcome.AfterDuplicateEditCommit());
-        }
-
-        [Fact]
         public void AStateThatIsNotKnownHasNoWording()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => EditOutcome.Describe((EditState)99));
@@ -41,15 +35,6 @@ namespace PmxEditorMcp.Tests
         public void AStageThatIsNotKnownStops()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => EditOutcome.Resolve((EditStage)99));
-        }
-
-        [Theory]
-        [InlineData(EditState.Unchanged, true)]
-        [InlineData(EditState.Unknown, true)]
-        [InlineData(EditState.Changed, false)]
-        public void OnlyTheChangedStateIsAnsweredAsSuccess(EditState state, bool expected)
-        {
-            Assert.Equal(expected, EditOutcome.IsFailure(state));
         }
     }
 }

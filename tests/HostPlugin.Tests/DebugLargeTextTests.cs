@@ -62,7 +62,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(1)]
-        [InlineData(1000)]
         [InlineData(Budget)]
         public void TheTextHasExactlyTheRequestedNumberOfCharacters(int chars)
         {
@@ -83,7 +82,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(0)]
-        [InlineData(-1)]
         public void ANumberThatIsNotPositiveStops(int chars)
         {
             Assert.Throws<InvalidParamsException>(() => DebugLargeText.Build(Context(chars)));

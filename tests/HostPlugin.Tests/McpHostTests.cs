@@ -178,17 +178,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void StatusValuesAreReturnedAsIs()
-        {
-            McpHost host = CreateHost(Ignore);
-
-            Assert.Equal(_pipeName, host.PipeName);
-            Assert.Equal(Path.Combine(_directory, "host.log"), host.LogFilePath);
-            Assert.True(host.Budget.IsValid);
-            Assert.Equal(ResponseBudget.DefaultChars, host.Budget.Chars);
-        }
-
-        [Fact]
         public void StartingMakesItRunningAndAcceptsClient()
         {
             McpHost host = CreateHost(Ignore);

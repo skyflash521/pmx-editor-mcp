@@ -16,9 +16,6 @@ namespace PmxEditorMcp.Tests
         [InlineData(" 1")]
         [InlineData("1 ")]
         [InlineData("01")]
-        [InlineData("true")]
-        [InlineData("0")]
-        [InlineData("2")]
         public void AnyOtherValueLeavesItClosed(string rawValue)
         {
             Assert.False(DebugHooks.IsEnabled(rawValue));

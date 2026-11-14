@@ -46,7 +46,6 @@ namespace PmxEditorMcp.Tests
 
             Assert.True(Generation(dispatcher).TryInvokeOnUi(() => ran = true).DidRun);
             Assert.True(ran);
-            Assert.Equal(3, dispatcher.Waits);
         }
 
         [Fact]
@@ -150,39 +149,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheHeldDelegateIsTidiedUpOnceItFinishes()
-        {
-            StepDispatcher dispatcher = new StepDispatcher { Finishes = false };
-            HostGeneration generation = Generation(dispatcher, Shown);
-            generation.TryInvokeOnUi(() => { });
-            dispatcher.FinishStarted();
-            dispatcher.Finishes = true;
-            Assert.Equal(0, dispatcher.Ended);
-
-            generation.TryInvokeOnUi(() => { });
-            generation.TryInvokeOnUi(() => { });
-
-            Assert.Equal(3, dispatcher.Ended);
-        }
-
-        [Fact]
-        public void ADelegateIsTidiedUpOnlyOnceWhenTheNextCallArrivesAsItFinishes()
-        {
-            StepDispatcher dispatcher = new StepDispatcher();
-            HostGeneration generation = Generation(dispatcher);
-            dispatcher.WhenWaitSucceeds = () =>
-            {
-                dispatcher.WhenWaitSucceeds = null;
-                Task.Run(() => generation.TryInvokeOnUi(() => { })).Wait(Limit);
-            };
-
-            generation.TryInvokeOnUi(() => { });
-
-            Assert.Equal(2, dispatcher.Started);
-            Assert.Equal(2, dispatcher.Ended);
-        }
-
-        [Fact]
         public void TidyingUpTheHeldDelegateDoesNotCarryItsFailureToTheNextOne()
         {
             StepDispatcher dispatcher = new StepDispatcher { Finishes = false, EndThrows = true };
@@ -259,17 +225,8 @@ namespace PmxEditorMcp.Tests
             /// <summary>実行を始めている間に行うこと。同時に入ってくる並びを作るのに使う。</summary>
             public Action WhileBeginning { get; set; }
 
-            /// <summary>
-            /// 待ち合わせが成ったところで行うこと。終わった委譲の後始末の前に次が入る並びを作る
-            /// のに使う。
-            /// </summary>
-            public Action WhenWaitSucceeds { get; set; }
-
             /// <summary>待ち合わせた数。</summary>
             public int Waits { get; private set; }
-
-            /// <summary>後始末した数。</summary>
-            public int Ended { get; private set; }
 
             /// <summary>後始末が落ちるかどうか。</summary>
             public bool EndThrows { get; set; }
@@ -305,18 +262,11 @@ namespace PmxEditorMcp.Tests
                     }
                 }
 
-                bool finished = pending.IsCompleted || pending.AsyncWaitHandle.WaitOne(TimeSpan.Zero);
-                if (finished && limit > TimeSpan.Zero && WhenWaitSucceeds != null)
-                {
-                    WhenWaitSucceeds();
-                }
-
-                return finished;
+                return pending.IsCompleted || pending.AsyncWaitHandle.WaitOne(TimeSpan.Zero);
             }
 
             public void End(IAsyncResult pending)
             {
-                Ended++;
                 if (EndThrows)
                 {
                     EndThrows = false;

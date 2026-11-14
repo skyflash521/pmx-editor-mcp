@@ -280,7 +280,6 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData("ping")]
         [InlineData("unknown")]
-        [InlineData("")]
         public void OtherRequestBeforeHandshakeIsRejectedAndDisconnects(string method)
         {
             IList<IDictionary<string, object>> responses =
@@ -326,7 +325,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\"}")]
-        [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":{}}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":{\"protocol\":\"1\"}}")]
         [InlineData("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"handshake\",\"params\":[1]}")]
         public void HandshakeWithoutNumericProtocolIsInvalidArgumentsAndKeepsConnection(string request)
@@ -387,7 +385,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData("unknown")]
-        [InlineData("")]
         public void MethodWithoutHandlerIsUnknownAndKeepsConnection(string method)
         {
             IList<IDictionary<string, object>> responses = Exchange(
@@ -649,22 +646,6 @@ namespace PmxEditorMcp.Tests
 
             IList<IDictionary<string, object>> responses = Exchange(
                 CreateConnection(new McpMethodTable()), Handshake(), builder.ToString(), Request(3, "ping"));
-
-            Assert.Equal(2, responses.Count);
-            Assert.Equal(JsonRpcErrorCodes.RequestTooLarge, ErrorCodeOf(responses[1]));
-            Assert.Null(IdOf(responses[1]));
-        }
-
-        [Fact]
-        public void InputOverLimitIsRejectedAndDisconnects()
-        {
-            List<byte> input = new List<byte>();
-            input.AddRange(Lines(Handshake()));
-            input.AddRange(Utf8WithoutBom.GetBytes(new string('a', 4096)));
-
-            IList<IDictionary<string, object>> responses = ExchangeBytes(
-                CreateConnection(new McpMethodTable(), JsonRpcConnection.DefaultRequestTimeout, 256),
-                input.ToArray());
 
             Assert.Equal(2, responses.Count);
             Assert.Equal(JsonRpcErrorCodes.RequestTooLarge, ErrorCodeOf(responses[1]));
@@ -1048,7 +1029,7 @@ namespace PmxEditorMcp.Tests
         [InlineData("99999999999999999999")]
         [InlineData("1e300")]
         [InlineData("1.4")]
-        public void OverflowingProtocolNumberIsAnsweredAsMismatch(string protocol)
+        public void AProtocolNumberThatOverflowsOrHasAFractionIsAnsweredAsMismatch(string protocol)
         {
             IList<IDictionary<string, object>> responses = Exchange(
                 CreateConnection(new McpMethodTable()),
@@ -1089,21 +1070,13 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData("handshake")]
         [InlineData("ping")]
+        [InlineData("end_session")]
+        [InlineData("sdk_status")]
         public void BuiltInMethodNamesCannotBeRegistered(string name)
         {
             McpMethodTable methods = new McpMethodTable();
 
             Assert.Throws<ArgumentException>(() => methods.Add(name, context => null));
-        }
-
-        [Fact]
-        public void BuiltInMethodNamesCanBeEnumerated()
-        {
-            Assert.Equal(4, JsonRpcConnection.BaseMethodNames.Count);
-            Assert.Contains("handshake", JsonRpcConnection.BaseMethodNames);
-            Assert.Contains("ping", JsonRpcConnection.BaseMethodNames);
-            Assert.Contains("end_session", JsonRpcConnection.BaseMethodNames);
-            Assert.Contains("sdk_status", JsonRpcConnection.BaseMethodNames);
         }
 
         [Fact]

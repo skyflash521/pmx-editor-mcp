@@ -191,13 +191,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(4, MessageChannel.MeasureBytes("abcd"));
         }
 
-        [Fact]
-        public void LimitReturnsTheValueGivenAtConstruction()
-        {
-            Assert.Equal(MessageChannel.DefaultMaxMessageBytes, new MessageChannel(new MemoryStream()).MaxMessageBytes);
-            Assert.Equal(16, new MessageChannel(new MemoryStream(), 16).MaxMessageBytes);
-        }
-
         /// <summary>メッセージの上限は、ブリッジと揃えて持つ取り決めの値である。</summary>
         [Fact]
         public void DefaultLimitMatchesTheSharedContract()

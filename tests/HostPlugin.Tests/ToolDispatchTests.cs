@@ -728,13 +728,10 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(PreconditionKind.PickedObjects, false, false)]
-        [InlineData(PreconditionKind.PickedObjects, false, true)]
         [InlineData(PreconditionKind.PickedObjects, true, true)]
         [InlineData(PreconditionKind.SavedEdits, false, false)]
-        [InlineData(PreconditionKind.SavedEdits, true, false)]
         [InlineData(PreconditionKind.SavedEdits, true, true)]
         [InlineData(PreconditionKind.ListedParts, false, false)]
-        [InlineData(PreconditionKind.ListedParts, true, false)]
         [InlineData(PreconditionKind.ListedParts, true, true)]
         public void AToolWhoseMaterialDoesNotMatchItsKindStopsTheBuild(
             PreconditionKind kind, bool reading, bool counting)

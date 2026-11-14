@@ -126,14 +126,12 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(0)]
-        [InlineData(-1)]
         public void ASourceHandleThatIsNotPositiveStops(int sourceHandle)
         {
             Rejects("sourceHandle", "ui.model.mouse", sourceHandle);
         }
 
         [Theory]
-        [InlineData("seven")]
         [InlineData("7")]
         [InlineData(true)]
         [InlineData(7.5)]

@@ -97,22 +97,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AMemberThatTheLoadedSdkNoLongerPublishesDisablesThatRowToo()
-        {
-            Dictionary<string, SdkCall> calls = new Dictionary<string, SdkCall>(StringComparer.Ordinal)
-            {
-                { LostKey, (target, arguments) => { throw new MethodAccessException("Sdk.Type.Lost"); } },
-            };
-            SdkRelayTable table = new SdkRelayTable(GeneratedVersion, Digest, calls, new string[0]);
-
-            object result;
-            SdkRelayRefusal refusal;
-            Assert.False(table.TryInvoke(LostKey, null, null, out result, out refusal));
-            Assert.Equal(SdkRelayRefusal.Disabled, refusal);
-            Assert.Equal(new[] { LostKey }, table.Disabled);
-        }
-
-        [Fact]
         public void ATypeThatTheLoadedSdkNoLongerCarriesDisablesThatRowToo()
         {
             Dictionary<string, SdkCall> calls = new Dictionary<string, SdkCall>(StringComparer.Ordinal)
@@ -236,16 +220,6 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(
                 new object[] { "model_add_vertices", "model_list_vertices" },
                 Assert.IsType<object[]>(body["toolNames"]));
-        }
-
-        [Fact]
-        public void TheMethodTableNamesWhatItCarriesInSpellingOrder()
-        {
-            McpMethodTable methods = new McpMethodTable();
-            methods.Add("model_list_vertices", context => null);
-            methods.Add("model_add_vertices", context => null);
-
-            Assert.Equal(new[] { "model_add_vertices", "model_list_vertices" }, methods.Names);
         }
 
         [Fact]

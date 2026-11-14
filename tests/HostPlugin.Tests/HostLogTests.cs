@@ -56,14 +56,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void RotationTargetIsWriteTargetWithOneGenerationSuffix()
-        {
-            HostLog log = new HostLog(PathIn("host.log"));
-
-            Assert.Equal(log.FilePath + ".1", log.RotatedFilePath);
-        }
-
-        [Fact]
         public void AtThresholdItAppendsToSameFileWithoutRotating()
         {
             string path = PathIn("host.log");

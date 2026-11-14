@@ -404,7 +404,7 @@ namespace PmxEditorMcp.Tests
             HandleReleaseResult released;
             Assert.Throws<ArgumentNullException>(() => _ledger.TryReleaseAll(new[] { 1 }, null, out released));
             Assert.Throws<ArgumentNullException>(
-                () => _ledger.TryReleaseAll(new[] { 1 }, null, out released));
+                () => _ledger.TryReleaseAll(null, new InlineInvoker(), out released));
             Assert.Throws<ArgumentNullException>(() => _ledger.ReleaseIssuedAfter(0, null));
             Assert.Throws<ArgumentNullException>(() => _ledger.ReleaseAll(null));
         }

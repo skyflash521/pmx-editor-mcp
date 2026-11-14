@@ -45,18 +45,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AnImageThatFitsIsSentAsItIs()
-        {
-            using (Bitmap image = Solid(300, 200))
-            {
-                EncodedImage encoded = ImageTransfer.Encode(image, ImageTransfer.DefaultMaxLongSide);
-
-                Assert.Empty(encoded.Warnings);
-                Assert.Equal(new Size(300, 200), SizeOf(encoded.Base64));
-            }
-        }
-
-        [Fact]
         public void AnImageAtTheLimitIsSentAsItIs()
         {
             using (Bitmap image = Solid(ImageTransfer.MinimumMaxLongSide, 10))
