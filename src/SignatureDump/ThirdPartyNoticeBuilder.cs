@@ -20,11 +20,6 @@ namespace PmxEditorMcp.SignatureDump
         private static readonly string[] Header =
         {
             "pmx-editor-mcp が同梱する第三者のソフトウェアと、その表示。",
-            string.Empty,
-            "この表示は配布物を組み立てる元から機械で作る。手で書き換えない——書き換えても、",
-            "次に組み立てたときに元へ戻る。",
-            string.Empty,
-            "名乗るライセンスと転記元が同じものは、同じ転記を何度も並べずにまとめてある。",
         };
 
         /// <summary>転記元が読めなければ <see cref="FormatException"/>。</summary>
