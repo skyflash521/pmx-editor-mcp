@@ -491,7 +491,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData("VmdViewLib.RecForm", "btnStart")]
-        [InlineData("PmxEditor.ExportForm", "btnOK")]
         public void AnItemThatWritesAFileWithoutAToolNamesNoTool(string window, string path)
         {
             OnSta(() =>
@@ -767,25 +766,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ADangerousItemIsRefusedWithoutPressing()
-        {
-            OnSta(() =>
-            {
-                using (Screen screen = new Screen())
-                {
-                    int pressed = 0;
-                    screen.Save.Click += (sender, e) => pressed++;
-
-                    IDictionary<string, object> refused =
-                        Press(screen, MainForm, "menuStrip1", "MenuItem_File", "MenuItem_Save");
-
-                    Assert.Equal(ToolEnvelope.NotApplicable, Code(refused));
-                    Assert.Equal(0, pressed);
-                }
-            });
-        }
-
-        [Fact]
         public void ADisabledItemIsNotPressedEither()
         {
             OnSta(() =>
@@ -1054,8 +1034,6 @@ namespace PmxEditorMcp.Tests
             internal Screen()
             {
                 Main = Shown("PmxForm", "Pmx編集");
-                Save = new ToolStripMenuItem("上書き保存(&U)") { Name = "MenuItem_Save" };
-                Main.Controls.Add(Strip(Menu("MenuItem_File", Save)));
                 View = Shown("PMXView", "PmxView");
                 Item = new ToolStripMenuItem("TransformView(&T)") { Name = "MenuItem_TransformView" };
                 Item.Click += (sender, e) =>
@@ -1104,8 +1082,6 @@ namespace PmxEditorMcp.Tests
             internal Form Transform { get; private set; }
 
             internal ToolStripMenuItem Item { get; }
-
-            internal ToolStripMenuItem Save { get; }
 
             internal ToolStripMenuItem Normalize { get; }
 

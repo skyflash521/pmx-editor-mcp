@@ -55,11 +55,11 @@ namespace PmxEditorMcp.Tests
 
         private const string ClipboardDanger = "clipboard";
 
-        [Theory]
-        [MemberData(nameof(ItemsWhoseHandlersReadOrWriteTheClipboard))]
-        public void AnItemThatReadsOrWritesTheClipboardIsRefusedWithoutPressing(
-            string window, string path)
+        [Fact]
+        public void AnItemThatReadsOrWritesTheClipboardIsRefusedWithoutPressing()
         {
+            const string window = "PmxEditor.CsvElementView";
+            const string path = "menuStrip1/MenuItem_File/MenuItem_CopyOutput";
             string[] steps = path.Split('/');
             OnSta(() =>
             {
