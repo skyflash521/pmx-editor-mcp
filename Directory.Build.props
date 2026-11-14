@@ -2,7 +2,7 @@
 
   <!-- 配布のバージョン。ホストとブリッジのアセンブリも、配布するパッケージの名前もこの値を共有する。 -->
   <PropertyGroup>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
   </PropertyGroup>
 
   <PropertyGroup>
