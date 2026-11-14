@@ -205,6 +205,100 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void RangesComeBackRunByRunInTheOrderTheRequestGave()
+        {
+            ResolvedTargets resolved = Resolve(
+                new TargetRequest(ranges: new[] { new TargetRun(5, 2), new TargetRun(0, 2) }), listCount: 8);
+
+            Assert.Equal(TargetForm.Ranges, resolved.Form);
+            Assert.Equal(new[] { 5, 6, 0, 1 }, resolved.Indices);
+        }
+
+        [Fact]
+        public void RangesThatOverlapAreAnInvalidArgument()
+        {
+            Failure failure = Reject(
+                new TargetRequest(ranges: new[] { new TargetRun(3, 2), new TargetRun(0, 4) }), listCount: 8);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, failure.Code);
+            Assert.Contains("ranges", failure.Message);
+            Assert.Contains("二度指している", failure.Message);
+        }
+
+        [Fact]
+        public void RangesThatOnlyTouchAreAccepted()
+        {
+            ResolvedTargets resolved = Resolve(
+                new TargetRequest(ranges: new[] { new TargetRun(2, 2), new TargetRun(0, 2) }), listCount: 4);
+
+            Assert.Equal(new[] { 2, 3, 0, 1 }, resolved.Indices);
+        }
+
+        [Fact]
+        public void EmptyRangesAreAnInvalidArgument()
+        {
+            Failure failure = Reject(new TargetRequest(ranges: new TargetRun[0]), listCount: 3);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, failure.Code);
+        }
+
+        [Fact]
+        public void ARunInRangesThatRunsPastTheListIsOutOfRangeAndNamesRanges()
+        {
+            Failure failure = Reject(
+                new TargetRequest(ranges: new[] { new TargetRun(0, 1), new TargetRun(2, 2) }), listCount: 3);
+
+            Assert.Equal(ToolEnvelope.IndexOutOfRange, failure.Code);
+            Assert.Contains("ranges", failure.Message);
+        }
+
+        [Fact]
+        public void RangesTogetherWithARangeAreAnInvalidArgument()
+        {
+            Failure failure = Reject(
+                new TargetRequest(rangeStart: 0, rangeCount: 1, ranges: new[] { new TargetRun(1, 1) }),
+                listCount: 3);
+
+            Assert.Equal(ToolEnvelope.InvalidArgument, failure.Code);
+            Assert.Contains("ranges", failure.Message);
+        }
+
+        [Fact]
+        public void RangesAreRefusedWhereTheToolDoesNotTakeARange()
+        {
+            bool resolvedOk = TargetSelection.TryResolve(
+                new TargetRequest(ranges: new[] { new TargetRun(0, 1) }),
+                TargetForm.Indices | TargetForm.All,
+                listCount: 5,
+                isUsableHandle: h => false,
+                resolved: out ResolvedTargets resolved,
+                code: out string code,
+                message: out string message,
+                names: TargetNames.Element);
+
+            Assert.False(resolvedOk);
+            Assert.Equal(ToolEnvelope.InvalidArgument, code);
+            Assert.Contains("ranges", message);
+        }
+
+        [Fact]
+        public void ASetOfNamesWithoutRangesDoesNotAcceptThem()
+        {
+            bool resolvedOk = TargetSelection.TryResolve(
+                new TargetRequest(ranges: new[] { new TargetRun(0, 1) }),
+                TargetForm.Indices | TargetForm.Range,
+                listCount: 5,
+                isUsableHandle: h => false,
+                resolved: out ResolvedTargets resolved,
+                code: out string code,
+                message: out string message,
+                names: TargetNames.Parent);
+
+            Assert.False(resolvedOk);
+            Assert.Equal(ToolEnvelope.InvalidArgument, code);
+        }
+
+        [Fact]
         public void AllSetToFalseIsAnInvalidArgument()
         {
             Failure failure = Reject(new TargetRequest(all: false), listCount: 3);

@@ -665,7 +665,7 @@ namespace PmxEditorMcp
                     : TargetNames.Element.Selected + " が指す位置はモデル全体で数えるが、"
                         + kind.Name + " は " + kind.Owner.Name + " ごとに数える並びである。"
                         + TargetNames.Element.Indices + "・" + TargetNames.Element.Range + "・"
-                        + TargetNames.Element.All + " で指す。";
+                        + TargetNames.Element.Ranges + "・" + TargetNames.Element.All + " で指す。";
 
                 return false;
             }

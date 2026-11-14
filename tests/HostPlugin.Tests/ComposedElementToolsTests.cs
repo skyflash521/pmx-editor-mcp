@@ -596,6 +596,20 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void SeveralRunsAreDeletedInOneCall()
+        {
+            Bones("一", "二", "三", "四", "五", "六");
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Delete(
+                ComposedEditFixture.Given(ElementKinds.KindName, ElementKinds.Bone),
+                ComposedEditFixture.Given("ranges", new object[] { Span(4, 2), Span(0, 1), Span(2, 1) })));
+
+            Assert.Equal(new[] { "二", "四" }, Names());
+            Assert.Equal(4, value[ModelDeleteElements.RemovedName]);
+            Assert.Equal(1, _fixture.Commits);
+        }
+
+        [Fact]
         public void KeepingTheRelatedOnesLeavesThePointersWithoutATarget()
         {
             FakeBone root = new FakeBone("親");

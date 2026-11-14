@@ -101,6 +101,29 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void WithoutTheFalloffTheFalloffSmoothRadiusLeavesEachVertexWithItsOwnNearestPoint()
+        {
+            IList<IPXBone> bones = Bones("甲", "乙", "元");
+            Plate(bones[0], 0.0);
+            Plate(bones[1], Gap);
+            FakeVertex first = Target(0.0, Close, bones[2]);
+            FakeVertex second = Target(Gap, Middle, bones[2]);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Picking(
+                first,
+                second,
+                ComposedEditFixture.Given(FalloffSmoothRadius, FalloffRadius)));
+
+            Near(1.0, Share(first, bones[0]));
+            Near(0.0, Share(first, bones[1]));
+            Near(1.0, Share(second, bones[1]));
+            Near(0.0, Share(second, bones[0]));
+            Near(0.0, Share(first, bones[2]));
+            Near(0.0, Share(second, bones[2]));
+            Assert.Equal(2, value[ModelEditWeights.ChangedName]);
+        }
+
+        [Fact]
         public void TheCopiedWeightsAreSmoothedIntoEachOtherByTheGaussianBeforeTheyAreMixed()
         {
             IList<IPXBone> bones = Bones("甲", "乙", "元");
@@ -191,6 +214,25 @@ namespace PmxEditorMcp.Tests
             Near(0.0, Share(first, bones[1]));
             Near(0.0, Share(second, bones[0]));
             Assert.Equal(2, value[ModelEditWeights.ChangedName]);
+        }
+
+        [Fact]
+        public void ASmoothedFractionAboveOneHalfPutsTheOriginalBoneFirstAndTheCopiedSecond()
+        {
+            IList<IPXBone> bones = Bones("甲", "乙", "元");
+            Plate(bones[0], 0.0);
+            Plate(bones[1], Gap);
+            FakeVertex first = Target(0.0, Far, bones[2]);
+            FakeVertex second = Target(Gap, Middle, bones[2]);
+
+            ComposedEditFixture.Value(Picking(
+                first,
+                second,
+                Fading(),
+                ComposedEditFixture.Given(FalloffSmoothRadius, FalloffRadius)));
+
+            AssertSlots(first, bones[2], bones[0]);
+            AssertSlots(second, bones[2], bones[1]);
         }
 
         [Fact]
@@ -485,6 +527,13 @@ namespace PmxEditorMcp.Tests
             }
 
             return share;
+        }
+
+        private void AssertSlots(IPXVertex given, IPXBone firstBone, IPXBone secondBone)
+        {
+            IPXVertex now = _fixture.Now(given);
+            Assert.Same(_fixture.Now(firstBone), now.Bone1);
+            Assert.Same(_fixture.Now(secondBone), now.Bone2);
         }
 
         private static double Apart(double heightOfFirst, double heightOfSecond)

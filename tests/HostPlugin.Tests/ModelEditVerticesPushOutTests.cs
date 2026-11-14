@@ -178,6 +178,28 @@ namespace PmxEditorMcp.Tests
             AssertAt(0.2f, 3f, 0.1f, beyond);
         }
 
+        [Fact]
+        public void TheSpreadCarriesTheOutsideNeighboursWithinTheRadiusAndTheDeepestLandsAtTheMargin()
+        {
+            Tetrahedron();
+            IPXVertex inside = Vertex(0.5f, 1f, 1f);
+            IPXVertex within = Vertex(-0.5f, 1f, 1f);
+            IPXVertex beyond = Vertex(3.5f, 1f, 1f);
+            IPXVertex farther = Vertex(-1f, 1f, 1f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Push(
+                new[] { inside, within, beyond, farther },
+                ComposedEditFixture.Given(Margin, 0.25),
+                ComposedEditFixture.Given(SpreadRadius, 2.0)));
+
+            Assert.Equal(3, value[Changed]);
+            Assert.Equal(0, value[Remaining]);
+            Assert.Equal(-0.25f, At(inside).X, 4);
+            Assert.Equal(1f, At(inside).Y, 4);
+            Assert.Equal(1f, At(inside).Z, 4);
+            AssertAt(3.5f, 1f, 1f, beyond);
+        }
+
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -487,6 +509,20 @@ namespace PmxEditorMcp.Tests
             }
 
             _fixture.Model.Material.Add(cube);
+        }
+
+        private void Tetrahedron()
+        {
+            IPXVertex[] corners =
+            {
+                Vertex(0f, 0f, 0f), Vertex(4f, 0f, 0f), Vertex(0f, 4f, 0f), Vertex(0f, 0f, 4f),
+            };
+            FakeMaterial solid = new FakeMaterial("四面体");
+            solid.Faces.Add(new FakeFace(corners[0], corners[1], corners[2]));
+            solid.Faces.Add(new FakeFace(corners[0], corners[1], corners[3]));
+            solid.Faces.Add(new FakeFace(corners[0], corners[2], corners[3]));
+            solid.Faces.Add(new FakeFace(corners[1], corners[2], corners[3]));
+            _fixture.Model.Material.Add(solid);
         }
 
         private static FakeFace Face(IPXVertex[] corners, bool reversed, int a, int b, int c)

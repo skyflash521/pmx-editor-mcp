@@ -76,6 +76,30 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AskingForAnIdentifierThisPointingDoesNotReturnTakesNothingMore()
+        {
+            IList<string> selected;
+            string code;
+            string message;
+            Assert.True(FieldSelection.TryResolve(
+                new[] { "handle", "name" },
+                Readable,
+                Always,
+                out selected,
+                out code,
+                out message,
+                new[] { "handle", "parentIndex", "indexInParent" }));
+            Assert.Equal(new[] { "parentIndex", "indexInParent", "name" }, selected);
+            Assert.Null(code);
+        }
+
+        [Fact]
+        public void AnIdentifierIsStillRefusedWhenNoneAreNamed()
+        {
+            Refused(new[] { "handle", "name" }, "fields が選んだ handle は読み取れる項目に無い");
+        }
+
+        [Fact]
         public void AskingForWhatIsAlwaysReturnedTwiceIsRefused()
         {
             IList<string> selected;

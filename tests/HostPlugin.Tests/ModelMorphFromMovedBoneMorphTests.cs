@@ -152,6 +152,23 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheOffsetsOfEachMorphFollowTheOrderOfTheVerticesAndTheBones()
+        {
+            int handle = Scene(BonesNow, Vertices);
+
+            Run(handle, VertexMorphCalled, BoneMorphCalled);
+
+            Assert.Equal(
+                new[] { 1, 2, 3, 4, 5, 7, 8, 9, 10 },
+                MorphCalled(VertexMorphCalled).Offsets.Cast<IPXVertexMorphOffset>()
+                    .Select(offset => _fixture.Model.Vertex.IndexOf(offset.Vertex)));
+            Assert.Equal(
+                new[] { 0, 1, 3, 4 },
+                MorphCalled(BoneMorphCalled).Offsets.Cast<IPXBoneMorphOffset>()
+                    .Select(offset => _fixture.Model.Bone.IndexOf(offset.Bone)));
+        }
+
+        [Fact]
         public void TheCallNamesTheTwoMorphsItAddedAndHowManyOffsetsEachHolds()
         {
             int handle = Scene(BonesNow, Vertices);

@@ -97,6 +97,27 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void EveryElementRangeInputHasRangesBesideIt()
+        {
+            List<string> wrong = new List<string>();
+            foreach (KeyValuePair<string, IList<string>> tool in InputPathsByTool())
+            {
+                foreach (string path in tool.Value.Where(
+                    p => p == TargetNames.Element.Range || p.EndsWith("." + TargetNames.Element.Range, StringComparison.Ordinal)))
+                {
+                    string beside = path.Substring(0, path.Length - TargetNames.Element.Range.Length)
+                        + TargetNames.Element.Ranges + "[]";
+                    if (!tool.Value.Contains(beside))
+                    {
+                        wrong.Add(tool.Key + " " + path + ": " + beside + " が無い");
+                    }
+                }
+            }
+
+            Assert.True(wrong.Count == 0, wrong.Count + " 件:\n" + string.Join("\n", wrong));
+        }
+
+        [Fact]
         public void EveryFileThatReadsPositionsIsEitherAToolWithDeclarationsOrAListedSharedFile()
         {
             ISet<string> toolsWithDeclarations = new HashSet<string>(

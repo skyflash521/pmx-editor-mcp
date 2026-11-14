@@ -37,7 +37,7 @@ namespace PmxEditorMcp
 
             code = null;
             message = null;
-            string[] held = { names.Indices, names.Range, names.All, names.Selected, names.Numbered };
+            string[] held = { names.Indices, names.Range, names.All, names.Selected, names.Numbered, names.Ranges };
             foreach (string name in held.Where(n => n != null && given.ContainsKey(n)))
             {
                 code = ToolEnvelope.InvalidArgument;
@@ -79,10 +79,12 @@ namespace PmxEditorMcp
             int? count;
             bool? all;
             bool? selected;
+            IList<TargetRun> runs;
             IList<long> held = null;
             if (!TryIndices(parameters, names.Indices, out indices, out code, out message)
                 || !TryIndices(parameters, names.Numbered, out numbered, out code, out message)
                 || !TryRange(parameters, names, out start, out count, out code, out message)
+                || !TryRanges(parameters, names, out runs, out code, out message)
                 || !TryAll(parameters, names, out all, out code, out message)
                 || !TryFlag(parameters, names.Selected, out selected, out code, out message)
                 || (handles && !TryHandles(parameters, names, out held, out code, out message)))
@@ -90,7 +92,7 @@ namespace PmxEditorMcp
                 return false;
             }
 
-            request = new TargetRequest(indices, start, count, all, held, selected, numbered);
+            request = new TargetRequest(indices, start, count, all, held, selected, numbered, runs);
 
             return true;
         }
@@ -241,37 +243,88 @@ namespace PmxEditorMcp
                 return true;
             }
 
-            IDictionary<string, object> members = value as IDictionary<string, object>;
-            object given;
-            int taken;
-            if (members == null
-                || !members.TryGetValue(StartName, out given)
-                || !ValueInput.TryIndex(given, out taken))
+            TargetRun run;
+            if (!TryRun(value, out run))
             {
                 code = ToolEnvelope.InvalidArgument;
-                message = Pair(names);
+                message = names.Range + " は " + Pair + "でなければならない。";
 
                 return false;
             }
 
-            start = taken;
-            if (!members.TryGetValue(CountName, out given)
-                || !ValueInput.TryIndex(given, out taken))
-            {
-                code = ToolEnvelope.InvalidArgument;
-                message = Pair(names);
-
-                return false;
-            }
-
-            count = taken;
+            start = run.Start;
+            count = run.Count;
 
             return true;
         }
 
-        private static string Pair(TargetNames names)
+        private static bool TryRanges(
+            IDictionary<string, object> parameters,
+            TargetNames names,
+            out IList<TargetRun> runs,
+            out string code,
+            out string message)
         {
-            return names.Range + " は " + StartName + " と " + CountName + " の組でなければならない。";
+            code = null;
+            message = null;
+            runs = null;
+            object value;
+            if (names.Ranges == null || !parameters.TryGetValue(names.Ranges, out value))
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = names.Ranges + " は " + Pair + "の配列でなければならない。";
+            object[] items = value as object[];
+            if (items == null)
+            {
+                return false;
+            }
+
+            List<TargetRun> taken = new List<TargetRun>();
+            foreach (object item in items)
+            {
+                TargetRun run;
+                if (!TryRun(item, out run))
+                {
+                    return false;
+                }
+
+                taken.Add(run);
+            }
+
+            code = null;
+            message = null;
+            runs = taken;
+
+            return true;
+        }
+
+        private static bool TryRun(object value, out TargetRun run)
+        {
+            run = null;
+            IDictionary<string, object> members = value as IDictionary<string, object>;
+            object given;
+            int start;
+            int count;
+            if (members == null
+                || !members.TryGetValue(StartName, out given)
+                || !ValueInput.TryIndex(given, out start)
+                || !members.TryGetValue(CountName, out given)
+                || !ValueInput.TryIndex(given, out count))
+            {
+                return false;
+            }
+
+            run = new TargetRun(start, count);
+
+            return true;
+        }
+
+        private static string Pair
+        {
+            get { return StartName + " と " + CountName + " の組"; }
         }
 
         private static bool TryAll(

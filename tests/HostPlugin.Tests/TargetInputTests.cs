@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace PmxEditorMcp.Tests
@@ -33,6 +34,42 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(3, request.RangeStart);
             Assert.Equal(2, request.RangeCount);
+        }
+
+        [Fact]
+        public void RangesComeThroughAsTheRunsInTheOrderTheyWereGiven()
+        {
+            TargetRequest request = Taken(Arguments(
+                new KeyValuePair<string, object>(
+                    "ranges",
+                    new object[] { Run(4, 1), Run(0, 2) })));
+
+            Assert.Equal(new[] { 4, 0 }, request.Ranges.Select(run => run.Start).ToArray());
+            Assert.Equal(new[] { 1, 2 }, request.Ranges.Select(run => run.Count).ToArray());
+            Assert.Null(request.RangeStart);
+        }
+
+        [Fact]
+        public void RangesThatAreNotAnArrayAreRefused()
+        {
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                Refused(Arguments(new KeyValuePair<string, object>("ranges", Run(0, 1)))));
+        }
+
+        [Fact]
+        public void ARunInRangesThatCarriesOnlyOneOfTheTwoMembersIsRefused()
+        {
+            Assert.Equal(
+                ToolEnvelope.InvalidArgument,
+                Refused(Arguments(
+                    new KeyValuePair<string, object>(
+                        "ranges",
+                        new object[]
+                        {
+                            Run(0, 1),
+                            new Dictionary<string, object>(StringComparer.Ordinal) { { "start", 3 } },
+                        }))));
         }
 
         [Fact]
@@ -169,6 +206,15 @@ namespace PmxEditorMcp.Tests
 
             Assert.Throws<ArgumentNullException>(() => TargetInput.TryTake(
                 null, TargetNames.Element, false, out TargetRequest _, out code, out message));
+        }
+
+        private static IDictionary<string, object> Run(int start, int count)
+        {
+            return new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { "start", start },
+                { "count", count },
+            };
         }
 
         private static IDictionary<string, object> Arguments(

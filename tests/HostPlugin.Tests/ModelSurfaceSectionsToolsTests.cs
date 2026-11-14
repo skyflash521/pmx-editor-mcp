@@ -54,6 +54,17 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void EachSectionCarriesTheGivenPositionEvenWhereNothingIsCut()
+        {
+            BoxAndSlab();
+
+            object[] sections = Sections(new object[] { Material(1) }, 1.5, -0.25, 0.5);
+
+            Assert.Equal(new[] { 1.5f, -0.25f, 0.5f }, sections.Select(s => (float)Section(s)["s"]));
+            AssertPoints(Line(sections[2], 0), new[] { -1f, 2f }, new[] { 0f, 2f }, new[] { 1f, 2f });
+        }
+
+        [Fact]
         public void VertexSetsCutOnlyTheFacesWhoseCornersAreAllInTheSet()
         {
             BoxAndSlab();
@@ -95,6 +106,19 @@ namespace PmxEditorMcp.Tests
             Assert.Empty((object[])Section(sections[3])["lines"]);
             AssertPoints(
                 Line(sections[4], 0), new[] { -1f, -1f }, new[] { 1f, -1f }, new[] { 1f, 1f }, new[] { -1f, 1f });
+        }
+
+        [Fact]
+        public void WithAtOnlyThePositionsGivenAreCutAndNotTheVertexPositions()
+        {
+            Bipyramid();
+
+            object[] sections = Sections(new object[] { Material(0) }, 0.5);
+
+            IDictionary<string, object> section = Section(Assert.Single(sections));
+            Assert.Equal(0.5f, (float)section["s"]);
+            AssertPoints(
+                Line(section, 0), new[] { -1f, -1f }, new[] { 1f, -1f }, new[] { 1f, 1f }, new[] { -1f, 1f });
         }
 
         [Fact]

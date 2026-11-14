@@ -104,6 +104,7 @@ namespace PmxEditorMcp
                 ComposedOperation.OperationName,
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
+                TargetNames.Element.Ranges,
                 TargetNames.Element.All,
                 NameName,
                 TargetIndicesName,

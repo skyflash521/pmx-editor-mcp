@@ -59,6 +59,7 @@ namespace PmxEditorMcp
                 ComposedOperation.OperationName,
                 TargetNames.Element.Indices,
                 TargetNames.Element.Range,
+                TargetNames.Element.Ranges,
                 TargetNames.Element.All,
                 TargetNames.Element.Selected,
                 ModelFindVertexBounds.MaterialIndicesName,

@@ -19,6 +19,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData("kinds")]
         [InlineData("nameContains")]
         [InlineData("ramp")]
+        [InlineData("ranges")]
         [InlineData("surfaceMaterialIndices")]
         public void AnArrayThatDecidesWhatTheCallActsOnCannotBeEmpty(string name)
         {

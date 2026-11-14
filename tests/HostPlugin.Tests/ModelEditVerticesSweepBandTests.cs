@@ -145,6 +145,22 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheTangentNextToAFixedEndRunsThroughWhereTheFixedLayerStays()
+        {
+            Straight(3);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Run(Full(
+                3 * 2,
+                Tolerance,
+                new object[] { Offset(0.0, 0f, 0f, 0f), Offset(2.0, -2f, 2f, 0f) },
+                1)));
+
+            Assert.Equal(2, value[Changed]);
+            AssertNear(new V3(0f, 1f + HalfWidth, 0f), _fixture.Model.Vertex[2].Position);
+            AssertNear(new V3(0f, 1f - HalfWidth, 0f), _fixture.Model.Vertex[3].Position);
+        }
+
+        [Fact]
         public void ABandMovedAsAWholeIsOnlyTranslatedAndItsCrossSectionIsNotTurned()
         {
             Straight();

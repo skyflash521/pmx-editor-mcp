@@ -41,6 +41,48 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AFaceNumberedOverTheWholeModelTakesTheVerticesPointedByPosition()
+        {
+            FakeVertex[] vertices = { new FakeVertex(), new FakeVertex(), new FakeVertex() };
+            foreach (FakeVertex vertex in vertices)
+            {
+                _fixture.Model.Vertex.Add(vertex);
+            }
+
+            FakeMaterial first = new FakeMaterial("一");
+            first.Faces.Add(new FakeFace(vertices[0], vertices[1], vertices[2]));
+            first.Faces.Add(new FakeFace(vertices[0], vertices[1], vertices[2]));
+            FakeMaterial second = new FakeMaterial("二");
+            second.Faces.Add(new FakeFace(vertices[0], vertices[1], vertices[2]));
+            _fixture.Model.Material.Add(first);
+            _fixture.Model.Material.Add(second);
+            Dictionary<string, object> turned = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                { "vertex1", 1 },
+                { "vertex2", 2 },
+                { "vertex3", 0 },
+            };
+
+            IDictionary<string, object> envelope = _fixture.Call(
+                "model_update_faces",
+                ComposedEditFixture.Given("modelIndices", new object[] { 2 }),
+                ComposedEditFixture.Given(ToolDispatch.ValueName, turned));
+
+            Assert.Equal(1, ComposedEditFixture.Value(envelope)[SetResponse.UpdatedName]);
+            IList<IPXVertex> now = _fixture.Model.Vertex;
+            IPXFace changed = _fixture.Model.Material[1].Faces[0];
+            Assert.Equal(
+                new[] { 1, 2, 0 },
+                new[]
+                {
+                    now.IndexOf(changed.Vertex1), now.IndexOf(changed.Vertex2), now.IndexOf(changed.Vertex3),
+                });
+            Assert.All(
+                _fixture.Model.Material[0].Faces,
+                face => Assert.Equal(0, now.IndexOf(face.Vertex1)));
+        }
+
+        [Fact]
         public void AnIkTargetIsNotClearedWithNull()
         {
             FakeBone target = new FakeBone("目標");

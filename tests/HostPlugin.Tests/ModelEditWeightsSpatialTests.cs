@@ -243,6 +243,29 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void EveryVertexOfAGroupHoldsTheTiedBonesInTheOrderTheyFirstAppearInTheGroup()
+        {
+            IList<IPXBone> bones = Bones("一", "二", "三");
+            FakeVertex first = Vertex(0f, 0f, 0f, bones[0]);
+            FakeVertex second = Vertex(0f, 0f, 0f, bones[1]);
+            FakeVertex third = Vertex(5f, 0f, 0f, bones[2]);
+            FakeVertex fourth = Vertex(5.25f, 0f, 0f, bones[0]);
+
+            ComposedEditFixture.Value(Grouped(0.5, ComposedEditFixture.Given("all", true)));
+
+            Assert.Same(_fixture.Now(bones[0]), _fixture.Now(first).Bone1);
+            Assert.Same(_fixture.Now(bones[1]), _fixture.Now(first).Bone2);
+            Assert.Same(_fixture.Now(bones[0]), _fixture.Now(second).Bone1);
+            Assert.Same(_fixture.Now(bones[1]), _fixture.Now(second).Bone2);
+            Assert.Same(_fixture.Now(bones[2]), _fixture.Now(third).Bone1);
+            Assert.Same(_fixture.Now(bones[0]), _fixture.Now(third).Bone2);
+            Assert.Same(_fixture.Now(bones[2]), _fixture.Now(fourth).Bone1);
+            Assert.Same(_fixture.Now(bones[0]), _fixture.Now(fourth).Bone2);
+            Near(0.5, _fixture.Now(second).Weight1);
+            Near(0.5, _fixture.Now(fourth).Weight1);
+        }
+
+        [Fact]
         public void AVertexBeyondTheThresholdIsLeftAloneEvenWhenTheMeshJoinsIt()
         {
             IList<IPXBone> bones = Bones("一", "二");
