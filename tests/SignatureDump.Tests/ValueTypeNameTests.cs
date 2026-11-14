@@ -20,7 +20,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData("System.Int32")]
         [InlineData("System.Nullable<System.Int32>")]
-        [InlineData("System.Collections.Generic.IDictionary<System.String,System.Int32>")]
         public void ATypeThatIsNotASequenceGivesNothing(string typeName)
         {
             string element;

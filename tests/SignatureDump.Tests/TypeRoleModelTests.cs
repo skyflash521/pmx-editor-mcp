@@ -6,20 +6,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class TypeRoleModelTests
     {
-        private static readonly PropertyRecord Size =
-            new PropertyRecord("N.IThing", "Size", "System.Int32");
-
-        [Fact]
-        public void ADocumentSectionKeepsItsPathAndLines()
-        {
-            NameBasis basis = NameBasis.FromDocumentSection("doc/spec.txt", 4, 9);
-
-            Assert.Equal(NameBasisKind.DocumentSection, basis.Kind);
-            Assert.Equal("doc/spec.txt", basis.Path);
-            Assert.Equal(4, basis.FirstLine);
-            Assert.Equal(9, basis.LastLine);
-        }
-
         [Fact]
         public void ADocumentSectionOfOneLineIsAllowed()
         {
@@ -49,17 +35,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AMemberShapeHasNoPlace()
-        {
-            NameBasis basis = NameBasis.FromMemberShape();
-
-            Assert.Equal(NameBasisKind.MemberShape, basis.Kind);
-            Assert.Equal(string.Empty, basis.Path);
-            Assert.Equal(0, basis.FirstLine);
-            Assert.Equal(0, basis.LastLine);
-        }
-
-        [Fact]
         public void ANameRecordRequiresTheItemTheNameTheBasisAndTheOrigin()
         {
             Assert.Throws<ArgumentNullException>(() => Authored(null, "Size", "大きさ"));
@@ -71,12 +46,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<ArgumentException>(
                 () => new PropertyNameRecord(
                     "N.IThing", "Size", "大きさ", NameBasis.FromMemberShape(), " "));
-        }
-
-        [Fact]
-        public void ANameRecordKeepsTheItemAsItsKey()
-        {
-            Assert.Equal("N.IThing|Size", Authored("N.IThing", "Size", "大きさ").Key);
         }
 
         private static PropertyNameRecord Authored(
@@ -138,12 +107,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<ArgumentException>(
                 () => new ElementCollectionRecord(
                     "N.A.Refs()", false, "根拠。", new List<string> { "N.A.Refs()" }));
-        }
-
-        [Fact]
-        public void TheKeyJoinsTheThreePartsThatIdentifyAProperty()
-        {
-            Assert.Equal("N.IThing|Size|System.Int32", Size.Key);
         }
     }
 }

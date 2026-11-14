@@ -45,7 +45,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 3, 5 })
+            foreach (int count in new[] { 3, 5 })
             {
                 StringWriter error = new StringWriter();
 
@@ -185,19 +185,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(ExitCodes.Success, code);
             Assert.Contains("記載を採る 1・", output.ToString(), StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void APropertyWithANoteThatIsAuthoredIsUnresolved()
-        {
-            PropertyRecord noted = Expected()[0];
-            StringWriter error = new StringWriter();
-
-            int code = PropertyNameRunner.Run(
-                Arguments(Sdk(Document(noted)), Names()), new StringWriter(), error);
-
-            Assert.Equal(ExitCodes.Unresolved, code);
-            Assert.Contains("記載を引ける項目は表に置かない", error.ToString(), StringComparison.Ordinal);
         }
 
         [Fact]

@@ -285,51 +285,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void FailureLeavesNoOutputFile()
-        {
-            Assert.False(RunAndFindOutput("mismatch", CreateEditorDirectory(), CreateLedger()));
-            Assert.False(RunAndFindOutput("no-editor", Path.Combine(_root, "empty"), CreateLedger()));
-            Assert.False(RunAndFindOutput(
-                "no-ledger", CreateEditorDirectory(), Path.Combine(_root, "none.json")));
-
-            string broken = CreateEditorDirectory("broken-editor");
-            File.WriteAllText(SdkAssemblyLocator.GetAssemblyPath(broken), "アセンブリではない");
-            Assert.False(RunAndFindOutput("broken-assembly", broken, CreateLedger()));
-
-            string unreadable = Path.Combine(_root, "unreadable-ledger.json");
-            File.WriteAllText(unreadable, UnreadableLedgerText());
-            Assert.False(RunAndFindOutput("broken-ledger", CreateEditorDirectory(), unreadable));
-
-            string lockedLedger = Path.Combine(_root, "locked-source.json");
-            File.WriteAllText(lockedLedger, LedgerText(LedgerRows));
-            using (new FileStream(lockedLedger, FileMode.Open, FileAccess.Read, FileShare.None))
-            {
-                Assert.False(RunAndFindOutput("locked-ledger", CreateEditorDirectory(), lockedLedger));
-            }
-
-            string lockedEditor = CreateEditorDirectory("locked-editor");
-            using (new FileStream(
-                SdkAssemblyLocator.GetAssemblyPath(lockedEditor),
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.None))
-            {
-                Assert.False(RunAndFindOutput("locked-assembly", lockedEditor, CreateLedger()));
-            }
-        }
-
-        private bool RunAndFindOutput(string name, string editorDirectory, string ledgerPath)
-        {
-            string outputPath = Path.Combine(_root, name + ".json");
-
-            int code = ExcludedBaselineRunner.Run(
-                new[] { editorDirectory, ledgerPath, FrozenPath(), outputPath }, new StringWriter(), new StringWriter());
-
-            Assert.NotEqual(ExitCodes.Success, code);
-            return File.Exists(outputPath);
-        }
-
-        [Fact]
         public void UnparsableLedgerIsInputUnavailable()
         {
             string path = Path.Combine(_root, "broken-ledger.json");

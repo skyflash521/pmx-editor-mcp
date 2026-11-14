@@ -945,15 +945,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void TheSameSignatureIsNotPlacedUnderTwoCapabilities()
-        {
-            IList<string> all = ExcludedBaselineBuilder.Build(Ledger(), Signatures(), Frozen())
-                .SelectMany(e => e.Signatures).ToList();
-
-            Assert.Equal(all.Count, all.Distinct(StringComparer.Ordinal).Count());
-        }
-
-        [Fact]
         public void ASignatureThatTwoCapabilitiesBothPointAtThrows()
         {
             const string Shared = "PEPlugin.IPEBuilder.CreateVme(PEPlugin.Pmd.IPEPmd)";

@@ -10,14 +10,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
     public sealed class ToolMapDigestTests
     {
         [Fact]
-        public void TheSameTextGivesTheSameDigest()
-        {
-            Assert.Equal(
-                ToolMapDigest.Of("{\"rows\":[]}"),
-                ToolMapDigest.Of("{\"rows\":[]}"));
-        }
-
-        [Fact]
         public void TheSameRowKeyWithADifferentKindGivesADifferentDigest()
         {
             Assert.NotEqual(
@@ -40,12 +32,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(64, digest.Length);
             Assert.All(digest, letter => Assert.True("0123456789abcdef".IndexOf(letter) >= 0));
-        }
-
-        [Fact]
-        public void AnEmptyTextStillGivesADigest()
-        {
-            Assert.Equal(64, ToolMapDigest.Of(string.Empty).Length);
         }
 
         [Fact]

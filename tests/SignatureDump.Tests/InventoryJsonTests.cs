@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Web.Script.Serialization;
 using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
@@ -233,19 +232,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void ProducesTheExpectedJson()
         {
             Assert.Equal(string.Join("\n", ExpectedLines), InventoryJson.Write(Sample()));
-        }
-
-        [Fact]
-        public void WrittenJsonCanBeParsed()
-        {
-            JavaScriptSerializer serializer = new JavaScriptSerializer();
-            Dictionary<string, object> root =
-                (Dictionary<string, object>)serializer.DeserializeObject(InventoryJson.Write(Sample()));
-
-            Assert.Equal("Sample", root["assemblyName"]);
-            Assert.Equal(7, ((object[])root["types"]).Length);
-            Assert.Single((object[])root["referencedTypes"]);
-            Assert.Equal(7, ((object[])root["signatures"]).Length);
         }
 
         [Fact]

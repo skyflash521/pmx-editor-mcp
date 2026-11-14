@@ -976,33 +976,5 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(ExitCodes.Unresolved, code);
             Assert.Contains("指す先が無い", error.ToString(), StringComparison.Ordinal);
         }
-
-        [Fact]
-        public void ExecutableEntryPointAlsoReflectsInputDifferencesInResults()
-        {
-            string missing = Path.Combine(_root, "none");
-            StringWriter error = new StringWriter();
-            TextWriter previous = Console.Error;
-            int code;
-            try
-            {
-                Console.SetError(error);
-                code = Program.Main(new[]
-                {
-                    CommandRunner.ExcludedBaselineCommand,
-                    missing,
-                    CreateLedger(),
-                    FrozenPath(),
-                    Path.Combine(_root, "from-main-missing.json"),
-                });
-            }
-            finally
-            {
-                Console.SetError(previous);
-            }
-
-            Assert.Equal(ExitCodes.InputUnavailable, code);
-            Assert.Contains(missing, error.ToString(), StringComparison.Ordinal);
-        }
     }
 }

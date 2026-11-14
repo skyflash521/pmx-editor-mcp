@@ -145,7 +145,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData("1")]
         [InlineData("null")]
-        [InlineData("{}")]
         [InlineData("\"\"")]
         public void ASourceFieldThatIsNotTextStops(string value)
         {

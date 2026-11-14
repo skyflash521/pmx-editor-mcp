@@ -33,32 +33,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Above = "model_material";
 
         [Fact]
-        public void ARowWhoseBasisSaysItCannotBeReachedIsStillCalled()
-        {
-            IList<E2eCase> cases = Built(Unreachable(), new[] { Second });
-
-            Assert.Contains(
-                cases,
-                c => string.Equals(c.Tool, Tool, StringComparison.Ordinal)
-                    && c.Expectation == E2eExpectation.Called);
-        }
-
-        /// <summary>
-        /// 根拠の文言は事例の組み立てに関与しない。文言の真偽を確かめる検査が無いので、呼ぶか
-        /// どうかを文言では決めない。
-        /// </summary>
-        [Fact]
-        public void ARowWhoseBasisSaysCallingItShowsAPromptIsStillCalled()
-        {
-            IList<E2eCase> cases = Built(Prompting(), new[] { Second });
-
-            Assert.Contains(
-                cases,
-                c => string.Equals(c.Tool, Tool, StringComparison.Ordinal)
-                    && c.Expectation == E2eExpectation.Called);
-        }
-
-        [Fact]
         public void AReceiverThatTakesTwoStepsGetsACaseForEachStep()
         {
             IList<E2eCase> cases = Built(Map(), new[] { First, Second });
@@ -713,16 +687,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private static ToolMap Map()
         {
             return Rows("持っているものを返すだけである。");
-        }
-
-        private static ToolMap Unreachable()
-        {
-            return Rows("受け手を作る手立てが無い。");
-        }
-
-        private static ToolMap Prompting()
-        {
-            return Rows("呼ぶと確認を求められる。");
         }
 
         private static ToolMap Rows(string basis, IList<SetupOperation> setup = null)

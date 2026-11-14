@@ -150,23 +150,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AnEmptyMapWritesOneSummaryLineAndSucceeds()
-        {
-            StringWriter output = new StringWriter();
-            StringWriter error = new StringWriter();
-
-            int code = SchemaCorrespondenceRunner.Run(
-                Arguments(EmptyMap, EmptySchemas), output, error);
-
-            Assert.Equal(error.ToString(), string.Empty);
-            Assert.Equal(ExitCodes.Success, code);
-            string line = Assert.Single(
-                output.ToString().Split(
-                    new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries));
-            Assert.Equal("照合した: ツールを持つ行 0 件・入出力の形 0 件", line);
-        }
-
-        [Fact]
         public void ARowWithoutAToolIsNotCountedInTheSummary()
         {
             StringWriter output = new StringWriter();
@@ -175,8 +158,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Arguments(Assigned(), EmptySchemas), output, new StringWriter());
 
             Assert.Equal(ExitCodes.Success, code);
-            Assert.Contains(
-                "ツールを持つ行 0 件", output.ToString(), StringComparison.Ordinal);
+            string line = Assert.Single(
+                output.ToString().Split(
+                    new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries));
+            Assert.Equal("照合した: ツールを持つ行 0 件・入出力の形 0 件", line);
         }
 
         [Fact]

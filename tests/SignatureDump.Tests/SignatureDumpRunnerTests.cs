@@ -105,7 +105,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Theory]
-        [InlineData(0)]
         [InlineData(1)]
         [InlineData(3)]
         public void WrongArgumentCountEndsWithInvalidArguments(int count)

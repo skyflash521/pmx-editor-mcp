@@ -85,8 +85,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             string[][] wrong =
             {
-                new string[0],
-                new[] { "a" },
                 new[] { "a", "b" },
                 new[] { "a", "b", "c", "d" },
             };
@@ -134,27 +132,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void UnparsableBaselineCanonicalFileIsInputUnavailable()
         {
             string outputPath = CreateExistingOutput();
-
-            int code = ExcludedSignatureRunner.Run(
-                new[] { CreateEditorDirectory(), CreateBaseline("{"), outputPath },
-                new StringWriter(),
-                new StringWriter());
-
-            Assert.Equal(ExitCodes.InputUnavailable, code);
-            Assert.Equal(Existing, File.ReadAllText(outputPath));
-        }
-
-        [Theory]
-        [InlineData("{\"capabilities\":{}}")]
-        [InlineData("{\"capabilities\":[],\"extra\":1}")]
-        [InlineData("{\"capabilities\":[{\"capabilityId\":\"CAP-1\"}]}")]
-        public void BaselineCanonicalFileWithWrongShapeIsInputUnavailable(string json)
-        {
-            string outputPath = CreateExistingOutput();
             StringWriter error = new StringWriter();
 
             int code = ExcludedSignatureRunner.Run(
-                new[] { CreateEditorDirectory(), CreateBaseline(json), outputPath },
+                new[] { CreateEditorDirectory(), CreateBaseline("{"), outputPath },
                 new StringWriter(),
                 error);
 

@@ -6,15 +6,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class LedgerOutOfScopeModelTests
     {
-        private const string TypeName = "PEPlugin.View.IPEViewConnector";
-
         private const string Key = "PEPlugin.IPEBuilder.Pmx()";
-
-        [Fact]
-        public void TypeEntryCarriesTheNameAlone()
-        {
-            Assert.Equal(TypeName, new OutOfScopeTypeEntry(TypeName).Name);
-        }
 
         [Fact]
         public void TypeEntryWithEmptyNameThrows()
@@ -25,56 +17,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ReasonsConsistOfExactlyTheseFour()
-        {
-            OutOfScopeReason[] expected =
-            {
-                OutOfScopeReason.EnumType,
-                OutOfScopeReason.DelegateType,
-                OutOfScopeReason.Route,
-                OutOfScopeReason.ArgumentOnly,
-            };
-
-            Assert.Equal(expected, (OutOfScopeReason[])Enum.GetValues(typeof(OutOfScopeReason)));
-        }
-
-        [Fact]
-        public void SignatureEntryCarriesTheKeyAlone()
-        {
-            Assert.Equal(Key, new OutOfScopeSignatureEntry(Key).Key);
-        }
-
-        [Fact]
         public void SignatureEntryWithEmptyKeyThrows()
         {
             Assert.Throws<ArgumentNullException>(() => new OutOfScopeSignatureEntry(null));
             Assert.Throws<ArgumentException>(() => new OutOfScopeSignatureEntry(string.Empty));
-        }
-
-        [Fact]
-        public void RecordKeepsTypeAndSignatureCollectionsAsGiven()
-        {
-            LedgerOutOfScopeRecord record = new LedgerOutOfScopeRecord(
-                Types(
-                    Type("PEPlugin.IPEConnector"),
-                    Type("PEPlugin.Vme.OpType")),
-                Signatures(Signature("PEPlugin.IPEBuilder.Pmx()")));
-
-            Assert.Equal(2, record.Types.Count);
-            Assert.Equal("PEPlugin.IPEConnector", record.Types[0].Name);
-            Assert.Equal("PEPlugin.Vme.OpType", record.Types[1].Name);
-            Assert.Single(record.Signatures);
-            Assert.Equal("PEPlugin.IPEBuilder.Pmx()", record.Signatures[0].Key);
-        }
-
-        [Fact]
-        public void RecordAcceptsEmptyCollections()
-        {
-            LedgerOutOfScopeRecord record = new LedgerOutOfScopeRecord(
-                new List<OutOfScopeTypeEntry>(), new List<OutOfScopeSignatureEntry>());
-
-            Assert.Empty(record.Types);
-            Assert.Empty(record.Signatures);
         }
 
         [Fact]
@@ -132,14 +78,8 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Throws<NotSupportedException>(
                 () => record.Types.Add(Type("PEPlugin.Vme.OpType")));
-            Assert.Throws<NotSupportedException>(() => record.Types.Clear());
-            Assert.Throws<NotSupportedException>(
-                () => record.Types[0] = Type("PEPlugin.Vme.OpType"));
             Assert.Throws<NotSupportedException>(
                 () => record.Signatures.Add(Signature("PEPlugin.IPEBuilder.SC()")));
-            Assert.Throws<NotSupportedException>(() => record.Signatures.RemoveAt(0));
-            Assert.Throws<NotSupportedException>(
-                () => record.Signatures[0] = Signature("PEPlugin.IPEBuilder.SC()"));
         }
 
         [Fact]

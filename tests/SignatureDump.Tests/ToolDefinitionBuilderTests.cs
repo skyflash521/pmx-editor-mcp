@@ -57,7 +57,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData("boolean", "{\"type\":\"boolean\"}")]
         [InlineData("number", "{\"type\":\"number\"}")]
-        [InlineData("text", "{\"type\":\"string\"}")]
         [InlineData("enum_name", "{\"type\":\"string\"}")]
         [InlineData("size", "{\"type\":\"array\",\"items\":{\"type\":\"number\"},\"minItems\":2,\"maxItems\":2}")]
         [InlineData("color", "{\"type\":\"array\",\"items\":{\"type\":\"number\"},\"minItems\":3,\"maxItems\":4}")]

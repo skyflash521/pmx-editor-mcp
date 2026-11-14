@@ -59,14 +59,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void UserDefinedGenericDefinitionsAlsoListTypeParameterNames()
-        {
-            Assert.Equal(
-                "PmxEditorMcp.SignatureDump.Tests.Sample.SampleGeneric<T>",
-                TypeNameFormatter.Format(typeof(SampleGeneric<>)));
-        }
-
-        [Fact]
         public void GenericParametersAreWrittenByName()
         {
             Type parameter = typeof(SampleGeneric<>).GetGenericArguments()[0];

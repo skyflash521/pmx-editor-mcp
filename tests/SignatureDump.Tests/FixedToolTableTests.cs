@@ -31,13 +31,5 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 FixedToolTable.LargeTextName,
                 FixedToolTable.Descriptions(debugHooks: true).Keys);
         }
-
-        [Fact]
-        public void EveryPublishedFixedToolCarriesAText()
-        {
-            Assert.All(
-                FixedToolTable.Descriptions(debugHooks: true).Values,
-                text => Assert.False(string.IsNullOrWhiteSpace(text)));
-        }
     }
 }

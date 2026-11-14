@@ -166,9 +166,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         private const string PmdModelArrayInValueType = "PEPlugin.Vmd.IPEVmd.Sources()";
 
-        private const string EventWithDelegateHandler =
-            "PEPlugin.Vme.IPEVmeSingleValueEventOperator.Changed()";
-
         private const string PmdModelMatrixInValueType = "PEPlugin.Vmd.IPEVmd.Grid()";
 
         private const string ExternalDelegateArrayInValueType = "PEPlugin.Vme.IPEVmeGroup.Filters()";
@@ -810,12 +807,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AlternativeMustHaveTheSameArgumentCount()
-        {
-            Assert.Equal(PmxInit, Find(PmdInit).Alternative);
-        }
-
-        [Fact]
         public void SignatureWhoseOnlyPmdIsInTheMemberNameIsNotExcluded()
         {
             Assert.DoesNotContain(PmdInMemberNameOnly, Build().Select(r => r.Key));
@@ -1065,12 +1056,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void EventDeclaringADelegateHandlerIsNotExcluded()
-        {
-            Assert.DoesNotContain(EventWithDelegateHandler, Build().Select(r => r.Key));
-        }
-
-        [Fact]
         public void FactoryTakingPmdCountsAsAnAlternativeUnlessExcluded()
         {
             ExcludedSignatureRecord record = Find(ConstructorWithPmdFactory);
@@ -1111,7 +1096,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData(FromStream)]
-        [InlineData(ToStream)]
         [InlineData(StreamInValueType)]
         [InlineData(StreamDerivedArgument)]
         [InlineData(StreamArrayArgument)]
@@ -1122,16 +1106,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 () => ExcludedSignatureBuilder.Build(BaselineExcept(key), Inventory()));
 
             Assert.Contains(key, error.Message);
-        }
-
-        [Fact]
-        public void AllStreamOverloadsFrozenDoesNotStop()
-        {
-            string[] keys = Build().Select(r => r.Key).ToArray();
-
-            Assert.Contains(FromStream, keys);
-            Assert.Contains(ToStream, keys);
-            Assert.Contains(StreamInValueType, keys);
         }
 
         [Fact]

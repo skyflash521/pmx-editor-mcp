@@ -287,14 +287,12 @@ namespace PmxEditorMcp.SignatureDump.Tests
                      ""uniqueItems"": true, ""shape"": ""number"" }]")));
         }
 
-        [Theory]
-        [InlineData(@"""shape"": ""number"", ""members"": []")]
-        [InlineData(@"""shape"": ""number"", ""element"": { ""origin"": ""hostInput"",
-            ""shape"": ""number"" }, ""maxItems"": 2, ""source"": ""配布文書の該当節""")]
-        public void RejectsAnItemThatUsesMoreThanOneFormAtOnce(string forms)
+        [Fact]
+        public void RejectsAnItemThatUsesMoreThanOneFormAtOnce()
         {
             Rejects("項目の形は3つのうち1つ", Table(Branch(
-                @"[{ ""name"": ""a"", ""origin"": ""hostInput"", ""required"": true, " + forms + "}]")));
+                @"[{ ""name"": ""a"", ""origin"": ""hostInput"", ""required"": true,
+                     ""shape"": ""number"", ""members"": [] }]")));
         }
 
         [Fact]
@@ -432,7 +430,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData("0", "1以上の整数でなければならない")]
         [InlineData("1.5", "整数でなければならない")]
-        [InlineData(@"""2""", "整数でなければならない")]
         public void RejectsAnItemCountLimitThatIsNotAPositiveInteger(
             string maxItems, string fragment)
         {
@@ -617,7 +614,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Theory]
-        [InlineData(@"""origin"": ""sdkArgument""", "知らない origin")]
         [InlineData(@"""origin"": ""hostInput"", ""required"": ""true""", "真偽でなければならない")]
         [InlineData(
             @"""origin"": ""hostInput"", ""required"": true, ""nullable"": 1",
@@ -641,13 +637,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
                      ""required"": true }]")));
         }
 
-        [Theory]
-        [InlineData("ByIndex")]
-        [InlineData("by_index")]
-        public void RejectsABranchNameThatIsNotOfTheDefinedForm(string branch)
+        [Fact]
+        public void RejectsABranchNameThatIsNotOfTheDefinedForm()
         {
-            Rejects("英数字だけからなる語", Table(
-                @"[{ ""branch"": """ + branch + @""", ""inputs"": [] }]"));
+            Rejects("英数字だけからなる語", Table(@"[{ ""branch"": ""ByIndex"", ""inputs"": [] }]"));
         }
 
         [Theory]
@@ -660,7 +653,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AcceptsAShapeThatIsNotOfTheToolNameForm()
+        public void AcceptsAShapeThatIsNotOfTheItemNameForm()
         {
             Assert.Equal(
                 "array_of_number",

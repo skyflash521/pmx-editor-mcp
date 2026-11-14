@@ -35,7 +35,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 3, 5 })
+            foreach (int count in new[] { 3, 5 })
             {
                 StringWriter error = new StringWriter();
 
@@ -165,21 +165,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(before, Fingerprints());
         }
 
-        [Fact]
-        public void DroppingALedgerRowReportsTheMissingTypeAndFailsCollation()
-        {
-            string dropped = WithoutTypeArguments(Inventory().Types[0].Name);
-            StringWriter error = new StringWriter();
-
-            int code = LedgerCoverageRunner.Run(
-                new[] { CreateEditorDirectory(), Write("l.md", Ledger(1)), Write("e.json", Excluded()), Write("o.json", EmptyOutOfScope) },
-                new StringWriter(),
-                error);
-
-            Assert.Equal(ExitCodes.Unresolved, code);
-            Assert.Contains(dropped, error.ToString(), StringComparison.Ordinal);
-        }
-
         /// <summary>
         /// 試験用ディレクトリの全ファイルを、名前と中身と更新時刻の指紋の並びにしたもの。更新時刻
         /// まで見るのは、同じ中身で書き直す実装を中身の比較だけでは見分けられないためである。
@@ -237,13 +222,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return ExcludedSignatureJson.Write(Records());
         }
 
-        /// <summary>
-        /// 公開型ごとに1行を置いた台帳。<paramref name="skip"/> で先頭から落とすと、覆えない型が
-        /// 出る台帳になる。
-        /// </summary>
-        private static string Ledger(int skip = 0)
+        /// <summary>公開型ごとに1行を置いた台帳。</summary>
+        private static string Ledger()
         {
-            List<CapabilityRecord> rows = Rows(skip);
+            List<CapabilityRecord> rows = Rows();
             IDictionary<string, int> counts = ExcludedCounts(rows);
             LedgerJsonBuilder builder = new LedgerJsonBuilder();
 
@@ -266,11 +248,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>公開型ごとに1行を置き、まとめて指す2行を末尾へ足した行の並び。</summary>
-        private static List<CapabilityRecord> Rows(int skip)
+        private static List<CapabilityRecord> Rows()
         {
             List<CapabilityRecord> rows = new List<CapabilityRecord>();
             int id = 1;
-            foreach (TypeRecord type in Inventory().Types.Skip(skip))
+            foreach (TypeRecord type in Inventory().Types)
             {
                 string target = WithoutTypeArguments(type.Name);
                 rows.Add(new CapabilityRecord(

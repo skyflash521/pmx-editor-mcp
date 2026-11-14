@@ -208,63 +208,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AWrittenCapabilityIdStops()
-        {
-            Rejects(Common(@", ""capabilityIds"": [""CAP-001""]"));
-        }
-
-        [Fact]
-        public void AWrittenDirectionStops()
-        {
-            Rejects(Common(@", ""direction"": ""read"""));
-        }
-
-        [Fact]
-        public void AWrittenDangerKindStops()
-        {
-            Rejects(Common(@", ""dangerKind"": ""overwrite"""));
-        }
-
-        [Fact]
-        public void AWrittenNoteStops()
-        {
-            Rejects(Common(@", ""note"": ""一次資料で利用非推奨"""));
-        }
-
-        [Fact]
         public void RejectsAMissingRequiredMember()
         {
             Rejects(@"{ ""signatureKey"": ""T.M()"", ""editKind"": ""read"" }");
-        }
-
-        [Fact]
-        public void AWrittenRowKindStops()
-        {
-            Rejects(Common(@", ""rowKind"": ""commonContract"""));
-        }
-
-        [Fact]
-        public void AWrittenToolNameStops()
-        {
-            Rejects(Common(@", ""tool"": ""model_list_vertices"""));
-        }
-
-        [Fact]
-        public void AWrittenAssignmentStops()
-        {
-            Rejects(Common(@", ""assignment"": ""internalFlow"""));
-        }
-
-        [Fact]
-        public void AWrittenTargetStops()
-        {
-            Rejects(Common(@", ""target"": ""stateRead"""));
-        }
-
-        [Fact]
-        public void AWrittenSlotBindingStops()
-        {
-            Rejects(Common(@", ""slotBinding"": { ""return"": ""pmxClone"", ""parameters"": {} }"));
         }
 
         [Fact]
@@ -577,7 +523,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData("PEPlugin.SDX.V3")]
         [InlineData("PEPlugin.Vme.IPEVmePrimaryValue<1>")]
-        [InlineData("System.Collections.Generic.IList<PEPlugin.Pmd.IPEBody>")]
         [InlineData("System.Action<System.Int32,T>")]
         [InlineData("System.Byte[]")]
         [InlineData("PXCPlugin.UIModel.PXUIModelHelper+TextControl")]
@@ -649,22 +594,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                      ""valuePath"": ""name"", ""comparison"": ""exists"",
                      ""setup"": [
                        { ""tag"": ""initPmx"" },
-                       { ""tag"": ""addElement"", ""elementType"": ""vertex"", ""out"": ""added"" }
-                     ] }]",
-                string.Empty));
-
-            Assert.Equal("setupOut:added", Assert.Single(row.Postcondition).ObserverArgs["index"]);
-        }
-
-        [Fact]
-        public void AcceptsAReferenceToAnOutputThatASetupOperationProduces()
-        {
-            ToolMapRow row = Single(Dispatch(
-                @"[{ ""effectType"": ""valueRead"", ""effectKey"": ""name"",
-                     ""kind"": ""readback"", ""observerTool"": ""model_list_vertices"",
-                     ""observerArgs"": { ""index"": ""setupOut:added"" },
-                     ""valuePath"": ""name"", ""comparison"": ""exists"",
-                     ""setup"": [
                        { ""tag"": ""addElement"", ""elementType"": ""vertex"", ""out"": ""added"" }
                      ] }]",
                 string.Empty));

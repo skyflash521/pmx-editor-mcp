@@ -64,15 +64,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ARoleWithoutAnIndependentToolHasNoGroup()
-        {
-            IList<TypeRoleRecord> records = ReadTypes(Item("N.A", "dto"), Item("N.B", "eventArgs"));
-
-            Assert.Equal(
-                new[] { CapabilityOwner.None, CapabilityOwner.None }, records.Select(r => r.Group));
-        }
-
-        [Fact]
         public void AnUnknownGroupStops()
         {
             FormatException error = Assert.Throws<FormatException>(

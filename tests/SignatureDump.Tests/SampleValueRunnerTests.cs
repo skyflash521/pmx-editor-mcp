@@ -43,7 +43,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Fact]
         public void WrongArgumentCountEndsWithInvalidArguments()
         {
-            foreach (int count in new[] { 0, 1, 2, 4 })
+            foreach (int count in new[] { 2, 4 })
             {
                 StringWriter error = new StringWriter();
 

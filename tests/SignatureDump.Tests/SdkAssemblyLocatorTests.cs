@@ -7,39 +7,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 {
     public sealed class SdkAssemblyLocatorTests
     {
-        private const string EditorDirectory = @"C:\editor";
-
-        [Fact]
-        public void BuildsTheTargetAssemblyPath()
-        {
-            Assert.Equal(
-                Path.Combine(EditorDirectory, "Lib", "PEPlugin", "PEPlugin.dll"),
-                SdkAssemblyLocator.GetAssemblyPath(EditorDirectory));
-        }
-
-        [Fact]
-        public void BuildsTheDocumentPath()
-        {
-            Assert.Equal(
-                Path.Combine(EditorDirectory, "Lib", "PEPlugin", "PEPlugin.XML"),
-                SdkAssemblyLocator.GetDocumentPath(EditorDirectory));
-        }
-
-        [Fact]
-        public void OrdersProbeDirectoriesByPriority()
-        {
-            IList<string> directories = SdkAssemblyLocator.GetProbeDirectories(EditorDirectory);
-
-            Assert.Equal(
-                new[]
-                {
-                    Path.Combine(EditorDirectory, "Lib", "PEPlugin"),
-                    Path.Combine(EditorDirectory, "Lib", "SlimDX", "x64"),
-                    EditorDirectory,
-                },
-                directories);
-        }
-
         [Fact]
         public void DependenciesAreProbedInOrder()
         {

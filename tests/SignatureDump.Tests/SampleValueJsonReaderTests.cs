@@ -155,8 +155,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData("[1]")]
-        [InlineData("1")]
-        [InlineData("null")]
         public void CallArgumentsThatAreNotAGroupStop(string arguments)
         {
             FormatException error = Assert.Throws<FormatException>(

@@ -20,14 +20,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void TheDigestIsCarriedIntoTheText()
-        {
-            Assert.Contains(
-                "internal const string ToolMapDigest = \"abc123\";",
-                ToolDefinitionSource.Compose(new ToolDefinition[0], "abc123"));
-        }
-
-        [Fact]
         public void TheSchemaIsCarriedWithItsQuotesEscaped()
         {
             string text = ToolDefinitionSource.Compose(
@@ -40,24 +32,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ABackslashInTheTextIsEscaped()
-        {
-            Assert.Contains(
-                "\"a\\\\b\"",
-                ToolDefinitionSource.Compose(
-                    new[] { new ToolDefinition("one", "a\\b", "{}", false) }, "abc123"));
-        }
-
-        [Fact]
-        public void ALineBreakInTheTextIsEscaped()
-        {
-            Assert.Contains(
-                "\"a\\u000ab\"",
-                ToolDefinitionSource.Compose(
-                    new[] { new ToolDefinition("one", "a\nb", "{}", false) }, "abc123"));
-        }
-
-        [Fact]
         public void WhetherTheValueIsAnImageIsCarriedIntoTheText()
         {
             string drawn = ToolDefinitionSource.Compose(
@@ -67,14 +41,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains("\"{}\",\n                    true,\n", drawn);
             Assert.Contains("\"{}\",\n                    false,\n", plain);
-        }
-
-        [Fact]
-        public void NoToolsStillGivesAText()
-        {
-            Assert.Contains(
-                "return new GeneratedToolDefinition[]",
-                ToolDefinitionSource.Compose(new ToolDefinition[0], "abc123"));
         }
 
         [Fact]

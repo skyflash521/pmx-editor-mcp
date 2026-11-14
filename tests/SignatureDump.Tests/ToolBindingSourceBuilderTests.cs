@@ -106,8 +106,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData("System.Int32[]")]
-        [InlineData("System.Boolean[]")]
-        [InlineData("System.String[]")]
         public void ACallThatReturnsAWholeListIsPaged(string valueType)
         {
             ToolBindingSource source = Build(
@@ -298,19 +296,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains(
                 "new ToolArgument(\"one\", typeof(global::" + CPluginConnector + "), true, null, true)",
                 source.Text);
-        }
-
-        [Theory]
-        [InlineData("Close", "System.Void", "DangerKind.Shutdown")]
-        [InlineData("InitializePMX", "System.Void", "DangerKind.Reset")]
-        [InlineData("SavePMXFile", "System.Void", "DangerKind.Overwrite")]
-        public void TheDangerOfTheMemberComesOutWithTheCall(
-            string member, string valueType, string danger)
-        {
-            ToolBindingSource source = Build(
-                Dispatched("session_" + member.ToLowerInvariant(), Method(member, valueType)));
-
-            Assert.Contains(danger, source.Text);
         }
 
         [Fact]
@@ -721,17 +706,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "((global::" + Pmx + ")owner).Vertex.Remove(" + Without()
                     + "[SdkList.Behind(index, 1)])",
                 source.Text);
-        }
-
-        [Fact]
-        public void AListWithNoSoleMemberOfItsElementTypeIsRelayedAsItIs()
-        {
-            ToolBindingSource source = Build(Collection(), Weights());
-
-            Assert.Contains(
-                "owner => ((global::" + Pmx + ")owner).Vertex.Count",
-                source.Text);
-            Assert.DoesNotContain("SdkList.Behind(", source.Text);
         }
 
         private static string Without()

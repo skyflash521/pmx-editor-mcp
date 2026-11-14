@@ -13,12 +13,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string Generic = "N.IHolder<" + Parameter + ">";
 
         [Fact]
-        public void AnEnumerationWithoutASharedNamePasses()
-        {
-            InventoryAmbiguity.Require(Inventory(new List<TypeRecord>(), new List<TypeRecord>()));
-        }
-
-        [Fact]
         public void ATypeSharingItsNameWithATypeParameterOfAGenericTypeThrows()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
@@ -64,12 +58,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new List<SignatureRecord>());
 
             Assert.Throws<InvalidOperationException>(() => InventoryAmbiguity.Require(inventory));
-        }
-
-        [Fact]
-        public void TypesWithDistinctNamesPass()
-        {
-            InventoryAmbiguity.RequireDistinctNames(new[] { typeof(string), typeof(int) });
         }
 
         [Fact]

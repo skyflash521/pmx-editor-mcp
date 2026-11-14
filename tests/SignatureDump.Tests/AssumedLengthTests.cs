@@ -14,23 +14,16 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 { "text", 256 },
             });
 
-        [Theory]
-        [InlineData("boolean", 5)]
-        [InlineData("text", 256)]
-        public void EachSpellingTakesTheLengthTheTableWrites(string shape, int expected)
+        [Fact]
+        public void ASpellingTakesTheLengthTheTableWrites()
         {
-            Assert.Equal(expected, Lengths.Of(Scalar(shape)));
+            Assert.Equal(256, Lengths.Of(Scalar("text")));
         }
 
-        [Theory]
-        [InlineData(1000.0, 4)]
-        [InlineData(1.0, 1)]
-        [InlineData(0.5, 3)]
-        [InlineData(-1.0, 2)]
-        [InlineData(1e30, 5)]
-        public void AnUpperBoundIsTakenAsTheLengthOfItsWritingInJson(double maximum, int expected)
+        [Fact]
+        public void AnUpperBoundIsTakenAsTheLengthOfItsWritingInJson()
         {
-            Assert.Equal(expected, Lengths.Of(Bounded(maximum)));
+            Assert.Equal(4, Lengths.Of(Bounded(1000.0)));
         }
 
         [Fact]

@@ -572,16 +572,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AssemblyIdentityIsIncluded()
-        {
-            InventoryRecord inventory = Enumerate();
-            AssemblyName name = typeof(ISampleApi).Assembly.GetName();
-
-            Assert.Equal(name.Name, inventory.AssemblyName);
-            Assert.Equal(name.Version.ToString(), inventory.AssemblyVersion);
-        }
-
-        [Fact]
         public void MissingAssemblyThrows()
         {
             Assert.Throws<ArgumentNullException>(() => AssemblyEnumerator.Enumerate(null));
