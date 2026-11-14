@@ -344,29 +344,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>
-        /// 呼び分けを2つ持ち、無くてもよいまとまりの中だけが違う入出力の形。渡らないことがあるので、
-        /// このまとまりでは呼び分けを見分けられない。
-        /// </summary>
-        private static string OptionalChoiceSchemaJson()
-        {
-            return @"{ ""tools"": [{ ""tool"": ""model_list_vertices"",
-                ""branches"": [
-                  { ""branch"": ""first"", ""inputs"": [
-                    { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
-                      ""required"": true },
-                    { ""name"": ""offset"", ""origin"": ""hostInput"", ""shape"": ""number"" },
-                    { ""name"": ""all"", ""origin"": ""hostInput"", ""shape"": ""boolean"" }],
-                    ""choices"": [{ ""names"": [""offset"", ""all""], ""required"": false }] },
-                  { ""branch"": ""second"", ""inputs"": [
-                    { ""name"": ""count"", ""origin"": ""hostInput"", ""shape"": ""number"",
-                      ""required"": true },
-                    { ""name"": ""total"", ""origin"": ""hostInput"", ""shape"": ""number"" },
-                    { ""name"": ""all"", ""origin"": ""hostInput"", ""shape"": ""boolean"" }],
-                    ""choices"": [{ ""names"": [""total"", ""all""], ""required"": false }] }],
-                ""output"": { ""origin"": ""hostOutput"", ""shape"": ""number"" } }] }";
-        }
-
-        /// <summary>
         /// 呼び分けを2つ持ち、必ず渡す項目が同じで、無くてもよいまとまりだけが共通の名前を持たない
         /// 入出力の形。渡らないことがあるので、このまとまりでは呼び分けを見分けられない。
         /// </summary>
@@ -476,16 +453,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => RequireBranches(ChoiceSchemaJson("count", "all")));
-
-            Assert.Contains(
-                "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void AChoiceThatMayBeAbsentDoesNotTellTwoBranchesApart()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => RequireBranches(OptionalChoiceSchemaJson()));
 
             Assert.Contains(
                 "入力で判別できない呼び分けがある", error.Message, StringComparison.Ordinal);

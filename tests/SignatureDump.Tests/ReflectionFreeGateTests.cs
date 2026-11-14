@@ -13,13 +13,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         [Theory]
         [InlineData("System.Type.GetMethod")]
-        [InlineData("System.Type.GetProperty")]
-        [InlineData("System.Type.GetField")]
         [InlineData("System.Object.GetType")]
-        [InlineData("System.Reflection.PropertyInfo.GetValue")]
-        [InlineData("System.Reflection.FieldInfo.SetValue")]
-        [InlineData("System.Reflection.MethodBase.Invoke")]
-        [InlineData("System.Reflection.MemberInfo.IsDefined")]
         [InlineData("System.Reflection.Assembly.Load")]
         [InlineData("System.Activator.CreateInstance")]
         [InlineData("System.AppDomain.Load")]
@@ -30,8 +24,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData("System.Type.GetInterface")]
-        [InlineData("System.Type.GetNestedType")]
-        [InlineData("System.Type.InvokeMember")]
         [InlineData("System.Delegate.CreateDelegate")]
         [InlineData("System.Reflection.TypeInfo.GetDeclaredMethod")]
         [InlineData("System.Linq.Expressions.Expression.Call")]

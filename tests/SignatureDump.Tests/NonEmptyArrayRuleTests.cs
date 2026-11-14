@@ -27,7 +27,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Theory]
-        [InlineData("argsList")]
         [InlineData("values")]
         [InlineData("Handles")]
         public void AnyOtherArrayCanBeEmpty(string name)

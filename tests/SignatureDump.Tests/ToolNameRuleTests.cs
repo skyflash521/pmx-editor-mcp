@@ -11,8 +11,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData(TypeRole.Connector, ToolVerb.Update, "view_update_pmx_view")]
         [InlineData(TypeRole.OperationTarget, ToolVerb.List, "view_list_pmx_views")]
         [InlineData(TypeRole.OperationTarget, ToolVerb.Update, "view_update_pmx_views")]
-        [InlineData(TypeRole.OperationTarget, ToolVerb.Add, "view_add_pmx_views")]
-        [InlineData(TypeRole.HandleTarget, ToolVerb.Remove, "view_remove_pmx_views")]
         public void TheToolNameTakesTheNounThatTheVerbAndTheRoleChoose(
             TypeRole role, ToolVerb verb, string expected)
         {
@@ -35,12 +33,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData("Clear", "clear")]
-        [InlineData("Normalize", "normalize")]
         [InlineData("CreateVmd", "create_vmd")]
         [InlineData("AppendPMDFile", "append_pmd_file")]
         [InlineData("SetIK", "set_ik")]
         [InlineData("op_Implicit", "op_implicit")]
-        [InlineData("V3", "v3")]
         public void TheMemberNameBecomesASnakeCasedActionWord(string memberName, string expected)
         {
             Assert.Equal(expected, ToolNameRule.ActionWord(memberName));

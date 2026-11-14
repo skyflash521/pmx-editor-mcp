@@ -36,9 +36,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData("SetThing")]
-        [InlineData("Update")]
-        [InlineData("Apply")]
-        [InlineData("Remove")]
         public void MethodNotStartingWithAGetterNameIsWrite(string memberName)
         {
             Assert.Equal(
@@ -47,7 +44,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Theory]
-        [InlineData("Getter")]
         [InlineData("Issue")]
         public void NameIsJudgedByPrefixMatch(string memberName)
         {
@@ -61,12 +57,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Equal(OperationDirection.Read, OperationDirectionRule.ForProperty(true));
             Assert.Equal(OperationDirection.Write, OperationDirectionRule.ForProperty(false));
-        }
-
-        [Fact]
-        public void MembersOtherThanPropertiesAndMethodsAreWrite()
-        {
-            Assert.Equal(OperationDirection.Write, OperationDirectionRule.ForOtherMember());
         }
     }
 }

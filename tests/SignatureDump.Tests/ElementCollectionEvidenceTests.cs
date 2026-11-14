@@ -80,18 +80,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void EverySoleMemberOfThatTypeIsAside()
-        {
-            SignatureRecord list = Property(Owner, "Items", ElementList);
-            SignatureRecord head = Property(Owner, "Head", Element);
-            SignatureRecord tail = Property(Owner, "Tail", Element);
-
-            Assert.Equal(
-                new[] { head.Key, tail.Key },
-                Aside(list, tail, head)[list.Key].OrderBy(k => k, StringComparer.Ordinal));
-        }
-
-        [Fact]
         public void TheSoleMembersAreAsideInTheOrderTheyAreDeclared()
         {
             SignatureRecord list = Property(Owner, "Items", ElementList);

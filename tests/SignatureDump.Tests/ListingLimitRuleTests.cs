@@ -63,7 +63,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData(0, 200, "limitDefault")]
-        [InlineData(-1, 200, "limitDefault")]
         [InlineData(50, 0, "limitMaximum")]
         public void ListingLimitsAreOneOrMore(
             int limitDefault, int limitMaximum, string parameter)

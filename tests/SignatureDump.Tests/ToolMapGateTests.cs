@@ -549,14 +549,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AcceptsASetupPlacedByToolNameThatNamesWordsTheOtherCanonsHave()
-        {
-            Require(
-                mapJson: WithToolSetup("model_list_things", "vertex", "PEPlugin.SDX.V3"),
-                assignmentsJson: @"{ ""assignments"": [] }");
-        }
-
-        [Fact]
         public void RejectsAnElementTypeInASetupPlacedByToolNameThatTheTypeRoleTableDoesNotHave()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(

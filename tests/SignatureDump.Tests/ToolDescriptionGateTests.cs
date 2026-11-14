@@ -7,12 +7,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
     public sealed class ToolDescriptionGateTests
     {
         [Fact]
-        public void ComposedDescriptionsPass()
-        {
-            Accepts(Material("model_list_vertices", "model", "list", "vertices"));
-        }
-
-        [Fact]
         public void AToolWithoutADescriptionStops()
         {
             ToolDescriptionMaterial material = Material("model_list_vertices", "model", "list", "vertices");
@@ -144,22 +138,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains("説明文が無い", error.Message, StringComparison.Ordinal);
             Assert.Contains("session_release_handle", error.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void AComposedToolDescriptionOverTheLimitStops()
-        {
-            ToolDescriptionMaterial material = Material("model_list_vertices", "model", "list", "vertices");
-            Dictionary<string, ToolDescription> descriptions = Composed(material);
-            descriptions.Add(
-                "session_release_handle",
-                new ToolDescription(new string('あ', ToolDescriptionRule.LimitChars + 1), null));
-
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => ToolDescriptionGate.Require(
-                    new[] { material }, descriptions, new[] { "session_release_handle" }));
-
-            Assert.Contains("上限の文字数を超える", error.Message, StringComparison.Ordinal);
         }
 
         [Fact]

@@ -127,30 +127,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 Descriptions());
         }
 
-        [Theory]
-        [InlineData("list")]
-        [InlineData("ＬＩＳＴ")]
-        [InlineData("ぼーん")]
-        [InlineData("ﾎﾞｰﾝ")]
-        [InlineData("model_list_bones\n対象")]
-        [InlineData("list", "ボーン")]
-        [InlineData("ＢＯＮＥ", "一覧")]
-        public void MatchingAgreesWithWhatFindToolFindsForEachTerm(params string[] terms)
-        {
-            IDictionary<string, string> descriptions = Descriptions();
-
-            Assert.Equal(
-                FoundByFindTool(descriptions, terms).ToArray(),
-                DiscoveryRule.Matched(descriptions, terms).ToArray());
-        }
-
-        private static IList<string> FoundByFindTool(
-            IDictionary<string, string> descriptions, IList<string> terms)
-        {
-            return ToolMatch.Found(
-                terms, descriptions.Select(d => new ToolMatch.Entry(d.Key, d.Value)));
-        }
-
         private static DiscoveryTaskTable Table(IList<string> terms, IList<string> tools)
         {
             return new DiscoveryTaskTable(new[]

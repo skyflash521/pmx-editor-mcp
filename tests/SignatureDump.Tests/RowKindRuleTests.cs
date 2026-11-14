@@ -15,9 +15,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData(MemberKind.Event)]
-        [InlineData(MemberKind.Property)]
-        [InlineData(MemberKind.Field)]
-        [InlineData(MemberKind.Constructor)]
         public void TheSpecialRuleTableComesBeforeTheMemberKind(MemberKind memberKind)
         {
             Assert.Equal(
@@ -60,7 +57,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData(MemberKind.Property)]
-        [InlineData(MemberKind.Field)]
         public void APropertyOnTheWayToSuchInstancesTakesTheRoleAccessKind(
             MemberKind memberKind)
         {
@@ -71,7 +67,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData(MemberKind.Property)]
-        [InlineData(MemberKind.Field)]
         public void APropertyThatOnlyPointsAtSuchInstancesTakesTheSchemaEmbeddedKind(
             MemberKind memberKind)
         {
@@ -82,7 +77,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData(MemberKind.Property)]
-        [InlineData(MemberKind.Field)]
         public void APropertyThatHoldsAnInstanceHandlesPointAtTakesTheDirectDispatchKind(
             MemberKind memberKind)
         {

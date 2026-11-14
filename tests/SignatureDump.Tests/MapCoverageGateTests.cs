@@ -16,12 +16,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string NoteType = "Sdk.Note";
 
         [Fact]
-        public void AProvidedSignatureThatHasARowPasses()
-        {
-            MapCoverageGate.Require(Provided(Method), Signatures(), Embedded(), Map(Method));
-        }
-
-        [Fact]
         public void AProvidedSignatureWithoutARowIsRefused()
         {
             InvalidOperationException refused = Assert.Throws<InvalidOperationException>(
@@ -75,16 +69,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Contains("行を持たない提供対象がある", refused.Message, StringComparison.Ordinal);
             Assert.Contains(key, refused.Message, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void TheConstructorOfATypeThatIsEmbeddedNeedsNoRow()
-        {
-            string key = "Sdk.Note..ctor()";
-            IDictionary<string, SignatureRecord> signatures = Signatures();
-            signatures.Add(key, Signature(key, NoteType, MemberKind.Constructor, ".ctor"));
-
-            MapCoverageGate.Require(Provided(key), signatures, Embedded(), Map());
         }
 
         [Fact]

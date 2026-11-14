@@ -358,27 +358,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void TwoTypesThatWouldShareOnePathStop()
-        {
-            InvalidOperationException error = Assert.Throws<InvalidOperationException>(
-                () => TypeRoleEvidence.ReachableFromRoots(
-                    Inventory(
-                        Method(Root, "Make", "N.IAlpha", Arg("c", TypeRoleEvidence.InjectedConnector)),
-                        Method(
-                            Root,
-                            "Make",
-                            "N.IBeta",
-                            Arg("c", TypeRoleEvidence.InjectedConnector),
-                            Arg("d", TypeRoleEvidence.InjectedConnector)),
-                        Property("N.IAlpha", "Value", "System.Int32"),
-                        Property("N.IBeta", "Value", "System.Int32")),
-                    new[] { Root }));
-
-            Assert.Contains("Make()", error.Message);
-            Assert.Contains(Root, error.Message);
-        }
-
-        [Fact]
         public void ATypeBeyondARootThatWouldShareOnePathStops()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(

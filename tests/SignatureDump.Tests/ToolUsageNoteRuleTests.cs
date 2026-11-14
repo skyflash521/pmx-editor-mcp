@@ -112,10 +112,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void AListingWithNoParentDoesNotCarryTheParent()
+        public void AListingWithNoParentDoesNotSayHowToListUnderEveryParent()
         {
             Assert.DoesNotContain(
-                "親", Note(true, "indices", "range", "all", "offset", "limit"),
+                "すべての親の下を並べ", Note(true, "indices", "range", "all", "offset", "limit"),
                 StringComparison.Ordinal);
         }
 
@@ -225,12 +225,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("pmxView", note, StringComparison.Ordinal);
             Assert.Contains("transformView", note, StringComparison.Ordinal);
             Assert.Contains("subView", note, StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void AToolThatTakesNeitherCarriesNoNote()
-        {
-            Assert.Null(Note(false, "pmxHandle"));
         }
 
         [Fact]

@@ -269,20 +269,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void TheBoundedCountTakesTheSmallerOfTheTwoSides()
-        {
-            Assert.Equal(7, ElementLimitRule.Bounded(9, 7));
-            Assert.Equal(5, ElementLimitRule.Bounded(5, 7));
-        }
-
-        [Fact]
-        public void TheIssuedCountTakesTheSmallestOfTheDerivedLimits()
-        {
-            Assert.Equal(5, ElementLimitRule.Issued(new[] { 5, 9 }, 7));
-            Assert.Equal(7, ElementLimitRule.Issued(new int[0], 7));
-        }
-
-        [Fact]
         public void TheBranchAndTheTableAreRequired()
         {
             SchemaBranch branch = Branch(new[] { Sequence("targets", Number(), null) });

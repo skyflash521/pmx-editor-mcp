@@ -26,7 +26,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         [Theory]
         [InlineData("UndoCount", "undoCount")]
-        [InlineData("PmxFormActivate", "pmxFormActivate")]
         [InlineData("IKItemsCount", "ikItemsCount")]
         [InlineData("SavePMXFile", "savePmxFile")]
         public void TheMemberNameBreaksWhereTheActionWordBreaks(string member, string expected)

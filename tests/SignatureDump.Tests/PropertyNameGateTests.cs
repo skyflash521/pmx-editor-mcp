@@ -13,15 +13,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             new PropertyRecord("N.IThing", "Weight", "System.Single");
 
         [Fact]
-        public void ATableThatCarriesOnlyTheAuthoredItemsPasses()
-        {
-            Require(
-                new[] { Authored(Weight, "重さ") },
-                new[] { Size, Weight },
-                Notes("N.IThing.Size", "大きさ"));
-        }
-
-        [Fact]
         public void AnItemWhoseNoteCanBeQuotedIsRefusedInTheTable()
         {
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(

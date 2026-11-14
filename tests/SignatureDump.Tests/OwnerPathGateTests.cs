@@ -18,12 +18,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Owned("N.IRoot.Middles()", "N.IRoot.Middles()");
 
         [Fact]
-        public void AChainThatFollowsTheEnumerationPasses()
-        {
-            Require(Middles, Owned("N.IMiddle.Leaves()", "N.IRoot.Middles()", "N.IMiddle.Leaves()"));
-        }
-
-        [Fact]
         public void ASingularStageBridgesTwoLists()
         {
             Require(

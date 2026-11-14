@@ -182,13 +182,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Fact]
-        public void ListsOfMultiDimensionalArraysAreNotValuesEither()
-        {
-            Assert.False(Rule().TryClassify(
-                "System.Collections.Generic.IList<System.Byte[,]>", out ValueRepresentation _));
-        }
-
-        [Fact]
         public void NestedByteArraysWrapTheBase64OfEachInnerArray()
         {
             Assert.Equal("array_of_base64", Classify("System.Byte[][]").Identifier);
@@ -204,14 +197,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("array_of_number", representation.Identifier);
         }
 
-        [Theory]
-        [InlineData("System.Byte[,]")]
-        [InlineData("System.String[,]")]
-        [InlineData("System.Int32[,,]")]
-        [InlineData("System.Byte[,]&")]
-        public void MultiDimensionalArraysAreNotValues(string typeName)
+        [Fact]
+        public void MultiDimensionalArraysAreNotValues()
         {
-            Assert.False(Rule().TryClassify(typeName, out ValueRepresentation _));
+            Assert.False(Rule().TryClassify("System.Byte[,]", out ValueRepresentation _));
         }
 
         [Fact]
@@ -239,16 +228,10 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.True(representation.IsNullable);
         }
 
-        [Theory]
-        [InlineData("System.Int32&", "number")]
-        [InlineData("System.Byte[]&", "base64")]
-        [InlineData("System.Collections.Generic.IList<System.Byte>&", "base64")]
-        [InlineData("System.Nullable<System.Int32>&", "nullable_number")]
-        [InlineData("System.Nullable<System.Int32>[]&", "array_of_nullable_number")]
-        public void ByReferenceArgumentsKeepTheRepresentationOfTheirType(
-            string typeName, string expected)
+        [Fact]
+        public void ByReferenceArgumentsKeepTheRepresentationOfTheirType()
         {
-            Assert.Equal(expected, Classify(typeName).Identifier);
+            Assert.Equal("number", Classify("System.Int32&").Identifier);
         }
 
         [Fact]

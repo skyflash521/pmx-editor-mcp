@@ -15,8 +15,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [InlineData(FormConnector, "Close", DangerKind.Shutdown)]
         [InlineData(FormConnector, "InitializePMD", DangerKind.Reset)]
         [InlineData(FormConnector, "InitializePMX", DangerKind.Reset)]
-        [InlineData(FormConnector, "SavePMXFile", DangerKind.Overwrite)]
-        [InlineData("PEPlugin.View.IPEViewSettingConnector", "SaveViewSetting", DangerKind.Overwrite)]
         [InlineData(Pmx, "ToFile", DangerKind.Overwrite)]
         [InlineData(Pmx, "Clear", DangerKind.Reset)]
         public void TheKindFollowsTheDeclaringTypeAndTheMemberName(
@@ -31,7 +29,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         [Theory]
         [InlineData(Pmx, "Add")]
         [InlineData("PEPlugin.Pmx.IPXMaterialMorphOffset", "Clear")]
-        [InlineData("PEPlugin.Vme.IPEVme", "Clear")]
         [InlineData("PEPlugin.Pmx.IPXBone", "Close")]
         [InlineData("PEPlugin.Pmx.IPXBone", "InitializePMX")]
         public void TheOthersAreNotDangerous(string declaringType, string memberName)

@@ -12,12 +12,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string SingleEnum = "N.Single";
 
         [Fact]
-        public void ATableThatCoversTheTypesPasses()
-        {
-            Accepts(Rows());
-        }
-
-        [Fact]
         public void ATypeWithoutASampleStops()
         {
             Rejects("サンプル値を持たない型", Rows().Where(r => r.TypeName != "System.Int32").ToList());

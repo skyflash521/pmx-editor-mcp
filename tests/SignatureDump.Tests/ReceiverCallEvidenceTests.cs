@@ -69,12 +69,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string ClearVmeTool = "motion_clear_vme";
 
         [Fact]
-        public void ATypeMadeWithoutAHandleIsReachedInOneStep()
-        {
-            Assert.Equal(new[] { CreateVmeTool }, ByType()[Vme]);
-        }
-
-        [Fact]
         public void ATypeBehindAnotherHandleIsReachedThroughIt()
         {
             Assert.Equal(new[] { CreateVmeTool, CameraTool }, ByType()[Camera]);

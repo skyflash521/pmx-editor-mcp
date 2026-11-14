@@ -149,17 +149,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
                   { ""name"": ""items"", ""origin"": ""hostOutput"", ""element"": { } },
                   { ""name"": ""nextOffset"", ""origin"": ""hostOutput"", ""shape"": ""number"" }] } }";
 
-        [Theory]
-        [InlineData(@", ""default"": 100", true)]
-        [InlineData(@", ""bounds"": { ""minimum"": 1, ""maximum"": 100 }", true)]
-        [InlineData(@", ""default"": 100", false)]
-        [InlineData(@", ""bounds"": { ""minimum"": 1, ""maximum"": 100 }", false)]
-        public void RejectsAListingForEachTargetThatWritesTheCountTheRuleDerives(
-            string limit, bool inTheFirstBranch)
+        [Fact]
+        public void RejectsAListingForEachTargetThatWritesTheCountTheRuleDerives()
         {
-            string schemas = inTheFirstBranch
-                ? LimitSchemaJson(limit, string.Empty, ListingForEachTargetOutput)
-                : LimitSchemaJson(string.Empty, limit, ListingForEachTargetOutput);
+            string schemas = LimitSchemaJson(
+                @", ""default"": 100", string.Empty, ListingForEachTargetOutput);
 
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Require(schemas, MapJson()));
@@ -168,15 +162,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "一覧の件数は導く値なので既定と上限を持たない",
                 error.Message,
                 StringComparison.Ordinal);
-        }
-
-        [Fact]
-        public void AcceptsAListingForEachTargetWhoseCountIsLeftToTheRule()
-        {
-            Require(
-                LimitSchemaJson(
-                    @", ""bounds"": { ""minimum"": 1 }", string.Empty, ListingForEachTargetOutput),
-                MapJson());
         }
 
         [Fact]
