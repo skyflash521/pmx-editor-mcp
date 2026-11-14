@@ -23,7 +23,7 @@
       "editKind": "read",
       "connectionPath": "Host.Stub",
       "tool": "stub_refuse",
-      "purpose": "台帳に無いハンドルを渡す呼び出しを断ること",
+      "purpose": "台帳に無いハンドルを渡す呼び出しを拒否すること",
       "arguments": {
         "handles": [
           2147483647
@@ -37,7 +37,7 @@
       "editKind": "read",
       "connectionPath": "Host.Stub",
       "tool": "stub_deny",
-      "purpose": "成り立たない値を渡す呼び出しを、その理由で断ること",
+      "purpose": "成り立たない値を渡す呼び出しを、その理由で拒否すること",
       "arguments": {
         "path": "在りもしない位置"
       },

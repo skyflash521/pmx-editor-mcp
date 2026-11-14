@@ -103,7 +103,7 @@ export function bundlesOf(checks) {
     return bundles;
 }
 
-/** 形を持つ検査を、形1つにつき1件へ割る。形は組へ分け、組ごとに1回だけ相手を起こす。 */
+/** 形を持つ検査を、形1つにつき1件へ割る。形は組へ分け、組ごとに1回だけ相手を起動する。 */
 export function splitIntoForms(checks, work, atOnce) {
     return checks.flatMap((check) => {
         if (!check.forms || check.forms.length === 0) return [check];

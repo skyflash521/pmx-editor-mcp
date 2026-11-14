@@ -171,7 +171,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その行が、1回の呼び出しで頼まれた数だけ発行できるか。コネクタから作る行と公開の
+        /// その行が、1回の呼び出しで指定された数だけ発行できるか。コネクタから作る行と公開の
         /// コンストラクタが当たる。受け手に紐づく発行は当たらない。
         /// </summary>
         public static bool Batches(

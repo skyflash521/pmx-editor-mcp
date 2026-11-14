@@ -1175,7 +1175,7 @@ namespace PmxEditorMcp.Tests
         }
 
         /// <summary>
-        /// 取り決めの表にあるエラーコードをそれぞれ起こし、そのあと接続を切るかどうかが表のとおりである。
+        /// 取り決めの表にあるエラーコードをそれぞれ発生させ、そのあと接続を切るかどうかが表のとおりである。
         /// 切ったかどうかは、続けて送った ping に応答するかで見る。
         /// </summary>
         [Theory]
@@ -1273,7 +1273,7 @@ namespace PmxEditorMcp.Tests
                         StubClientProcess.ExitedOpener(LivingClientId));
 
                 default:
-                    throw new InvalidOperationException("起こし方を書いていないエラーコード: " + code);
+                    throw new InvalidOperationException("発生させ方を書いていないエラーコード: " + code);
             }
         }
 

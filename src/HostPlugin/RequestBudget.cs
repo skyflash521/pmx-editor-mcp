@@ -14,7 +14,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 予算に収まっていれば真。超えていれば偽を返し、断る内容を渡す。真を返したときは
+        /// 予算に収まっていれば真。超えていれば偽を返し、拒否の内容を渡す。真を返したときは
         /// <paramref name="code"/> も <paramref name="message"/> も持たない。
         /// </summary>
         public static bool TryPass(string request, out string code, out string message)

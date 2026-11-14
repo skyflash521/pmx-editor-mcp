@@ -127,7 +127,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "{\"types\":[],\"rows\":["
                 + "{\"signatureKey\":\"N.T.A()\",\"arguments\":{\"x\":1},\"basis\":\"根拠A\"}"
                 + ",{\"signatureKey\":\"N.T.B()\",\"arguments\":{},\"basis\":\"根拠B\""
-                + ",\"refused\":\"断る理由\",\"says\":\"文面\"}]}");
+                + ",\"refused\":\"拒否する理由\",\"says\":\"文面\"}]}");
 
             Assert.Equal(2, table.Calls.Count);
             Assert.Equal("N.T.A()", table.Calls[0].SignatureKey);
@@ -136,7 +136,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Null(table.Calls[0].Refused);
             Assert.Null(table.Calls[0].Says);
             Assert.Equal("N.T.B()", table.Calls[1].SignatureKey);
-            Assert.Equal("断る理由", table.Calls[1].Refused);
+            Assert.Equal("拒否する理由", table.Calls[1].Refused);
             Assert.Equal("文面", table.Calls[1].Says);
         }
 
@@ -168,7 +168,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         [Theory]
-        [InlineData(",\"refused\":\"断る理由\"")]
+        [InlineData(",\"refused\":\"拒否する理由\"")]
         [InlineData(",\"says\":\"文面\"")]
         public void ARefusalWithoutItsWordingStops(string half)
         {

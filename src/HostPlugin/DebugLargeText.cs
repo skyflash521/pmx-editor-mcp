@@ -23,7 +23,7 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>指定された文字数のテキストを返す。応答サイズ予算を超える大きさは断る。</summary>
+        /// <summary>指定された文字数のテキストを返す。応答サイズ予算を超える大きさは拒否する。</summary>
         public static object Build(McpMethodContext context)
         {
             if (context == null)

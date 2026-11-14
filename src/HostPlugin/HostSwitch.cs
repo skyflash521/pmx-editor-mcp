@@ -5,8 +5,8 @@ using System.Windows.Forms;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// ホストの停止と開始を、メニューを通さずに頼む入口の設定。環境変数を設定して起動したときだけ
-    /// 開く。頼むのは、登録したウィンドウメッセージをホストのウィンドウへ送る形で、待受が止まって
+    /// ホストの停止と開始を、メニューを通さずに要求する入口の設定。環境変数を設定して起動したときだけ
+    /// 開く。要求は、登録したウィンドウメッセージをホストのウィンドウへ送る形で、待受が止まって
     /// いる間も届く。
     /// </summary>
     public static class HostSwitch
@@ -18,10 +18,10 @@ namespace PmxEditorMcp
 
         public const string MessageName = "PmxEditorMcp.HostSwitch";
 
-        /// <summary>頼みを受けるウィンドウのタイトル。探す側がこの綴りで見つける。</summary>
+        /// <summary>要求を受けるウィンドウのタイトル。探す側がこの綴りで見つける。</summary>
         public const string WindowTitle = "PmxEditorMcp.HostSwitch";
 
-        /// <summary>頼むメッセージの番号。WParam が0なら停止、1なら開始を頼む。</summary>
+        /// <summary>要求するメッセージの番号。WParam が0なら停止、1なら開始を要求する。</summary>
         public static readonly uint Message = RegisterWindowMessage(MessageName);
 
         public static bool ReadFromEnvironment()
@@ -40,7 +40,7 @@ namespace PmxEditorMcp
     }
 
     /// <summary>
-    /// UIスレッドへ委譲するための、表示しないウィンドウ。入口が開いているときだけ、停止と開始を頼む
+    /// UIスレッドへ委譲するための、表示しないウィンドウ。入口が開いているときだけ、停止と開始を要求する
     /// メッセージを受けて、渡された処理を呼ぶ。
     /// </summary>
     internal sealed class HostSwitchForm : Form

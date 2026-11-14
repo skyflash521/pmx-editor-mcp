@@ -8,7 +8,7 @@ namespace PmxEditorMcp
 {
     /// <summary>
     /// JSONから値を組み立てる。写せる型と綴りの判定は <see cref="ValueShape"/> が持ち、こちらは
-    /// その逆向きだけを持つ。形が合わない値は断る。
+    /// その逆向きだけを持つ。形が合わない値は拒否する。
     /// </summary>
     public static class ValueInput
     {
@@ -30,7 +30,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// JSONから値を組み立てる。値として写せない型なら偽を返して <paramref name="code"/> を
-        /// 持たせず、形が合わない値なら偽を返して断る内容を渡す。組み立てたものが使い捨てを要るとき
+        /// 持たせず、形が合わない値なら偽を返して拒否の内容を渡す。組み立てたものが使い捨てを要るとき
         /// (画像・書体・ブラシ)、手放すのは受け取った側である。
         /// </summary>
         public static bool TryFromJson(
@@ -662,7 +662,7 @@ namespace PmxEditorMcp
             return (int)Math.Round((float)number * ColorScale, MidpointRounding.AwayFromZero);
         }
 
-        /// <summary>途中で断るときに、それまでに組み立てた使い捨てのものを手放す。</summary>
+        /// <summary>途中で拒否するときに、それまでに組み立てた使い捨てのものを手放す。</summary>
         private static void Release(Array read)
         {
             foreach (object each in read)

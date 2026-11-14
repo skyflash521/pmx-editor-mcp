@@ -6,9 +6,9 @@ namespace PmxEditorMcp
     public static class FieldSelection
     {
         /// <summary>
-        /// 頼まれた項目名を、返す項目の並びへ直す。頼まれていなければ読み取り可能な項目すべてと
+        /// 指定された項目名を、返す項目の並びへ直す。指定されていなければ読み取り可能な項目すべてと
         /// する。常に返す項目 <paramref name="always"/> は選び方の外に置き、先頭へ並べる。
-        /// 頼み方が正しくなければ偽を返し、断る内容を渡す。
+        /// 指定のしかたが正しくなければ偽を返し、拒否の内容を渡す。
         /// </summary>
         public static bool TryResolve(
             IList<string> requested,

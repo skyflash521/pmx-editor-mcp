@@ -421,7 +421,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             };
         }
 
-        /// <summary>入口で断られることを見る検査。</summary>
+        /// <summary>入口で拒否されることを見る検査。</summary>
         private static E2eCase[] Refused(string tool)
         {
             return new[]
@@ -431,7 +431,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     string.Empty,
                     string.Empty,
                     tool,
-                    "断ること",
+                    "拒否すること",
                     new Dictionary<string, object>(StringComparer.Ordinal),
                     E2eExpectation.Refusal,
                     ToolEnvelope.InvalidHandle),

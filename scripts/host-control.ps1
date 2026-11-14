@@ -20,7 +20,7 @@ param(
     #   editors このセッションの導入先から動いているPMXエディタのプロセスIDを一覧する(ホストの
     #          稼働状態を問わない)。導入先は editor-dir.ps1 の Get-SessionEditorDirectory が決める
     #   launch このセッションの導入先のPMXエディタを起動し、そのホストの待受が現れるまで待ち、-View を指していれば
-    #          そのビューを開いてからプロセスIDを返す。待受が現れないときは、起こしたエディタを
+    #          そのビューを開いてからプロセスIDを返す。待受が現れないときは、起動したエディタを
     #          こちらで閉じてから失敗する
     #   close  指定したエディタを通常の手順で終了し、終了と待受の消失を待つ
     #   status プラグインメニューの稼働状態を表示させ、本文を読んで閉じる。続けてホストのログの所在を返す
@@ -128,8 +128,8 @@ public static class HostControlWindow {
   }
 
   /// <summary>
-  /// ウィンドウを手前へ出すよう頼む。手前に出たかどうかは <see cref="IsInFront"/> で見る。
-  /// Windowsは、いま手前に在るウィンドウと入力の列を共にしない側からの入れ替えを断る。
+  /// ウィンドウを手前へ出すよう要求する。手前に出たかどうかは <see cref="IsInFront"/> で見る。
+  /// Windowsは、いま手前に在るウィンドウと入力の列を共にしない側からの入れ替えを拒否する。
   /// </summary>
   public static void Raise(IntPtr window) {
     const int SW_RESTORE = 9;
@@ -437,7 +437,7 @@ $PipeDirectory = "\\.\pipe\"
 # プラグインのメニュー文言。状態表示の表題にも同じ文言が出る。
 $PluginName = "PMX Editor MCP"
 
-# 編集メニューの中で1回分の元に戻す操作を起こす項目の名前。実機の編集メニューが持つ綴りである。
+# 編集メニューの中で1回分の元に戻す操作を実行する項目の名前。実機の編集メニューが持つ綴りである。
 $UndoItemName = "元に戻す(U)"
 
 # 元に戻した分をやり直す項目の名前。元に戻す操作が1回起きていれば、この項目は使える。
@@ -452,7 +452,7 @@ $ShadowClassName = "SysShadow"
 # 状態を見に行く間隔。
 $PollIntervalMs = 25
 
-# 開始を頼んで待受が現れないときに、頼み直すまでの間隔。
+# 開始を要求して待受が現れないときに、要求し直すまでの間隔。
 $StartRetryMs = 300
 
 # 応えない相手へ同じ働きかけを送り直す間隔。送り直しは相手の受け取り待ちを取り消す。
@@ -556,26 +556,26 @@ $HostSwitchMessageName = "PmxEditorMcp.HostSwitch"
 function Send-HostSwitch {
     <#
         .SYNOPSIS
-        ホストの停止か開始を、ホストのウィンドウへメッセージを送って頼む。ウィンドウが見つからなければ失敗させる。
-        頼みは非同期に届くので、結果は待受の有無で確かめる。
+        ホストの停止か開始を、ホストのウィンドウへメッセージを送って要求する。ウィンドウが見つからなければ失敗させる。
+        要求は非同期に届くので、結果は待受の有無で確かめる。
     #>
     param([int]$OwnerProcessId, [ValidateSet("stop", "start")][string]$Turn)
 
     $windows = @([HostControlWindow]::FindHidden($OwnerProcessId, $HostSwitchWindowTitle))
-    if ($windows.Count -eq 0) { throw "ホストの停止と開始を頼むウィンドウが無い: プロセスID $OwnerProcessId" }
+    if ($windows.Count -eq 0) { throw "ホストの停止と開始を要求するウィンドウが無い: プロセスID $OwnerProcessId" }
 
     $message = [HostControlWindow]::Registered($HostSwitchMessageName)
     $first = [IntPtr]::Zero
     if ($Turn -eq "start") { $first = [IntPtr]1 }
     if ([HostControlWindow]::PostMessage([IntPtr]$windows[0], $message, $first, [IntPtr]::Zero) -eq [IntPtr]::Zero) {
-        throw "ホストの停止と開始を頼むメッセージを送れなかった: プロセスID $OwnerProcessId"
+        throw "ホストの停止と開始を要求するメッセージを送れなかった: プロセスID $OwnerProcessId"
     }
 }
 
 function Wait-HostStarted {
     <#
         .SYNOPSIS
-        ホストの開始を頼み、待受が現れるまで、間隔を置いて頼み直しながら待つ。
+        ホストの開始を要求し、待受が現れるまで、間隔を置いて要求し直しながら待つ。
     #>
     param([int]$OwnerProcessId)
 
@@ -769,8 +769,8 @@ function Close-MenuShadow {
 function Close-OpenMenu {
     <#
         .SYNOPSIS
-        開いたメニューを畳む。開いたままだとメニューが入力待ちを続け、エディタは終了要求も
-        受け付けなくなる。畳む形を持たないメニューは、開いた操作をもう一度行って閉じる
+        開いたメニューを閉じる。開いたままだとメニューが入力待ちを続け、エディタは終了要求も
+        受け付けなくなる。閉じる形を持たないメニューは、開いた操作をもう一度行って閉じる
         ——メニューバーの項目は押すたびに開閉が入れ替わる。
     #>
     param($Menu)
@@ -789,7 +789,7 @@ function Close-OpenMenu {
 function Close-OpenMenuSafely {
     <#
         .SYNOPSIS
-        開いたメニューを畳む。畳めなかったことは警告として知らせるだけにして、元の失敗を
+        開いたメニューを閉じる。閉じられなかったことは警告として知らせるだけにして、元の失敗を
         置き換えない。
     #>
     param($Menu)
@@ -1126,7 +1126,7 @@ function Show-StatusDialog {
         Invoke-Element -Element $target
     }
     catch {
-        # 押せたときは、押した側が畳む。
+        # 押せたときは、押した側が閉じる。
         Close-OpenMenuSafely -Menu $edit
         if (-not $pressing) { throw }
 
@@ -1186,7 +1186,7 @@ function Get-MenuItem {
 function Invoke-UndoOnce {
     <#
         .SYNOPSIS
-        編集メニューから1回分の元に戻す操作を起こす。プラグインの項目を押すのと同じ経路を通るが、
+        編集メニューから1回分の元に戻す操作を実行する。プラグインの項目を押すのと同じ経路を通るが、
         押した先に表示は出ないので、待つのは項目が辿れるようになるところまでである。
     #>
     param([int]$OwnerProcessId, $Deadline)
@@ -1226,7 +1226,7 @@ function Invoke-UndoOnce {
         }
     }
     catch {
-        # 押せたときは、押した側が畳む。
+        # 押せたときは、押した側が閉じる。
         Close-OpenMenuSafely -Menu $edit
         throw
     }
@@ -1281,7 +1281,7 @@ function Get-DialogButton {
 function Close-StatusDialog {
     <#
         .SYNOPSIS
-        状態表示を、何も起こさない側の選択で閉じる。問いの形なら否定、確認だけの形なら了解。
+        状態表示を、何も実行しない側の選択で閉じる。問いの形なら否定、確認だけの形なら了解。
     #>
     param($Dialog)
 
@@ -1447,7 +1447,7 @@ function Open-View {
 function Wait-ViewInFront {
     <#
         .SYNOPSIS
-        そのウィンドウが手前に出るまで待つ。出なければ失敗する。頼んだだけでは、手前に出たことにならない。
+        そのウィンドウが手前に出るまで待つ。出なければ失敗する。要求しただけでは、手前に出たことにならない。
     #>
     param([IntPtr]$Window, [string]$Name)
 
@@ -1542,7 +1542,7 @@ switch ($Action) {
                     -TimeoutSeconds $TimeoutSeconds | Out-Null
             }
             catch {
-                Write-Error "起こしたエディタを閉じられなかった: $($started.Id)" -ErrorAction Continue
+                Write-Error "起動したエディタを閉じられなかった: $($started.Id)" -ErrorAction Continue
             }
 
             throw

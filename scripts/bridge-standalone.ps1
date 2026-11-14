@@ -45,7 +45,7 @@ function Get-MachineKind {
 function Invoke-WithoutSharedRuntime {
     <#
         .SYNOPSIS
-        共有ランタイムを解決できない環境で起こし、書き出したものと終了コードを返す。空の置き場を
+        共有ランタイムを解決できない環境で起動し、書き出したものと終了コードを返す。空の置き場を
         ランタイムの在り処として指し、`dotnet` を引ける場所を通り道から外す。
     #>
     param([string]$FilePath, [string[]]$Arguments)

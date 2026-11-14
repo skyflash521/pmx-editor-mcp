@@ -6,7 +6,7 @@ namespace PmxEditorMcp.Bridge.Tests
 {
     /// <summary>
     /// 公開した入力スキーマの形を辿るテストのために、根の $defs を指す $ref をその中身へ置き換え、
-    /// $defs を外した形を作る。値を通すか断るかを見るテストは、$ref のまま照合器へ渡す。
+    /// $defs を外した形を作る。値を通すか拒否するかを見るテストは、$ref のまま照合器へ渡す。
     /// </summary>
     internal static class SchemaRefs
     {

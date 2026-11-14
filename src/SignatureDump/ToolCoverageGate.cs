@@ -170,7 +170,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その結末が、呼び先まで届いたことを示すか。入口で断られることを見る検査は届いていない。
+        /// その結末が、呼び先まで届いたことを示すか。入口で拒否されることを見る検査は届いていない。
         /// </summary>
         private static bool Reached(E2eExpectation expectation)
         {

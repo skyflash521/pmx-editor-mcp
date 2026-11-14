@@ -21,7 +21,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         private const string NoteName = "大きさ";
 
         private const string Authored =
-            ",\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"メンバー名から起こした。\"";
+            ",\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"メンバー名から名前を付けた。\"";
 
         private readonly string _root;
 
@@ -154,7 +154,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
             Assert.Equal(ExitCodes.Unresolved, code);
             Assert.Contains("日本語名が規則に合わない。", error.ToString(), StringComparison.Ordinal);
-            Assert.Contains("名前を起こす項目が表に無い", error.ToString(), StringComparison.Ordinal);
+            Assert.Contains("名前を付ける項目が表に無い", error.ToString(), StringComparison.Ordinal);
         }
 
         [Fact]
@@ -169,7 +169,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    "照合した: 対象 {0} 件(記載を採る 0・名前を起こす {0})",
+                    "照合した: 対象 {0} 件(記載を採る 0・名前を付ける {0})",
                     Expected().Count),
                 output.ToString().Trim());
         }
@@ -291,7 +291,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>
-        /// 母集合の全項目へ、同じ型の中で重ならない名前を起こした正本。<paramref name="quoted"/> を
+        /// 母集合の全項目へ、同じ型の中で重ならない名前を付けた正本。<paramref name="quoted"/> を
         /// 渡した項目は記載を採る側になるので、正本に載らない。
         /// </summary>
         private static string Names(PropertyRecord quoted = null)

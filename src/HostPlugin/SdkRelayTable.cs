@@ -27,7 +27,7 @@ namespace PmxEditorMcp
     }
 
     /// <summary>
-    /// 行キーから中継を引く表。生成に使ったSDKのバージョンを持ち、解決できない行はその行だけを断る。
+    /// 行キーから中継を引く表。生成に使ったSDKのバージョンを持ち、解決できない行はその行だけを拒否する。
     /// 複数のスレッドから同時に呼んでよい。
     /// </summary>
     public sealed class SdkRelayTable
@@ -85,7 +85,7 @@ namespace PmxEditorMcp
             get { return Sorted(_unresolved); }
         }
 
-        /// <summary>呼び出しが解決の失敗で落ちたため、以後断る行。識別子の序数昇順。</summary>
+        /// <summary>呼び出しが解決の失敗で落ちたため、以後拒否する行。識別子の序数昇順。</summary>
         public IList<string> Disabled
         {
             get
@@ -128,7 +128,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 行キーの指すメンバーを呼ぶ。断ったときは偽で、<paramref name="refusal"/> がその理由。
+        /// 行キーの指すメンバーを呼ぶ。拒否したときは偽で、<paramref name="refusal"/> がその理由。
         /// 呼び出しが型かメンバーの解決の失敗で落ちた行は、以後無効にする。
         /// </summary>
         public bool TryInvoke(

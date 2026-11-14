@@ -273,7 +273,7 @@ namespace PmxEditorMcp.Tests
 
                 if (probe.Outside && !ComposedEditFixture.Message(envelope).Contains(input.LeafName))
                 {
-                    return "断る文が入力の名前 " + input.LeafName + " を含まない: " + ComposedEditFixture.Message(envelope);
+                    return "拒否の文が入力の名前 " + input.LeafName + " を含まない: " + ComposedEditFixture.Message(envelope);
                 }
             }
 

@@ -441,7 +441,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 呼ぶ前に確かめることを満たしているか。UIスレッドの中で呼ぶこと。満たしていなければ偽で、
-        /// <paramref name="refused"/> に断りを持たせる。
+        /// <paramref name="refused"/> に拒否を持たせる。
         /// </summary>
         private bool TryMet(
             McpMethodContext context,
@@ -712,7 +712,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 済んだ呼び出しのあとに、変えた中身をエディタの画面へ映す。断られた呼び出しは映さない。
+        /// 済んだ呼び出しのあとに、変えた中身をエディタの画面へ映す。拒否された呼び出しは映さない。
         /// 映せなかったことの知らせは、どちらの経路のぶんもここで応答へ移す。
         /// </summary>
         private McpMethod Shown(ScreenRefreshKind refresh, McpMethod inner)
@@ -744,7 +744,7 @@ namespace PmxEditorMcp
             };
         }
 
-        /// <summary>止めることを頼まれているか。値の検証は前置きで済んでいる。</summary>
+        /// <summary>止めることを指定されているか。値の検証は前置きで済んでいる。</summary>
         private static bool Suppressed(McpMethodContext context)
         {
             object value;
@@ -941,7 +941,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// SDKのメンバーを、受け手そのものへ呼ぶ。ハンドルを発行する呼び出しは、頼まれた数だけ
+        /// SDKのメンバーを、受け手そのものへ呼ぶ。ハンドルを発行する呼び出しは、指定された数だけ
         /// 繰り返して、その全部を1つの応答で返す。
         /// </summary>
         private object InvokeOnce(
@@ -1275,8 +1275,8 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 頼まれた数だけ繰り返した生成物をまとめて台帳へ預け、そのハンドルの並びを返す。途中で
-        /// 断るときは、その呼び出しで預けたぶんを台帳から戻す。
+        /// 指定された数だけ繰り返した生成物をまとめて台帳へ預け、そのハンドルの並びを返す。途中で
+        /// 拒否するときは、その呼び出しで預けたぶんを台帳から戻す。
         /// </summary>
         private object Issued(
             McpMethodContext context, ToolCall call, IList<object> results, object receiver)
@@ -1541,7 +1541,7 @@ namespace PmxEditorMcp
                         call.Releases, target, arguments, out ignored, out refusal))
                     {
                         throw new InvalidOperationException(
-                            "手放す呼び出しを断られた: " + call.Releases);
+                            "手放す呼び出しを拒否された: " + call.Releases);
                     }
                 });
                 if (!ran.DidRun)
@@ -2023,7 +2023,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 書き込む組ごとに、位置で預かった値が指す実体を解く。1つでも解けなければ、どれも
-        /// 書き込まないまま断る。
+        /// 書き込まないまま拒否する。
         /// </summary>
         private bool TryPointing(
             IList<Change> writing,
@@ -2594,7 +2594,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// ハンドルで受け取る引数を、そのハンドルが指す実体へ直す。指していなければ断る。
+        /// ハンドルで受け取る引数を、そのハンドルが指す実体へ直す。指していなければ拒否する。
         /// </summary>
         private static bool TryHeldArgument(
             McpMethodContext context,
@@ -2638,7 +2638,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>ハンドル1件を、それが指す実体へ直す。指していなければ断る。</summary>
+        /// <summary>ハンドル1件を、それが指す実体へ直す。指していなければ拒否する。</summary>
         private static bool TryOneHeld(
             McpMethodContext context,
             ToolArgument argument,
@@ -2719,7 +2719,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>組1つを実体へ組み立てる。知らない項目と足りない項目は断る。</summary>
+        /// <summary>組1つを実体へ組み立てる。知らない項目と足りない項目は拒否する。</summary>
         private static bool TryOne(
             ToolArgument argument,
             Type type,
@@ -3083,7 +3083,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 名前が渡された文字列のどれかを含む要素だけを残す。名前を読めなければ偽で、
-        /// <paramref name="refused"/> に断りを持たせる。照合は序数で、大文字小文字を同じにしない。
+        /// <paramref name="refused"/> に拒否を持たせる。照合は序数で、大文字小文字を同じにしない。
         /// </summary>
         private bool TryNarrow(
             IList<Spot> column,
@@ -3119,7 +3119,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>名前での絞り込みの頼み方。渡していなければ絞り込まないものとする。</summary>
+        /// <summary>名前での絞り込みの指定のしかた。渡していなければ絞り込まないものとする。</summary>
         private static bool TryNameContains(
             McpMethodContext context, out IList<string> needles, out string code, out string message)
         {
@@ -3814,7 +3814,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 所有するリストに在る、指した位置の要素を台帳へ預けてハンドルを返す。並びを変えず、反映も
-        /// しない。預けたハンドルは親のハンドルに連なる。親をハンドルで指していない呼び出しは断る。
+        /// しない。預けたハンドルは親のハンドルに連なる。親をハンドルで指していない呼び出しは拒否する。
         /// </summary>
         private object Hold(McpMethodContext context, ToolElements tool)
         {
@@ -4809,7 +4809,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 解いた対象の実行時の型が求める型と合うことを求める。合わない位置は適用できないとして
-        /// 断り、その位置と実行時の型を説明に含める。
+        /// 拒否し、その位置と実行時の型を説明に含める。
         /// </summary>
         private static bool TryOfType(
             IList<Spot> column,
@@ -5596,7 +5596,7 @@ namespace PmxEditorMcp
             return receiver.Bridged ? _bridged : _pmx;
         }
 
-        /// <summary>その行のリストの中継。持たなければ偽で、断る内容を渡す。</summary>
+        /// <summary>その行のリストの中継。持たなければ偽で、拒否の内容を渡す。</summary>
         private bool TryList(string rowKey, out SdkList list, out Refusal refused)
         {
             refused = null;
@@ -5771,7 +5771,7 @@ namespace PmxEditorMcp
             return call.Receiver.Kind == ToolReceiverKind.Pmx || Takes(call);
         }
 
-        /// <summary>知らない名前の引数を渡す要求を断る。名前の検証は適用より先に済ませる。</summary>
+        /// <summary>知らない名前の引数を渡す要求を拒否する。名前の検証は適用より先に済ませる。</summary>
         private static bool TryOnlyKnown(
             McpMethodContext context,
             IList<string> known,
@@ -5783,7 +5783,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 確認の要否。PMXを受け手に取る初期化は、ハンドルで指したPMXだけを空にし、確認を取らない。
-        /// ハンドルが無ければ断る。
+        /// ハンドルが無ければ拒否する。
         /// </summary>
         private static bool TryPassDanger(
             ToolCall call, long? handle, bool confirm, out string code, out string message)
@@ -5867,7 +5867,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>返す項目の頼み方。渡していなければ選んでいないものとする。</summary>
+        /// <summary>返す項目の指定のしかた。渡していなければ選んでいないものとする。</summary>
         private static bool TryFields(
             McpMethodContext context, out IList<string> requested, out string code, out string message)
         {
@@ -6158,7 +6158,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 省いてよい、<paramref name="least"/> 以上の整数を読む。省かれているか空なら
-        /// <paramref name="taken"/> を変えずに真を返す。読めなければ偽を返し、断る符号と内容を渡す。
+        /// <paramref name="taken"/> を変えずに真を返す。読めなければ偽を返し、拒否する符号と内容を渡す。
         /// </summary>
         private static bool TryOptionalNumber(
             McpMethodContext context, string name, int least, ref int taken, out string code, out string message)
@@ -6302,7 +6302,7 @@ namespace PmxEditorMcp
             public IList<object> Items { get; }
         }
 
-        /// <summary>UIスレッドの中で決まった断り。包みは同じスレッドの外で返す。</summary>
+        /// <summary>UIスレッドの中で決まった拒否。包みは同じスレッドの外で返す。</summary>
         private sealed class Refusal
         {
             public Refusal(IDictionary<string, object> envelope)
@@ -6332,7 +6332,7 @@ namespace PmxEditorMcp
                         return "このバージョンのSDKに無くなった呼び出し: " + rowKey;
 
                     default:
-                        return "断られた呼び出し: " + rowKey;
+                        return "拒否された呼び出し: " + rowKey;
                 }
             }
         }

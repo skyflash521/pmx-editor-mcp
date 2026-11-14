@@ -10,7 +10,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>値を返して成功すること。</summary>
         Success,
 
-        /// <summary>断ること。断る理由の綴りは <see cref="E2eCase.Code"/> が持つ。</summary>
+        /// <summary>拒否すること。拒否する理由の綴りは <see cref="E2eCase.Code"/> が持つ。</summary>
         Refusal,
 
         /// <summary>
@@ -38,9 +38,9 @@ namespace PmxEditorMcp.SignatureDump
         Called,
 
         /// <summary>
-        /// 呼び先まで届いたうえで、渡した値を呼び先が断ること。断る理由の綴りは
+        /// 呼び先まで届いたうえで、渡した値を呼び先が拒否すること。拒否する理由の綴りは
         /// <see cref="E2eCase.Code"/> が、その理由を見分ける文面は <see cref="E2eCase.Says"/> が
-        /// 持つ。入口で断られる呼び出しと違い、この断りは呼び先まで届いた証しになる。
+        /// 持つ。入口で拒否される呼び出しと違い、この拒否は呼び先まで届いた証しになる。
         /// </summary>
         Denied,
     }
@@ -126,7 +126,7 @@ namespace PmxEditorMcp.SignatureDump
 
         public E2eExpectation Expectation { get; }
 
-        /// <summary>断ることを確かめるとき、その理由の綴り。成功を確かめるときは null。</summary>
+        /// <summary>拒否することを確かめるとき、その理由の綴り。成功を確かめるときは null。</summary>
         public string Code { get; }
 
         /// <summary>返す画像が写すビューの名前。画像を確かめる検査だけが持ち、ほかは null。</summary>
@@ -147,7 +147,7 @@ namespace PmxEditorMcp.SignatureDump
         public E2eExpectedMember Expected { get; }
 
         /// <summary>
-        /// 断る理由を見分ける文面。呼び先が断ることを確かめる検査だけが持ち、ほかは null。
+        /// 拒否する理由を見分ける文面。呼び先が拒否することを確かめる検査だけが持ち、ほかは null。
         /// 綴りだけでは、狙った理由とほかの失敗を見分けられない。
         /// </summary>
         public string Says { get; }

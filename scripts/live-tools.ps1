@@ -129,7 +129,7 @@ try {
     if ($rising) {
         try { $editor = [int](Receive-Job -Job $rising -Wait -AutoRemoveJob) }
         catch {
-            Write-Warning "起こしたエディタを引き取れなかった: $($_.Exception.Message)" `
+            Write-Warning "起動したエディタを引き取れなかった: $($_.Exception.Message)" `
                 -WarningAction Continue
         }
     }

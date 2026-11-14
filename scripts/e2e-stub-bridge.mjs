@@ -54,7 +54,7 @@ const BRIDGE_FAILURE = "BRIDGE_TIMEOUT: ホストの応答が時間内に返ら�
 /** 包みへ足す警告。結末を変えない。 */
 const WARNING = "確かめのための警告。";
 
-/** 確認の表示が出て止まったことを知らせる断りの綴り。ホストの包みが定める。 */
+/** 確認の表示が出て止まったことを知らせる拒否の綴り。ホストの包みが定める。 */
 const PROMPT_SHOWN = "TOOL_PROMPT_SHOWN";
 
 /** ホストが受け持ち、ブリッジが固定のツールとして公開する名前。 */
@@ -134,13 +134,13 @@ function answer(one, broken, params, remembered, round) {
     if (one.expect === "refusal") {
         return wrong
             ? { ok: true, value: null }
-            : { ok: false, error: { code: one.code, message: "断った。" } };
+            : { ok: false, error: { code: one.code, message: "拒否した。" } };
     }
 
     if (one.expect === "denied") {
         return wrong
             ? { ok: false, error: { code: one.code, message: "別の事情。" } }
-            : { ok: false, error: { code: one.code, message: "断った: " + one.says } };
+            : { ok: false, error: { code: one.code, message: "拒否した: " + one.says } };
     }
 
     if (one.expect === "reads") {
@@ -163,7 +163,7 @@ function answer(one, broken, params, remembered, round) {
     }
 
     if (wrong) {
-        return { ok: false, error: { code: "TOOL_OPERATION_FAILED", message: "断った。" } };
+        return { ok: false, error: { code: "TOOL_OPERATION_FAILED", message: "拒否した。" } };
     }
 
     if (one.writes !== undefined && broken !== BROKEN_FILE) {

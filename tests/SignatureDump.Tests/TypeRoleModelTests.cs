@@ -67,7 +67,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<ArgumentNullException>(() => Authored("N.IThing", null, "大きさ"));
             Assert.Throws<ArgumentException>(() => Authored("N.IThing", "Size", " "));
             Assert.Throws<ArgumentNullException>(
-                () => new PropertyNameRecord("N.IThing", "Size", "大きさ", null, "起こした。"));
+                () => new PropertyNameRecord("N.IThing", "Size", "大きさ", null, "名前を付けた。"));
             Assert.Throws<ArgumentException>(
                 () => new PropertyNameRecord(
                     "N.IThing", "Size", "大きさ", NameBasis.FromMemberShape(), " "));
@@ -83,7 +83,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             string declaringType, string memberName, string japaneseName)
         {
             return new PropertyNameRecord(
-                declaringType, memberName, japaneseName, NameBasis.FromMemberShape(), "起こした。");
+                declaringType, memberName, japaneseName, NameBasis.FromMemberShape(), "名前を付けた。");
         }
 
         [Fact]

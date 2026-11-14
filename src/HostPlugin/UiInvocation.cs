@@ -2,7 +2,7 @@ using System;
 
 namespace PmxEditorMcp
 {
-    /// <summary>UIスレッドでの実行を頼んだ結果。</summary>
+    /// <summary>UIスレッドでの実行を要求した結果。</summary>
     public sealed class UiInvocation
     {
         private UiInvocation(bool ran, bool started, string unavailable)

@@ -5,9 +5,9 @@ using System.Linq;
 namespace PmxEditorMcp
 {
     /// <summary>
-    /// Undoの記録まわりの前置きを済ませてからツールを呼ぶ包み。止めることを頼めない分類が頼んで
-    /// いれば断り、止めたまま戻せていないものがあれば、まず戻しにいき、戻らなければ分類ごとの
-    /// 決まりで断るか警告を添える。
+    /// Undoの記録まわりの前置きを済ませてからツールを呼ぶ包み。止めることを指定できない分類が指定して
+    /// いれば拒否し、止めたまま戻せていないものがあれば、まず戻しにいき、戻らなければ分類ごとの
+    /// 決まりで拒否するか警告を添える。
     /// </summary>
     public sealed class UndoBarrier
     {
@@ -25,7 +25,7 @@ namespace PmxEditorMcp
             _recovery = recovery;
         }
 
-        /// <summary>抑止を頼まれているかを読む。値の形が違えば偽で、断る内容を渡す。</summary>
+        /// <summary>抑止を指定されているかを読む。値の形が違えば偽で、拒否の内容を渡す。</summary>
         public static bool TrySuppress(
             McpMethodContext context, out bool suppress, out string code, out string message)
         {

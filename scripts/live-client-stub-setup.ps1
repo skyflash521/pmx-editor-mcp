@@ -1,9 +1,9 @@
 # 参照クライアントの実機動作確認の前置のうち、実行器自身を確かめる経路。
 # 実機を導入せず、登録の綴りに書く相手だけを返す。呼ばせる相手の代わりはこの登録を読まず、
-# ここで返すものは起こされない。
+# ここで返すものは起動されない。
 [CmdletBinding()]
 param(
-    # 行う前置。prepare は起こす相手を書き出す。
+    # 行う前置。prepare は起動する対象を書き出す。
     [Parameter(Mandatory = $true)]
     [ValidateSet("prepare")]
     [string]$Action

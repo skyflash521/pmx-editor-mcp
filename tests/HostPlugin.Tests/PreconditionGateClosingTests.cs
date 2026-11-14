@@ -80,7 +80,7 @@ namespace PmxEditorMcp.Tests
 
         private static string Code(IDictionary<string, object> envelope)
         {
-            Assert.False((bool)envelope["ok"], "閉じるのを断っていない。");
+            Assert.False((bool)envelope["ok"], "閉じるのを拒否していない。");
 
             return (string)((IDictionary<string, object>)envelope["error"])["code"];
         }

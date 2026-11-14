@@ -451,7 +451,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 値を持つメンバーの行キーごとの日本語名。名前を起こした項目は正本から採り、ほかは
+        /// 値を持つメンバーの行キーごとの日本語名。名前を付けた項目は正本から採り、ほかは
         /// 記載から採る。
         /// </summary>
         private static IDictionary<string, string> JapaneseNames(

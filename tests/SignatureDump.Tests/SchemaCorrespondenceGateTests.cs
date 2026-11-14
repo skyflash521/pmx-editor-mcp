@@ -605,7 +605,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                   ""observerArgs"": { ""handles"": ""result:"" } }] }] }";
         }
 
-        /// <summary>頼まれた数だけ発行するツール1件。入力と応答を差し替えられる。</summary>
+        /// <summary>指定された数だけ発行するツール1件。入力と応答を差し替えられる。</summary>
         private static string MakingTool(string count, string output)
         {
             return @"{ ""tools"": [{ ""tool"": """ + Tool + @""",

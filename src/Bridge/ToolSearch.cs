@@ -26,7 +26,7 @@ namespace PmxEditorMcp.Bridge
 
         /// <summary>
         /// 語を当てた結果を、ホストが返すのと同じ形の包みにする。渡された値が範囲の外にあれば
-        /// 断りの包みを返す。<paramref name="budgetChars"/> は応答の枠で、名前は件数と枠の
+        /// 拒否の包みを返す。<paramref name="budgetChars"/> は応答の枠で、名前は件数と枠の
         /// どちらか先に尽きるところまで並べ、残りがあれば続きの位置を添える。
         /// </summary>
         public static JsonObject Answer(

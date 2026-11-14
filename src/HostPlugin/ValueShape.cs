@@ -6,7 +6,7 @@ using System.Globalization;
 
 namespace PmxEditorMcp
 {
-    /// <summary>値をJSONへ写す。写せない型は写さず偽を返し、断る内容も持たせない。</summary>
+    /// <summary>値をJSONへ写す。写せない型は写さず偽を返し、拒否の内容も持たせない。</summary>
     public static class ValueShape
     {
         private const string ListTypeName = "System.Collections.Generic.IList`1";
@@ -31,7 +31,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 値をJSONへ写す。写せない型なら偽を返して <paramref name="code"/> を持たせず、写せる型の
-        /// 写せない値なら偽を返して断る内容を渡す。<paramref name="warnings"/> は空でも渡す。
+        /// 写せない値なら偽を返して拒否の内容を渡す。<paramref name="warnings"/> は空でも渡す。
         /// </summary>
         public static bool TryToJson(
             Type declared,

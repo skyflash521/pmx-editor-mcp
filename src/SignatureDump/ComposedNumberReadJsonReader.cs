@@ -228,7 +228,7 @@ namespace PmxEditorMcp.SignatureDump
 
         public double Least { get; }
 
-        /// <summary>下限そのものを断るなら真。</summary>
+        /// <summary>下限そのものを受け付けないなら真。</summary>
         public bool LeastExcluded { get; }
 
         public double Most { get; }

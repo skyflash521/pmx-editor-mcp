@@ -114,7 +114,7 @@ namespace PmxEditorMcp.SignatureDump
             return compacted.Length < schema.Length ? compacted : schema;
         }
 
-        /// <summary>同じ値を通し同じ値を断る、短い同義の綴りへ置き換えた綴り。</summary>
+        /// <summary>同じ値を通し同じ値を拒否する、短い同義の綴りへ置き換えた綴り。</summary>
         public static string Shortened(string schema)
         {
             if (schema == null)

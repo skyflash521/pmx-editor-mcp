@@ -95,7 +95,7 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>種類を読む。画面が選べない種類なら偽で、断る内容を渡す。</summary>
+        /// <summary>種類を読む。画面が選べない種類なら偽で、拒否の内容を渡す。</summary>
         public static bool TryKind(
             McpMethodContext context,
             string name,

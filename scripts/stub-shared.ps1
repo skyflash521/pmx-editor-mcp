@@ -14,10 +14,10 @@ $StubLaunchStateName = "pmx-editor-mcp-acceptance-stub-launched.txt"
 # 段をどこまで進めたかを持ち越す置き場の名前。
 $StubProgressStateName = "pmx-editor-mcp-acceptance-stub-progress.json"
 
-# 頼まれた操作を書き留める置き場の名前。
+# 要求された操作を書き留める置き場の名前。
 $StubOperationLogName = "pmx-editor-mcp-acceptance-stub-operations.txt"
 
-# 起こしたことにするエディタを、参照クライアントの題材が持ち越す置き場の名前。
+# 起動したことにするエディタを、参照クライアントの題材が持ち越す置き場の名前。
 $LiveStubEditorsName = "pmx-editor-mcp-live-stub-editors.txt"
 
 # 何回目の起動かを、同じ題材が持ち越す置き場の名前。
@@ -26,7 +26,7 @@ $LiveStubLaunchedName = "pmx-editor-mcp-live-stub-launched.txt"
 # 実機動作確認の題材が開く待受の、名前の付け方。ホスト側の実装と同じ形にする。
 $LiveHostStubPipePrefix = "pmx-editor-mcp-"
 
-# 起こしたことにするエディタの、状態を持ち越す置き場の名前の書き出し。プロセスIDを後ろへ足す。
+# 起動したことにするエディタの、状態を持ち越す置き場の名前の書き出し。プロセスIDを後ろへ足す。
 $LiveHostStubStatePrefix = "pmx-editor-mcp-livehost-stub-"
 
 # 状態の綴り。待受を開けているか、閉じたか、終わるかを表す。

@@ -179,7 +179,7 @@ namespace PmxEditorMcp
 
     /// <summary>
     /// 要素の集合の指定を、順序の付いた対象へ解く。解けなかったときは、返すエラーコードと説明を
-    /// 添えて断る。
+    /// 添えて拒否する。
     /// </summary>
     public static class TargetSelection
     {

@@ -45,7 +45,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>置き場を用意する・確かめる段の種別。</summary>
         private const string FileStep = "file";
 
-        /// <summary>応答を作る相手を起こし直す段の種別。</summary>
+        /// <summary>応答を作る相手を起動し直す段の種別。</summary>
         private const string ServerStep = "server";
 
         /// <summary>形が違えば <see cref="FormatException"/>。</summary>
@@ -79,7 +79,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 実物の定義が立てる期待の形と、エディタとホストの操作・置き場・応答を作る相手の
-        /// 起こし直しの各段が頼む行いの種類が、突き合わせの題材にも在ることを求める。
+        /// 起動し直しの各段が要求する行いの種類が、突き合わせの題材にも在ることを求める。
         /// </summary>
         public static void RequireCoveredByStub(JsonNode scenarios, JsonNode stub)
         {
@@ -190,7 +190,7 @@ namespace PmxEditorMcp.SignatureDump
             yield return name;
         }
 
-        /// <summary>その定義が、指した種別の段で頼む行いの種類。</summary>
+        /// <summary>その定義が、指した種別の段で要求する行いの種類。</summary>
         private static ISet<string> Actions(JsonNode defined, string kind)
         {
             return new HashSet<string>(

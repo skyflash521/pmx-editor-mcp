@@ -60,7 +60,7 @@ namespace PmxEditorMcp.SignatureDump
             "対象を指さずに " + NameContainsName + " を渡すと全件から絞り込む。";
 
         private const string RangeIsNotClamped =
-            RangeName + " は端で詰めず、リストの件数を超えると断る。";
+            RangeName + " は端で詰めず、リストの件数を超えると拒否する。";
 
         private const string TakesTheScreenSelection =
             SelectedName + " に真を渡すと、画面がいま選んでいるものを対象にする。";

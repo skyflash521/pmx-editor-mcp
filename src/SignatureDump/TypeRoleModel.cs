@@ -247,7 +247,7 @@ namespace PmxEditorMcp.SignatureDump
         public IList<ElementCollectionRecord> Collections { get; }
     }
 
-    /// <summary>起こした名前が拠る意味の根拠の種類。</summary>
+    /// <summary>付けた名前が拠る意味の根拠の種類。</summary>
     public enum NameBasisKind
     {
         /// <summary>配布物の資料が意味を説明している。</summary>
@@ -257,7 +257,7 @@ namespace PmxEditorMcp.SignatureDump
         MemberShape,
     }
 
-    /// <summary>起こした名前が拠る意味の根拠。種類ごとのファクトリメソッドで作る。</summary>
+    /// <summary>付けた名前が拠る意味の根拠。種類ごとのファクトリメソッドで作る。</summary>
     public sealed class NameBasis
     {
         private NameBasis(NameBasisKind kind, string path, int firstLine, int lastLine)
@@ -352,7 +352,7 @@ namespace PmxEditorMcp.SignatureDump
         }
     }
 
-    /// <summary>日本語名を起こしたプロパティ1件。記載を引ける項目は表に現れない。</summary>
+    /// <summary>日本語名を付けたプロパティ1件。記載を引ける項目は表に現れない。</summary>
     public sealed class PropertyNameRecord
     {
         public PropertyNameRecord(

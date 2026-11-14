@@ -128,7 +128,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         /// <summary>
         /// 項目を集めるツールがハンドルで受け取るのは、並べる要素そのものである。所有する側の
-        /// ハンドルを渡すと、呼び先が要素の型を検めて断る。
+        /// ハンドルを渡すと、呼び先が要素の型を検めて拒否する。
         /// </summary>
         [Fact]
         public void AToolWithoutItsOwnRowIsGivenThePathToWhatItLists()

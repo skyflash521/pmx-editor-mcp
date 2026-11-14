@@ -6,7 +6,7 @@ namespace PmxEditorMcp
     public static class PreconditionGate
     {
         /// <summary>
-        /// 満たしていれば真。満たしていなければ偽で、断る理由を <paramref name="message"/> に
+        /// 満たしていれば真。満たしていなければ偽で、拒否の理由を <paramref name="message"/> に
         /// 持たせる。<paramref name="counted"/> は種別ごとに読んだもの——いま選ばれているものの数、
         /// 元に戻せる編集の数、絞込の一覧に並んでいる項目の数、元に戻せる操作かやり直せる操作の残りの数、
         /// TransformView の一覧で選ばれているボーンの位置(選ばれていなければ -1)——で、読めなかったときは

@@ -2,7 +2,7 @@
 # 合否は、実行したコマンドとクライアントが返す出力と終了コードだけで決める——画面の見た目は
 # 材料にしない。
 #
-# エディタは1つだけ起こし、件を順に通す。状態を変えたまま終わるのは最後の件だけで、途中の件は
+# エディタは1つだけ起動し、件を順に通す。状態を変えたまま終わるのは最後の件だけで、途中の件は
 # 変えたものをその件の中で元へ戻す。
 [CmdletBinding()]
 param(
@@ -108,7 +108,7 @@ function Set-EnvironmentValue {
 function Start-Editor {
     <#
         .SYNOPSIS
-        エディタを1つ起こし、そのプロセスIDを返す。応答サイズ予算の環境変数は、ホストが起動時に一度だけ読む。
+        エディタを1つ起動し、そのプロセスIDを返す。応答サイズ予算の環境変数は、ホストが起動時に一度だけ読む。
     #>
     param([switch]$WithDebugHooks)
 
@@ -132,8 +132,8 @@ $script:SharedEditor = 0
 function Get-SharedEditor {
     <#
         .SYNOPSIS
-        件が共有するエディタ。初めて要るときに起こし、最後の件が閉じるまで開いたままにする。
-        検査からだけ使う入口を開いて起こす。コネクタの取り直しには、その入口が要る。
+        件が共有するエディタ。初めて要るときに起動し、最後の件が閉じるまで開いたままにする。
+        検査からだけ使う入口を開いて起動する。コネクタの取り直しには、その入口が要る。
     #>
     if ($script:SharedEditor -eq 0) {
         $script:SharedEditor = Start-Editor -WithDebugHooks
@@ -153,7 +153,7 @@ function Clear-SharedEditor {
 function Close-SharedEditor {
     <#
         .SYNOPSIS
-        共有したエディタを閉じる。起こしていなければ何もしない。
+        共有したエディタを閉じる。起動していなければ何もしない。
     #>
     if ($script:SharedEditor -eq 0) { return }
 
@@ -200,7 +200,7 @@ function Stop-HoldingClient {
 function Start-HoldingClient {
     <#
         .SYNOPSIS
-        接続を保ったままの確認クライアントを起こし、待ちに入るまで見届けて返す。接続が確立する
+        接続を保ったままの確認クライアントを起動し、待ちに入るまで見届けて返す。接続が確立する
         前にエディタを触ると、切断を待つ側が居ないまま状態が変わってしまう。
     #>
     param([int]$EditorProcessId)
@@ -291,7 +291,7 @@ if ($env:PMX_EDITOR_MCP_PREPARED -ne '1') { & $deploy | Out-Null }
 $cases = [ordered]@{}
 
 $cases['起動の記録'] = {
-    # 起こした直後の記録を見る件で、共有するエディタを起こす最初の件でなければならない。
+    # 起動した直後の記録を見る件で、共有するエディタを起動する最初の件でなければならない。
     $editor = Get-SharedEditor
     $started = @(Get-HostLogLines -EditorProcessId $editor -Mark $StartedMark)
     if ($started.Count -ne 1) {
@@ -300,10 +300,10 @@ $cases['起動の記録'] = {
 }
 
 $cases['バージョンの食い違い'] = {
-    # 断られるのは繋ぎに来た側だけで、待受もホストの状態も変わらない。
+    # 拒否されるのは繋ぎに来た側だけで、待受もホストの状態も変わらない。
     $editor = Get-SharedEditor
 
-    # バージョンが合わなければホストは断って接続を切る。クライアントは、切断が要るエラー応答の
+    # バージョンが合わなければホストは拒否して接続を切る。クライアントは、切断が要るエラー応答の
     # あとの切断を専用の終了コードで名乗る。
     $ran = Invoke-Client -EditorProcessId $editor -Requests @('handshake', '{"protocol":2}')
     Assert-Client -Ran $ran -Code $ClosedAfterDisconnectingErrorCode -What 'バージョンの食い違い'

@@ -118,7 +118,7 @@ namespace PmxEditorMcp
         /// <summary>
         /// <paramref name="body"/> を複製編集の経路へ乗せた呼び出しにする。
         /// <paramref name="known"/> はそのツールが受け取る項目の名前で、どのPMXを相手にするかの
-        /// 指定とUndoの抑止の頼みはここが足す。<paramref name="body"/> はUIスレッドの上で、
+        /// 指定とUndoの抑止の指定はここが足す。<paramref name="body"/> はUIスレッドの上で、
         /// 相手にするPMXを受け取って呼ばれる。
         /// </summary>
         public McpMethod Method(

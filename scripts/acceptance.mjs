@@ -1,5 +1,5 @@
 // 受入シナリオの実行器。
-// 定義に並ぶシナリオを、MCPサーバーとして起こしたブリッジ越しに1段ずつ実行し、返った結果を
+// 定義に並ぶシナリオを、MCPサーバーとして起動したブリッジ越しに1段ずつ実行し、返った結果を
 // 定義が書いた期待と突き合わせて合否を出す。
 // シナリオの中身はこの実行器が決めず、定義に書かれたものだけを読む。
 // 導入の前置は差し替え点で、経路ごとの前置スクリプトが受け持つ。
@@ -86,7 +86,7 @@ function parseArguments(args) {
 }
 
 /**
- * PowerShellのスクリプトを起こし、書き出したものと、落ちたときの事情を返す。
+ * PowerShellのスクリプトを起動し、書き出したものと、落ちたときの事情を返す。
  * 出力の文字コードは端末の設定で変わる。読めない並びは読めないまま置く。
  */
 function invokeScript(script, args, timeoutMs) {
@@ -95,7 +95,7 @@ function invokeScript(script, args, timeoutMs) {
         ["-NoProfile", "-File", script, ...args],
         { encoding: "utf8", timeout: timeoutMs });
     if (done.error !== undefined) {
-        return { written: null, unavailable: "pwsh を起こせません: " + done.error.message };
+        return { written: null, unavailable: "pwsh を起動できません: " + done.error.message };
     }
     if (done.status !== 0) {
         return {
@@ -113,7 +113,7 @@ const CONTROL_SERVER = path.join(
 
 /**
  * run は1度に1つずつ呼ぶ。戻り値は invokeScript と同じ形で、上限を過ぎた操作は中継ごと終わらせ、
- * 次の run で起こし直す。
+ * 次の run で起動し直す。
  */
 class ControlSession {
     constructor(script) {
@@ -163,7 +163,7 @@ class ControlSession {
                     + (this.stderr.trim() || reason),
             });
         };
-        child.on("error", (error) => ended("pwsh を起こせません: " + error.message));
+        child.on("error", (error) => ended("pwsh を起動できません: " + error.message));
         child.on("exit", (code) => ended("終了コード " + code));
         child.stdin.on("error", (error) => ended("中継へ依頼を書けません: " + error.message));
         this.child = child;
@@ -240,7 +240,7 @@ class ControlSession {
 }
 
 /**
- * 導入の前置を行い、MCPサーバーとして起こす相手を受け取る。前置が何をするかはこの実行器の
+ * 導入の前置を行い、MCPサーバーとして起動する対象を受け取る。前置が何をするかはこの実行器の
  * 知るところではなく、最後の行へ置いた組だけを読む。
  */
 function prepare(setup, setupArgs) {
@@ -251,7 +251,7 @@ function prepare(setup, setupArgs) {
 
     const lines = done.written.split("\n").map((line) => line.trim()).filter((line) => line !== "");
     if (lines.length === 0) {
-        return { server: null, unavailable: setup + " が起こす相手を書きませんでした。" };
+        return { server: null, unavailable: setup + " が起動する対象を書きませんでした。" };
     }
 
     let server;
@@ -537,12 +537,12 @@ function judgeNotice(expected, notice, remembered) {
 function judge(expected, response, remembered) {
     const parsed = split(response.text);
     if (expected.ok !== undefined && expected.ok === response.isError) {
-        return (expected.ok ? "成功するはずが断られました: " : "断るはずが成功しました: ")
+        return (expected.ok ? "成功するはずが拒否されました: " : "拒否されるはずが成功しました: ")
             + parsed.value;
     }
 
     if (expected.code !== undefined && !parsed.value.startsWith(expected.code + ": ")) {
-        return "断る理由が " + expected.code + " ではありません: " + parsed.value;
+        return "拒否の理由が " + expected.code + " ではありません: " + parsed.value;
     }
 
     if (expected.notice !== undefined) {

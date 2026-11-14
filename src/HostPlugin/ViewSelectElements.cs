@@ -169,7 +169,7 @@ namespace PmxEditorMcp
                     : ScreenFaceVisibility.Warnings(parts.Setting, ElementKinds.Face));
         }
 
-        /// <summary>選び直せたなら null を、断るなら断りを返す。</summary>
+        /// <summary>選び直せたなら null を、拒否するなら拒否を返す。</summary>
         private static ComposedEditResult Chosen(
             IPXPmx model,
             ScreenParts parts,

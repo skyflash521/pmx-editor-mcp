@@ -256,7 +256,7 @@ namespace PmxEditorMcp
                 return ToolEnvelope.Failure(
                     ToolEnvelope.OperationFailed,
                     UiAnswering.Told(
-                        "押したが、入り切りは頼んだ状態にならなかった(" + CheckedName + ": "
+                        "押したが、入り切りは指定した状態にならなかった(" + CheckedName + ": "
                             + (after.HasValue ? after.Value.ToString().ToLowerInvariant() : "null") + ")。",
                         answered.Notices));
             }
@@ -278,7 +278,7 @@ namespace PmxEditorMcp
             return value;
         }
 
-        /// <summary>台帳の危険の区分を、断る事情の文へ直す。危険でなければ null。</summary>
+        /// <summary>台帳の危険の区分を、拒否の事情の文へ直す。危険でなければ null。</summary>
         private static string Danger(string kind, string window, IList<string> path)
         {
             string part = string.Join("/", path);

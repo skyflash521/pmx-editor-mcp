@@ -57,7 +57,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>危険操作の確認を受け取る共通引数の名前。</summary>
         public const string ConfirmName = "confirm";
 
-        /// <summary>Undoの記録を止めることを頼む共通引数の名前。</summary>
+        /// <summary>Undoの記録を止めることを指定する共通引数の名前。</summary>
         public const string SuppressName = "suppressUndo";
 
         /// <summary>どのPMXを見るかを切り替える共通引数の名前。</summary>

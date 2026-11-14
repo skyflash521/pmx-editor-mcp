@@ -89,7 +89,7 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>いまの稼働世代。止まっている間は、常に断る窓口。</summary>
+        /// <summary>いまの稼働世代。止まっている間は、常に拒否する窓口。</summary>
         public IUiInvoker CurrentUi
         {
             get

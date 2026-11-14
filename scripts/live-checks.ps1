@@ -54,7 +54,7 @@ $checks['受入シナリオ'] = New-Check `
         '--cases', 'catalog/authored/acceptance-scenarios.json',
         '--setup', 'scripts/setup-dev.ps1', '--setup-arg', '-DeployHost')
 
-# 検査が起こすブリッジは、ほかのセッションのエディタが待ち受けていても、この導入先から動く
+# 検査が起動するブリッジは、ほかのセッションのエディタが待ち受けていても、この導入先から動く
 # エディタだけを接続先の候補にする。
 $environment = [ordered]@{
     PMX_EDITOR_MCP_PREPARED = '1'

@@ -77,7 +77,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// <paramref name="currentUi"/> は、終わらせるセッションのハンドルを手放す時点の稼働世代を返す。
-        /// 稼働世代が無いときは断る窓口を返す。
+        /// 稼働世代が無いときは拒否する窓口を返す。
         /// </summary>
         public SessionStore(
             HostLog log,
@@ -133,7 +133,7 @@ namespace PmxEditorMcp
         /// 接続に結び付けるセッションを決める。<paramref name="presented"/> が null か知らない識別子
         /// なら新しいセッションを作り、知っている識別子でその所有者が
         /// <paramref name="client"/> と同じプロセスなら、そのセッションへ戻す。別のプロセスからの
-        /// 提示は偽を返して断る。戻したセッションは自分の所有者を保ち続け、そのときは
+        /// 提示は偽を返して拒否する。戻したセッションは自分の所有者を保ち続け、そのときは
         /// <paramref name="client"/> の持ち主が閉じる。
         /// </summary>
         public bool TryResolve(string presented, ClientProcess client, out Session session)

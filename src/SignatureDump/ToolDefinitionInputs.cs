@@ -719,7 +719,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// Undoの記録を止めることを頼めるツールの名前。複製編集型の行を持つツールに限る。
+        /// Undoの記録を止めることを指定できるツールの名前。複製編集型の行を持つツールに限る。
         /// </summary>
         public ISet<string> SuppressingTools(InventoryRecord inventory)
         {

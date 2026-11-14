@@ -205,7 +205,7 @@
       "basis": {
         "kind": "memberShape"
       },
-      "origin": "PMX仕様書 Lib/PMX仕様/PMX仕様.txt の1458行と1459行は、この2件にも剛体との対の説明を写していて区別が付かないので、メンバー名の SK・SS が硬さ側の SKHR_CL・SSHR_CL と対応することから名前を起こした。"
+      "origin": "PMX仕様書 Lib/PMX仕様/PMX仕様.txt の1458行と1459行は、この2件にも剛体との対の説明を写していて区別が付かないので、メンバー名の SK・SS が硬さ側の SKHR_CL・SSHR_CL と対応することから名前を付けた。"
     },
     {
       "declaringType": "PEPlugin.Pmx.IPXSoftBody",
@@ -250,7 +250,7 @@
       "basis": {
         "kind": "memberShape"
       },
-      "origin": "PMX仕様書 Lib/PMX仕様/PMX仕様.txt の1458行と1459行は、この2件にも剛体との対の説明を写していて区別が付かないので、メンバー名の SK・SS が硬さ側の SKHR_CL・SSHR_CL と対応することから名前を起こした。"
+      "origin": "PMX仕様書 Lib/PMX仕様/PMX仕様.txt の1458行と1459行は、この2件にも剛体との対の説明を写していて区別が付かないので、メンバー名の SK・SS が硬さ側の SKHR_CL・SSHR_CL と対応することから名前を付けた。"
     },
     {
       "declaringType": "PEPlugin.Pmx.IPXSoftBody",

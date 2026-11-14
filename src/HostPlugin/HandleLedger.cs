@@ -24,7 +24,7 @@ namespace PmxEditorMcp
     }
 
     /// <summary>
-    /// 解放の処理には、解放を頼んだ呼び出しが渡すUIスレッドへの委譲の窓口が渡る。
+    /// 解放の処理には、解放を要求した呼び出しが渡すUIスレッドへの委譲の窓口が渡る。
     /// 複数のスレッドから同時に呼んでよい。解放の処理の中から台帳を呼んでもよい。
     /// </summary>
     public sealed class HandleLedger

@@ -9,7 +9,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
     {
         private const string Shape =
             "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\",\"japaneseName\":\"重さ\","
-            + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"メンバー名から起こした。\"}";
+            + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"メンバー名から名前を付けた。\"}";
 
         [Fact]
         public void ARecordCarriesItsNameBasisAndOrigin()
@@ -21,7 +21,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal("N.IThing|Weight", record.Key);
             Assert.Equal("重さ", record.JapaneseName);
             Assert.Equal(NameBasisKind.MemberShape, record.Basis.Kind);
-            Assert.Equal("メンバー名から起こした。", record.Origin);
+            Assert.Equal("メンバー名から名前を付けた。", record.Origin);
         }
 
         [Fact]
@@ -88,7 +88,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<FormatException>(() => Read(
                 "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
                 + "\"propertyType\":\"System.Single\",\"japaneseName\":\"重さ\","
-                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"起こした。\"}"));
+                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"名前を付けた。\"}"));
         }
 
         [Fact]
@@ -97,7 +97,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<FormatException>(() => Read(
                 "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
                 + "\"japaneseName\":\"重さ\",\"decision\":\"authored\","
-                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"起こした。\"}"));
+                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"名前を付けた。\"}"));
         }
 
         [Fact]
@@ -113,7 +113,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Throws<FormatException>(() => Read(
                 "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
-                + "\"japaneseName\":\"重さ\",\"origin\":\"起こした。\"}"));
+                + "\"japaneseName\":\"重さ\",\"origin\":\"名前を付けた。\"}"));
         }
 
         [Fact]
@@ -121,7 +121,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             Assert.Throws<FormatException>(() => Read(
                 "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\",\"japaneseName\":\"\","
-                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"起こした。\"}"));
+                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"名前を付けた。\"}"));
         }
 
         [Fact]
@@ -130,7 +130,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<FormatException>(() => Read(
                 "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
                 + "\"japaneseName\":\"重さ\",\"basis\":{\"kind\":\"guess\"},"
-                + "\"origin\":\"起こした。\"}"));
+                + "\"origin\":\"名前を付けた。\"}"));
         }
 
         [Fact]
@@ -146,7 +146,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
                 + "\"japaneseName\":\"重さ\",\"basis\":{\"kind\":\"documentSection\","
                 + "\"path\":\"doc/spec.txt\",\"firstLine\":1.5,\"lastLine\":2},"
-                + "\"origin\":\"起こした。\"}"));
+                + "\"origin\":\"名前を付けた。\"}"));
         }
 
         [Fact]
@@ -155,7 +155,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Throws<FormatException>(() => Read(
                 "{\"declaringType\":\"N.IThing\",\"memberName\":\"Weight\","
                 + "\"japaneseName\":\"重さ\",\"basis\":{\"kind\":\"memberShape\"},"
-                + "\"origin\":\"起こした。\",\"note\":\"重さ\"}"));
+                + "\"origin\":\"名前を付けた。\",\"note\":\"重さ\"}"));
         }
 
         [Fact]
@@ -219,7 +219,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         {
             return "{\"declaringType\":\"" + declaringType + "\",\"memberName\":\"" + memberName
                 + "\",\"japaneseName\":\"" + memberName + "の値\","
-                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"起こした。\"}";
+                + "\"basis\":{\"kind\":\"memberShape\"},\"origin\":\"名前を付けた。\"}";
         }
 
         private static IList<PropertyNameRecord> Read(string items)

@@ -174,7 +174,7 @@ namespace PmxEditorMcp.Tests
                 new HandleLedger(_log, new HandleIdIssuer()),
                 new EventQueue(new EventSequenceIssuer())));
 
-            Assert.False((bool)envelope["ok"], "断っていない: " + tool);
+            Assert.False((bool)envelope["ok"], "拒否していない: " + tool);
             IDictionary<string, object> error = (IDictionary<string, object>)envelope["error"];
             Assert.Equal(ToolEnvelope.NotApplicable, error["code"]);
             Assert.Contains(tool, (string)error["message"]);

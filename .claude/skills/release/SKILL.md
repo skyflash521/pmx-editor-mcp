@@ -38,7 +38,7 @@ description: 配布パッケージのリリース(バージョンの決定・変
    の差を並べる。
 3. **取りこぼしの確認**: 次の差がすべて材料に現れていることを確かめる。
    - ブリッジが `tools/list` で返すツール名と引数。前の Release の zip のブリッジと、今回組み立てた
-     ブリッジを [mcp-client.mjs](../../../scripts/mcp-client.mjs) で起こして並べ、突き合わせる。
+     ブリッジを [mcp-client.mjs](../../../scripts/mcp-client.mjs) で起動して並べ、突き合わせる。
      突き合わせるスクリプトは `.scratch/` に書き、終わったら消す。
    - `docs/package/INSTALL.md` と、[製品の要求](../../../docs/conventions/requirements.md)が定める
      PMXエディタの下限の、前のタグとの差。

@@ -83,13 +83,13 @@ namespace PmxEditorMcp.SignatureDump
         public string Basis { get; }
 
         /// <summary>
-        /// 渡した値を断ることを確かめるときの、断る理由の綴り。呼び出しが成り立つ値を検査の側で
+        /// 渡した値を拒否することを確かめるときの、拒否する理由の綴り。呼び出しが成り立つ値を検査の側で
         /// 用意できない行だけが持ち、ほかは null。
         /// </summary>
         public string Refused { get; }
 
         /// <summary>
-        /// 断る理由を見分ける文面。断ることを確かめる行だけが持ち、ほかは null。文面まで一致を
+        /// 拒否する理由を見分ける文面。拒否することを確かめる行だけが持ち、ほかは null。文面まで一致を
         /// 求める。
         /// </summary>
         public string Says { get; }

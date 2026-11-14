@@ -13,13 +13,13 @@ const REACHED = "接続先: pmx-editor-mcp-1";
 const SAID = REACHED + "\n作った返りである。";
 
 /** 呼び出しがホストまで届いたうえで通らなかった返り。書き出しはホスト側の実装が定める。 */
-const REFUSED = REACHED + "\nTOOL_OPERATION_FAILED: 作った断りである。";
+const REFUSED = REACHED + "\nTOOL_OPERATION_FAILED: 作った拒否である。";
 
 /**
- * 呼び出しがサーバーへ届く前に参照クライアントの側で断られた返り。本文は塊の並びでなく文字列で
+ * 呼び出しがサーバーへ届く前に参照クライアントの側で拒否された返り。本文は塊の並びでなく文字列で
  * 載せ、接続先を名乗らない。誤りの印を付ける。
  */
-const UNREACHED = "<tool_use_error>作ったクライアント側の断りである。</tool_use_error>";
+const UNREACHED = "<tool_use_error>作ったクライアント側の拒否である。</tool_use_error>";
 
 /** 画像の塊に詰める中身。実行器は数だけを見る。 */
 const DRAWN = "iVBORw0KGgo=";

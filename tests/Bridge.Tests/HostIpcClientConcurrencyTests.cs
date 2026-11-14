@@ -551,7 +551,7 @@ namespace PmxEditorMcp.Bridge.Tests
             {
                 if (++_opened == 1)
                 {
-                    // 1回目は取り消しを起こしてから、開き終える前に打ち切られるようにする。
+                    // 1回目は取り消しを発生させてから、開き終える前に打ち切られるようにする。
                     _release.Cancel();
                     await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
                 }

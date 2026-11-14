@@ -1,5 +1,5 @@
 // 参照クライアントからの実機動作確認。
-// Claude Code をMCPクライアントとして非対話で起こし、引数を取るツールを実際に呼ばせて、
+// Claude Code をMCPクライアントとして非対話で起動し、引数を取るツールを実際に呼ばせて、
 // 綴ったスキーマのとおりに引数が渡ることを確かめる。
 //
 // MCPのツール定義は組の直下へ oneOf や allOf を置くことを許す(2025-11-25 までのバージョンは
@@ -22,7 +22,7 @@ const here = path.dirname(url.fileURLToPath(import.meta.url));
 /** エディタとホストの操作役。既定は実物で、差し替えは実行時の引数に限る。 */
 let CONTROL_SCRIPT = path.join(here, "host-control.ps1");
 
-/** 導入の前置。ホストを配置し、MCPサーバーとして起こす相手を書き出す。 */
+/** 導入の前置。ホストを配置し、MCPサーバーとして起動する対象を書き出す。 */
 let SETUP_SCRIPT = path.join(here, "setup-dev.ps1");
 let SETUP_ARGS = ["-DeployHost"];
 
@@ -79,7 +79,7 @@ function invokeScript(script, args) {
         ["-NoProfile", "-File", script, ...args],
         { encoding: "utf8", timeout: CONTROL_TIMEOUT_MS });
     if (done.error !== undefined && done.error !== null) {
-        throw new Error(script + " を起こせません: " + done.error.message);
+        throw new Error(script + " を起動できません: " + done.error.message);
     }
 
     if (done.status !== 0) {
@@ -90,7 +90,7 @@ function invokeScript(script, args) {
 }
 
 /**
- * 起こしたエディタを閉じる。閉じられたかを返す。
+ * 起動したエディタを閉じる。閉じられたかを返す。
  */
 function close(script, editor) {
     if (editor === null || !/^[1-9][0-9]*$/.test(editor)) {
@@ -251,7 +251,7 @@ const fell = new Set();
 
 const walked = new Set();
 try {
-    // エディタの中のホストも、参照クライアントが起こすブリッジも、この値を読む。
+    // エディタの中のホストも、参照クライアントが起動するブリッジも、この値を読む。
     process.env[BUDGET_NAME] = BUDGET_CHARS;
 
     const prepared = invokeScript(SETUP_SCRIPT, ["-Action", "prepare", ...SETUP_ARGS]).split(/\r?\n/).pop();
@@ -259,7 +259,7 @@ try {
 
     editor = invokeScript(CONTROL_SCRIPT, ["-Action", "launch"]).trim();
     if (!/^[1-9][0-9]*$/.test(editor)) {
-        throw new Error("エディタを起こせませんでした: " + editor);
+        throw new Error("エディタを起動できませんでした: " + editor);
     }
 
     room = fs.mkdtempSync(path.join(os.tmpdir(), "pmx-editor-mcp-client-"));
@@ -284,7 +284,7 @@ try {
         })
         .join("\n");
 
-    // 参照クライアントの入口はWindowsでは .cmd なので、シェルを通さないと起こせない。
+    // 参照クライアントの入口はWindowsでは .cmd なので、シェルを通さないと起動できない。
     const quoted = (value) => "\"" + value + "\"";
     const said = spawnSync(
         CLIENT_COMMAND,
@@ -310,7 +310,7 @@ try {
                 + orders,
         });
     if (said.error !== undefined && said.error !== null) {
-        console.error("参照クライアントを起こせません: " + said.error.message);
+        console.error("参照クライアントを起動できません: " + said.error.message);
         code = EXIT_INPUT_UNAVAILABLE;
     } else if (said.status !== 0 && endedAs(said.stdout) !== MAX_TURNS_REACHED) {
         fell.add(7);

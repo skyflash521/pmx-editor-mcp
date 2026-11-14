@@ -51,7 +51,7 @@ namespace PmxEditorMcp.SignatureDump
                     allowEmpty: true)));
 
         /// <summary>
-        /// 名前を起こした項目を書かれた順に返す。並びは宣言型・メンバー名の序数の昇順で、重複が
+        /// 名前を付けた項目を書かれた順に返す。並びは宣言型・メンバー名の序数の昇順で、重複が
         /// 無いことを求める(<see cref="RoleTypeProperties"/> の並びと同じ定義)。形が違えば
         /// <see cref="FormatException"/>。
         /// </summary>

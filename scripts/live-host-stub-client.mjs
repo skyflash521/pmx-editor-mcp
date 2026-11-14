@@ -75,7 +75,7 @@ async function hold(editor, broken) {
     return broken === "client.holdCode" ? EXIT_OK : EXIT_CLOSED_WHILE_HOLDING;
 }
 
-/** バージョンの合わないハンドシェイクへの答え。断って切ることまでを言う。 */
+/** バージョンの合わないハンドシェイクへの答え。拒否して切ることまでを言う。 */
 function mismatched(broken) {
     console.log("handshake {\"protocol\":2} -> エラー " + PROTOCOL_MISMATCH);
     console.log("切断が要るエラー応答(" + PROTOCOL_MISMATCH

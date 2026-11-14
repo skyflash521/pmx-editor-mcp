@@ -12,7 +12,7 @@ namespace PmxEditorMcp
     {
         public const string OperationName = "operation";
 
-        /// <summary>入力から操作を読む。受け取れない値なら偽で、断る内容を渡す。</summary>
+        /// <summary>入力から操作を読む。受け取れない値なら偽で、拒否の内容を渡す。</summary>
         public static bool TryTake(
             McpMethodContext context,
             IList<string> operations,

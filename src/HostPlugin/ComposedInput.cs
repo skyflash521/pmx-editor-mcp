@@ -15,7 +15,7 @@ namespace PmxEditorMcp
         public const float NoFloor = float.MinValue;
 
         /// <summary>
-        /// 3つの有限の数の並びで渡す向きを読み、長さ1にして渡す。長さを持たなければ偽を返し、断る内容を渡す。
+        /// 3つの有限の数の並びで渡す向きを読み、長さ1にして渡す。長さを持たなければ偽を返し、拒否の内容を渡す。
         /// </summary>
         public static bool TryDirection(
             McpMethodContext context, string name, out V3 unit, out string code, out string message)
@@ -38,7 +38,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>3つの有限の数の並びを受け取る。受け取れなければ断る符号と事情を返す。</summary>
+        /// <summary>3つの有限の数の並びを受け取る。受け取れなければ拒否する符号と事情を返す。</summary>
         public static bool TrySpot(
             McpMethodContext context, string name, out V3 spot, out string code, out string message)
         {
@@ -74,7 +74,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 省いてよい、<paramref name="least"/> 以上の整数を読む。省かれているか空なら
-        /// <paramref name="taken"/> を変えずに真を返す。範囲外なら偽を返し、断る内容を渡す。
+        /// <paramref name="taken"/> を変えずに真を返す。範囲外なら偽を返し、拒否の内容を渡す。
         /// </summary>
         public static bool TryNumber(
             McpMethodContext context, string name, int least, ref int taken, out string message)
@@ -103,7 +103,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 要る操作のときだけ受け取る、有限の数を読む。要る操作で欠けていれば偽、要らない操作で
-        /// 渡されていれば偽を返し、断る内容を渡す。要らない操作では0を渡す。
+        /// 渡されていれば偽を返し、拒否の内容を渡す。要らない操作では0を渡す。
         /// </summary>
         public static bool TryFloat(
             McpMethodContext context,
@@ -157,7 +157,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 要る操作のときだけ受け取る、下限を持つ整数を読む。要る操作で欠けていれば偽、要らない
-        /// 操作で渡されていれば偽を返し、断る内容を渡す。要らない操作では0を渡す。
+        /// 操作で渡されていれば偽を返し、拒否の内容を渡す。要らない操作では0を渡す。
         /// </summary>
         public static bool TryCount(
             McpMethodContext context,
@@ -231,7 +231,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 要る操作のときだけ受け取る、決まった値のどれかを読む。要る操作で欠けていれば偽、
-        /// 要らない操作で渡されていれば偽を返し、断る内容を渡す。要らない操作では空を渡す。
+        /// 要らない操作で渡されていれば偽を返し、拒否の内容を渡す。要らない操作では空を渡す。
         /// </summary>
         public static bool TryChoice(
             McpMethodContext context,
@@ -272,7 +272,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 要る操作のときだけ受け取る、空でない文字を読む。要る操作で欠けていれば偽、要らない操作で
-        /// 渡されていれば偽を返し、断る内容を渡す。要らない操作では空を渡す。
+        /// 渡されていれば偽を返し、拒否の内容を渡す。要らない操作では空を渡す。
         /// </summary>
         public static bool TryText(
             McpMethodContext context,
@@ -312,7 +312,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 操作によらず必ず受け取る、決まった値のどれかを読む。欠けていても知らない値でも偽を返し、
-        /// 断る内容を渡す。
+        /// 拒否の内容を渡す。
         /// </summary>
         public static bool TryChoice(
             McpMethodContext context,
@@ -348,7 +348,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 操作によらず必ず受け取る、決まった値の並びを読む。空の並び・知らない値・並びでない値は
-        /// いずれも偽を返し、断る内容を渡す。同じ値が重なっていても1つとして数える。
+        /// いずれも偽を返し、拒否の内容を渡す。同じ値が重なっていても1つとして数える。
         /// </summary>
         public static bool TryChoices(
             McpMethodContext context,
@@ -385,8 +385,8 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 要る操作のときだけ受け取る、位置の並びを読む。要る操作で欠けていれば偽、要らない操作で
-        /// 渡されていれば偽を返し、断る内容を渡す。<paramref name="ceiling"/> 以上の位置と負の位置も
-        /// 断る。要らない操作と、<paramref name="omittable"/> が挙げる操作で欠けているときは、空の
+        /// 渡されていれば偽を返し、拒否の内容を渡す。<paramref name="ceiling"/> 以上の位置と負の位置も
+        /// 拒否する。要らない操作と、<paramref name="omittable"/> が挙げる操作で欠けているときは、空の
         /// 並びを渡す。
         /// </summary>
         /// <param name="selectedName">

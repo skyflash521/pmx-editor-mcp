@@ -336,7 +336,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 応答をハンドルの並びで返すツールの名前。呼び分けのどれかが並びを預けるなら、どの
-        /// 呼び分けでも並びで返す。頼まれた数だけ発行できる行も並びで返す。
+        /// 呼び分けでも並びで返す。指定された数だけ発行できる行も並びで返す。
         /// </summary>
         private static ISet<string> Responding(
             ToolMap map,

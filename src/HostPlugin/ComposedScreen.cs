@@ -111,8 +111,8 @@ namespace PmxEditorMcp
         /// <summary>
         /// <paramref name="body"/> を、画面のコネクタとPMXを受け取る呼び出しにする。
         /// <paramref name="known"/> はそのツールが受け取る項目の名前、<paramref name="needs"/> は
-        /// そのツールが要る相手で、引けない相手が1つでもあればそのツールだけを断る。
-        /// <paramref name="refresh"/> は、済んだあとに画面へ映すのに要ることで、断った呼び出しでは
+        /// そのツールが要る相手で、引けない相手が1つでもあればそのツールだけを拒否する。
+        /// <paramref name="refresh"/> は、済んだあとに画面へ映すのに要ることで、拒否した呼び出しでは
         /// 行わない。<paramref name="body"/> はUIスレッドの上で呼ばれる。
         /// </summary>
         public McpMethod Method(

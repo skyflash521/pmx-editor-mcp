@@ -129,7 +129,7 @@ namespace PmxEditorMcp.SignatureDump
                 .OrderBy(k => k, StringComparer.Ordinal).FirstOrDefault();
             if (missing != null)
             {
-                throw new InvalidOperationException("名前を起こす項目が表に無い: " + missing);
+                throw new InvalidOperationException("名前を付ける項目が表に無い: " + missing);
             }
         }
 
@@ -155,7 +155,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 同じ宣言型の中で日本語名が重ならないことを、導いた名前と起こした名前の両方で見る。
+        /// 同じ宣言型の中で日本語名が重ならないことを、導いた名前と付けた名前の両方で見る。
         /// </summary>
         private static void RequireDistinctNamesWithinAType(
             IList<PropertyNameRecord> records,

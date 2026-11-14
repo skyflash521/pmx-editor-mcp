@@ -43,7 +43,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     new[] { Size, Weight },
                     Notes("N.IThing.Size", "大きさ")));
 
-            Assert.Contains("名前を起こす項目が表に無い", error.Message, StringComparison.Ordinal);
+            Assert.Contains("名前を付ける項目が表に無い", error.Message, StringComparison.Ordinal);
             Assert.Contains("Weight", error.Message, StringComparison.Ordinal);
         }
 
@@ -172,7 +172,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 property.MemberName,
                 japaneseName,
                 NameBasis.FromMemberShape(),
-                "メンバー名から起こした。");
+                "メンバー名から名前を付けた。");
         }
 
         private static PropertyNameRecord Document(

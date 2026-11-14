@@ -1,11 +1,11 @@
 ---
 name: editor-startup
-description: いまのHEADのブリッジとホストでMCPのツールを呼べる状態にし、PMXエディタを起こすまでの手順。ツールを呼ぶ前にエディタが動いていないとき、pingがpongを返さないとき、いまのHEADの内容でツールを試すときに使う。
+description: いまのHEADのブリッジとホストでMCPのツールを呼べる状態にし、PMXエディタを起動するまでの手順。ツールを呼ぶ前にエディタが動いていないとき、pingがpongを返さないとき、いまのHEADの内容でツールを試すときに使う。
 ---
 
-# エディタを起こす
+# エディタを起動する
 
-いまのHEADのブリッジとホストでMCPのツールを呼べる状態にし、エディタを起こすまでの手順。
+いまのHEADのブリッジとホストでMCPのツールを呼べる状態にし、エディタを起動するまでの手順。
 
 ## 手順
 
@@ -32,6 +32,6 @@ description: いまのHEADのブリッジとホストでMCPのツールを呼べ
    開き直しを待つのは新しいブリッジのツールを呼ぶところだけで、開き直しを求めて止まらない。
 4. `$env:LOCALAPPDATA/pmx-editor-mcp-dev-bridge/` の下で、掴まれていない世代を消す。いま掴んでいる
    世代は残るので、次に開き直したときに消す。
-5. エディタを起こす。`pwsh -File scripts/host-control.ps1 -Action launch`
+5. エディタを起動する。`pwsh -File scripts/host-control.ps1 -Action launch`
 6. `select_editor` が今のセッションに在るなら、手順5が出力したプロセスIDを `processId` へ渡して
    接続先に選び、続けて `ping` が `pong` を返すことを確かめる。

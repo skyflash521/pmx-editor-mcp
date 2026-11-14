@@ -7,7 +7,7 @@ using Xunit;
 namespace PmxEditorMcp.Tests
 {
     /// <summary>
-    /// 行キーからSDKへの中継。解決できない行はその行だけを断り、待受も他の行も止めない。
+    /// 行キーからSDKへの中継。解決できない行はその行だけを拒否し、待受も他の行も止めない。
     /// </summary>
     public sealed class SdkRelayTests : IDisposable
     {
@@ -132,7 +132,7 @@ namespace PmxEditorMcp.Tests
         {
             Dictionary<string, SdkCall> calls = new Dictionary<string, SdkCall>(StringComparer.Ordinal)
             {
-                { LiveKey, (target, arguments) => { throw new InvalidOperationException("SDKが断った。"); } },
+                { LiveKey, (target, arguments) => { throw new InvalidOperationException("SDKが拒否した。"); } },
             };
             SdkRelayTable table = new SdkRelayTable(GeneratedVersion, Digest, calls, new string[0]);
 

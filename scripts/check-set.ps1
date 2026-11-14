@@ -447,7 +447,7 @@ function Get-ExpectationForms {
 function Get-AcceptanceOperations {
     <#
         .SYNOPSIS
-        定義が求めるエディタとホストの操作を、頼まれる順に並べる。
+        定義が求めるエディタとホストの操作を、要求される順に並べる。
     #>
     param($Defined)
 
@@ -477,7 +477,7 @@ function Assert-NoEditorLeft {
 
     $left = @((Get-Content $Editors -Raw -Encoding UTF8 | ConvertFrom-Json).Live)
     if ($left.Count -ne 0) {
-        throw "${What}のあと、起こしたエディタが閉じられずに残っている: $($left -join '・')"
+        throw "${What}のあと、起動したエディタが閉じられずに残っている: $($left -join '・')"
     }
 }
 
@@ -636,7 +636,7 @@ function Test-AcceptanceRunner {
         .SYNOPSIS
         受入の実行器が、定義どおりに段をこなし、返った結果を期待と突き合わせて合否を出すことを
         確かめる。期待どおりの応答を与えた通しの実行は、全シナリオを合格で終え、定義に並ぶツールの
-        呼び出し・エディタとホストの操作・サーバーの起こし直しを1件残らずこなさなければならない。
+        呼び出し・エディタとホストの操作・サーバーの起動し直しを1件残らずこなさなければならない。
         数えるのはいずれも応答を作った側と操作役の代わりで、実行器の自己申告ではない。そのうえで、
         期待の形ごとにその形だけを違えた実行が不合格になることを見る。
     #>
@@ -661,12 +661,12 @@ function Test-AcceptanceRunner {
         }
 
         if ($held.starts -ne ($restarts + 1)) {
-            throw ("サーバーを起こした回数が " + ($restarts + 1) + " ではない: $($held.starts)")
+            throw ("サーバーを起動した回数が " + ($restarts + 1) + " ではない: $($held.starts)")
         }
 
         $done = @(Get-Content $Operations -Encoding UTF8)
         if (($done -join '/') -ne ($asked -join '/')) {
-            throw "頼んだ操作が定義と違う。定義: $($asked -join '/') / 実際: $($done -join '/')"
+            throw "要求した操作が定義と違う。定義: $($asked -join '/') / 実際: $($done -join '/')"
         }
 
         Assert-NoEditorLeft -Editors $Editors -What '期待どおりの応答で通した実行'

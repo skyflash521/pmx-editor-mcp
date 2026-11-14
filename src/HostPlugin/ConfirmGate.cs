@@ -36,7 +36,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 確認が要る呼び出しに <paramref name="confirm"/> が無ければ偽を返し、断る内容を渡す。
+        /// 確認が要る呼び出しに <paramref name="confirm"/> が無ければ偽を返し、拒否の内容を渡す。
         /// 真を返したときは <paramref name="code"/> も <paramref name="message"/> も持たない。
         /// </summary>
         public static bool TryPass(DangerKind kind, bool confirm, out string code, out string message)

@@ -75,19 +75,19 @@ namespace PmxEditorMcp.SignatureDump
         private const int ReadbackLimit = 1;
 
         /// <summary>台帳に無いハンドルを並びで渡す検査が確かめること。</summary>
-        private const string ListedHandleRefusal = "台帳に無いハンドルを渡す呼び出しを断ること";
+        private const string ListedHandleRefusal = "台帳に無いハンドルを渡す呼び出しを拒否すること";
 
         /// <summary>台帳に無いハンドルを1つだけ渡す検査が確かめること。</summary>
-        private const string LoneHandleRefusal = "台帳に無いハンドルを1つ渡す呼び出しを断ること";
+        private const string LoneHandleRefusal = "台帳に無いハンドルを1つ渡す呼び出しを拒否すること";
 
         /// <summary>件数に0を渡す検査が確かめること。</summary>
-        private const string CountRefusal = "件数に0を渡す呼び出しを断ること";
+        private const string CountRefusal = "件数に0を渡す呼び出しを拒否すること";
 
         /// <summary>確認を渡さない検査が確かめること。</summary>
-        private const string ConfirmRefusal = "確認を渡さない呼び出しを断ること";
+        private const string ConfirmRefusal = "確認を渡さない呼び出しを拒否すること";
 
         /// <summary>
-        /// 共通の入口が断ることを確かめる検査。代表だけを実機へ投げる。並びは入口をどこまで進むかの
+        /// 共通の入口が拒否することを確かめる検査。代表だけを実機へ投げる。並びは入口をどこまで進むかの
         /// 順で、深いものが先に来る。
         /// </summary>
         private static readonly string[] SharedRefusals =
@@ -157,7 +157,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 検査を組み立てる。<paramref name="connectionPaths"/> は型から接続の経路へ、
-        /// <paramref name="dangerous"/> は確認を要する行キーの集合。断る理由の綴りはここが
+        /// <paramref name="dangerous"/> は確認を要する行キーの集合。拒否する理由の綴りはここが
         /// 名指しする。
         /// </summary>
         public static IList<E2eCase> Build(
@@ -357,8 +357,8 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 共通の入口が断ることを確かめる検査を代表へ縮めた並び。残すのは、種別ごとに並びの順で
-        /// 最初に当たった1件だけである。同じ入口へ同じ断り方をもう一度通しても、分かることは
+        /// 共通の入口が拒否することを確かめる検査を代表へ縮めた並び。残すのは、種別ごとに並びの順で
+        /// 最初に当たった1件だけである。同じ入口へ同じ拒否のしかたをもう一度通しても、分かることは
         /// 増えない。
         /// </summary>
         private static IList<E2eCase> Shrunk(IList<E2eCase> cases)
@@ -380,7 +380,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その検査が確かめるのが共通の入口の断りなら、その種別の位置。ほかの検査では負。
+        /// その検査が確かめるのが共通の入口での拒否なら、その種別の位置。ほかの検査では負。
         /// </summary>
         private static int Shared(E2eCase one)
         {
@@ -754,7 +754,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// ハンドルの並びだけを渡す引数に、借りる相手の種別を選ぶ値を足したもの。種別で呼び分ける
-        /// ツールへ別の種別として渡すと、呼び先が断る。作ったものの種別は、作ったツールの名前の
+        /// ツールへ別の種別として渡すと、呼び先が拒否する。作ったものの種別は、作ったツールの名前の
         /// 担当群から後ろがそのまま表す。
         /// </summary>
         private static IDictionary<string, object> Chosen(ToolSchema schema, string made)
@@ -1073,7 +1073,7 @@ namespace PmxEditorMcp.SignatureDump
             for (int at = 0; borrowing != null && maker != null && at < maker.Count; at++)
             {
                 // 道の段として呼ぶ行も、その行が宣言した段取りを先に流す。段が作ったものをその
-                // まま次の段へ渡すと、中身を持たないまま先へ進み、道の終わりで断られる。
+                // まま次の段へ渡すと、中身を持たないまま先へ進み、道の終わりで拒否される。
                 IList<SetupOperation> step;
                 foreach (E2eCase one in Prepared(
                     stepSetups != null && stepSetups.TryGetValue(maker[at], out step)
@@ -1212,7 +1212,7 @@ namespace PmxEditorMcp.SignatureDump
                     path,
                     tool,
                     denies
-                        ? "成り立たない値を渡す呼び出しを、その理由で断ること"
+                        ? "成り立たない値を渡す呼び出しを、その理由で拒否すること"
                         : row != null && row.EditKind == ToolMapEditKind.Read
                             ? "呼び出して値を返せること"
                             : "呼び出して成功すること",
@@ -1383,7 +1383,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 並べたものが名前を載せる観測ツールか。名前を載せるならそれ1つに絞り、載せないツールでは
-        /// 項目を選ばずに頼む。
+        /// 項目を選ばずに要求する。
         /// </summary>
         private static bool Named(ToolSchema observer)
         {
@@ -2894,7 +2894,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// ハンドルを1つだけ受け取る入力。ハンドルで指す型を値に取る項目がこれに当たり、並びで
-        /// 受け取る入力とは別に、1つだけ渡す形でも断ることを確かめる。
+        /// 受け取る入力とは別に、1つだけ渡す形でも拒否することを確かめる。
         /// </summary>
         private static IEnumerable<SchemaItem> Handles(
             ToolSchema schema,
@@ -3073,7 +3073,7 @@ namespace PmxEditorMcp.SignatureDump
                         editKind,
                         path,
                         schema.Tool,
-                        "どのリストにも無い位置を指す書き込みを断ること",
+                        "どのリストにも無い位置を指す書き込みを拒否すること",
                         Pointing(arguments, member.Name, UnknownPosition),
                         E2eExpectation.Refusal,
                         ToolEnvelope.IndexOutOfRange);
@@ -3086,7 +3086,7 @@ namespace PmxEditorMcp.SignatureDump
                         schema.Tool,
                         takesNull
                             ? "位置で指す項目へ関連が無いことを書けること"
-                            : "関連が無いことを受け取らない位置の項目へ、関連が無いことを書くのを断ること",
+                            : "関連が無いことを受け取らない位置の項目へ、関連が無いことを書くのを拒否すること",
                         Pointing(arguments, member.Name, null),
                         takesNull ? E2eExpectation.Success : E2eExpectation.Refusal,
                         takesNull ? null : ToolEnvelope.InvalidArgument);

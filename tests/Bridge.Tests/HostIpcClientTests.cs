@@ -1159,7 +1159,7 @@ namespace PmxEditorMcp.Bridge.Tests
             }
         }
 
-        /// <summary>選ばれていないときだけ繋ぎ、選ばれた接続先は起動していないとして断る接続役。</summary>
+        /// <summary>選ばれていないときだけ繋ぎ、選ばれた接続先は起動していないとして拒否する接続役。</summary>
         private sealed class RefusingSelectionConnector : IHostConnector
         {
             private readonly FakeHostConnector _unselected;

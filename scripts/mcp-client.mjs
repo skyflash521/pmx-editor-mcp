@@ -1,4 +1,4 @@
-// MCPサーバーへ stdio で繋ぐクライアント。ブリッジを起こして話す側は、受入の実行器も
+// MCPサーバーへ stdio で繋ぐクライアント。ブリッジを起動して話す側は、受入の実行器も
 // 単独起動の確認もこれを使う。
 
 import { spawn } from "node:child_process";
@@ -32,13 +32,13 @@ export class McpClient {
 
     /**
      * サーバーが標準出力へ書いた、JSONとして読めない最初の行を述べる文。そういう行が無ければ null。
-     * 起こし直しても消えない。
+     * 起動し直しても消えない。
      */
     get protocolViolation() {
         return this._violation;
     }
 
-    /** サーバーを起こし、初期化まで済ませる。 */
+    /** サーバーを起動し、初期化まで済ませる。 */
     async start() {
         const child = spawn(this._server.command, this._server.arguments, {
             stdio: ["pipe", "pipe", "inherit"],
@@ -54,7 +54,7 @@ export class McpClient {
                 this._end(reason);
             }
         };
-        child.on("error", (error) => finish("MCPサーバーを起こせません: " + error.message));
+        child.on("error", (error) => finish("MCPサーバーを起動できません: " + error.message));
         child.on("exit", (code) => finish("MCPサーバーが " + code + " で終わりました。"));
         child.stdout.setEncoding("utf8");
         child.stdout.on("data", (chunk) => {
@@ -76,7 +76,7 @@ export class McpClient {
         this._notify("notifications/initialized", {});
     }
 
-    /** サーバーを落とし、起こし直す。接続を保っていない状態から始めたい段で使う。 */
+    /** サーバーを落とし、起動し直す。接続を保っていない状態から始めたい段で使う。 */
     async restart() {
         await this.stop();
         await this.start();
@@ -107,7 +107,7 @@ export class McpClient {
         const response = await this._request("tools/list", {});
         if (response.error !== undefined) {
             throw new Error(
-                "MCPサーバーがツールの一覧を断りました(" + response.error.code + "): "
+                "MCPサーバーがツールの一覧を拒否しました(" + response.error.code + "): "
                     + response.error.message);
         }
 
@@ -121,7 +121,7 @@ export class McpClient {
 
     /**
      * ツールを1件呼び、返った本文と画像と誤りの印を返す。extend を渡すと、待ちの上限に達した
-     * ときにそれを呼び、真が返ればもう1回ぶん待ち直す。投げ直しではないので、頼んだ操作が二度
+     * ときにそれを呼び、真が返ればもう1回ぶん待ち直す。投げ直しではないので、要求した操作が二度
      * 実行されることはない。
      */
     async callTool(name, args, extend = null) {
@@ -129,7 +129,7 @@ export class McpClient {
             "tools/call", { name, arguments: args }, extend);
         if (response.error !== undefined) {
             throw new Error(
-                "MCPサーバーが要求を断りました(" + response.error.code + "): "
+                "MCPサーバーが要求を拒否しました(" + response.error.code + "): "
                     + response.error.message);
         }
 

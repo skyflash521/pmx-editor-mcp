@@ -277,7 +277,7 @@ namespace PmxEditorMcp
             return true;
         }
 
-        /// <summary>UVの範囲を読む。上限が下限より小さければ偽を返し、断る内容を渡す。</summary>
+        /// <summary>UVの範囲を読む。上限が下限より小さければ偽を返し、拒否の内容を渡す。</summary>
         private static bool TryRegion(
             McpMethodContext context,
             string operation,

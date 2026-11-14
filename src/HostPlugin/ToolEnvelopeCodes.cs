@@ -24,7 +24,7 @@ namespace PmxEditorMcp
         /// <summary>UIスレッドが空かず、呼び出しを始めていない。同じ要求を投げ直してよい。</summary>
         public const string NotStarted = "TOOL_NOT_STARTED";
 
-        /// <summary>人の応答を待つ表示が出ていて進められないことを断る綴り。</summary>
+        /// <summary>人の応答を待つ表示が出ていて進められないことを示す綴り。</summary>
         public const string PromptShown = "TOOL_PROMPT_SHOWN";
 
         /// <summary>実行に失敗した。</summary>

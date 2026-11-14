@@ -405,7 +405,7 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        /// <summary>入力を渡し切ったことを知らせ、切断をこちらから起こせるパイプ。</summary>
+        /// <summary>入力を渡し切ったことを知らせ、こちらから切断できるパイプ。</summary>
         private sealed class DetachingPipe : PipeStream
         {
             private readonly MemoryStream _input;

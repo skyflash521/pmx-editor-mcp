@@ -525,7 +525,7 @@ namespace PmxEditorMcp.Tests
 
             Assert.True(
                 ToolEnvelope.Succeeded(envelope),
-                "断られた: " + (ToolEnvelope.Succeeded(envelope) ? string.Empty : Message(envelope)));
+                "拒否された: " + (ToolEnvelope.Succeeded(envelope) ? string.Empty : Message(envelope)));
             Assert.Equal(
                 new[] { 0f, 2f, 0f },
                 new[] { _target.Shifted.X, _target.Shifted.Y, _target.Shifted.Z });

@@ -279,7 +279,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Contains("notice.changed", error.Message, StringComparison.Ordinal);
         }
 
-        /// <summary>実物が頼む操作の種類が題材に無ければ落ちる。</summary>
+        /// <summary>実物が要求する操作の種類が題材に無ければ落ちる。</summary>
         [Fact]
         public void AnActionTheStubDoesNotCarryIsRefused()
         {
@@ -316,7 +316,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>
-        /// 実物が応答を作る相手を起こし直すのに題材が起こし直さなければ落ちる。起こした回数を
+        /// 実物が応答を作る相手を起動し直すのに題材が起動し直さなければ落ちる。起動した回数を
         /// 見る突き合わせは、段が0件でも数が合ってしまうので、この経路が走らないまま通る。
         /// </summary>
         [Fact]

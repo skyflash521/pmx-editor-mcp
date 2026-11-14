@@ -319,7 +319,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 指したモーフへ、指した相手を指すオフセットを1つずつ足す。値はどれも動かさない値にする。
-        /// 指したモーフの種類がそろっていなければ断る。
+        /// 指したモーフの種類がそろっていなければ拒否する。
         /// </summary>
         private static ComposedEditResult Filled(
             IPXPmx model, Func<object> builder, IList<IPXMorph> picked, IList<int> targets)

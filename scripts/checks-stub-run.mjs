@@ -14,7 +14,7 @@ process.chdir(root);
 
 const sleeps = 'setInterval(() => {}, 1000);';
 
-/** その置き場へ自分の番号を書いてから寝る孫を、1つ起こして寝る相手。 */
+/** その置き場へ自分の番号を書いてから待機する孫を、1つ起動して待機する相手。 */
 function spawnsGrandchildAt(path) {
     const grandchild = `require('node:fs').writeFileSync(${JSON.stringify(path)},`
         + ` String(process.pid)); ${sleeps}`;
@@ -59,7 +59,7 @@ async function stillAlive(pid) {
     return true;
 }
 
-/** 別のプロセスを起こして観る分。**呼ばれるまで走らせない**。一度だけ走らせて使い回す。 */
+/** 別のプロセスを起動して観る分。**呼ばれるまで走らせない**。一度だけ走らせて使い回す。 */
 let observed = null;
 function observe() {
     return observed ??= (async () => {
@@ -152,7 +152,7 @@ const items = [
     { named: '実行停止後の子孫', wanted: false, got: async () => (await observe()).wholeLeft },
     { named: '上限内の終了コード', wanted: 3, got: async () => (await observe()).uncapped.code },
     { named: '上限なしの終了コード', wanted: 5, got: async () => (await observe()).unlimited.code },
-    { named: '起こせない相手の終了コード', wanted: 1,
+    { named: '起動できない相手の終了コード', wanted: 1,
         got: async () => (await observe()).missing.code },
     { named: '上限超過の走り切り', wanted: CAPPED_CODE,
         got: () => judgeResult({ code: 0, seconds: 1.5 }, 1) },

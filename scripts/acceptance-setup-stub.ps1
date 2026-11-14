@@ -1,8 +1,8 @@
 # 受入の導入の前置のうち、実行器自身を確かめる経路。
-# 実機を導入せず、応答を作って返すだけのMCPサーバーを起こす相手として返す。
+# 実機を導入せず、応答を作って返すだけのMCPサーバーを、起動する対象として返す。
 [CmdletBinding()]
 param(
-    # 行う前置。prepare は起こす相手を書き出す。
+    # 行う前置。prepare は起動する対象を書き出す。
     [Parameter(Mandatory = $true)]
     [ValidateSet("prepare")]
     [string]$Action,

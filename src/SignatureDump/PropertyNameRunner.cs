@@ -97,7 +97,7 @@ namespace PmxEditorMcp.SignatureDump
 
             output.WriteLine(string.Format(
                 CultureInfo.InvariantCulture,
-                "照合した: 対象 {0} 件(記載を採る {1}・名前を起こす {2})",
+                "照合した: 対象 {0} 件(記載を採る {1}・名前を付ける {2})",
                 properties.Count,
                 properties.Count - names.Count,
                 names.Count));

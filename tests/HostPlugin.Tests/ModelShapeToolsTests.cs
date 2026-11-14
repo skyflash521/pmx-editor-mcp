@@ -980,7 +980,7 @@ namespace PmxEditorMcp.Tests
         }
 
         /// <summary>
-        /// <paramref name="suppressed"/> が真なら、項目の組へUndoの抑止の頼みを足す。抑止を頼むと、
+        /// <paramref name="suppressed"/> が真なら、項目の組へUndoの抑止の指定を足す。抑止を指定すると、
         /// 書き換えた種類だけを部分反映する経路を通る。
         /// </summary>
         private static KeyValuePair<string, object>[] Undo(

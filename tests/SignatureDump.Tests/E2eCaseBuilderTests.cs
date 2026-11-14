@@ -147,7 +147,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>
-        /// 呼び先まで届かせられないツールは、断られなかったことだけを見る検査も持たない——その
+        /// 呼び先まで届かせられないツールは、拒否されなかったことだけを見る検査も持たない——その
         /// 検査は行の振る舞いへ一度も入らないので、通っても分かることが無い。
         /// </summary>
         [Fact]
@@ -555,7 +555,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
 
         /// <summary>
         /// ほかの行の段取りとしてしか呼ばれないツールは、自分の行を名指しした検査を持たないが、
-        /// 共通の入口の断りは代表を取ったツールだけが残す。
+        /// 共通の入口での拒否は代表を取ったツールだけが残す。
         /// </summary>
         [Fact]
         public void ARowCalledOnlyAsAnotherRowsSetupKeepsNoRefusalOfItsOwn()
@@ -1034,7 +1034,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>
-        /// どちらも呼び先まで届く検査を持たない2つのツールでも、共通の入口の断りは種別ごとの
+        /// どちらも呼び先まで届く検査を持たない2つのツールでも、共通の入口での拒否は種別ごとの
         /// 代表1件だけを残す。
         /// </summary>
         [Fact]
@@ -1101,7 +1101,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             // 2つの種類の代表を兼ねる行は、その2件を残す。
             Assert.Equal(2, cases.Count(c => c.Tool == "model_erase" && c.Code != null));
 
-            // 代表を取られた行は、どちらの種別の断りも残さない。
+            // 代表を取られた行は、どちらの種別の拒否も残さない。
             Assert.DoesNotContain(cases, c => c.Tool == "model_wipe" && c.Code != null);
         }
 
@@ -1342,7 +1342,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                     .ToArray());
         }
 
-        /// <summary>断りを見る検査だけ。呼び先が在ることの検査はどのツールにも付くので外す。</summary>
+        /// <summary>拒否を見る検査だけ。呼び先が在ることの検査はどのツールにも付くので外す。</summary>
         private static IList<E2eCase> Refused(IEnumerable<E2eCase> cases)
         {
             return cases.Where(c => c.Code != null).ToList();
@@ -1638,9 +1638,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                             new SampleCallRow(
                                 RowKey,
                                 new Dictionary<string, object>(StringComparer.Ordinal),
-                                "断られることを見る。",
+                                "拒否されることを見る。",
                                 refused,
-                                "断る文面"),
+                                "拒否する文面"),
                         }),
                 adders: new Dictionary<string, string>(StringComparer.Ordinal)
                 {
@@ -1710,9 +1710,9 @@ namespace PmxEditorMcp.SignatureDump.Tests
                             new SampleCallRow(
                                 RowKey,
                                 new Dictionary<string, object>(StringComparer.Ordinal),
-                                "断られることを見る。",
+                                "拒否されることを見る。",
                                 refused,
-                                "断る文面"),
+                                "拒否する文面"),
                         }));
         }
 
@@ -1946,7 +1946,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>
-        /// そのどれもが呼び先まで届く2つのツールで、断りを見る検査を組み立てる。
+        /// そのどれもが呼び先まで届く2つのツールで、拒否を見る検査を組み立てる。
         /// <paramref name="typed"/> が真なら、2つのハンドルへ別々の型を割り当てる。
         /// </summary>
         private static IList<E2eCase> Reached(string first, string second, bool typed = false)
@@ -2064,7 +2064,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
                                 },
                                 "書ける位置を渡す。",
                                 refused,
-                                refused == null ? null : "断る文面"),
+                                refused == null ? null : "拒否する文面"),
                         })
                     : null);
         }

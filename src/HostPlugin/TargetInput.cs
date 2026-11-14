@@ -15,7 +15,7 @@ namespace PmxEditorMcp
         public const string CountName = "count";
 
         /// <summary>
-        /// 選択の指定が1つも渡されていないことを確かめる。渡されていれば偽を返し、断る内容を渡す。
+        /// 選択の指定が1つも渡されていないことを確かめる。渡されていれば偽を返し、拒否の内容を渡す。
         /// <paramref name="wanted"/> は、その指定を渡せる操作の名前である。
         /// </summary>
         public static bool TryNoTarget(
@@ -52,7 +52,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 1つの集合の指定を読む。<paramref name="handles"/> が偽なら、ハンドルの配列は読まない。
-        /// 値の形が違えば偽で、断る内容を渡す。
+        /// 値の形が違えば偽で、拒否の内容を渡す。
         /// </summary>
         public static bool TryTake(
             IDictionary<string, object> parameters,
@@ -98,7 +98,7 @@ namespace PmxEditorMcp
         }
 
         /// <summary>
-        /// 受け取る名前だけが来ているかを見る。知らない名前が1つでもあれば偽で、断る内容を渡す。
+        /// 受け取る名前だけが来ているかを見る。知らない名前が1つでもあれば偽で、拒否の内容を渡す。
         /// </summary>
         public static bool TryOnlyKnown(
             IDictionary<string, object> parameters,
@@ -136,7 +136,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// その並びの中で、指した位置を解く。位置は昇順で重なりを持たない。解けなければ偽で、
-        /// 断る内容を渡す。
+        /// 拒否の内容を渡す。
         /// </summary>
         public static bool TryPositions(
             IDictionary<string, object> parameters,
@@ -394,7 +394,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// ハンドルの配列を読む。配列でないか整数でない要素を含めば偽を返し、
-        /// <paramref name="name"/> を挙げて断る内容を渡す。
+        /// <paramref name="name"/> を挙げて拒否の内容を渡す。
         /// </summary>
         internal static bool TryHandleList(object value, string name, out IList<long> handles, out string message)
         {

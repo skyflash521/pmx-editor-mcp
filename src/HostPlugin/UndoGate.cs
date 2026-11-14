@@ -9,9 +9,9 @@ namespace PmxEditorMcp
         public const string RecoveredWarning = "止めたままだったUndoの記録を戻した。";
 
         /// <summary>
-        /// 抑止を頼める呼び出しかを見る。頼めない分類が頼んでいるときと、まとめて反映しない
-        /// 相手を <paramref name="pointed"/> で指している呼び出しが頼んでいるときは偽を返し、
-        /// 断る内容を渡す。真を返したときは <paramref name="code"/> も
+        /// 抑止を指定できる呼び出しかを見る。指定できない分類が指定しているときと、まとめて反映しない
+        /// 相手を <paramref name="pointed"/> で指している呼び出しが指定しているときは偽を返し、
+        /// 拒否の内容を渡す。真を返したときは <paramref name="code"/> も
         /// <paramref name="message"/> も持たない。
         /// </summary>
         public static bool TryAcceptSuppress(
@@ -22,8 +22,8 @@ namespace PmxEditorMcp
             if (pointed && suppressUndo)
             {
                 code = ToolEnvelope.InvalidArgument;
-                message = "ハンドルで指したPMXへの呼び出しは suppressUndo を頼めない。"
-                    + "まとめて反映しないので、頼んでも何も起きない。";
+                message = "ハンドルで指したPMXへの呼び出しは suppressUndo を指定できない。"
+                    + "まとめて反映しないので、指定しても何も起きない。";
 
                 return false;
             }
@@ -48,8 +48,8 @@ namespace PmxEditorMcp
             }
 
             code = ToolEnvelope.InvalidArgument;
-            message = "suppressUndo を頼めるのは複製編集型の呼び出しだけである。"
-                + "まとめて反映する呼び出しを持たないので、頼んでも何も起きない。";
+            message = "suppressUndo を指定できるのは複製編集型の呼び出しだけである。"
+                + "まとめて反映する呼び出しを持たないので、指定しても何も起きない。";
 
             return false;
         }

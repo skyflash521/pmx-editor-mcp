@@ -484,7 +484,7 @@ namespace PmxEditorMcp.Tests
         /// <summary>描画を作り直した回数。</summary>
         public int Redraws { get; private set; }
 
-        /// <summary>画面を映し直す頼みを落とすか。真なら描き直しの頼みが例外で終わる。</summary>
+        /// <summary>画面を映し直す要求を落とすか。真なら描き直しの要求が例外で終わる。</summary>
         public bool RefusesToPaint { get; set; }
 
         /// <summary>画面を描き直した回数。</summary>
@@ -494,7 +494,7 @@ namespace PmxEditorMcp.Tests
 
         public int? PaintsAllowed { get; set; }
 
-        /// <summary>区分だけを作り直した先を、頼まれた順に並べたもの。</summary>
+        /// <summary>区分だけを作り直した先を、要求された順に並べたもの。</summary>
         public IList<string> Remade { get; } = new List<string>();
 
         /// <summary>VMDViewへ読み込んだモデル。</summary>
@@ -688,7 +688,7 @@ namespace PmxEditorMcp.Tests
         private bool _drawnKnown;
 
         /// <summary>
-        /// 画面にいま描かれている視点。エディタと同じく、視点を入れただけでは描き直さず、描き直しを頼んだときの
+        /// 画面にいま描かれている視点。エディタと同じく、視点を入れただけでは描き直さず、描き直しを要求したときの
         /// 視点が残る。視点を入れる前は、そのときの視点が描かれている。
         /// </summary>
         public PEPlugin.Pmd.IPEVector3 DrawnFrom

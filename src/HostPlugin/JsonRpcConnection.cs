@@ -273,7 +273,7 @@ namespace PmxEditorMcp
         /// すべてを指定して生成する。<paramref name="clock"/> は単調に進む時刻で、省くとホストの読み込みから数えた
         /// 経過時間を用いる。<paramref name="gatePollInterval"/> は要求の処理を直列化する錠を待つ間に相手の切断を
         /// 見に行く間隔で、省くと <see cref="DefaultGatePollInterval"/> を用いる。<paramref name="currentUi"/> は
-        /// セッションを終わらせるときにハンドルを手放す稼働世代を返すもので、省くと常に断る窓口を用いる。
+        /// セッションを終わらせるときにハンドルを手放す稼働世代を返すもので、省くと常に拒否する窓口を用いる。
         /// </summary>
         public JsonRpcConnection(
             HostLog log,
@@ -648,7 +648,7 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>ハンドシェイクの検査の結末。引数の不備と、断る結末とで切断の要否が分かれる。</summary>
+        /// <summary>ハンドシェイクの検査の結末。引数の不備と、拒否する結末とで切断の要否が分かれる。</summary>
         private enum HandshakeOutcome
         {
             Accepted,
@@ -656,7 +656,7 @@ namespace PmxEditorMcp
             /// <summary>引数が契約に合わない。応答は返したが接続は保つ。</summary>
             InvalidParams,
 
-            /// <summary>断った。応答を返して切断する。</summary>
+            /// <summary>拒否した。応答を返して切断する。</summary>
             Refused,
         }
 

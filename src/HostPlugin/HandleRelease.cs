@@ -78,7 +78,7 @@ namespace PmxEditorMcp
                 + "。何も解放していない。使えるハンドルだけで呼び直す。";
         }
 
-        /// <summary>解放するハンドルの並び。整数の配列でなければ断る。</summary>
+        /// <summary>解放するハンドルの並び。整数の配列でなければ拒否する。</summary>
         private static bool TryHandles(
             McpMethodContext context, out IList<long> handles, out string code, out string message)
         {

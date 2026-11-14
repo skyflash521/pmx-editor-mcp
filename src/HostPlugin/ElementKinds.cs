@@ -96,7 +96,7 @@ namespace PmxEditorMcp
 
     /// <summary>
     /// 組み立てたツールが <c>kind</c> で受け取る要素の種類の表。名前から種類を引き、知らない名前は
-    /// 受け取れる名前を並べて断る。
+    /// 受け取れる名前を並べて拒否する。
     /// </summary>
     public static class ElementKinds
     {
@@ -139,7 +139,7 @@ namespace PmxEditorMcp
             }
         }
 
-        /// <summary>名前から種類を引く。知らない名前なら偽で、断る説明を渡す。</summary>
+        /// <summary>名前から種類を引く。知らない名前なら偽で、拒否の説明を渡す。</summary>
         public static bool TryResolve(object given, out ElementKind kind, out string message)
         {
             kind = null;
@@ -270,7 +270,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 先頭の2つはRoot枠と表情枠で、取り除くことも動かすこともできない。
-        /// その2つが先頭に居ない並びは <see cref="ArgumentException"/> で断る。
+        /// その2つが先頭に居ない並びは <see cref="ArgumentException"/> で拒否する。
         /// </summary>
         private static void PutNodes(object owner, IList<object> items)
         {
@@ -330,7 +330,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 解いた相手を渡す。<paramref name="kind"/> が親を持つ種類のときだけ、親の指定を読む。
-        /// 解けなければ偽で、断る内容を渡す。
+        /// 解けなければ偽で、拒否の内容を渡す。
         /// </summary>
         public static bool TryTake(
             McpMethodContext context,
@@ -611,7 +611,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// その相手の並びの中で、指した要素の位置を解く。位置は昇順で重なりを持たない。解けなければ
-        /// 偽で、断る内容を渡す。
+        /// 偽で、拒否の内容を渡す。
         /// </summary>
         public static bool TryPositions(
             McpMethodContext context,

@@ -4,10 +4,10 @@ using System.Globalization;
 
 namespace PmxEditorMcp
 {
-    /// <summary>要求の引数から、決まった形の値を取り出す。形が合わなければ不正な引数として断る。</summary>
+    /// <summary>要求の引数から、決まった形の値を取り出す。形が合わなければ不正な引数として拒否する。</summary>
     public static class RequestParameter
     {
-        /// <summary>空でない文字列を取り出す。空白だけのものも空として断る。</summary>
+        /// <summary>空でない文字列を取り出す。空白だけのものも空として拒否する。</summary>
         public static string Text(IDictionary<string, object> parameters, string name)
         {
             if (parameters == null)
@@ -30,7 +30,7 @@ namespace PmxEditorMcp
             return text;
         }
 
-        /// <summary>1以上の整数を取り出す。小数・真偽・文字列・範囲外はいずれも断る。</summary>
+        /// <summary>1以上の整数を取り出す。小数・真偽・文字列・範囲外はいずれも拒否する。</summary>
         public static int PositiveInteger(IDictionary<string, object> parameters, string name)
         {
             if (parameters == null)

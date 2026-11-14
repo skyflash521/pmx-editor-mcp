@@ -1,5 +1,5 @@
 // 自動E2E検査の実行器。
-// 生成器が書き出した検査を、MCPサーバーとして起こしたブリッジへ1件ずつ投げ、結果を
+// 生成器が書き出した検査を、MCPサーバーとして起動したブリッジへ1件ずつ投げ、結果を
 // 行キー・編集の流れ・接続の経路ごとに数えて出す。
 // 検査の中身はこの実行器が決めず、生成器が書いたものだけを読む。
 
@@ -111,10 +111,10 @@ function beside(name) {
 /** 応答待ちの表示へ応答する操作役。実機のエディタを相手にしない実行では代わりを差し替える。 */
 let CONTROL_SCRIPT = beside("host-control.ps1");
 
-/** 呼び出しを始めていないことを表す断りの綴り。共通契約が定める。 */
+/** 呼び出しを始めていないことを表す拒否の綴り。共通契約が定める。 */
 const NOT_STARTED = "TOOL_NOT_STARTED";
 
-/** 人の応答を待つ表示が出ていて進められないことを表す断りの綴り。共通契約が定める。 */
+/** 人の応答を待つ表示が出ていて進められないことを表す拒否の綴り。共通契約が定める。 */
 const PROMPT_SHOWN = "TOOL_PROMPT_SHOWN";
 
 /** 同じビューを写した2枚と見なす明るさの差の上限。 */
@@ -132,7 +132,7 @@ const EXIT_INPUT_UNAVAILABLE = 3;
 const EXIT_ROWS_UNCOVERED = 4;
 
 /**
- * 導入の前置を行い、MCPサーバーとして起こす相手を受け取る。前置が何をするかはこの実行器の
+ * 導入の前置を行い、MCPサーバーとして起動する対象を受け取る。前置が何をするかはこの実行器の
  * 知るところではなく、最後の行へ置いた組だけを読む。
  */
 function prepare(setup, setupArgs) {
@@ -144,7 +144,7 @@ function prepare(setup, setupArgs) {
     const lines = done.written.split("\n").map((line) => line.trim())
         .filter((line) => line !== "");
     if (lines.length === 0) {
-        return { server: null, unavailable: setup + " が起こす相手を書きませんでした。" };
+        return { server: null, unavailable: setup + " が起動する対象を書きませんでした。" };
     }
 
     let server;
@@ -313,7 +313,7 @@ async function settled(client) {
     const left = [
         ["中継を作れなかった行", said.status.unresolvedRows ?? []],
         ["呼び出しの失敗で無効にした行", said.status.disabledRows ?? []],
-        ["組み立てられず断るツール", said.status.refusedTools ?? []],
+        ["組み立てられず拒否するツール", said.status.refusedTools ?? []],
     ].filter((pair) => pair[1].length !== 0);
 
     return left.length === 0
@@ -330,7 +330,7 @@ function judge(one, response, remembered) {
     const envelope = response.result;
 
     if (one.expect === "success") {
-        return envelope.ok === true ? null : "成功するはずが断られました: " + describe(envelope);
+        return envelope.ok === true ? null : "成功するはずが拒否されました: " + describe(envelope);
     }
 
     if (one.expect === "called") {
@@ -341,41 +341,41 @@ function judge(one, response, remembered) {
         return envelope.error !== undefined && envelope.error.code === PROMPT_SHOWN
             ? "確認の表示で止まりました。表示が求めるものを段取りで先に満たしてください: "
                 + describe(envelope)
-            : "呼び先まで届くはずが断られました: " + describe(envelope);
+            : "呼び先まで届くはずが拒否されました: " + describe(envelope);
     }
 
     if (one.expect === "denied") {
         if (envelope.ok !== false) {
-            return "断るはずが成功しました。";
+            return "拒否されるはずが成功しました。";
         }
         if (envelope.error === undefined || envelope.error.code !== one.code) {
-            return "断る理由が " + one.code + " ではありません: " + describe(envelope);
+            return "拒否の理由が " + one.code + " ではありません: " + describe(envelope);
         }
 
         return envelope.error.message.indexOf(one.says) >= 0
             ? null
-            : "断る理由が " + JSON.stringify(one.says) + " を述べていません: "
+            : "拒否の理由が " + JSON.stringify(one.says) + " を述べていません: "
                 + envelope.error.message;
     }
 
     if (one.expect === "reads") {
         return envelope.ok === true
             ? reads(one.expected, envelope.value)
-            : "読み返せるはずが断られました: " + describe(envelope);
+            : "読み返せるはずが拒否されました: " + describe(envelope);
     }
 
     if (one.expect === "changed") {
         return envelope.ok === true
             ? changed(one.differs, envelope.value, remembered)
-            : "読み比べるはずが断られました: " + describe(envelope);
+            : "読み比べるはずが拒否されました: " + describe(envelope);
     }
 
     if (envelope.ok !== false) {
-        return "断るはずが成功しました。";
+        return "拒否されるはずが成功しました。";
     }
 
     if (envelope.error === undefined || envelope.error.code !== one.code) {
-        return "断る理由が " + one.code + " ではありません: " + describe(envelope);
+        return "拒否の理由が " + one.code + " ではありません: " + describe(envelope);
     }
 
     return null;
@@ -623,13 +623,13 @@ function report(results, key, title) {
 }
 
 /**
- * PowerShellのスクリプトを起こし、書き出したものと、落ちたときの事情を返す。
+ * PowerShellのスクリプトを起動し、書き出したものと、落ちたときの事情を返す。
  * PowerShellの出力の文字コードは端末の設定で変わる。読めない並びは読めないまま置く。
  */
 function invokeControl(args) {
     const done = spawnSync("pwsh", ["-NoProfile", ...args], { encoding: "utf8" });
     if (done.error !== undefined) {
-        return { written: null, unavailable: "pwsh を起こせません: " + done.error.message };
+        return { written: null, unavailable: "pwsh を起動できません: " + done.error.message };
     }
     if (done.status !== 0) {
         return {
@@ -643,7 +643,7 @@ function invokeControl(args) {
 }
 
 /**
- * 並びを渡す相手を、PowerShellの式として起こす。-File で起こすと、引数はどれも文字列1つとして
+ * 並びを渡す相手を、PowerShellの式として起動する。-File で起動すると、引数はどれも文字列1つとして
  * 渡る。値は引用符で括り、引用符そのものは重ねて逃がす。
  */
 function invokeListed(script, named) {
@@ -718,7 +718,7 @@ function notStarted(response) {
         && envelope.error.code === NOT_STARTED;
 }
 
-/** 表示が出たことを知らせる断りか。 */
+/** 表示が出たことを知らせる拒否か。 */
 function prompted(response) {
     const envelope = response.result;
 
@@ -783,7 +783,7 @@ function written(one, given) {
 
 /**
  * 返った値を覚えられるか。成功して値を載せた応答だけが覚える相手で、表示が出たことを知らせる
- * 断りのように値を持たない応答は覚えない。
+ * 拒否のように値を持たない応答は覚えない。
  */
 function produced(response) {
     const envelope = response.result;

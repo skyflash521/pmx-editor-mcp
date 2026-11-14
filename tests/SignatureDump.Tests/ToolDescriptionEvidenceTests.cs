@@ -634,11 +634,11 @@ namespace PmxEditorMcp.SignatureDump.Tests
             return new List<PropertyNameRecord>
             {
                 new PropertyNameRecord(
-                    Owner, "Index", "頂点の番号", NameBasis.FromMemberShape(), "起こした。"),
+                    Owner, "Index", "頂点の番号", NameBasis.FromMemberShape(), "名前を付けた。"),
                 new PropertyNameRecord(
-                    Bone, "Index", "ボーンの番号", NameBasis.FromMemberShape(), "起こした。"),
+                    Bone, "Index", "ボーンの番号", NameBasis.FromMemberShape(), "名前を付けた。"),
                 new PropertyNameRecord(
-                    Owner, "IsIK", "IKかどうか", NameBasis.FromMemberShape(), "起こした。"),
+                    Owner, "IsIK", "IKかどうか", NameBasis.FromMemberShape(), "名前を付けた。"),
             };
         }
     }

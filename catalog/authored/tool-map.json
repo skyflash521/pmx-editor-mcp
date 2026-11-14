@@ -3795,7 +3795,7 @@
       "updateSpec": {
         "refresh": []
       },
-      "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲も反映の後の表示更新も、この流れを起こしたツールの行が決めるので、この行は持たない。"
+      "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲も反映の後の表示更新も、この流れを始めたツールの行が決めるので、この行は持たない。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx,PEPlugin.Pmx.PmxUpdateObject,System.Int32)",
@@ -3803,7 +3803,7 @@
       "updateSpec": {
         "refresh": []
       },
-      "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲は引数で受け取り、反映の後の表示更新はこの流れを起こしたツールの行が決めるので、この行は持たない。"
+      "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲は引数で受け取り、反映の後の表示更新はこの流れを始めたツールの行が決めるので、この行は持たない。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.Update(PEPlugin.Pmx.IPXPmx,PEPlugin.Pmx.PmxUpdateObject,System.Int32[])",
@@ -3811,7 +3811,7 @@
       "updateSpec": {
         "refresh": []
       },
-      "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲は引数で受け取り、反映の後の表示更新はこの流れを起こしたツールの行が決めるので、この行は持たない。"
+      "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲は引数で受け取り、反映の後の表示更新はこの流れを始めたツールの行が決めるので、この行は持たない。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPrimitiveBuilder.AddBox(System.Int32,PEPlugin.SDX.V3,System.Single,System.Single,System.Single,PEPlugin.Pmx.IPXBone)",
@@ -10456,7 +10456,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.PathType()",
       "editKind": "directChange",
-      "basis": "点のつなぎ方を持つ。空間パスは長寿命の持ち物なので、それへ直に作用する。この行を覆えるツールは受け手をハンドルで要る。作った直後の空間パスには通る点が無く、その状態でこの項目を読むとエディタが範囲の外を指して断る。",
+      "basis": "点のつなぎ方を持つ。空間パスは長寿命の持ち物なので、それへ直に作用する。この行を覆えるツールは受け手をハンドルで要る。作った直後の空間パスには通る点が無く、その状態でこの項目を読むとエディタが範囲の外を指したとして拒否する。",
       "embeddedIn": [
         "motion_list_vme_paths",
         "motion_update_vme_paths"
@@ -10465,7 +10465,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.RangeMax()",
       "editKind": "read",
-      "basis": "道のりの終わりを返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要る。作った直後の空間パスには通る点が無く、その状態でこの項目を読むとエディタが範囲の外を指して断る。",
+      "basis": "道のりの終わりを返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要る。作った直後の空間パスには通る点が無く、その状態でこの項目を読むとエディタが範囲の外を指したとして拒否する。",
       "embeddedIn": [
         "motion_list_vme_paths"
       ]
@@ -10473,7 +10473,7 @@
     {
       "signatureKey": "PEPlugin.Vme.IPEVmePath.RangeMin()",
       "editKind": "read",
-      "basis": "道のりの始まりを返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要る。作った直後の空間パスには通る点が無く、その状態でこの項目を読むとエディタが範囲の外を指して断る。",
+      "basis": "道のりの始まりを返すだけで、エディタの状態を動かさない。この行を覆えるツールは受け手をハンドルで要る。作った直後の空間パスには通る点が無く、その状態でこの項目を読むとエディタが範囲の外を指したとして拒否する。",
       "embeddedIn": [
         "motion_list_vme_paths"
       ]
@@ -13884,7 +13884,7 @@
       "updateSpec": {
         "refresh": []
       },
-      "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲も反映の後の表示更新も、この流れを起こしたツールの行が決めるので、この行は持たない。"
+      "basis": "複製したPMXをまとめて反映する呼び出しそのもので、複製編集型が確定させる呼び出しに当たる。反映の範囲も反映の後の表示更新も、この流れを始めたツールの行が決めるので、この行は持たない。"
     },
     {
       "signatureKey": "PXCPlugin.PXCBridge.ViewCtrl(PXCPlugin.IPXCPluginConnector)",

@@ -1,9 +1,9 @@
 # 実機の検査の前置のうち、開発配置の経路。
-# ブリッジのビルド成果物を、実行器が起こす相手として返す。
+# ブリッジのビルド成果物を、実行器が起動する対象として返す。
 # 実行器はこのスクリプトの中身を解さず、最後の行へ書いた組だけを読む。
 [CmdletBinding()]
 param(
-    # 行う前置。prepare は起こす相手を書き出す。
+    # 行う前置。prepare は起動する対象を書き出す。
     [Parameter(Mandatory = $true)]
     [ValidateSet("prepare")]
     [string]$Action,

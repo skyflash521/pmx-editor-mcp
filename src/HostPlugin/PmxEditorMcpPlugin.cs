@@ -242,7 +242,7 @@ namespace PmxEditorMcp
                 if (relay.RefusedTools.Count > 0)
                 {
                     _log.Write(
-                        "読み込まれたSDKでは組み立てられず、断るツール: " + string.Join(", ", relay.RefusedTools));
+                        "読み込まれたSDKでは組み立てられず、拒否するツール: " + string.Join(", ", relay.RefusedTools));
                 }
 
                 ComposedModelTools.AddTo(

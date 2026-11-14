@@ -56,7 +56,7 @@ namespace PmxEditorMcp.Bridge.Tests
                         : form["minLength"] != null && form["minLength"].GetValue<int>() >= least;
                     if (!bounded)
                     {
-                        wrong.Add(input + ": ホストは " + least + " 文字未満を断るが、ツール定義は " + form.ToJsonString());
+                        wrong.Add(input + ": ホストは " + least + " 文字未満を拒否するが、ツール定義は " + form.ToJsonString());
                     }
                 }
             }
@@ -85,7 +85,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 {
                     if (least > 0 && !(form["minItems"] != null && form["minItems"].GetValue<int>() >= least))
                     {
-                        wrong.Add(input + ": ホストは " + least + " 個未満を断るが、ツール定義は " + form.ToJsonString());
+                        wrong.Add(input + ": ホストは " + least + " 個未満を拒否するが、ツール定義は " + form.ToJsonString());
                     }
                 }
             }

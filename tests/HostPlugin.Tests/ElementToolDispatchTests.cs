@@ -2936,7 +2936,7 @@ namespace PmxEditorMcp.Tests
             return arguments;
         }
 
-        /// <summary>親のリストへ加える。題材の側で失敗させたいときは、そう頼まれたとおり投げる。</summary>
+        /// <summary>親のリストへ加える。題材の側で失敗させたいときは、そう指定されたとおり投げる。</summary>
         private void Join(Group owner, Leaf leaf)
         {
             if (_joinBreaks)

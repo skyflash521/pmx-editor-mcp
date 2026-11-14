@@ -75,7 +75,7 @@ namespace PmxEditorMcp.Tests
         {
             _fixture.Call(
                 Method((context, pmx) =>
-                    ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, "断る")),
+                    ComposedEditResult.Refuse(ToolEnvelope.InvalidArgument, "拒否する")),
                 ComposedEditFixture.Arguments());
 
             Assert.Empty(_fixture.Form.Updated);
@@ -195,7 +195,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Arguments(
                     ComposedEditFixture.Given(UndoBarrier.SuppressName, true)));
 
-            Assert.True(_fixture.Suppressed, "抑止の頼みが反映へ届いていない。");
+            Assert.True(_fixture.Suppressed, "抑止の指定が反映へ届いていない。");
             Assert.False(_fixture.UndoLocked, "Undoの記録を止めたまま戻していない。");
         }
 
@@ -207,7 +207,7 @@ namespace PmxEditorMcp.Tests
                 ComposedEditFixture.Arguments());
 
             Assert.Equal(1, _fixture.Commits);
-            Assert.False(_fixture.Suppressed, "頼んでいない抑止が反映へ届いた。");
+            Assert.False(_fixture.Suppressed, "指定していない抑止が反映へ届いた。");
             Assert.Equal(0, _fixture.Resumes);
         }
 
@@ -230,7 +230,7 @@ namespace PmxEditorMcp.Tests
                     ComposedEditFixture.Given(UndoBarrier.SuppressName, true)));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
-            Assert.False(ran, "断るべき呼び出しで中身が走った。");
+            Assert.False(ran, "拒否すべき呼び出しで中身が走った。");
         }
 
         [Fact]

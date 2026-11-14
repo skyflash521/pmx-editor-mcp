@@ -512,7 +512,7 @@
       "arguments": {
         "n": 2147483647
       },
-      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して断る側で確かめる。",
+      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して拒否される側で確かめる。",
       "refused": "TOOL_INDEX_OUT_OF_RANGE",
       "says": "範囲の外"
     },
@@ -521,7 +521,7 @@
       "arguments": {
         "n": 2147483647
       },
-      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して断る側で確かめる。",
+      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して拒否される側で確かめる。",
       "refused": "TOOL_INDEX_OUT_OF_RANGE",
       "says": "範囲の外"
     },
@@ -763,21 +763,21 @@
     {
       "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedBoneIndices()",
       "arguments": {},
-      "basis": "PmxViewの絞込のウィンドウを一度も表示していない状態で呼び、断る側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
+      "basis": "PmxViewの絞込のウィンドウを一度も表示していない状態で呼び、拒否される側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedExpressionIndices()",
       "arguments": {},
-      "basis": "PmxViewの絞込のウィンドウを一度も表示していない状態で呼び、断る側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
+      "basis": "PmxViewの絞込のウィンドウを一度も表示していない状態で呼び、拒否される側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
     {
       "signatureKey": "PEPlugin.View.IPEPartsSelectConnector.GetCheckedMaterialIndices()",
       "arguments": {},
-      "basis": "PmxViewの絞込のウィンドウを一度も表示していない状態で呼び、断る側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
+      "basis": "PmxViewの絞込のウィンドウを一度も表示していない状態で呼び、拒否される側で確かめる。このウィンドウは検査の中で開かないので、一覧は組まれないままである。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
@@ -788,7 +788,7 @@
           0
         ]
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PmxViewの絞込のウィンドウを一度も表示していない状態で呼ぶので、断る側で確かめる。",
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PmxViewの絞込のウィンドウを一度も表示していない状態で呼ぶので、拒否される側で確かめる。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
@@ -799,7 +799,7 @@
           0
         ]
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PmxViewの絞込のウィンドウを一度も表示していない状態で呼ぶので、断る側で確かめる。",
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PmxViewの絞込のウィンドウを一度も表示していない状態で呼ぶので、拒否される側で確かめる。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
@@ -810,28 +810,28 @@
           0
         ]
       },
-      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PmxViewの絞込のウィンドウを一度も表示していない状態で呼ぶので、断る側で確かめる。",
+      "basis": "段取りが入れた先頭の要素を指す。位置0はどの並びにも在る。PmxViewの絞込のウィンドウを一度も表示していない状態で呼ぶので、拒否される側で確かめる。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "絞込の一覧に項目が1つも並んでいないので呼べない"
     },
     {
       "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneRotate()",
       "arguments": {},
-      "basis": "TransformView の一覧でボーンを選んでいない状態で呼び、断る側で確かめる。検査の段取りはこの一覧でボーンを選ばない。",
+      "basis": "TransformView の一覧でボーンを選んでいない状態で呼び、拒否される側で確かめる。検査の段取りはこの一覧でボーンを選ばない。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "TransformView の一覧でボーンが選ばれていないので呼べない"
     },
     {
       "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneScaling()",
       "arguments": {},
-      "basis": "TransformView の一覧でボーンを選んでいない状態で呼び、断る側で確かめる。検査の段取りはこの一覧でボーンを選ばない。",
+      "basis": "TransformView の一覧でボーンを選んでいない状態で呼び、拒否される側で確かめる。検査の段取りはこの一覧でボーンを選ばない。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "TransformView の一覧でボーンが選ばれていないので呼べない"
     },
     {
       "signatureKey": "PEPlugin.View.IPETransformViewConnector.BoneTranslate()",
       "arguments": {},
-      "basis": "TransformView の一覧でボーンを選んでいない状態で呼び、断る側で確かめる。検査の段取りはこの一覧でボーンを選ばない。",
+      "basis": "TransformView の一覧でボーンを選んでいない状態で呼び、拒否される側で確かめる。検査の段取りはこの一覧でボーンを選ばない。",
       "refused": "TOOL_NOT_APPLICABLE",
       "says": "TransformView の一覧でボーンが選ばれていないので呼べない"
     },
@@ -1232,7 +1232,7 @@
       "arguments": {
         "n": 2147483647
       },
-      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して断る側で確かめる。",
+      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して拒否される側で確かめる。",
       "refused": "TOOL_INDEX_OUT_OF_RANGE",
       "says": "範囲の外"
     },
@@ -1241,7 +1241,7 @@
       "arguments": {
         "n": 2147483647
       },
-      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して断る側で確かめる。",
+      "basis": "ほかのプラグインを実際に走らせると、そのプラグインが何をするかで検査の続きが決まってしまうので、並びに無い番号を渡して拒否される側で確かめる。",
       "refused": "TOOL_INDEX_OUT_OF_RANGE",
       "says": "範囲の外"
     },

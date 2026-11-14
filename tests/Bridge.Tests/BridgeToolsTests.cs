@@ -12,9 +12,9 @@ using Xunit;
 namespace PmxEditorMcp.Bridge.Tests
 {
     /// <summary>
-    /// 既定の設定で起こしたブリッジ。設定を変えず読むだけの件はこれを共有する——件ごとに
-    /// 起こすと、確かめる事柄の数だけ起動と畳みの待ちが積み上がる。設定を変える件と、ホストへ
-    /// 繋ぐ件は、自分で起こして自分で畳む。
+    /// 既定の設定で起動したブリッジ。設定を変えず読むだけの件はこれを共有する——件ごとに
+    /// 起動すると、確かめる事柄の数だけ起動と終了の待ちが積み上がる。設定を変える件と、ホストへ
+    /// 繋ぐ件は、自分で起動して自分で終了する。
     /// </summary>
     public sealed class SharedBridge : IAsyncLifetime
     {
@@ -62,7 +62,7 @@ namespace PmxEditorMcp.Bridge.Tests
         private static readonly TimeSpan TestWait = TimeSpan.FromSeconds(60);
 
         /// <summary>
-        /// 起動したブリッジを畳むときの待ち。クライアントのSDKはここへ与えた時間をいっぱいまで
+        /// 起動したブリッジを終了するときの待ち。クライアントのSDKはここへ与えた時間をいっぱいまで
         /// 待ってから落とすので、既定の5秒だとこの組の1件ごとに5秒が乗る。ブリッジは stdin が
         /// 閉じれば0.1秒とかからず終わるので、待つのはその余裕だけでよい。
         /// </summary>
@@ -146,7 +146,7 @@ namespace PmxEditorMcp.Bridge.Tests
             IList<McpClientTool> tools = await client.ListToolsAsync(cancellationToken: limit.Token);
 
             // 受入シナリオの照合は表の側で引数を照らすので、表と公開する定義が食い違うと、
-            // 照合を通った引数が実際の呼び出しで断られる。
+            // 照合を通った引数が実際の呼び出しで拒否される。
             foreach (string name in FixedToolTable.Descriptions(debugHooks: false).Keys)
             {
                 AssertSchemaMatchesTable(Named(tools, name));

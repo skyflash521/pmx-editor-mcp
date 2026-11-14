@@ -25,7 +25,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         }
 
         /// <summary>
-        /// 選ばれていない呼び分けだけが持つ項目を渡すと、呼び先はそれを知らない項目として断る。
+        /// 選ばれていない呼び分けだけが持つ項目を渡すと、呼び先はそれを知らない項目として拒否する。
         /// </summary>
         [Fact]
         public void NoInputOfTheBranchThatWasNotChosenIsPassed()
