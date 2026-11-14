@@ -18,6 +18,23 @@ pwsh -File scripts/verify.ps1
 **通すのは変更を確定させる前の1回**とする——走る群は作業木にある変えたものから決まるので、
 確定させた後に走らせても、変えたものが無く走る検査も無い。
 
+確定させる変更が次の表の左だけで済むときは、上の1本も[実機に触る検査](#実機に触る検査)も通さず、
+右に挙げた検査だけを [check-set.ps1](../../scripts/check-set.ps1) か
+[live-checks.ps1](../../scripts/live-checks.ps1) の定義の中身のまま走らせる。
+作業木にほかの変更が在っても、確定させない変更を理由に検査を足さない。ファイルの削除と改名は
+表に当たらない。
+
+| 確定させる変更 | 走らせる検査 |
+|---|---|
+| `*.md` | 文書のリンク。`CHANGELOG.md` では変更履歴も走らせる |
+| `.claude/settings.json` | 参照クライアントの実機動作確認 |
+| `.github/workflows/` の下 | 無し |
+| `.gitignore` | 文書のリンク |
+| `LICENSE` | 無し |
+| `docs/images/` の下 | 文書のリンク |
+| `scripts/` の `.ps1`・`.mjs` のコメントだけ | スクリプト構文・スクリプト構文(PowerShell)。`scripts/package*.ps1` では配布パッケージの生成も、`scripts/check-set.ps1`・`scripts/live-checks.ps1` では検査の上限も走らせる。`#Requires` の行はコメントに数えない |
+| `src/` と `tests/` の C# のコメントだけ | summaryコメントの位置・整形。`src/HostPlugin/` の下のコメントを変えたときはテストも走らせる |
+
 ## 実機に触る検査
 
 エディタかMCPクライアントに触る変更のときに通す。実機のエディタを起こして操作する。
