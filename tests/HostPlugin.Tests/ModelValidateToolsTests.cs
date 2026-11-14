@@ -625,7 +625,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AnOffsetOrLimitBelowTheLeastIsRefused()
+        public void ALimitBelowOneIsRefused()
         {
             IDictionary<string, object> envelope = _fixture.Call(
                 ModelValidatePmx.ToolName,

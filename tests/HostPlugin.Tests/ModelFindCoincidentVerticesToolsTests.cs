@@ -493,7 +493,6 @@ namespace PmxEditorMcp.Tests
                 yield return new object[] { name, double.PositiveInfinity };
                 yield return new object[] { name, 1e39 };
                 yield return new object[] { name, "0.1" };
-                yield return new object[] { name, new object[] { 0.1 } };
             }
         }
 

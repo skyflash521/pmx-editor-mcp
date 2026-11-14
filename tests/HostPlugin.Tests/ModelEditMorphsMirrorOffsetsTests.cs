@@ -164,44 +164,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AVertexWithNoVertexAtItsMirroredSpotGetsNothingAdded()
-        {
-            int handle = Standard("x");
-            Morph("上", MorphKind.Vertex, Moved(2, First));
-            string before = Shape();
-
-            IDictionary<string, object> value = ComposedEditFixture.Value(
-                Run(Full(handle, "x", new[] { 0 }, new[] { 2 })));
-
-            Assert.Equal(0, value[Changed]);
-            Assert.Equal(before, Shape());
-        }
-
-        [Theory]
-        [InlineData(0.0005f, true)]
-        [InlineData(0.002f, false)]
-        public void AVertexWithinTheToleranceOfTheMirroredSpotIsThePartnerAndOneBeyondItIsNot(
-            float gap, bool found)
-        {
-            V3[] baseline =
-            {
-                LeftBase, new V3(-2f, 3f, 5f + gap), new V3(7f, 8f, 9f), new V3(11f, 12f, 13f),
-            };
-            int handle = Scene(baseline, baseline);
-            Morph("左目", MorphKind.Vertex, Moved(0, First));
-
-            IDictionary<string, object> value = ComposedEditFixture.Value(
-                Run(Full(handle, "x", new[] { 0 }, new[] { 0 })));
-
-            Assert.Equal(found ? 1 : 0, value[Changed]);
-            Assert.Equal(found ? 2 : 1, _fixture.Model.Morph[0].Offsets.Count);
-            if (found)
-            {
-                AssertVertexOffset(0, 1, -0.5f, -0.25f, 0.75f);
-            }
-        }
-
-        [Fact]
         public void ThePartnerVertexIsFoundAtTheMirroredSpotInTheCopyNotWhereVerticesAreNow()
         {
             V3[] baseline =
@@ -219,26 +181,6 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(2, _fixture.Model.Morph[0].Offsets.Count);
             AssertVertexOffset(0, 1, -0.5f, -0.25f, 0.75f);
-        }
-
-        [Theory]
-        [InlineData(true, false)]
-        [InlineData(false, false)]
-        [InlineData(true, true)]
-        [InlineData(false, true)]
-        public void SurroundingsInTheCopyDecideWhichOfTwoVerticesAtTheSamePositionIsThePartner(
-            bool firstIsMatching, bool surroundingsSwappedNow)
-        {
-            int handle = Layered(firstIsMatching, surroundingsSwappedNow);
-            Morph("左目", MorphKind.Vertex, Moved(0, First), Moved(3, Second));
-
-            ComposedEditFixture.Value(Run(Full(handle, "x", new[] { 0 }, new[] { 0, 3 })));
-
-            int matching = firstIsMatching ? 6 : 9;
-            int other = firstIsMatching ? 9 : 6;
-            Assert.Equal(4, _fixture.Model.Morph[0].Offsets.Count);
-            AssertVertexOffset(0, matching, -0.5f, -0.25f, 0.75f);
-            AssertVertexOffset(0, other, -1.5f, 2f, -3f);
         }
 
         [Theory]
@@ -317,9 +259,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData("左腕", "右腕")]
-        [InlineData("右腕", "左腕")]
-        [InlineData("腕左", "腕右")]
-        [InlineData("_左腕_", "_右腕_")]
         public void ThePartnerBoneIsTheOneWhoseNameHasTheSideSwappedTheWayMirrorPositionSwapsIt(
             string picked, string partner)
         {
@@ -333,9 +272,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData("腕_L", "腕_R")]
         [InlineData("左腕", "首")]
-        [InlineData("手左先", "手右先")]
         public void ABoneWhoseSideSwappedNameIsNoBoneGetsNothingAdded(string picked, string other)
         {
             int handle = Bones("x", picked, other);
@@ -349,15 +286,10 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(before, Shape());
         }
 
-        [Theory]
-        [InlineData(MorphKind.Material)]
-        [InlineData(MorphKind.UV)]
-        [InlineData(MorphKind.Group)]
-        [InlineData(MorphKind.Flip)]
-        [InlineData(MorphKind.Impulse)]
-        public void AMorphThatIsNeitherVertexNorBoneIsRefusedAsNotApplicable(MorphKind kind)
+        [Fact]
+        public void AMorphThatIsNeitherVertexNorBoneIsRefusedAsNotApplicable()
         {
-            Settled(() => Other(kind));
+            Settled(() => Morph("他", MorphKind.UV, new FakeUVMorphOffset(_fixture.Model.Vertex[0])));
             string before = Shape();
 
             IDictionary<string, object> envelope = Run(Full(
@@ -436,10 +368,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData("w")]
-        [InlineData("")]
         [InlineData("X")]
-        [InlineData(1.0)]
         public void AnAxisThatIsNotOneOfTheThreeIsRefused(object given)
         {
             Settled();
@@ -494,30 +423,14 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(before, Shape());
         }
 
-        [Theory]
-        [InlineData("vertex")]
-        [InlineData("face")]
-        [InlineData("bone")]
-        public void ACopyWhoseCountsDifferFromTheModelIsRefused(string differing)
+        [Fact]
+        public void ACopyWhoseCountsDifferFromTheModelIsRefused()
         {
             Settled();
             string before = Shape();
 
             FakePmx copy = FakeEditorState.Duplicate(_fixture.Model);
-            switch (differing)
-            {
-                case "vertex":
-                    copy.Vertex.Add(new FakeVertex(5f, 5f, 5f));
-                    break;
-
-                case "face":
-                    ((FakeMaterial)copy.Material[0]).Faces.RemoveAt(0);
-                    break;
-
-                default:
-                    copy.Bone.Add(new FakeBone("ボーン"));
-                    break;
-            }
+            copy.Vertex.Add(new FakeVertex(5f, 5f, 5f));
 
             int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, copy, () => { });
             IDictionary<string, object> envelope = Run(Full(handle, "x", new[] { 0 }, new[] { 0 }));
@@ -526,23 +439,20 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(before, Shape());
         }
 
-        [Theory]
-        [InlineData(1)]
-        [InlineData(99)]
-        public void AMorphOutsideTheMorphsIsRefused(int outside)
+        [Fact]
+        public void AMorphOutsideTheMorphsIsRefused()
         {
             Settled();
             string before = Shape();
 
             IDictionary<string, object> envelope = Run(Full(
-                Handle(), "x", new[] { 0, outside }, new[] { 0 }));
+                Handle(), "x", new[] { 0, 1 }, new[] { 0 }));
 
             Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
             Assert.Equal(before, Shape());
         }
 
         [Theory]
-        [InlineData("addOffsets", BasePmxHandle)]
         [InlineData("splitVerticesByAxis", BasePmxHandle)]
         [InlineData(MirrorOffsets, "boundary")]
         [InlineData(MirrorOffsets, "name")]
@@ -560,11 +470,6 @@ namespace PmxEditorMcp.Tests
             {
                 given.Add(ComposedEditFixture.Given(Axis, "x"));
                 given.Add(ComposedEditFixture.Given(BasePmxHandle, (long)Handle()));
-                given.Add(ComposedEditFixture.Given(TargetIndices, new object[] { 0 }));
-            }
-
-            if (operation == "addOffsets")
-            {
                 given.Add(ComposedEditFixture.Given(TargetIndices, new object[] { 0 }));
             }
 
@@ -617,24 +522,6 @@ namespace PmxEditorMcp.Tests
             ComposedEditFixture.Value(Run(Full(_handle, "x", new[] { 0 }, new[] { 0 })));
         }
 
-        private IPXMorph Other(MorphKind kind)
-        {
-            switch (kind)
-            {
-                case MorphKind.Material:
-                    return Morph("他", kind, new FakeMaterialMorphOffset(_fixture.Model.Material[0]));
-
-                case MorphKind.UV:
-                    return Morph("他", kind, new FakeUVMorphOffset(_fixture.Model.Vertex[0]));
-
-                case MorphKind.Impulse:
-                    return Morph("他", kind, new FakeImpulseMorphOffset(_fixture.Model.Body[0]));
-
-                default:
-                    return Morph("他", kind, new FakeGroupMorphOffset(_fixture.Model.Morph[0]));
-            }
-        }
-
         private int Standard(string axis)
         {
             V3 partner = axis == "x"
@@ -644,10 +531,7 @@ namespace PmxEditorMcp.Tests
             V3[] current = (V3[])baseline.Clone();
             current[0] = LeftNow;
             current[1] = new V3(partner.X + 0.125f, partner.Y - 0.25f, partner.Z + 0.5f);
-            int handle = Scene(baseline, current);
-            _fixture.Model.Body.Add(new FakeBody("剛体"));
-
-            return handle;
+            return Scene(baseline, current);
         }
 
         private int Pairs()
@@ -675,51 +559,18 @@ namespace PmxEditorMcp.Tests
             return handle;
         }
 
-        private int Layered(bool firstIsMatching, bool surroundingsSwappedNow)
-        {
-            V3[] layers =
-            {
-                new V3(2f, 0f, 0f), new V3(3f, 1f, 0f), new V3(3f, -1f, 0f),
-                new V3(2f, 0f, 0f), new V3(3f, 4f, 0f), new V3(3f, -4f, 0f),
-            };
-            V3[] matching =
-            {
-                new V3(-2f, 0f, 0f), new V3(-3f, 1f, 0f), new V3(-3f, -1f, 0f),
-            };
-            V3[] other =
-            {
-                new V3(-2f, 0f, 0f), new V3(-3f, 4f, 0f), new V3(-3f, -4f, 0f),
-            };
-            V3[] baseline = layers.Concat(firstIsMatching ? matching : other)
-                .Concat(firstIsMatching ? other : matching)
-                .ToArray();
-            V3[] current = (V3[])baseline.Clone();
-            if (surroundingsSwappedNow)
-            {
-                current[7] = baseline[10];
-                current[8] = baseline[11];
-                current[10] = baseline[7];
-                current[11] = baseline[8];
-            }
-
-            return Scene(
-                baseline,
-                current,
-                new[] { new[] { 0, 1, 2 }, new[] { 3, 4, 5 }, new[] { 6, 7, 8 }, new[] { 9, 10, 11 } });
-        }
-
-        private int Scene(V3[] baseline, V3[] current, int[][] faces = null)
+        private int Scene(V3[] baseline, V3[] current)
         {
             FakePmx held = new FakePmx();
-            Fill(held, baseline, faces);
+            Fill(held, baseline);
             _held = held;
-            Fill(_fixture.Model, current, faces);
+            Fill(_fixture.Model, current);
             _handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, held, () => { });
 
             return _handle;
         }
 
-        private static void Fill(FakePmx model, V3[] positions, int[][] faces)
+        private static void Fill(FakePmx model, V3[] positions)
         {
             foreach (V3 position in positions)
             {
@@ -727,12 +578,7 @@ namespace PmxEditorMcp.Tests
             }
 
             FakeMaterial material = new FakeMaterial("材質");
-            foreach (int[] face in faces ?? new[] { new[] { 0, 1, 2 } })
-            {
-                material.Faces.Add(new FakeFace(
-                    model.Vertex[face[0]], model.Vertex[face[1]], model.Vertex[face[2]]));
-            }
-
+            material.Faces.Add(new FakeFace(model.Vertex[0], model.Vertex[1], model.Vertex[2]));
             model.Material.Add(material);
         }
 

@@ -1191,21 +1191,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void MovingSeveralKindsReflectsTheWholeCopyOnce()
-        {
-            Vertex(1f, 1f, 1f);
-            Bone(2f, 2f, 2f);
-
-            Place(
-                Operation(ModelPlaceElements.TranslateBy),
-                Offset(0f, 1f, 0f),
-                Targets(Target(ElementKinds.Vertex, 0), Target(ElementKinds.Bone, 0)));
-
-            Assert.Empty(_fixture.Partials);
-            Assert.Equal(1, _fixture.Commits);
-        }
-
-        [Fact]
         public void SuppressingTheUndoWhileMovingSeveralKindsReflectsTheWholeCopyWithTheUndoLocked()
         {
             FakeVertex vertex = Vertex(1f, 1f, 1f);

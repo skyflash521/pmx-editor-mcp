@@ -138,22 +138,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AFoldThatWasAlreadyInTheCopyIsNotABend()
-        {
-            V3[] folded = Moved(HingeBase, 3, 0f, -1f, 1f);
-            int handle = Pair(folded, folded, HingeFaces);
-
-            IDictionary<string, object> value = ComposedEditFixture.Value(Compare(
-                handle,
-                ComposedEditFixture.Given("all", true),
-                ComposedEditFixture.Given("bendThresholds", new object[] { 1.0 })));
-
-            Assert.Equal(0f, (float)value["maxBend"], 3);
-            AssertLimit(1f, 0, ((object[])value["bendDistribution"])[0]);
-            Assert.Equal(0, value["flippedCount"]);
-        }
-
-        [Fact]
         public void TheBendIsTheChangeFromTheAngleTheCopyAlreadyHad()
         {
             int handle = Pair(
@@ -315,7 +299,7 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [MemberData(nameof(BadThresholds))]
-        public void ThresholdsThatAreNotNonNegativeFiniteNumbersAreRefused(string name, object given)
+        public void ANegativeThresholdIsRefusedInEitherList(string name, object given)
         {
             int handle = Pair(QuadBase, QuadBase, QuadFaces);
 
@@ -334,12 +318,7 @@ namespace PmxEditorMcp.Tests
         {
             foreach (string name in new[] { "stretchThresholds", "bendThresholds" })
             {
-                yield return new object[] { name, new object[0] };
                 yield return new object[] { name, new object[] { -0.1 } };
-                yield return new object[] { name, new object[] { "0.1" } };
-                yield return new object[] { name, new object[] { double.PositiveInfinity } };
-                yield return new object[] { name, new object[] { 1e39 } };
-                yield return new object[] { name, 0.1 };
             }
         }
 

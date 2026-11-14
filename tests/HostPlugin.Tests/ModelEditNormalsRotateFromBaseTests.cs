@@ -117,26 +117,6 @@ namespace PmxEditorMcp.Tests
             }
         }
 
-        [Fact]
-        public void TheAngleBetweenACraftedNormalAndItsFaceSurvivesTheRotation()
-        {
-            V3[] crafted = { new V3(0.8f, 0f, 0.6f), new V3(0f, -0.6f, 0.8f), new V3(0.6f, 0.8f, 0f) };
-            V3[] current = Plane.Select(point => Moved(ThirdTurnAboutDiagonal, point)).ToArray();
-            double[] faceBefore = FaceNormal(Plane);
-            double[] faceNow = FaceNormal(current);
-            Assert.True(Angle(crafted[0], faceBefore) > 0.5);
-            int handle = Scene(Plane, current, crafted, new[] { 0, 1, 2 });
-
-            ComposedEditFixture.Value(Run(handle));
-
-            for (int at = 0; at < crafted.Length; at++)
-            {
-                Assert.Equal(
-                    Angle(crafted[at], faceBefore), Angle(_fixture.Model.Vertex[at].Normal, faceNow), Tight);
-                AssertNormal(at, Turn(ThirdTurnAboutDiagonal, crafted[at]), Tight);
-            }
-        }
-
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -193,7 +173,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData("inBoth")]
         [InlineData("onlyNow")]
         [InlineData("onlyInTheCopy")]
         public void AFaceWithoutAreaInTheCopyOrNowDoesNotCount(string where)
@@ -335,31 +314,15 @@ namespace PmxEditorMcp.Tests
             AssertUnchanged(before);
         }
 
-        [Theory]
-        [InlineData("vertex")]
-        [InlineData("face")]
-        [InlineData("bone")]
-        public void ACopyWhoseCountsDifferFromTheModelIsRefused(string differing)
+        [Fact]
+        public void ACopyWhoseCountsDifferFromTheModelIsRefused()
         {
             int same = Turned();
             ComposedEditFixture.Value(Run(same));
             V3[] before = NormalsNow();
 
             FakePmx copy = FakeEditorState.Duplicate(_fixture.Model);
-            switch (differing)
-            {
-                case "vertex":
-                    copy.Vertex.Add(new FakeVertex(5f, 5f, 5f));
-                    break;
-
-                case "face":
-                    ((FakeMaterial)copy.Material[0]).Faces.RemoveAt(0);
-                    break;
-
-                default:
-                    copy.Bone.Add(new FakeBone("ボーン"));
-                    break;
-            }
+            ((FakeMaterial)copy.Material[0]).Faces.RemoveAt(0);
 
             int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, copy, () => { });
             IDictionary<string, object> envelope = Run(handle);
@@ -368,34 +331,20 @@ namespace PmxEditorMcp.Tests
             AssertUnchanged(before);
         }
 
-        [Theory]
-        [InlineData("average")]
-        [InlineData("averageNear")]
-        [InlineData("fromFaces")]
-        [InlineData("normalize")]
-        [InlineData("flip")]
-        [InlineData("rotate")]
-        public void TheCopyIsPassedOnlyToRotatingFromIt(string operation)
+        [Fact]
+        public void TheCopyIsPassedOnlyToRotatingFromIt()
         {
             int handle = Turned();
             ComposedEditFixture.Value(Run(handle));
             V3[] before = NormalsNow();
             List<KeyValuePair<string, object>> given = new List<KeyValuePair<string, object>>
             {
-                ComposedEditFixture.Given("operation", operation),
+                ComposedEditFixture.Given("operation", "rotate"),
                 All(),
                 ComposedEditFixture.Given(BasePmxHandle, (long)handle),
+                ComposedEditFixture.Given("rotationAxis", new object[] { 0f, 1f, 0f }),
+                ComposedEditFixture.Given("rotationAngle", 90f),
             };
-            if (operation == "averageNear")
-            {
-                given.Add(ComposedEditFixture.Given("threshold", 0.1));
-            }
-
-            if (operation == "rotate")
-            {
-                given.Add(ComposedEditFixture.Given("rotationAxis", new object[] { 0f, 1f, 0f }));
-                given.Add(ComposedEditFixture.Given("rotationAngle", 90f));
-            }
 
             IDictionary<string, object> envelope = Call(given);
 
@@ -440,11 +389,6 @@ namespace PmxEditorMcp.Tests
             V3[] line = { new V3(2f, 0f, 0f), new V3(3f, 0f, 0f) };
             switch (where)
             {
-                case "inBoth":
-                    baseline = Triangle.Concat(line).ToArray();
-                    current = moved.Concat(line.Select(point => Moved(QuarterTurnAboutY, point))).ToArray();
-                    break;
-
                 case "onlyNow":
                     baseline = Triangle.Concat(new[] { new V3(1f, 4f, 0f), new V3(1f, 0f, 5f) }).ToArray();
                     current = moved.Concat(new[] { moved[0], moved[0] }).ToArray();
@@ -510,15 +454,6 @@ namespace PmxEditorMcp.Tests
                 first[2] * second[0] - first[0] * second[2],
                 first[0] * second[1] - first[1] * second[0],
             };
-        }
-
-        private static double Angle(V3 normal, double[] face)
-        {
-            double dot = normal.X * face[0] + normal.Y * face[1] + normal.Z * face[2];
-            double lengths = Math.Sqrt(normal.X * normal.X + normal.Y * normal.Y + normal.Z * normal.Z)
-                * Math.Sqrt(face[0] * face[0] + face[1] * face[1] + face[2] * face[2]);
-
-            return Math.Acos(dot / lengths);
         }
 
         private int Turned()

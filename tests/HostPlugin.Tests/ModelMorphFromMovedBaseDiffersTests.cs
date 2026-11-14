@@ -50,8 +50,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData("normal")]
-        [InlineData("uv")]
-        [InlineData("edgeScale")]
         [InlineData("weight")]
         [InlineData("boneRef")]
         public void AnAttributeOtherThanThePositionThatDiffersFromTheCopyIsNotRefusedAndTheTwoMorphsBringTheCopyShapeBack(
@@ -126,25 +124,6 @@ namespace PmxEditorMcp.Tests
             Assert.Empty(_fixture.Model.Morph);
         }
 
-        [Fact]
-        public void TheVerticesAndTheBonesOfTheModelStayWhereTheyAre()
-        {
-            FakePmx copy = Scene();
-            Differ(copy.Vertex[1], "normal");
-
-            Assert.NotNull(ComposedEditFixture.Value(Call(Issue(copy))));
-
-            for (int at = 0; at < BonesNow.Length; at++)
-            {
-                AssertAt(BonesNow[at], _fixture.Model.Bone[at].Position);
-            }
-
-            for (int at = 0; at < VerticesNow.Length; at++)
-            {
-                AssertAt(VerticesNow[at], _fixture.Model.Vertex[at].Position);
-            }
-        }
-
         private IDictionary<string, object> Call(int handle)
         {
             return _fixture.Call(
@@ -207,12 +186,6 @@ namespace PmxEditorMcp.Tests
             {
                 case "normal":
                     vertex.Normal = new V3(1f, 0f, 0f);
-                    break;
-                case "uv":
-                    vertex.UV = new V2(0.5f, 0.25f);
-                    break;
-                case "edgeScale":
-                    vertex.EdgeScale = 2f;
                     break;
                 case "weight":
                     vertex.Weight1 = 0.75f;

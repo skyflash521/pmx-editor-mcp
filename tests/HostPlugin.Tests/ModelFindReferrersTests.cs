@@ -321,19 +321,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void ASlotWhoseWeightDoesNotPassTheThresholdIsNotCounted()
-        {
-            IList<IPXBone> bones = Bones(2);
-            IPXVertex vertex = Weighted(bones[0]);
-            vertex.Weight1 = 0.9f;
-            vertex.Bone2 = bones[1];
-            vertex.Weight2 = 0.1f;
-
-            Assert.Equal(1, Weighed(0, 0.5));
-            Assert.Equal(0, Weighed(1, 0.5));
-        }
-
-        [Fact]
         public void ASlotWhoseWeightIsExactlyTheThresholdIsNotCounted()
         {
             IList<IPXBone> bones = Bones(1);

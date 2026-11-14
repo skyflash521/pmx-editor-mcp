@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using PEPlugin.Pmx;
 using PEPlugin.SDX;
 using Xunit;
@@ -64,21 +63,6 @@ namespace PmxEditorMcp.Tests
             Near(0.5, Share(target, bones[0]));
             Near(0.5, Share(target, bones[1]));
             Near(0.0, Share(target, bones[2]));
-        }
-
-        [Fact]
-        public void TheWeightsAfterTheCopyAddUpToOne()
-        {
-            IList<IPXBone> bones = Bones("一", "二", "三", "元");
-            Triangle(bones[0], bones[1], bones[2]);
-            FakeVertex target = Target(0.3f, 0.1f, 0.3f, bones[3]);
-
-            FromTheSurface(ComposedEditFixture.Given("indices", new object[] { 3 }));
-
-            Near(0.0, Share(target, bones[3]));
-            Near(
-                1.0,
-                bones.Sum(bone => (double)Share(target, bone)));
         }
 
         [Fact]

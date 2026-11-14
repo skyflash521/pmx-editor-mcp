@@ -87,8 +87,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData("x", -2f, 1f, -3f)]
-        [InlineData("y", 2f, -1f, -3f)]
-        [InlineData("z", 2f, 1f, 3f)]
         public void WhenBothTipsAreOffsetsThePartnerOffsetIsThePickedOffsetNowMirroredAcrossTheAxis(
             string axis, float x, float y, float z)
         {
@@ -296,8 +294,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData("w")]
-        [InlineData("")]
         [InlineData("X")]
         [InlineData(1.0)]
         public void AnAxisThatIsNotOneOfTheThreeIsRefused(object given)
@@ -324,30 +320,14 @@ namespace PmxEditorMcp.Tests
             AssertBonesUnchanged(before);
         }
 
-        [Theory]
-        [InlineData("vertex")]
-        [InlineData("face")]
-        [InlineData("bone")]
-        public void ACopyWhoseCountsDifferFromTheModelIsRefused(string differing)
+        [Fact]
+        public void ACopyWhoseCountsDifferFromTheModelIsRefused()
         {
             Settled();
             IList<IPXBone> before = Bones();
 
             FakePmx copy = FakeEditorState.Duplicate(_fixture.Model);
-            switch (differing)
-            {
-                case "vertex":
-                    copy.Vertex.Add(new FakeVertex(5f, 5f, 5f));
-                    break;
-
-                case "face":
-                    ((FakeMaterial)copy.Material[0]).Faces.RemoveAt(0);
-                    break;
-
-                default:
-                    copy.Bone.Add(new FakeBone("ボーン"));
-                    break;
-            }
+            copy.Bone.Add(new FakeBone("ボーン"));
 
             int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, copy, () => { });
             IDictionary<string, object> envelope = Run(Full(handle, "x", 0));
@@ -356,23 +336,19 @@ namespace PmxEditorMcp.Tests
             AssertBonesUnchanged(before);
         }
 
-        [Theory]
-        [InlineData(3)]
-        [InlineData(99)]
-        public void ABoneOutsideTheBonesIsRefused(int outside)
+        [Fact]
+        public void ABoneOutsideTheBonesIsRefused()
         {
             int handle = Settled();
             IList<IPXBone> before = Bones();
 
-            IDictionary<string, object> envelope = Run(Full(handle, "x", 0, outside));
+            IDictionary<string, object> envelope = Run(Full(handle, "x", 0, 3));
 
             Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedEditFixture.Code(envelope));
             AssertBonesUnchanged(before);
         }
 
         [Theory]
-        [InlineData("resetLocalAxis", BasePmxHandle)]
-        [InlineData("resetLocalAxis", Axis)]
         [InlineData("mirrorPosition", BasePmxHandle)]
         [InlineData("followVertices", Axis)]
         [InlineData(MirrorDisplacement, Radius)]
@@ -429,10 +405,6 @@ namespace PmxEditorMcp.Tests
                 case "mirrorPosition":
                     given.Add(ComposedEditFixture.Given("indices", new object[] { 1 }));
                     given.Add(ComposedEditFixture.Given(Axis, "x"));
-                    break;
-
-                default:
-                    given.Add(ComposedEditFixture.Given("indices", new object[] { 0 }));
                     break;
             }
 

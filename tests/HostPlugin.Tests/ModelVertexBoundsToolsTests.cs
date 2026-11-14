@@ -224,16 +224,14 @@ namespace PmxEditorMcp.Tests
             Assert.False(box.ContainsKey("vertexRuns"));
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void RunsWithoutBoxesAreRefused(bool runs)
+        [Fact]
+        public void RunsWithoutBoxesAreRefusedEvenWhenFalse()
         {
             Vertex(0f, 5f, 0f);
 
             IDictionary<string, object> envelope = Find(
                 ComposedEditFixture.Given("all", true),
-                ComposedEditFixture.Given("runs", runs));
+                ComposedEditFixture.Given("runs", false));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }

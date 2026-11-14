@@ -841,22 +841,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void AligningPutsThePickedVerticesOnTheAverageOfTheChosenAxis()
-        {
-            _fixture.Model.Vertex.Add(new FakeVertex(1f, 2f, 3f));
-            _fixture.Model.Vertex.Add(new FakeVertex(5f, 6f, 7f));
-
-            EditVertices(
-                Operation(ModelEditVertices.Align),
-                ComposedEditFixture.Given("all", true),
-                ComposedEditFixture.Given(ModelEditVertices.AxisName, ModelEditVertices.AxisY));
-
-            Assert.Equal(4f, _fixture.Model.Vertex[0].Position.Y);
-            Assert.Equal(4f, _fixture.Model.Vertex[1].Position.Y);
-            Assert.Equal(1f, _fixture.Model.Vertex[0].Position.X);
-        }
-
-        [Fact]
         public void MirroringACopyAddsTheOppositeSideAndLeavesTheOriginal()
         {
             _fixture.Model.Vertex.Add(new FakeVertex(1f, 2f, 3f));

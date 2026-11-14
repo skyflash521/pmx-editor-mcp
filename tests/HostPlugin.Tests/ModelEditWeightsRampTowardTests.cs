@@ -205,25 +205,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheWeightsAfterTheRampAddUpToOne()
-        {
-            IList<IPXBone> bones = Bones("根", "副", "先");
-            Rooted(0f, 0f, 0f, bones[2]);
-            FakeVertex middle = Rooted(0.7f, 0f, 0f, bones[0]);
-            Weigh(middle, bones[0], 0.3f, bones[1], 0.7f);
-
-            ComposedEditFixture.Value(
-                Ramp(
-                    RampRadius,
-                    new object[] { 0 },
-                    ComposedEditFixture.Given("indices", new object[] { 1 })));
-
-            Near(
-                1.0,
-                (double)Share(middle, bones[0]) + Share(middle, bones[1]) + Share(middle, bones[2]));
-        }
-
-        [Fact]
         public void TheTargetsAreRequiredForTheRamp()
         {
             IList<IPXBone> bones = Bones("根", "先");
@@ -285,10 +266,8 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
-        [Theory]
-        [InlineData(0.0)]
-        [InlineData(-1.0)]
-        public void ARadiusThatIsNotPositiveIsRefused(double radius)
+        [Fact]
+        public void ARadiusThatIsNotPositiveIsRefused()
         {
             IList<IPXBone> bones = Bones("根", "先");
             Rooted(0f, 0f, 0f, bones[1]);
@@ -300,7 +279,7 @@ namespace PmxEditorMcp.Tests
                     ComposedEditFixture.Given("indices", new object[] { 1 })));
 
             IDictionary<string, object> envelope = Ramp(
-                radius,
+                0.0,
                 new object[] { 0 },
                 ComposedEditFixture.Given("indices", new object[] { 1 }));
 

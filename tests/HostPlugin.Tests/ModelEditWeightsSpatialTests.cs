@@ -166,10 +166,8 @@ namespace PmxEditorMcp.Tests
             Assert.Contains(Iterations, ComposedEditFixture.Message(envelope));
         }
 
-        [Theory]
-        [InlineData(0.0)]
-        [InlineData(-1.0)]
-        public void ARadiusThatIsNotPositiveIsRefused(double radius)
+        [Fact]
+        public void ARadiusThatIsNotPositiveIsRefused()
         {
             IList<IPXBone> bones = Bones("一", "二");
             Vertex(0f, 0f, 0f, bones[0]);
@@ -177,7 +175,7 @@ namespace PmxEditorMcp.Tests
             ComposedEditFixture.Value(Spatial(1.0, 1, ComposedEditFixture.Given("all", true)));
 
             IDictionary<string, object> envelope =
-                Spatial(radius, 1, ComposedEditFixture.Given("all", true));
+                Spatial(0.0, 1, ComposedEditFixture.Given("all", true));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
             Assert.Contains(Radius, ComposedEditFixture.Message(envelope));

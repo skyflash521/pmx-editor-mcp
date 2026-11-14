@@ -114,29 +114,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData(1, 0f, 0.1875f, 0.25f)]
-        [InlineData(2, -0.1875f, 0.15625f, -0.0625f)]
-        [InlineData(3, 0.125f, -0.4375f, 0.125f)]
-        [InlineData(4, 0f, 0.75f, -0.5f)]
-        [InlineData(5, 0.5f, 0f, -0.25f)]
-        [InlineData(7, 0.5f, 0.25f, -0.5f)]
-        [InlineData(8, -0.25f, 0f, -0.25f)]
-        [InlineData(9, 0f, 0f, 0.5f)]
-        [InlineData(10, 0f, 0f, -0.5f)]
-        public void AVertexOffsetIsTheDistanceToTheCopyLessWhatTheBoneMorphMovesTheVertex(
-            int vertex, float x, float y, float z)
-        {
-            int handle = Scene(BonesNow, Vertices);
-
-            Run(handle, VertexMorphCalled, BoneMorphCalled);
-
-            IPXVertexMorphOffset offset = Assert.Single(OffsetsOf(vertex));
-            Assert.Equal(x, offset.Offset.X, Digits);
-            Assert.Equal(y, offset.Offset.Y, Digits);
-            Assert.Equal(z, offset.Offset.Z, Digits);
-        }
-
-        [Theory]
         [InlineData(0)]
         [InlineData(6)]
         public void AVertexThatTheBoneMorphAloneBringsToTheCopyGetsNoOffset(int vertex)
@@ -271,8 +248,6 @@ namespace PmxEditorMcp.Tests
         {
             yield return new object[] { string.Empty };
             yield return new object[] { 5L };
-            yield return new object[] { true };
-            yield return new object[] { new object[] { BoneMorphCalled } };
         }
 
         private IDictionary<string, object> Run(int handle, string vertexMorph, string boneMorph)

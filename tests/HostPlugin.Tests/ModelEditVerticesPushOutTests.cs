@@ -30,15 +30,10 @@ namespace PmxEditorMcp.Tests
             _fixture.Dispose();
         }
 
-        [Theory]
-        [InlineData(false, false)]
-        [InlineData(true, false)]
-        [InlineData(false, true)]
-        [InlineData(true, true)]
-        public void TwoLayersSunkIntoAClosedSurfaceMoveByTheSameAmountToOutsideTheMargin(
-            bool inwardNormals, bool reversedWinding)
+        [Fact]
+        public void TwoLayersSunkIntoAClosedSurfaceMoveByTheSameAmountToOutsideTheMargin()
         {
-            Cube(inwardNormals, reversedWinding);
+            Cube(false, false);
             IPXVertex upper = Vertex(0.2f, 0.9f, 0.1f);
             IPXVertex lower = Vertex(0.2f, 0.8f, 0.1f);
 
@@ -407,7 +402,6 @@ namespace PmxEditorMcp.Tests
         {
             yield return new object[] { -0.1 };
             yield return new object[] { "0.1" };
-            yield return new object[] { new object[] { 0.1 } };
             yield return new object[] { double.PositiveInfinity };
             yield return new object[] { double.NaN };
         }

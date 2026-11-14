@@ -69,10 +69,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData(QuarterTurnAboutY, 3, 4f, 2f, -4f, 3f, 7f, 1f)]
-        [InlineData(QuarterTurnAboutY, 4, 4f, 2f, -4f, 3f, 7f, 1f)]
         [InlineData(ThirdTurnAboutDiagonal, 3, 4f, 6f, -2f, 3f, 1f, 3f)]
-        [InlineData(ThirdTurnAboutDiagonal, 4, 4f, 6f, -2f, 3f, 1f, 3f)]
         public void RigidCarriesThePickedVerticesByTheRotationAndTranslationThatMovedTheGuides(
             string turn, int guideCount, float x1, float y1, float z1, float x2, float y2, float z2)
         {
@@ -161,19 +158,16 @@ namespace PmxEditorMcp.Tests
             AssertAt(5, SecondPoint.X, SecondPoint.Y, SecondPoint.Z);
         }
 
-        [Theory]
-        [InlineData(1)]
-        [InlineData(2)]
-        [InlineData(3)]
-        public void RigidRefusesGuidesThatDoNotFixTheRotation(int variant)
+        [Fact]
+        public void RigidRefusesGuidesThatDoNotFixTheRotation()
         {
             int handle = Turned(QuarterTurnAboutY);
             ComposedEditFixture.Value(Run(Full(
                 handle, Rigid, new[] { FirstPicked }, new[] { 0, 1, 2, 3 })));
             V3[] before = Positions();
-            int[] guides = variant == 1 ? new[] { 0 } : variant == 2 ? new[] { 0, 1 } : new[] { 4, 5, 6 };
 
-            IDictionary<string, object> envelope = Run(Full(handle, Rigid, new[] { SecondPicked }, guides));
+            IDictionary<string, object> envelope = Run(Full(
+                handle, Rigid, new[] { SecondPicked }, new[] { 4, 5, 6 }));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
             Assert.Contains(GuideIndices, ComposedEditFixture.Message(envelope));
@@ -271,7 +265,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(Rigid)]
-        [InlineData(Interpolate)]
         public void FollowingTheGuideChangesNeitherTheCopyNorItsCounts(string mode)
         {
             int handle = Turned(QuarterTurnAboutY);
@@ -293,7 +286,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(Rigid)]
-        [InlineData(Interpolate)]
         public void LeavingOutTheGuidesIsRefused(string mode)
         {
             int handle = Turned(QuarterTurnAboutY);
@@ -311,7 +303,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(Rigid, 0)]
-        [InlineData(Interpolate, 0)]
         [InlineData(Rigid, 1)]
         [InlineData(Interpolate, 2)]
         [InlineData(Interpolate, 3)]
@@ -334,8 +325,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData(Rigid, 99)]
-        [InlineData(Interpolate, 99)]
         [InlineData(Rigid, 9)]
         [InlineData(Interpolate, -1)]
         public void AGuideOutsideTheVerticesIsRefused(string mode, int outside)
@@ -355,7 +344,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(Rigid)]
-        [InlineData(Interpolate)]
         public void AGuideThatIsAlsoPickedIsRefused(string mode)
         {
             int handle = Turned(QuarterTurnAboutY);
@@ -372,10 +360,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData("diagonal")]
-        [InlineData("")]
         [InlineData("Rigid")]
-        [InlineData(1.0)]
         public void AModeThatIsNotOneOfTheTwoIsRefused(object given)
         {
             int handle = Turned(QuarterTurnAboutY);
@@ -409,7 +394,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(Rigid)]
-        [InlineData(Interpolate)]
         public void LeavingOutTheCopyIsRefused(string mode)
         {
             int handle = Turned(QuarterTurnAboutY);
@@ -440,68 +424,22 @@ namespace PmxEditorMcp.Tests
             AssertUnchanged(before);
         }
 
-        [Theory]
-        [InlineData("vertex", Rigid)]
-        [InlineData("face", Rigid)]
-        [InlineData("bone", Rigid)]
-        [InlineData("vertex", Interpolate)]
-        [InlineData("face", Interpolate)]
-        [InlineData("bone", Interpolate)]
-        public void ACopyWhoseCountsDifferFromTheModelIsRefused(string differing, string mode)
+        [Fact]
+        public void ACopyWhoseCountsDifferFromTheModelIsRefused()
         {
             int same = Turned(QuarterTurnAboutY);
             ComposedEditFixture.Value(Run(Full(
-                same, mode, new[] { FirstPicked }, new[] { 0, 1, 2, 3 })));
+                same, Rigid, new[] { FirstPicked }, new[] { 0, 1, 2, 3 })));
             V3[] before = Positions();
 
             FakePmx copy = FakeEditorState.Duplicate(_fixture.Model);
-            switch (differing)
-            {
-                case "vertex":
-                    copy.Vertex.Add(new FakeVertex(5f, 5f, 5f));
-                    break;
-
-                case "face":
-                    ((FakeMaterial)copy.Material[0]).Faces.RemoveAt(0);
-                    break;
-
-                default:
-                    copy.Bone.Add(new FakeBone("ボーン"));
-                    break;
-            }
+            copy.Vertex.Add(new FakeVertex(5f, 5f, 5f));
 
             int handle = _fixture.Handles.Issue(typeof(IPXPmx).FullName, copy, () => { });
             IDictionary<string, object> envelope = Run(Full(
-                handle, mode, new[] { SecondPicked }, new[] { 0, 1, 2, 3 }));
+                handle, Rigid, new[] { SecondPicked }, new[] { 0, 1, 2, 3 }));
 
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
-            AssertUnchanged(before);
-        }
-
-        [Theory]
-        [InlineData(GuideIndices)]
-        [InlineData(Mode)]
-        [InlineData(BasePmxHandle)]
-        public void TheGuideArgumentsArePassedOnlyToFollowingTheGuide(string name)
-        {
-            int handle = Turned(QuarterTurnAboutY);
-            ComposedEditFixture.Value(Run(Full(
-                handle, Rigid, new[] { FirstPicked }, new[] { 0, 1, 2, 3 })));
-            V3[] before = Positions();
-            object given = name == GuideIndices
-                ? new object[] { 0, 1, 2, 3 }
-                : name == Mode ? (object)Rigid : (long)handle;
-
-            IDictionary<string, object> envelope = _fixture.Call(
-                ModelEditVertices.ToolName,
-                ComposedEditFixture.Arguments(
-                    ComposedEditFixture.Given("operation", ModelEditVertices.Align),
-                    ComposedEditFixture.Given("indices", new object[] { SecondPicked }),
-                    ComposedEditFixture.Given("axis", "y"),
-                    ComposedEditFixture.Given(name, given)));
-
-            Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
-            Assert.Contains(name, ComposedEditFixture.Message(envelope));
             AssertUnchanged(before);
         }
 

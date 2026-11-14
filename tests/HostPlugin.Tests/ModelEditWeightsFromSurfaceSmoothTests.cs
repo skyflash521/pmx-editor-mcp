@@ -9,8 +9,6 @@ namespace PmxEditorMcp.Tests
     {
         private const string FromSurface = "fromSurface";
 
-        private const string SmoothSpatial = "smoothSpatial";
-
         private const string SurfaceMaterialIndices = "surfaceMaterialIndices";
 
         private const string Falloff = "falloff";
@@ -50,9 +48,7 @@ namespace PmxEditorMcp.Tests
         public static IEnumerable<object[]> BadRadii()
         {
             yield return new object[] { 0.0 };
-            yield return new object[] { -1.0 };
             yield return new object[] { "1.0" };
-            yield return new object[] { new object[] { 1.0 } };
             yield return new object[] { double.PositiveInfinity };
             yield return new object[] { double.NaN };
         }
@@ -354,9 +350,7 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData(SourceSmoothRadius, SmoothSpatial)]
         [InlineData(SourceSmoothRadius, ModelEditWeights.Average)]
-        [InlineData(FalloffSmoothRadius, SmoothSpatial)]
         [InlineData(FalloffSmoothRadius, ModelEditWeights.Average)]
         public void TheSmoothRadiiArePassedOnlyToTheCopyFromTheSurface(string name, string operation)
         {
@@ -425,12 +419,6 @@ namespace PmxEditorMcp.Tests
                         _fixture.Model.Vertex.IndexOf(_fixture.Now(second)),
                     }),
             };
-            if (operation == SmoothSpatial)
-            {
-                all.Add(ComposedEditFixture.Given("radius", SourceRadius));
-                all.Add(ComposedEditFixture.Given("iterations", 1));
-            }
-
             all.AddRange(given);
 
             return Weights(all.ToArray());

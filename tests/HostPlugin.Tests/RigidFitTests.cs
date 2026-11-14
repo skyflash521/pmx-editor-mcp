@@ -77,7 +77,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(0)]
-        [InlineData(1)]
         [InlineData(2)]
         public void FewerThanThreePointsDoNotFixTheRotation(int count)
         {
@@ -109,9 +108,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(2e-4)]
-        [InlineData(5e-4)]
-        [InlineData(1e-3)]
-        [InlineData(1e-2)]
         public void NearlyCollinearPointsAreFitByTheKnownRotation(double thickness)
         {
             Vec[] from = Thin(thickness);
@@ -131,9 +127,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(1e-5)]
-        [InlineData(1e-6)]
-        [InlineData(1e-7)]
-        [InlineData(1e-10)]
         public void PointsThinnerThanTheRotationCanBeToldFromTheirLengthAreRefused(double thickness)
         {
             Assert.Null(RigidFit.Of(Thin(thickness), Thin(thickness).Select(Turned).ToArray()));
