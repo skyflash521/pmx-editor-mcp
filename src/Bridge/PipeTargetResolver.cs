@@ -39,7 +39,15 @@ namespace PmxEditorMcp.Bridge
         /// </summary>
         public const string TestEditorDirectoryEnvironmentVariableName = "PMX_EDITOR_MCP_TEST_EDITOR_DIR";
 
-        public const string EditorProcessName = "PmxEditor_x64";
+        public const string EditorBaseName = "PmxEditor";
+
+        private const int PeHeaderOffsetPosition = 0x3C;
+
+        /// <summary>PEのヘッダの先頭の署名 "PE\0\0"。</summary>
+        private const uint PeSignature = 0x00004550;
+
+        /// <summary>PEのヘッダが名乗る機械の種別。x64のもの。</summary>
+        private const ushort AmdMachine = 0x8664;
 
         /// <summary>エディタの導入フォルダの中で、ホストが置かれる場所。</summary>
         public const string HostRelativePath = @"_plugin\User\PmxEditorMcp.dll";
@@ -122,7 +130,7 @@ namespace PmxEditorMcp.Bridge
                 throw SelectedNotListening(
                     selectedPipeName,
                     TakeMaterial(
-                        () => findEditorProcessIds(EditorProcessName), "起動しているPMXエディタ"));
+                        () => findEditorProcessIds(EditorBaseName), "起動しているPMXエディタ"));
             }
 
             string configuredPipeName = TakeMaterial(
@@ -152,7 +160,7 @@ namespace PmxEditorMcp.Bridge
                 listeningPipeNames,
                 () => Admitted(
                     TakeMaterial(
-                        () => findEditorProcessIds(EditorProcessName), "起動しているPMXエディタ"),
+                        () => findEditorProcessIds(EditorBaseName), "起動しているPMXエディタ"),
                     admits));
         }
 
@@ -235,7 +243,7 @@ namespace PmxEditorMcp.Bridge
             }
 
             foreach (int processId in TakeMaterial(
-                () => findEditorProcessIds(EditorProcessName), "起動しているPMXエディタ"))
+                () => findEditorProcessIds(EditorBaseName), "起動しているPMXエディタ"))
             {
                 if (!listeningByProcessId.ContainsKey(processId))
                 {
@@ -344,8 +352,8 @@ namespace PmxEditorMcp.Bridge
                 return new BridgeException(
                     BridgeErrorCodes.NoEditor,
                     "接続先になるPMXエディタが見つからない。PMXエディタの導入フォルダへ "
-                        + HostRelativePath + " を置き、同じフォルダの "
-                        + EditorProcessName + ".exe を起動してから呼び出す。");
+                        + HostRelativePath + " を置き、同じフォルダのx64版のPMXエディタを"
+                        + "起動してから呼び出す。");
             }
 
             return new BridgeException(
@@ -486,15 +494,101 @@ namespace PmxEditorMcp.Bridge
             return File.Exists(Path.Combine(directory, HostRelativePath));
         }
 
-        private static IReadOnlyList<int> FindEditorProcessIds(string processName)
+        /// <summary>
+        /// その実行ファイルがエディタのものか。<see cref="IsEditorName"/> に当たる名前の <c>.exe</c> で、
+        /// x64 の実行形式であるものをエディタとみなす。読めなければ偽を返す。
+        /// </summary>
+        internal static bool IsEditorExecutable(string executablePath)
         {
-            Process[] editors = Process.GetProcessesByName(processName);
+            if (string.IsNullOrEmpty(executablePath))
+            {
+                return false;
+            }
+
+            string name;
+            try
+            {
+                name = Path.GetFileName(executablePath);
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+
+            if (!IsEditorName(Path.GetFileNameWithoutExtension(name))
+                || !string.Equals(Path.GetExtension(name), ".exe", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            try
+            {
+                using FileStream stream = File.OpenRead(executablePath);
+                using BinaryReader reader = new BinaryReader(stream);
+                if (stream.Length < PeHeaderOffsetPosition + sizeof(int))
+                {
+                    return false;
+                }
+
+                stream.Position = PeHeaderOffsetPosition;
+                long header = reader.ReadInt32();
+                if (header < 0 || header + sizeof(uint) + sizeof(ushort) > stream.Length)
+                {
+                    return false;
+                }
+
+                stream.Position = header;
+                return reader.ReadUInt32() == PeSignature && reader.ReadUInt16() == AmdMachine;
+            }
+            catch (IOException)
+            {
+                return false;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return false;
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+            catch (NotSupportedException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 拡張子を除いた名前がエディタのものか。<see cref="EditorBaseName"/> そのものか、それに
+        /// <c>_</c> を続けて始まるものをエディタの名前とみなす。大文字小文字は区別しない。
+        /// </summary>
+        internal static bool IsEditorName(string name)
+        {
+            return HasBaseName(name, EditorBaseName);
+        }
+
+        private static bool HasBaseName(string name, string baseName)
+        {
+            return name != null
+                && (string.Equals(name, baseName, StringComparison.OrdinalIgnoreCase)
+                    || name.StartsWith(baseName + "_", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static IReadOnlyList<int> FindEditorProcessIds(string baseName)
+        {
+            Process[] processes = Process.GetProcesses();
             try
             {
                 List<int> processIds = new List<int>();
-                foreach (Process editor in editors)
+                foreach (Process editor in processes)
                 {
-                    if (HostsInstalledBeside(ExecutablePathOf(editor)))
+                    if (!HasBaseName(ProcessNameOf(editor), baseName))
+                    {
+                        continue;
+                    }
+
+                    string path = ExecutablePathOf(editor);
+                    if (IsEditorExecutable(path) && HostsInstalledBeside(path))
                     {
                         processIds.Add(editor.Id);
                     }
@@ -504,10 +598,23 @@ namespace PmxEditorMcp.Bridge
             }
             finally
             {
-                foreach (Process editor in editors)
+                foreach (Process process in processes)
                 {
-                    editor.Dispose();
+                    process.Dispose();
                 }
+            }
+        }
+
+        /// <summary>そのプロセスの名前。終わったプロセスは null を返す。</summary>
+        private static string ProcessNameOf(Process process)
+        {
+            try
+            {
+                return process.ProcessName;
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
             }
         }
 

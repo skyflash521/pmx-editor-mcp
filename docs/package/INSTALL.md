@@ -28,7 +28,7 @@ PMXエディタをMCP経由で操作できるようにする。
 
 | 決めること | 決め方 |
 |---|---|
-| PMXエディタの導入フォルダ | 起動中の `PmxEditor_x64` のプロセスの実行ファイルのある場所。エディタが起動していなければ `PmxEditor_x64.exe` をディスクから探し、1件だけ見つかったならそれを候補としてエンドユーザーへ示して確かめる。0件か2件以上、またはコマンドを実行できないならエンドユーザーへ尋ねる |
+| PMXエディタの導入フォルダ | 起動中のエディタの実行ファイルのある場所。起動していなければ[エディタの実行ファイル](#エディタの実行ファイル)をディスクから探し、1件だけ見つかったならそれを候補としてエンドユーザーへ示して確かめる。0件か2件以上、またはコマンドを実行できないならエンドユーザーへ尋ねる |
 | 登録先のMCPクライアント | エンドユーザーへ尋ねる。[登録する](#登録する)の表から選ぶ |
 | PMXエディタを終了してよいか | エンドユーザーへ確かめる。[止める](#止める)で終了させる |
 
@@ -38,8 +38,12 @@ PMXエディタをMCP経由で操作できるようにする。
 |---|---|
 | x64 の Windows | OSが64ビットであること |
 | .NET Framework 4.8 以上 | レジストリ `HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full` の `Version` が `4.8` 以上(文字列でなくバージョン番号として比べる) |
-| PMXエディタ(x64版) 0.2.7.3 以上 | 導入フォルダに `PmxEditor_x64.exe` が在り、ファイルバージョンが `0.2.7.3` 以上。導入フォルダの `Lib\PEPlugin\PEPlugin.dll` のファイルバージョンが `0.0.8.9` 以上(いずれも文字列でなくバージョン番号として比べる) |
+| PMXエディタ(x64版) 0.2.7.3 以上 | 導入フォルダ直下の[エディタの実行ファイル](#エディタの実行ファイル)が1つだけで、ファイルバージョンが `0.2.7.3` 以上。導入フォルダの `Lib\PEPlugin\PEPlugin.dll` のファイルバージョンが `0.0.8.9` 以上(いずれも文字列でなくバージョン番号として比べる) |
 | 書き込み | `_plugin\User` が `C:\Program Files` の下にあるなら、管理者権限で実行する |
+
+### エディタの実行ファイル
+
+`PmxEditor.exe` か `PmxEditor_*.exe` のうち x64 のもの(PEヘッダの機械の種別が `0x8664`)。
 
 ## 置き場
 
@@ -82,7 +86,7 @@ PMXエディタをMCP経由で操作できるようにする。
 
 ## エディタを終了する
 
-対象は、決めた導入フォルダの `PmxEditor_x64.exe` から起動したプロセスに限る。同じ名前の
+対象は、決めた導入フォルダの[エディタの実行ファイル](#エディタの実行ファイル)から起動したプロセスに限る。同じ名前の
 エディタは別の導入フォルダからも動く。実行ファイルのパスまで確かめずに終了させると、無関係な
 編集作業を巻き込む。
 
@@ -133,7 +137,31 @@ public static string FinalPath(string path) {
 # 決めた導入フォルダを入れる。
 $editorDirectory = "C:\path\to\PmxEditor"
 
-$target = [Win.Native]::FinalPath((Join-Path $editorDirectory "PmxEditor_x64.exe"))
+function Test-EditorExecutable {
+    param([string]$Path)
+
+    $name = [System.IO.Path]::GetFileName($Path)
+    if ($name -notlike "PmxEditor.exe" -and $name -notlike "PmxEditor_*.exe") { return $false }
+
+    $stream = [System.IO.File]::OpenRead($Path)
+    try {
+        $reader = New-Object System.IO.BinaryReader($stream)
+        if ($stream.Length -lt 0x40) { return $false }
+        $stream.Position = 0x3C
+        $header = [long]$reader.ReadInt32()
+        if ($header -lt 0 -or $header + 6 -gt $stream.Length) { return $false }
+        $stream.Position = $header
+        ($reader.ReadUInt32() -eq 0x00004550) -and ($reader.ReadUInt16() -eq 0x8664)
+    } finally { $stream.Dispose() }
+}
+
+$executables = @(Get-ChildItem -LiteralPath $editorDirectory -File |
+    Where-Object { Test-EditorExecutable -Path $_.FullName })
+if ($executables.Count -ne 1) {
+    throw "導入フォルダのエディタの実行ファイルが1つに決まらない: $editorDirectory"
+}
+
+$target = [Win.Native]::FinalPath($executables[0].FullName)
 if ($null -eq $target) {
     throw "導入フォルダのエディタの実行ファイルを開けない: $editorDirectory"
 }
@@ -142,7 +170,7 @@ function Get-TargetEditor {
     # 実行ファイルを読めないプロセスは、別の利用者のものである。
     param([string]$FinalPath)
 
-    @(Get-Process -Name PmxEditor_x64 -ErrorAction Ignore | Where-Object {
+    @(Get-Process -Name PmxEditor, PmxEditor_* -ErrorAction Ignore | Where-Object {
         $actual = $null
         try { $actual = $_.Path } catch { }
         if ($null -eq $actual) { return $false }

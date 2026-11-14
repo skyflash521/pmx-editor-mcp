@@ -614,7 +614,7 @@ function Get-EditorProcess {
     }
 
     $editorDirectory = Get-SessionEditorDirectory
-    $expected = [HostControlPath]::Final((Join-Path $editorDirectory "PmxEditor_x64.exe"))
+    $expected = [HostControlPath]::Final((Get-EditorExecutable -Directory $editorDirectory))
     if ($null -eq $expected) {
         throw "導入ディレクトリのエディタの実行ファイルを開けない: $editorDirectory"
     }
@@ -634,8 +634,7 @@ function Get-EditorProcessIds {
         この導入ディレクトリのPMXエディタとして動いているプロセスのIDを返す。ホストが待ち受けて
         いるかどうかは問わない——停止させたホストのエディタも、実行ファイルを掴んだまま残る。
     #>
-    $name = [System.IO.Path]::GetFileNameWithoutExtension("PmxEditor_x64.exe")
-    foreach ($candidate in @(Get-Process -Name $name -ErrorAction Ignore)) {
+    foreach ($candidate in @(Get-Process -Name $EditorProcessNames -ErrorAction Ignore)) {
         # 別の導入ディレクトリのエディタと、読めないプロセスは対象から外す。
         try { [void](Get-EditorProcess -OwnerProcessId $candidate.Id) } catch { continue }
 
@@ -1517,8 +1516,7 @@ switch ($Action) {
         Get-EditorProcessIds
     }
     "launch" {
-        $editorPath = Join-Path (Get-SessionEditorDirectory) "PmxEditor_x64.exe"
-        if (-not (Test-Path $editorPath)) { throw "エディタの実行ファイルが無い: $editorPath" }
+        $editorPath = Get-EditorExecutable -Directory (Get-SessionEditorDirectory)
 
         $hostSwitch = [Environment]::GetEnvironmentVariable($HostSwitchEnvironmentName)
         try {

@@ -41,7 +41,7 @@ namespace PmxEditorMcp.Bridge.Tests
         public void ListeningDiscoveryNameMatchesContract()
         {
             Assert.Equal("PMX_EDITOR_MCP_TEST_PIPE", PipeTargetResolver.TestPipeEnvironmentVariableName);
-            Assert.Equal("PmxEditor_x64", PipeTargetResolver.EditorProcessName);
+            Assert.Equal("PmxEditor", PipeTargetResolver.EditorBaseName);
             Assert.Equal("pmx-editor-mcp-", PipeTargetResolver.PipeNamePrefix);
             Assert.Equal(@"\\.\pipe\", PipeTargetResolver.PipeDirectory);
         }
@@ -72,7 +72,7 @@ namespace PmxEditorMcp.Bridge.Tests
                 File.WriteAllText(placed, string.Empty);
 
                 Assert.True(PipeTargetResolver.HostsInstalledBeside(
-                    Path.Combine(installed, PipeTargetResolver.EditorProcessName + ".exe")));
+                    Path.Combine(installed, "PmxEditor.exe")));
             }
             finally
             {
@@ -87,7 +87,7 @@ namespace PmxEditorMcp.Bridge.Tests
             try
             {
                 Assert.False(PipeTargetResolver.HostsInstalledBeside(
-                    Path.Combine(installed, PipeTargetResolver.EditorProcessName + ".exe")));
+                    Path.Combine(installed, "PmxEditor.exe")));
             }
             finally
             {
@@ -101,6 +101,62 @@ namespace PmxEditorMcp.Bridge.Tests
         public void UnreadableEditorPathDoesNotCount(string editorExecutablePath)
         {
             Assert.False(PipeTargetResolver.HostsInstalledBeside(editorExecutablePath));
+            Assert.False(PipeTargetResolver.IsEditorExecutable(editorExecutablePath));
+        }
+
+        [Theory]
+        [InlineData("PmxEditor_x64.exe", 0x8664, true)]
+        [InlineData("PmxEditor.exe", 0x8664, true)]
+        [InlineData("pmxeditor.EXE", 0x8664, true)]
+        [InlineData("PmxEditor.exe", 0x14C, false)]
+        [InlineData("PmxEditor_x86.exe", 0x14C, false)]
+        [InlineData("Other.exe", 0x8664, false)]
+        [InlineData("PmxEditorMcp.Bridge.exe", 0x8664, false)]
+        [InlineData("PmxEditor.dll", 0x8664, false)]
+        public void EditorExecutableIsNamedPmxEditorAndBuiltForX64(string name, int machine, bool expected)
+        {
+            string installed = Directory.CreateTempSubdirectory().FullName;
+            try
+            {
+                string path = Path.Combine(installed, name);
+                File.WriteAllBytes(path, PeImage((ushort)machine));
+
+                Assert.Equal(expected, PipeTargetResolver.IsEditorExecutable(path));
+            }
+            finally
+            {
+                Directory.Delete(installed, true);
+            }
+        }
+
+        [Fact]
+        public void TruncatedExecutableIsNotEditor()
+        {
+            string installed = Directory.CreateTempSubdirectory().FullName;
+            try
+            {
+                string path = Path.Combine(installed, "PmxEditor.exe");
+                File.WriteAllBytes(path, PeImage(0x8664).Take(0x44).ToArray());
+
+                Assert.False(PipeTargetResolver.IsEditorExecutable(path));
+            }
+            finally
+            {
+                Directory.Delete(installed, true);
+            }
+        }
+
+        /// <summary>PEのヘッダの位置と、署名と機械の種別だけを持つ実行形式の先頭。</summary>
+        private static byte[] PeImage(ushort machine)
+        {
+            byte[] image = new byte[0x80];
+            image[0] = (byte)'M';
+            image[1] = (byte)'Z';
+            BitConverter.GetBytes(0x40).CopyTo(image, 0x3C);
+            image[0x40] = (byte)'P';
+            image[0x41] = (byte)'E';
+            BitConverter.GetBytes(machine).CopyTo(image, 0x44);
+            return image;
         }
 
         [Fact]
@@ -112,8 +168,8 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(BridgeErrorCodes.NoEditor, error.Code);
             Assert.Equal(
                 "接続先になるPMXエディタが見つからない。PMXエディタの導入フォルダへ "
-                    + @"_plugin\User\PmxEditorMcp.dll を置き、同じフォルダの "
-                    + "PmxEditor_x64.exe を起動してから呼び出す。",
+                    + @"_plugin\User\PmxEditorMcp.dll を置き、同じフォルダのx64版のPMXエディタを"
+                    + "起動してから呼び出す。",
                 error.Message);
         }
 
@@ -261,7 +317,7 @@ namespace PmxEditorMcp.Bridge.Tests
             Assert.Equal(expectedCode, error.Code);
 
             // 検索するプロセス名を内部で固定した実装だと、別の名前を見ていても検出できない。
-            Assert.Equal(PipeTargetResolver.EditorProcessName, searchedProcessName);
+            Assert.Equal(PipeTargetResolver.EditorBaseName, searchedProcessName);
         }
 
         [Theory]
@@ -397,7 +453,7 @@ namespace PmxEditorMcp.Bridge.Tests
             for (int index = 0; index < pairs.Length; index += 2)
             {
                 paths[(int)pairs[index]] = Path.Combine(
-                    (string)pairs[index + 1], PipeTargetResolver.EditorProcessName + ".exe");
+                    (string)pairs[index + 1], "PmxEditor.exe");
             }
 
             return processId => paths.TryGetValue(processId, out string path) ? path : string.Empty;

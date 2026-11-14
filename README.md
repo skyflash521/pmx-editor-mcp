@@ -48,7 +48,7 @@ pmx-editor-mcp を登録したMCPクライアントのAIエージェントに、
 | Claude Code | 2.1.72 以上の `claude` コマンド。参照クライアントの実機動作確認が `claude -p` を `--effort` 付きで起動する |
 | lychee | 文書のリンク検査に用いる。`winget install lycheeverse.lychee` |
 | OS | Windows x64。表示言語は日本語 |
-| PMXエディタ | 各自が導入したx64版の配布物で、0.2.7.3 以上(同梱の `PEPlugin.dll` は 0.0.8.9 以上)。操作の対象は `PmxEditor_x64.exe` |
+| PMXエディタ | 各自が導入したx64版の配布物で、0.2.7.3 以上(同梱の `PEPlugin.dll` は 0.0.8.9 以上)。操作の対象は導入フォルダ直下の x64 の `PmxEditor.exe` か `PmxEditor_*.exe` |
 | セッション | ログオンした対話的なデスクトップ。実機に触る検査はエディタの画面を操作する |
 
 ### 構築手順

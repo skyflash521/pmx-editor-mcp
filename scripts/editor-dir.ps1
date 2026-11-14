@@ -40,6 +40,59 @@ function Get-EditorDirectory {
     $value
 }
 
+$EditorFileNames = @("PmxEditor.exe", "PmxEditor_*.exe")
+
+$EditorProcessNames = @("PmxEditor", "PmxEditor_*")
+
+# PEのヘッダが名乗る機械の種別。x64のもの。
+$EditorAmdMachine = 0x8664
+
+function Test-EditorExecutable {
+    <#
+        .SYNOPSIS
+        そのファイルがエディタの実行ファイルか。名前が $EditorFileNames のどれかに当たり、x64 の
+        実行形式であるものをエディタとみなす。読めなければ偽を返す。
+    #>
+    param([string]$Path)
+
+    $name = [System.IO.Path]::GetFileName($Path)
+    if (-not ($EditorFileNames | Where-Object { $name -like $_ })) {
+        return $false
+    }
+
+    try {
+        $stream = [System.IO.File]::OpenRead($Path)
+    }
+    catch { return $false }
+
+    try {
+        $reader = New-Object System.IO.BinaryReader($stream)
+        if ($stream.Length -lt 0x40) { return $false }
+        $stream.Position = 0x3C
+        $header = [long]$reader.ReadInt32()
+        if ($header -lt 0 -or $header + 6 -gt $stream.Length) { return $false }
+        $stream.Position = $header
+        ($reader.ReadUInt32() -eq 0x00004550) -and ($reader.ReadUInt16() -eq $EditorAmdMachine)
+    }
+    finally { $stream.Dispose() }
+}
+
+function Get-EditorExecutable {
+    <#
+        .SYNOPSIS
+        導入フォルダの直下にあるエディタの実行ファイルの道を返す。1つに決まらなければ止める。
+    #>
+    param([string]$Directory)
+
+    $found = @(Get-ChildItem -LiteralPath $Directory -File -ErrorAction Ignore |
+        Where-Object { Test-EditorExecutable -Path $_.FullName })
+    if ($found.Count -ne 1) {
+        throw "導入フォルダ直下の x64 の $($EditorFileNames -join " か ") が1つに決まらない($($found.Count) 件): $Directory"
+    }
+
+    $found[0].FullName
+}
+
 # セッションごとの導入先を並べる親。
 $SessionEditorRoot = Join-Path $env:LOCALAPPDATA "pmx-editor-mcp-dev-editors"
 
@@ -98,7 +151,7 @@ function Remove-UnusedSessionEditorDirectories {
     if (-not (Test-Path -LiteralPath $SessionEditorRoot)) { return }
 
     $limit = (Get-Date).AddDays(-$SessionEditorKeepDays)
-    $running = @(Get-Process -Name "PmxEditor_x64" -ErrorAction Ignore | ForEach-Object {
+    $running = @(Get-Process -Name $EditorProcessNames -ErrorAction Ignore | ForEach-Object {
         try { $_.Path } catch { $null }
     } | Where-Object { $_ })
 
