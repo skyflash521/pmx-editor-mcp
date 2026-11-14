@@ -109,9 +109,6 @@ namespace PmxEditorMcp.Tests
 
         public FakePmx LastClone { get; private set; }
 
-        /// <summary>複製を得た回数。</summary>
-        public int Clones { get; private set; }
-
         /// <summary>エディタの代役が状態の複製と反映に使った時間の累計。</summary>
         public TimeSpan EditorTime
         {
@@ -334,7 +331,6 @@ namespace PmxEditorMcp.Tests
                         StateReadKey,
                         (target, arguments) =>
                         {
-                            Clones++;
                             _editor.Start();
                             try
                             {

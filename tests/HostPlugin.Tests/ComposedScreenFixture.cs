@@ -35,11 +35,6 @@ namespace PmxEditorMcp.Tests
             get { return _edit.Model; }
         }
 
-        public int Clones
-        {
-            get { return _edit.Clones; }
-        }
-
         /// <summary>VMDやPMXを作る相手の題材。</summary>
         public FakeHostBuilder Builder { get; } = new FakeHostBuilder();
 

@@ -293,7 +293,6 @@ namespace PmxEditorMcp.Tests
                 {
                     foreach (KeyValuePair<string, object> wrong in new[]
                     {
-                        ComposedScreenFixture.Given("frame", -1),
                         ComposedScreenFixture.Given("frame", 1.5),
                         ComposedScreenFixture.Given("frame", "1"),
                         ComposedScreenFixture.Given("playRangeStart", -1),

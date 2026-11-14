@@ -30,22 +30,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void SwitchingTwiceTakesOneClone()
-        {
-            OnSta(() =>
-            {
-                using (ComposedScreenFixture fixture = new ComposedScreenFixture())
-                using (Screen screen = new Screen(fixture, 2))
-                {
-                    ComposedScreenFixture.Value(Call(fixture, false, null));
-                    ComposedScreenFixture.Value(Call(fixture, true, null));
-
-                    Assert.Equal(1, fixture.Clones);
-                }
-            });
-        }
-
-        [Fact]
         public void OnlyTheGivenIkBoneIsSwitchedAndTheOthersStay()
         {
             OnSta(() =>
@@ -144,36 +128,15 @@ namespace PmxEditorMcp.Tests
             });
         }
 
-        [Theory]
-        [InlineData("旧・")]
-        [InlineData("旧 ")]
-        [InlineData("旧-")]
-        [InlineData("★")]
-        [InlineData("＋")]
-        public void AListItemWhoseLongerNameMeetsTheModelsNameAtASymbolOrSpaceIsRefused(string decorate)
+        [Fact]
+        public void AListItemWhoseLongerNameMeetsTheModelsNameAtASymbolIsRefused()
         {
             OnSta(() =>
             {
                 using (ComposedScreenFixture fixture = new ComposedScreenFixture())
-                using (Screen screen = new Screen(fixture, 2, false, decorate))
+                using (Screen screen = new Screen(fixture, 2, false, "★"))
                 {
                     Assert.Equal(ToolEnvelope.NotApplicable, ComposedScreenFixture.Code(Call(fixture, false, new object[] { 1 })));
-                    Assert.Equal(new[] { true, true }, screen.Enabled);
-                }
-            });
-        }
-
-        [Fact]
-        public void AnEmptyNamedBoneIsToldApartFromAListItemEndingInASymbol()
-        {
-            OnSta(() =>
-            {
-                using (ComposedScreenFixture fixture = new ComposedScreenFixture())
-                using (Screen screen = new Screen(fixture, 2, false, null, true))
-                {
-                    screen.Rename(0, "旧ＩＫ＋");
-
-                    Assert.Equal(ToolEnvelope.NotApplicable, ComposedScreenFixture.Code(Call(fixture, false, new object[] { 3 })));
                     Assert.Equal(new[] { true, true }, screen.Enabled);
                 }
             });

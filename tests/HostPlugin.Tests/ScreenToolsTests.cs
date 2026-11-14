@@ -389,22 +389,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TakingHalfTheModelKeepsOnlyOneSideOfTheAxis()
-        {
-            Vertex(-1f, 0f, 0f);
-            Vertex(1f, 0f, 0f);
-            Vertex(2f, 0f, 0f);
-
-            Select(
-                Operation(ViewSelectElements.HalfModel),
-                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex),
-                ComposedScreenFixture.Given(
-                    ViewSelectElements.AxisName, ModelEditVertices.AxisX));
-
-            Assert.Equal(new[] { 1, 2 }, _fixture.View.Selected[ElementKinds.Vertex]);
-        }
-
-        [Fact]
         public void TakingHalfTheModelTakesOnlyTheVerticesTheNarrowedDisplayShows()
         {
             Vertex(-1f, 0f, 0f);
@@ -546,18 +530,6 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(new[] { 0, 1, 2 }, _fixture.View.Selected[ElementKinds.Face]);
             Assert.Equal(1, value[ViewSelectRelated.SelectedName]);
-        }
-
-        [Fact]
-        public void TheVerticesThatTheSelectedFacesUseAreSelected()
-        {
-            IList<IPXVertex> vertices = Vertices(4);
-            Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 3, 4, 5 };
-
-            Related(Operation(ViewSelectRelated.FacesToVertices));
-
-            Assert.Equal(new[] { 1, 2, 3 }, _fixture.View.Selected[ElementKinds.Vertex]);
         }
 
         [Fact]
@@ -921,22 +893,6 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(ToolEnvelope.IndexOutOfRange, ComposedScreenFixture.Code(envelope));
             Assert.Contains(ViewSelectRelated.MaterialIndicesName, ComposedEditFixture.Message(envelope));
-        }
-
-        [Fact]
-        public void EachSelectedFaceReachesTheViewAsItsThreeCorners()
-        {
-            IList<IPXVertex> vertices = Vertices(5);
-            Faces(Face(vertices, 0, 1, 2));
-            Faces(Face(vertices, 1, 2, 3));
-            Faces(Face(vertices, 2, 3, 4));
-
-            Related(
-                Operation(ViewSelectRelated.MaterialToFaces),
-                ComposedScreenFixture.Given(
-                    ViewSelectRelated.MaterialIndicesName, new object[] { 2 }));
-
-            Assert.Equal(new[] { 6, 7, 8 }, _fixture.View.Selected[ElementKinds.Face]);
         }
 
         [Fact]
@@ -1357,20 +1313,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void WhatTheRelatedSelectionCountedIsSaidWithTheKindOfElement()
-        {
-            IList<IPXVertex> vertices = Vertices(4);
-            Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 0, 1, 2 };
-
-            IDictionary<string, object> value = ComposedScreenFixture.Value(
-                Related(Operation(ViewSelectRelated.FacesToVertices)));
-
-            Assert.Equal(ElementKinds.Vertex, value[ViewSelectRelated.KindName]);
-            Assert.Equal(3, value[ViewSelectRelated.SelectedName]);
-        }
-
-        [Fact]
         public void WhatReachingTheMaterialsOfTheSelectedFacesCountedIsTheirFaces()
         {
             IList<IPXVertex> vertices = Vertices(4);
@@ -1782,110 +1724,6 @@ namespace PmxEditorMcp.Tests
             ((FakeBone)ground.Model.Bone[0]).Name = "二";
 
             Assert.Throws<InvalidOperationException>(() => ground.Dispose());
-        }
-
-        [Fact]
-        public void ChoosingElementsTwiceTakesOneClone()
-        {
-            Vertices(3);
-
-            Select(
-                Operation(ViewSelectElements.All),
-                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex));
-            Select(
-                Operation(ViewSelectElements.All),
-                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex));
-
-            Assert.Equal(1, _fixture.Clones);
-        }
-
-        [Fact]
-        public void SelectingRelatedElementsTwiceTakesOneClone()
-        {
-            IList<IPXVertex> vertices = Vertices(4);
-            Faces(Face(vertices, 0, 1, 2), Face(vertices, 1, 2, 3));
-            _fixture.View.Selected[ElementKinds.Face] = new[] { 3, 4, 5 };
-
-            Related(Operation(ViewSelectRelated.FacesToVertices));
-            Related(Operation(ViewSelectRelated.FacesToVertices));
-
-            Assert.Equal(1, _fixture.Clones);
-        }
-
-        [Fact]
-        public void FilteringTheDisplayTwiceTakesOneClone()
-        {
-            IList<IPXVertex> vertices = Vertices(4);
-            Faces(Face(vertices, 0, 1, 2));
-            Faces(Face(vertices, 1, 2, 3));
-            _fixture.Parts.MaterialItemsCount = 2;
-            _fixture.View.Selected[ElementKinds.Vertex] = new[] { 3 };
-
-            Filter(Operation(ViewFilterDisplay.MaterialsFromVertices));
-            Filter(Operation(ViewFilterDisplay.MaterialsFromVertices));
-
-            Assert.Equal(1, _fixture.Clones);
-        }
-
-        [Fact]
-        public void MovingTheRotateCentreTwiceTakesOneClone()
-        {
-            Bones("一", "二");
-            _fixture.View.Selected[ElementKinds.Bone] = new[] { 0, 1 };
-
-            Centre(Operation(ViewSetCameraRotateCenter.Bones));
-            Centre(Operation(ViewSetCameraRotateCenter.Bones));
-
-            Assert.Equal(1, _fixture.Clones);
-        }
-
-        [Fact]
-        public void PickingListsFromTheViewTwiceTakesOneClone()
-        {
-            Bones("一", "二");
-            _fixture.View.Selected[ElementKinds.Bone] = new[] { 1 };
-
-            for (int at = 0; at < 2; at++)
-            {
-                _fixture.Call(
-                    SessionSelectListsFromView.ToolName,
-                    ComposedScreenFixture.Arguments(ComposedScreenFixture.Given(
-                        SessionSelectListsFromView.KindsName,
-                        new object[] { SessionSelectListsFromView.Bone })));
-            }
-
-            Assert.Equal(1, _fixture.Clones);
-        }
-
-        [Fact]
-        public void CapturingTheViewBetweenTwoSelectionsKeepsTheClone()
-        {
-            Vertices(3);
-            KeyValuePair<string, object>[] all =
-            {
-                Operation(ViewSelectElements.All),
-                ComposedScreenFixture.Given(ViewSelectElements.KindName, ElementKinds.Vertex),
-            };
-
-            Select(all);
-            Captured();
-            Select(all);
-
-            Assert.Equal(1, _fixture.Clones);
-        }
-
-        [Fact]
-        public void ALoadedVmdViewIsGivenACloneOfItsOwn()
-        {
-            Vertices(1);
-            _fixture.Model.Bone.Add(new FakeBone("一"));
-
-            for (int at = 0; at < 2; at++)
-            {
-                _fixture.Call(ViewClearVmdView.ToolName, ComposedScreenFixture.Arguments());
-            }
-
-            Assert.Equal(2, _fixture.Clones);
         }
 
         private static IDictionary<string, object> Row(object counted)

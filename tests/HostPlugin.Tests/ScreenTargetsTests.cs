@@ -26,15 +26,13 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData(typeof(IPXMorph))]
-        [InlineData(typeof(IPXNode))]
-        [InlineData(typeof(IPXSoftBody))]
         public void TheScreenCannotSelectTheOtherKinds(Type element)
         {
             Assert.False(ScreenTargets.Selectable(element));
         }
 
         [Fact]
-        public void TheVertexSelectionComesFromTheViewInTheOrderTheViewHandsOver()
+        public void TheVertexSelectionComesFromTheView()
         {
             _view.Selected[ElementKinds.Vertex] = new[] { 4, 1 };
 

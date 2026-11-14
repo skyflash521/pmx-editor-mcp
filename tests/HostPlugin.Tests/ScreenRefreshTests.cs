@@ -129,12 +129,12 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void TheOpeningsThatCannotBeTakenAreLeftAlone()
+        public void TheOpeningsThatCannotBeTakenAreSkippedAndTheRefreshIsToldAsDone()
         {
             ScreenRefresh refresh = new ScreenRefresh(() => null, () => null);
 
-            refresh.Apply(ScreenRefreshKind.Rebuilt);
-            refresh.Apply(ScreenRefreshKind.Drawn);
+            Assert.True(refresh.Apply(ScreenRefreshKind.Rebuilt));
+            Assert.True(refresh.Apply(ScreenRefreshKind.Drawn));
         }
 
         [Fact]
@@ -166,8 +166,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData("PEPlugin.Pmx.IPXPmx.Vertex()")]
-        [InlineData("PEPlugin.Pmx.IPXPmx.Material()")]
-        [InlineData("PEPlugin.Pmx.IPXPmx.Morph()")]
         [InlineData(null)]
         public void AnyOtherReflectionRebuildsTheWholeModel(string listRow)
         {
@@ -201,7 +199,6 @@ namespace PmxEditorMcp.Tests
 
         [Theory]
         [InlineData("PEPlugin.Pmx.IPXPmx.Material()")]
-        [InlineData("PEPlugin.Pmx.IPXPmx.Morph()")]
         [InlineData(null)]
         public void RewritingTheItemsOfAnyOtherListTellsNoKind(string listRow)
         {

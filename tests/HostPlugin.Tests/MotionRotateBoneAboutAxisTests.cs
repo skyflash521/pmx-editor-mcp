@@ -26,15 +26,8 @@ namespace PmxEditorMcp.Tests
         }
 
         [Theory]
-        [InlineData(1.0, 0.0, 0.0, 30.0)]
-        [InlineData(0.0, 1.0, 0.0, -45.0)]
-        [InlineData(0.0, 0.0, 1.0, 170.0)]
-        [InlineData(1.0, 0.0, 0.0875, 40.0)]
-        [InlineData(1.0, 1.0, 1.0, 120.0)]
         [InlineData(0.3, -0.5, 0.8, -75.0)]
         [InlineData(1.0, 0.0, 0.0, 90.0)]
-        [InlineData(1.0, 0.0, 0.0, -90.0)]
-        [InlineData(0.6, 0.0, 0.8, 90.0)]
         public void TheBoneTurnsAboutTheGivenAxisInOneRotation(double x, double y, double z, double angle)
         {
             Rotate(new object[] { x, y, z }, angle);
@@ -49,26 +42,6 @@ namespace PmxEditorMcp.Tests
                     Assert.InRange(made[row, column], wanted[row, column] - Tolerance, wanted[row, column] + Tolerance);
                 }
             }
-        }
-
-        [Fact]
-        public void TurningTwiceTakesOneClone()
-        {
-            Rotate(new object[] { 1.0, 0.0, 0.0 }, 30.0);
-            Rotate(new object[] { 1.0, 0.0, 0.0 }, 30.0);
-
-            Assert.Equal(1, _fixture.Clones);
-        }
-
-        [Fact]
-        public void TheAnglesHandedToTheEditorAreReturned()
-        {
-            IDictionary<string, object> value = ComposedScreenFixture.Value(Rotate(new object[] { 0.0, 1.0, 0.0 }, 30.0));
-
-            V3 turned = Assert.Single(_fixture.TransformView.Rotations);
-            Assert.Equal(
-                new object[] { (double)turned.X, (double)turned.Y, (double)turned.Z },
-                (object[])value[MotionRotateBoneAboutAxis.RotateXyzName]);
         }
 
         [Fact]

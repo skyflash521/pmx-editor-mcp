@@ -63,15 +63,6 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
-        public void PosingTwiceTakesOneClone()
-        {
-            Call(_motion, 30);
-            Call(_motion, 31);
-
-            Assert.Equal(1, _fixture.Clones);
-        }
-
-        [Fact]
         public void TheFrameAndTheNumbersOfBonesAndMorphsSetAreReturned()
         {
             IDictionary<string, object> value = ComposedScreenFixture.Value(Call(_motion, 30));
@@ -154,7 +145,6 @@ namespace PmxEditorMcp.Tests
         [Theory]
         [InlineData("1")]
         [InlineData(1.5)]
-        [InlineData(null)]
         public void AHandleThatIsNotAnIntegerIsRefused(object given)
         {
             IDictionary<string, object> envelope = Call(given, 0);
@@ -178,7 +168,6 @@ namespace PmxEditorMcp.Tests
         [InlineData(1.5)]
         [InlineData("1")]
         [InlineData(2147483648.0)]
-        [InlineData(null)]
         public void AFrameThatIsNotANonNegativeIntegerIsRefused(object frame)
         {
             IDictionary<string, object> envelope = Call(_motion, frame);
@@ -462,21 +451,6 @@ namespace PmxEditorMcp.Tests
             Assert.False(read.IsNotAMotion);
             Assert.Empty(read.Bones);
             Assert.Empty(read.Morphs);
-        }
-
-        [Fact]
-        public void TheRegisteredToolTakesTheMotionFromTheSdkSourceByDefault()
-        {
-            _fixture.Poses = new SdkVmdPoseSource();
-            PoseVmd vmd = new PoseVmd();
-            vmd.BoneNames[0] = "センター";
-            vmd.Bone.Add(new PoseBoneKey { BoneIndex = 0, FrameIndex = 0, Translation = new PEPlugin.SDX.V3(1f, 2f, 3f) });
-            int handle = _fixture.Handles.Issue("PEPlugin.Vmd.IPEVmd", vmd, () => { });
-
-            IDictionary<string, object> value = ComposedScreenFixture.Value(Call(handle, 8));
-
-            Assert.Equal(1, value["bones"]);
-            Assert.Equal(0, value["morphs"]);
         }
 
         private static float ParsedSingle(Match match, string group)

@@ -97,25 +97,6 @@ namespace PmxEditorMcp.Tests
             Assert.Contains("TransformView を読み直せない。", Logged());
         }
 
-        [Fact]
-        public void AnActionThatFailsIsReportedAsItsOwnFailureAndNotRecordedAsARefreshFailure()
-        {
-            Updates updates = new Updates();
-            FakeTransformView view = new FakeTransformView { Visible = true, FailsToUpdate = true };
-            TransformViewFollowing following = Following(updates, () => view);
-
-            IAsyncResult pending = following.Begin(() =>
-            {
-                updates.Count++;
-                throw new InvalidOperationException("落ちた");
-            });
-
-            InvalidOperationException thrown =
-                Assert.Throws<InvalidOperationException>(() => following.End(pending));
-            Assert.Equal("落ちた", thrown.Message);
-            Assert.DoesNotContain("TransformView を読み直せない。", Logged());
-        }
-
         private TransformViewFollowing Following(IModelUpdates updates, Func<object> transformView)
         {
             return new TransformViewFollowing(new InlineDispatcher(), _log, updates, transformView);

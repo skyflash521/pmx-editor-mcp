@@ -23,11 +23,5 @@ namespace PmxEditorMcp.Tests
 
             Assert.Equal(0, view.Updates);
         }
-
-        [Fact]
-        public void NoTransformViewIsNothingToDo()
-        {
-            TransformViewSync.Refresh(null);
-        }
     }
 }

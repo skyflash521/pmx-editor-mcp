@@ -71,10 +71,10 @@ namespace PmxEditorMcp.Tests
             string message;
 
             Assert.False(VmdSaving.TryCall(VmdSaving.ToFileKey, vmd, out code, out message));
-            Assert.Contains("カメラ", message, System.StringComparison.Ordinal);
-            Assert.Contains("照明", message, System.StringComparison.Ordinal);
-            Assert.Contains("セルフシャドウ", message, System.StringComparison.Ordinal);
-            Assert.Contains("IK表示", message, System.StringComparison.Ordinal);
+            Assert.Contains("カメラ 1 件", message, System.StringComparison.Ordinal);
+            Assert.Contains("照明 1 件", message, System.StringComparison.Ordinal);
+            Assert.Contains("セルフシャドウ 1 件", message, System.StringComparison.Ordinal);
+            Assert.Contains("IK表示 1 件", message, System.StringComparison.Ordinal);
         }
 
         [Fact]

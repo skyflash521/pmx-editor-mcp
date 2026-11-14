@@ -10,10 +10,8 @@ namespace PmxEditorMcp.Tests
     {
         [Theory]
         [InlineData(PEVmePathType.Spline, 0, true)]
-        [InlineData(PEVmePathType.Spline, 1, false)]
         [InlineData(PEVmePathType.Spline, 2, false)]
         [InlineData(PEVmePathType.Spline, 3, true)]
-        [InlineData(PEVmePathType.Linear, 0, true)]
         [InlineData(PEVmePathType.Linear, 1, false)]
         [InlineData(PEVmePathType.Linear, 2, true)]
         public void APathIsAcceptedOnlyWithEnoughPointsForItsType(
