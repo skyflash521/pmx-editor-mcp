@@ -202,6 +202,18 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void TheAddedRootParentCanBothRotateAndTranslate()
+        {
+            Bones("センター");
+
+            Bone(Operation(ModelEditBones.AddRootParent));
+
+            IPXBone made = Named("センター").Parent;
+            Assert.True(made.IsRotation);
+            Assert.True(made.IsTranslation);
+        }
+
+        [Fact]
         public void AStageParentIsAddedAtTheSameSpotAndTakesOverTheOldParent()
         {
             IList<IPXBone> bones = Bones("親", "腕");

@@ -545,6 +545,7 @@ namespace PmxEditorMcp
             made.Visible = true;
             made.Controllable = true;
             made.IsRotation = true;
+            made.IsTranslation = true;
             model.Bone.Insert(0, made);
             foreach (IPXBone bone in loose)
             {
