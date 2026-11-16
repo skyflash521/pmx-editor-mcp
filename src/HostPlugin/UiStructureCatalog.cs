@@ -223,7 +223,7 @@ namespace PmxEditorMcp
             return null;
         }
 
-        /// <summary>window はウィンドウの型の完全名、path はウィンドウの根から節までの名前の並び。</summary>
+        /// <summary>window はウィンドウの型の完全名、path はウィンドウの最上位から節までの名前の並び。</summary>
         internal static bool Walkable(string window, IList<string> path)
         {
             IDictionary<string, object> at = Node(Window(window), RootName);

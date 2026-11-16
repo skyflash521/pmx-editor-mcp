@@ -190,8 +190,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// ハンドルを発行されうる型。列挙をそのまま持たない側のための形で、
-        /// <paramref name="concrete"/> は抽象の型からその枝の型を引く表である。所有の根は、その枝の
-        /// 型へハンドルが発行されうるなら、根の型も発行されうるものに数える。
+        /// <paramref name="concrete"/> は抽象の型からその枝の型を引く表である。所有の起点は、その枝の
+        /// 型へハンドルが発行されうるなら、起点の型も発行されうるものに数える。
         /// </summary>
         public static ISet<string> Issued(
             IDictionary<string, SignatureRecord> signatures,

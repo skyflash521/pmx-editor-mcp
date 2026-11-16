@@ -2,7 +2,7 @@
 # 番号は使い回される。その相手より後に始まったものだけを数える。
 [CmdletBinding()]
 param(
-    # 木の根とするプロセスの番号。
+    # 木の頂点とするプロセスの番号。
     [Parameter(Mandatory)][int]$Root
 )
 
@@ -25,7 +25,6 @@ do {
     $want += $more
 } while ($more.Count -gt 0)
 
-# この1本も根の子孫で、木には自分が入る。既に終わっている相手への始末は、失敗を書き出す。
 foreach ($one in @($want | Where-Object { $_ -ne $Root -and $_ -ne $PID })) {
     Stop-Process -Id $one -Force -ErrorAction Ignore
 }

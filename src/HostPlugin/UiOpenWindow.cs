@@ -51,7 +51,7 @@ namespace PmxEditorMcp
 
         /// <summary>
         /// 開いているウィンドウから <paramref name="named"/> を開くまでに押す部品を、押す順に並べる。各段は
-        /// 押す側のウィンドウの名前と、そのウィンドウの根から部品までの名前の連なり。段数の最も少ないものを採る。
+        /// 押す側のウィンドウの名前と、そのウィンドウの最上位から部品までの名前の連なり。段数の最も少ないものを採る。
         /// 開けないときは null。
         /// </summary>
         internal static IList<KeyValuePair<string, IList<string>>> Hops(string named, Func<string, bool> open)

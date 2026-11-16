@@ -55,11 +55,11 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 接続の根から辿れる型と、その経路。辿るのは引数の無い取得プロパティと、自動注入コネクタを
+        /// 接続の起点から辿れる型と、その経路。辿るのは引数の無い取得プロパティと、自動注入コネクタを
         /// 1つ以上取りそれ以外の引数を取らない戻り値ありのメソッドで、経路はその名前を点でつないだ
-        /// もの(メソッドは丸括弧を付ける)。根そのものは経路が空の項目として入る。同じ型へ道が
-        /// 複数あるときは、根の並びと列挙の並びで先に見つかった短い方を返す。メンバーを宣言も継承も
-        /// しない根は <see cref="ArgumentException"/>。名前から一つの先を選べない段が在る列挙は
+        /// もの(メソッドは丸括弧を付ける)。起点そのものは経路が空の項目として入る。同じ型へ道が
+        /// 複数あるときは、起点の並びと列挙の並びで先に見つかった短い方を返す。メンバーを宣言も継承も
+        /// しない起点は <see cref="ArgumentException"/>。名前から一つの先を選べない段が在る列挙は
         /// <see cref="InvalidOperationException"/>。
         /// </summary>
         public static IDictionary<string, string> ReachableFromRoots(
@@ -82,7 +82,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 経路を辿り直す側が、各段で名前から一つの先を選べることを求める。接続の根の並びは一つの
+        /// 経路を辿り直す側が、各段で名前から一つの先を選べることを求める。接続の起点の並びは一つの
         /// 段として数える。
         /// </summary>
         private static void RequireStepsSelectOneTarget(
@@ -101,7 +101,7 @@ namespace PmxEditorMcp.SignatureDump
                         && !string.Equals(other, source, StringComparison.Ordinal))
                     {
                         throw new InvalidOperationException(
-                            "同じ名前の一歩を持つ根の組が在る: " + other + " と " + source
+                            "同じ名前の一歩を持つ起点の組が在る: " + other + " と " + source
                                 + "(" + step + ")");
                     }
 
@@ -138,8 +138,8 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// コネクタ型になりうる型。呼び出し側が実体を用意せずに呼べる型がこれに当たり、次の
-        /// 3つからなる。接続の根から辿り着ける型。その基底型。
-        /// そして宣言するメンバーがすべて静的な型。根の扱いは <see cref="ReachableFromRoots"/> と
+        /// 3つからなる。接続の起点から辿り着ける型。その基底型。
+        /// そして宣言するメンバーがすべて静的な型。起点の扱いは <see cref="ReachableFromRoots"/> と
         /// 同じ。
         /// </summary>
         public static ISet<string> ConnectorCandidates(
@@ -180,10 +180,10 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 接続の根から辿り着け、かつそこから <paramref name="targets"/> のいずれかへ辿り着ける型。
-        /// 根そのものと途中の型を返し、<paramref name="targets"/> 自身は入れない。どの目的地へも
-        /// 至らない枝は入らない。根の扱いは <see cref="ReachableFromRoots"/> と同じで、列挙に
-        /// メンバーの無い根は <see cref="ArgumentException"/>。
+        /// 接続の起点から辿り着け、かつそこから <paramref name="targets"/> のいずれかへ辿り着ける型。
+        /// 起点そのものと途中の型を返し、<paramref name="targets"/> 自身は入れない。どの目的地へも
+        /// 至らない枝は入らない。起点の扱いは <see cref="ReachableFromRoots"/> と同じで、列挙に
+        /// メンバーの無い起点は <see cref="ArgumentException"/>。
         /// </summary>
         public static ISet<string> RouteTypesToward(
             InventoryRecord inventory, IEnumerable<string> roots, ISet<string> targets)
@@ -241,7 +241,6 @@ namespace PmxEditorMcp.SignatureDump
             return reversed;
         }
 
-        /// <summary>根から辿った結果。経路と、一歩で進める型を持つ。</summary>
         private sealed class Reach
         {
             public Reach()
@@ -250,7 +249,7 @@ namespace PmxEditorMcp.SignatureDump
                 Steps = new Dictionary<string, ISet<string>>(StringComparer.Ordinal);
             }
 
-            /// <summary>辿り着いた型と、根からの経路。根は空の経路を持つ。</summary>
+            /// <summary>辿り着いた型と、起点からの経路。起点は空の経路を持つ。</summary>
             public IDictionary<string, string> Paths { get; }
 
             /// <summary>辿り着いた型と、そこから一歩で進める型。</summary>
@@ -275,7 +274,7 @@ namespace PmxEditorMcp.SignatureDump
                 string key = TypeDefinitionName.Of(root);
                 if (!members.ContainsKey(key))
                 {
-                    throw new ArgumentException("列挙にメンバーの無い根が在る: " + root, nameof(roots));
+                    throw new ArgumentException("列挙にメンバーの無い起点が在る: " + root, nameof(roots));
                 }
 
                 if (reach.Paths.ContainsKey(key))

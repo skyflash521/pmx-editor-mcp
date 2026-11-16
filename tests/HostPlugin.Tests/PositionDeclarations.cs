@@ -144,7 +144,7 @@ namespace PmxEditorMcp.Tests
                 }
             }
 
-            throw new DirectoryNotFoundException("リポジトリの根が見つからない。");
+            throw new DirectoryNotFoundException("リポジトリの最上位のディレクトリが見つからない。");
         }
 
         public static object Plain(object json)

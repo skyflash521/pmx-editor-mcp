@@ -8,7 +8,7 @@ namespace PmxEditorMcp.SignatureDump
     {
         /// <summary>
         /// 規則に反していれば <see cref="InvalidOperationException"/>。
-        /// <paramref name="roleTypes"/> は表が覆うべき型の集合で、接続の根とその経路上の型を
+        /// <paramref name="roleTypes"/> は表が覆うべき型の集合で、接続の起点とその経路上の型を
         /// 含めて渡すこと。<paramref name="connectorCandidates"/> には
         /// <see cref="TypeRoleEvidence.ConnectorCandidates"/> の結果を渡すこと。
         /// <paramref name="issuanceCandidates"/> には
@@ -101,7 +101,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>接続の根は、表がコネクタ型として持つことを課す。</summary>
+        /// <summary>接続の起点は、表がコネクタ型として持つことを課す。</summary>
         private static void RequireRootsAreConnectors(
             IList<TypeRoleRecord> records, IEnumerable<string> connectionRoots)
         {
@@ -112,12 +112,12 @@ namespace PmxEditorMcp.SignatureDump
                 TypeRole role;
                 if (!roles.TryGetValue(root, out role))
                 {
-                    throw new InvalidOperationException("接続の根が表に無い: " + root);
+                    throw new InvalidOperationException("接続の起点が表に無い: " + root);
                 }
 
                 if (role != TypeRole.Connector)
                 {
-                    throw new InvalidOperationException("接続の根をコネクタ型にしていない: " + root);
+                    throw new InvalidOperationException("接続の起点をコネクタ型にしていない: " + root);
                 }
             }
         }

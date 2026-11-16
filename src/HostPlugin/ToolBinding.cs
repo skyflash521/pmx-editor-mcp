@@ -7,7 +7,7 @@ namespace PmxEditorMcp
 {
     public enum ToolReceiverKind
     {
-        /// <summary>接続の根から辿って得る。道はビルド時に決めてある。</summary>
+        /// <summary>接続の起点から辿って得る。道はビルド時に決めてある。</summary>
         Connection,
 
         /// <summary>どのPMXを見るかの切り替えで選ぶ。</summary>

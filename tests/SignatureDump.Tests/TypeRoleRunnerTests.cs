@@ -152,7 +152,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(ExitCodes.Unresolved, code);
             Assert.Contains(
                 "所有の経路が規則に合わない。", error.ToString(), StringComparison.Ordinal);
-            Assert.Contains("所有の根", error.ToString(), StringComparison.Ordinal);
+            Assert.Contains("所有の起点", error.ToString(), StringComparison.Ordinal);
         }
 
         [Fact]

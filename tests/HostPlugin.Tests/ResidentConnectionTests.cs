@@ -261,7 +261,7 @@ namespace PmxEditorMcp.Tests
                 () => ResidentConnection.Hold(RunArgs(ModulePath), null));
         }
 
-        /// <summary>接続の根を保持し、Cプラグイン連携のコネクタまで得た状態。</summary>
+        /// <summary>接続の起点を保持し、Cプラグイン連携のコネクタまで得た状態。</summary>
         private ResidentConnection Taken(string modulePath)
         {
             ResidentConnection connection = ResidentConnection.Hold(RunArgs(modulePath), _log);

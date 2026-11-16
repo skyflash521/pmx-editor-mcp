@@ -291,8 +291,6 @@ namespace PmxEditorMcp.SignatureDump
                 return;
             }
 
-            // 対象の集合を持つのは、リストの中の1件を相手にする受け手だけである。所有の根そのものも、
-            // 根から1つに決まる子も、どのPMXを見るかの切り替えだけで相手が決まる。
             if (role == TypeRole.OperationTarget
                 && Listed(paths, signature.DeclaringType)
                 && !schema.Branches.All(b => TargetSelectors.Any(n => HasDirectInput(b, n))))

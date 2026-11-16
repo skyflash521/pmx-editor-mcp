@@ -114,7 +114,7 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>編集の流れ。合否はこの単位でも数える。</summary>
         public string EditKind { get; }
 
-        /// <summary>接続の根から受け手の型へ至る経路。辿り着けない型では空。</summary>
+        /// <summary>接続の起点から受け手の型へ至る経路。辿り着けない型では空。</summary>
         public string ConnectionPath { get; }
 
         public string Tool { get; }

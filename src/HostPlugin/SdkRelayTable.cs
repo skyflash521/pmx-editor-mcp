@@ -9,7 +9,7 @@ namespace PmxEditorMcp
     /// <param name="arguments">引数。並びは行キーの引数の列と同じ。</param>
     public delegate object SdkCall(object target, object[] arguments);
 
-    /// <param name="connection">接続の根を保つ常駐。道の起点と、自動注入のコネクタをここから採る。</param>
+    /// <param name="connection">接続の起点を保つ常駐。道の起点と、自動注入のコネクタをここから採る。</param>
     public delegate object SdkReceiver(ResidentConnection connection);
 
     public enum SdkRelayRefusal

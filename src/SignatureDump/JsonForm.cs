@@ -217,7 +217,7 @@ namespace PmxEditorMcp.SignatureDump
         internal static FormatException Wrong(string path, string expected)
         {
             return new FormatException(
-                (path.Length == 0 ? "根" : path) + " は" + expected + "でなければならない。");
+                (path.Length == 0 ? "最上位" : path) + " は" + expected + "でなければならない。");
         }
 
         private sealed class TextForm : JsonForm
@@ -417,7 +417,7 @@ namespace PmxEditorMcp.SignatureDump
                 if (source.Count == 0 && !_allowEmpty)
                 {
                     throw new FormatException(
-                        (path.Length == 0 ? "根" : path) + " は1件以上でなければならない。");
+                        (path.Length == 0 ? "最上位" : path) + " は1件以上でなければならない。");
                 }
 
                 Dictionary<string, object> read =
@@ -462,7 +462,7 @@ namespace PmxEditorMcp.SignatureDump
                 if (items.Length == 0 && !_allowEmpty)
                 {
                     throw new FormatException(
-                        (path.Length == 0 ? "根" : path) + " は1件以上でなければならない。");
+                        (path.Length == 0 ? "最上位" : path) + " は1件以上でなければならない。");
                 }
 
                 List<object> read = new List<object>();

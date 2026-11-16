@@ -68,7 +68,7 @@ namespace PmxEditorMcp
             {
                 return ToolEnvelope.Failure(
                     ToolEnvelope.InvalidArgument,
-                    PathName + " はウィンドウの根から部品までの名前の並びで与える。並びは " + UiTree.ToolName
+                    PathName + " はウィンドウの最上位から部品までの名前の並びで与える。並びは " + UiTree.ToolName
                         + " の node の name で分かる。");
             }
 

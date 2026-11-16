@@ -3,27 +3,27 @@
     {
       "typeName": "PEPlugin.Form.IPEFormConnector",
       "role": "connector",
-      "basis": "PmxForm操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "PmxForm操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "form_connector",
       "group": "session"
     },
     {
       "typeName": "PEPlugin.IPEBuilder",
       "role": "connector",
-      "basis": "ビルダインターフェースで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "ビルダインターフェースで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "builder"
     },
     {
       "typeName": "PEPlugin.IPEConnector",
       "role": "connector",
-      "basis": "操作コネクタインターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "操作コネクタインターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "operation_connector",
       "group": "session"
     },
     {
       "typeName": "PEPlugin.IPEPluginHost",
       "role": "connector",
-      "basis": "ホスト用プラグインインターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "ホスト用プラグインインターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "plugin_host",
       "group": "session"
     },
@@ -47,13 +47,13 @@
     {
       "typeName": "PEPlugin.IPESystemConnector",
       "role": "connector",
-      "basis": "プラグインシステム情報インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "プラグインシステム情報インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "system_connector"
     },
     {
       "typeName": "PEPlugin.IPXPmxBuilder",
       "role": "connector",
-      "basis": "PMX系ビルダインターフェースで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "PMX系ビルダインターフェースで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmx_builder"
     },
     {
@@ -199,7 +199,7 @@
     {
       "typeName": "PEPlugin.Pmx.IPXPmxConnector",
       "role": "connector",
-      "basis": "プラグインPMX操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "プラグインPMX操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmx_connector",
       "group": "model"
     },
@@ -254,21 +254,21 @@
     {
       "typeName": "PEPlugin.View.IPEPMDViewConnector",
       "role": "connector",
-      "basis": "PMDView操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "PMDView操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmd_view_connector",
       "group": "view"
     },
     {
       "typeName": "PEPlugin.View.IPEPMDViewHelper",
       "role": "connector",
-      "basis": "PMDView関連ヘルパ操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "PMDView関連ヘルパ操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmd_view_helper",
       "group": "view"
     },
     {
       "typeName": "PEPlugin.View.IPEPartsSelectConnector",
       "role": "connector",
-      "basis": "頂点表示／材質編集操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "頂点表示／材質編集操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "parts_select_connector"
     },
     {
@@ -280,44 +280,44 @@
     {
       "typeName": "PEPlugin.View.IPESubViewConnector",
       "role": "connector",
-      "basis": "サブView操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "サブView操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "sub_view_connector"
     },
     {
       "typeName": "PEPlugin.View.IPETransformViewConnector",
       "role": "connector",
-      "basis": "TransformView操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "TransformView操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "transform_view_connector"
     },
     {
       "typeName": "PEPlugin.View.IPEVertexEditConnector",
       "role": "connector",
-      "basis": "頂点／ボーン編集View操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "頂点／ボーン編集View操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "vertex_edit_connector"
     },
     {
       "typeName": "PEPlugin.View.IPEVertexGuideConnector",
       "role": "connector",
-      "basis": "選択頂点ガイド操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "選択頂点ガイド操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "vertex_guide_connector"
     },
     {
       "typeName": "PEPlugin.View.IPEViewConnector",
       "role": "connector",
-      "basis": "View操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "View操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "view_connector",
       "group": "view"
     },
     {
       "typeName": "PEPlugin.View.IPEViewSettingConnector",
       "role": "connector",
-      "basis": "表示設定View操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "表示設定View操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "view_setting_connector"
     },
     {
       "typeName": "PEPlugin.View.IPEWeightEditConnector",
       "role": "connector",
-      "basis": "ウェイト描画操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "ウェイト描画操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "weight_edit_connector"
     },
     {
@@ -329,13 +329,13 @@
     {
       "typeName": "PEPlugin.View.IPXPmxViewConnector",
       "role": "connector",
-      "basis": "PmxView操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "PmxView操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmx_view_connector"
     },
     {
       "typeName": "PEPlugin.View.IPXPmxViewHelper",
       "role": "connector",
-      "basis": "PmxView関連ヘルパ操作インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "PmxView関連ヘルパ操作インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "pmx_view_helper",
       "group": "view"
     },
@@ -771,7 +771,7 @@
     {
       "typeName": "PXCPlugin.IPXCPluginConnector",
       "role": "connector",
-      "basis": "Cプラグイン接続インターフェイスで、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "Cプラグイン接続インターフェイスで、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "c_plugin_connector"
     },
     {
@@ -783,7 +783,7 @@
     {
       "typeName": "PXCPlugin.IPXCPrimitiveBuilder",
       "role": "connector",
-      "basis": "Cプラグイン用プリミティブ作成で、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "Cプラグイン用プリミティブ作成で、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "c_primitive_builder"
     },
     {
@@ -796,13 +796,13 @@
     {
       "typeName": "PXCPlugin.IPXSystemControl",
       "role": "connector",
-      "basis": "System制御で、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "System制御で、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "system_control"
     },
     {
       "typeName": "PXCPlugin.IPXViewControl",
       "role": "connector",
-      "basis": "View制御で、接続の根から辿り着き、呼び出し側が実体を用意せずに呼べる。",
+      "basis": "View制御で、接続の起点から辿り着き、呼び出し側が実体を用意せずに呼べる。",
       "elementNoun": "view_control"
     },
     {

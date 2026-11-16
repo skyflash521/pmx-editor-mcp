@@ -5,7 +5,6 @@ using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
 {
-    /// <summary>受け手の型へ至る道。接続の根ごとに辿って決める。</summary>
     public sealed class ReceiverEvidenceTests
     {
         private const string RunArgs = "PEPlugin.IPERunArgs";

@@ -257,7 +257,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 受け手を得る式。根から一歩ずつ進む。自動注入コネクタを取る一歩には、常駐から渡す。
+        /// 受け手を得る式。起点から一歩ずつ進む。自動注入コネクタを取る一歩には、常駐から渡す。
         /// </summary>
         private static string Receiver(ReceiverPath path)
         {
@@ -285,7 +285,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 接続の根を指す式。常駐が保つものと、実体を持たない静的な橋渡しから採る。これ以外の根は
+        /// 接続の起点を指す式。常駐が保つものと、実体を持たない静的な橋渡しから採る。これ以外の起点は
         /// 中継に使えない。
         /// </summary>
         private static string Root(string root)
@@ -299,7 +299,7 @@ namespace PmxEditorMcp.SignatureDump
                 case "PXCPlugin.PXCBridge":
                     return "global::PXCPlugin.PXCBridge";
                 default:
-                    throw new InvalidOperationException("受け手を得られない接続の根: " + root);
+                    throw new InvalidOperationException("受け手を得られない接続の起点: " + root);
             }
         }
 

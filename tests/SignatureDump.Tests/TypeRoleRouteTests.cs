@@ -5,7 +5,6 @@ using Xunit;
 
 namespace PmxEditorMcp.SignatureDump.Tests
 {
-    /// <summary>接続の根から提供対象へ至る経路の型が、母集合へ入るかどうかを固定する。</summary>
     public sealed class TypeRoleRouteTests
     {
         private static readonly string Root = TypeRoleEvidence.ConnectionRoots[0];
@@ -123,7 +122,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
                 new List<ExcludedSignatureRecord>());
         }
 
-        /// <summary>接続の根はどれも列挙に在ることを求められるので、題材はすべてを持つ。</summary>
         private static InventoryRecord Inventory(params SignatureRecord[] signatures)
         {
             List<TypeRecord> types = new List<TypeRecord>();

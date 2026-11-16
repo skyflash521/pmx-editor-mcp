@@ -815,7 +815,7 @@ namespace PmxEditorMcp.SignatureDump
                 && role.Role == TypeRole.HandleTarget;
         }
 
-        /// <summary>その行の受け手を、橋渡しから得るか。所有の根から得る受け手は当たらない。</summary>
+        /// <summary>その行の受け手を、橋渡しから得るか。所有の起点から得る受け手は当たらない。</summary>
         private static bool Bridges(
             SignatureRecord signature, AccessPath path, ISet<string> bridged)
         {
@@ -1243,7 +1243,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 受け手の得方。所有の根の型はどのPMXを見るかの切り替えで選び、ほかは接続の道から得る。
+        /// 受け手の得方。所有の起点の型はどのPMXを見るかの切り替えで選び、ほかは接続の道から得る。
         /// 静的なメンバーは相手を取らない。
         /// </summary>
         private static string Receiver(

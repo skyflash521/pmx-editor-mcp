@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace PmxEditorMcp.SignatureDump
 {
-    /// <summary>接続の根から受け手の型へ至る道。根と、根から進む一歩の並びからなる。</summary>
+    /// <summary>接続の起点から受け手の型へ至る道。起点と、起点から進む一歩の並びからなる。</summary>
     public sealed class ReceiverPath
     {
         public ReceiverPath(string root, string steps, string initialize = null)
@@ -14,10 +14,10 @@ namespace PmxEditorMcp.SignatureDump
             Initialize = initialize;
         }
 
-        /// <summary>辿り始める接続の根の型名。</summary>
+        /// <summary>辿り始める接続の起点の型名。</summary>
         public string Root { get; }
 
-        /// <summary>根から進む一歩の名前を点でつないだもの。根そのものでは空。</summary>
+        /// <summary>起点から進む一歩の名前を点でつないだもの。起点そのものでは空。</summary>
         public string Steps { get; }
 
         /// <summary>
@@ -28,8 +28,8 @@ namespace PmxEditorMcp.SignatureDump
     }
 
     /// <summary>
-    /// 受け手の型へ至る道を、根ごとに辿って決める。同じ型へ道が複数あるときは、一歩の数が最も
-    /// 少ないものを採り、並ぶときは根の並びで先のものを採る。自分自身へ至る道を持たない型は、その
+    /// 受け手の型へ至る道を、起点ごとに辿って決める。同じ型へ道が複数あるときは、一歩の数が最も
+    /// 少ないものを採り、並ぶときは起点の並びで先のものを採る。自分自身へ至る道を持たない型は、その
     /// 型を実装する型を通る。通れる実装する型が2つ以上あるときは採らない。
     /// </summary>
     public static class ReceiverEvidence
@@ -116,7 +116,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// その道を辿る前に呼ぶ初期化のメンバー名。根が、最初の一歩と同じ名前に初期化を続けた
+        /// その道を辿る前に呼ぶ初期化のメンバー名。起点が、最初の一歩と同じ名前に初期化を続けた
         /// メソッドを宣言していて、それが常駐コネクタだけを取るときに限る。持たなければ null。
         /// </summary>
         private static string Initializer(InventoryRecord inventory, string root, string steps)

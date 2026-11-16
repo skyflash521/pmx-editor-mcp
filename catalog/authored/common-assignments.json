@@ -4,7 +4,7 @@
       "signatureKey": "PEPlugin.IPESystemConnector.GetCPluginRunArgsClone(System.String)",
       "assignment": "internalFlow",
       "target": "connect",
-      "basis": "Cプラグイン連携の入口になる接続の根の複製で、取得経路が一次資料で利用非推奨なのでホストが起動時に一度だけ得て常駐保持する。"
+      "basis": "Cプラグイン連携の入口になる接続の起点の複製で、取得経路は一次資料で利用非推奨とされている。ホストが起動時に一度だけ得て常駐保持する。"
     },
     {
       "signatureKey": "PEPlugin.Pmx.IPXPmxConnector.GetCurrentState()",

@@ -51,7 +51,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
         public void AChainThatDoesNotStartAtARootStops()
         {
             Assert.Contains(
-                "所有の根",
+                "所有の起点",
                 Stops(Middles, Owned("N.IMiddle.Leaves()", "N.IMiddle.Leaves()")));
         }
 

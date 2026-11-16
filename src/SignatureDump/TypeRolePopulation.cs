@@ -63,7 +63,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// 接続の根から提供対象の型へ至る経路の上にある型を母集合へ足す。値の表現で写せる型は
+        /// 接続の起点から提供対象の型へ至る経路の上にある型を母集合へ足す。値の表現で写せる型は
         /// 足さない。
         /// </summary>
         private static TypeRolePopulation WithConnectionRoutes(

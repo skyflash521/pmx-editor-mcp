@@ -8,9 +8,9 @@ namespace PmxEditorMcp.SignatureDump
     public static class OwnerPathGate
     {
         /// <summary>
-        /// 所有の経路が次を満たすことを求める。最初の段の宣言型が所有の根であること。各段の宣言型が
+        /// 所有の経路が次を満たすことを求める。最初の段の宣言型が所有の起点であること。各段の宣言型が
         /// 一つ前の段が指す型であること。リストの段が表の所有するリストであること。単数の段が指す型が
-        /// どの所有リストの要素でもないこと。最後の段がその所有リスト自身であること。あわせて所有の根が
+        /// どの所有リストの要素でもないこと。最後の段がその所有リスト自身であること。あわせて所有の起点が
         /// どの所有リストの要素でもないことを求める。満たさなければ
         /// <see cref="InvalidOperationException"/>。
         /// </summary>
@@ -44,7 +44,7 @@ namespace PmxEditorMcp.SignatureDump
             foreach (string root in roots.Where(owned.Contains)
                 .OrderBy(n => n, StringComparer.Ordinal))
             {
-                throw new InvalidOperationException("所有の根が所有される型である: " + root);
+                throw new InvalidOperationException("所有の起点が所有される型である: " + root);
             }
 
             foreach (ElementCollectionRecord record in owning)
@@ -78,7 +78,7 @@ namespace PmxEditorMcp.SignatureDump
                     if (!roots.Contains(declaring))
                     {
                         throw new InvalidOperationException(
-                            "所有の経路が所有の根から始まっていない: " + record.SignatureKey
+                            "所有の経路が所有の起点から始まっていない: " + record.SignatureKey
                                 + "(" + declaring + ")");
                     }
                 }

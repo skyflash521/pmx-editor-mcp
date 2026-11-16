@@ -117,7 +117,7 @@ namespace PmxEditorMcp
                 return ComposedEditResult.Refuse(
                     ToolEnvelope.InvalidArgument,
                     UiPressItem.WindowName + " はウィンドウの型の完全名で、" + UiPressItem.PathName
-                        + " はウィンドウの根から項目までの名前の並びで与える。");
+                        + " はウィンドウの最上位から項目までの名前の並びで与える。");
             }
 
             SavingItem item;
@@ -495,7 +495,7 @@ namespace PmxEditorMcp
 
             /// <summary>
             /// 押すとクリップボードへも書くのが、<paramref name="clipboardSwitch"/> の入り切りが入っているときだけの部品にする。
-            /// <paramref name="clipboardSwitch"/> は同じウィンドウの根からその入り切りまでの名前の並び。
+            /// <paramref name="clipboardSwitch"/> は同じウィンドウの最上位からその入り切りまでの名前の並び。
             /// </summary>
             internal SavingItem ClipboardOnlyWith(params string[] clipboardSwitch)
             {

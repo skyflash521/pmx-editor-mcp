@@ -5,7 +5,7 @@ using System.Text.Json.Nodes;
 namespace PmxEditorMcp.Bridge.Tests
 {
     /// <summary>
-    /// 公開した入力スキーマの形を辿るテストのために、根の $defs を指す $ref をその中身へ置き換え、
+    /// 公開した入力スキーマの形を辿るテストのために、最上位の $defs を指す $ref をその中身へ置き換え、
     /// $defs を外した形を作る。値を通すか拒否するかを見るテストは、$ref のまま照合器へ渡す。
     /// </summary>
     internal static class SchemaRefs
@@ -46,7 +46,7 @@ namespace PmxEditorMcp.Bridge.Tests
                     if (!target.StartsWith(RefPrefix, StringComparison.Ordinal)
                         || defs[target.Substring(RefPrefix.Length)] == null)
                     {
-                        throw new InvalidOperationException("根の $defs に無いものを指す $ref: " + target);
+                        throw new InvalidOperationException("最上位の $defs に無いものを指す $ref: " + target);
                     }
 
                     return Expanded(defs[target.Substring(RefPrefix.Length)], defs);

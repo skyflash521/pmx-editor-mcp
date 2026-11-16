@@ -28,7 +28,7 @@ namespace PmxEditorMcp.SignatureDump
 
         /// <summary>
         /// 縮めたスキーマの綴り。<see cref="Inline"/> で戻すと <see cref="Shortened"/> と同じJSONになる。
-        /// 根と根の properties は置き換えない。縮めても短くならなければ元の綴りをそのまま返す。$defs か $ref を既に持つ
+        /// 最上位と最上位の properties は置き換えない。縮めても短くならなければ元の綴りをそのまま返す。$defs か $ref を既に持つ
         /// スキーマは扱わず、<see cref="InvalidOperationException"/>。
         /// </summary>
         public static string Compact(string schema)
@@ -204,7 +204,7 @@ namespace PmxEditorMcp.SignatureDump
             }
         }
 
-        /// <summary>$ref を根の $defs の中身へ戻し、$defs を外した綴り。</summary>
+        /// <summary>$ref を最上位の $defs の中身へ戻し、$defs を外した綴り。</summary>
         public static string Inline(string schema)
         {
             if (schema == null)
@@ -232,7 +232,7 @@ namespace PmxEditorMcp.SignatureDump
                     string target = pointer.GetValue<string>();
                     if (!target.StartsWith(RefPrefix, StringComparison.Ordinal))
                     {
-                        throw new InvalidOperationException("根の $defs を指さない $ref: " + target);
+                        throw new InvalidOperationException("最上位の $defs を指さない $ref: " + target);
                     }
 
                     return Expanded(defs[target.Substring(RefPrefix.Length)], defs);

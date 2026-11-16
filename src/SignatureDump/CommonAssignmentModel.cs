@@ -32,10 +32,10 @@ namespace PmxEditorMcp.SignatureDump
         /// <summary>反映のときにUndoを積むかどうか。</summary>
         UndoLock,
 
-        /// <summary>接続の根の複製。</summary>
+        /// <summary>接続の起点の複製。</summary>
         RunArgsClone,
 
-        /// <summary>接続の根の複製を求めるときに渡すホストプラグイン自身の位置。</summary>
+        /// <summary>接続の起点の複製を求めるときに渡すホストプラグイン自身の位置。</summary>
         ModulePath,
 
         /// <summary>ホストが常駐期間中保持するコネクタ。</summary>

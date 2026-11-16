@@ -739,7 +739,7 @@ namespace PmxEditorMcp.SignatureDump
         }
 
         /// <summary>
-        /// ハンドルで指した相手だけを空にするツールの名前。所有の根そのものを空にする初期化が
+        /// ハンドルで指した相手だけを空にするツールの名前。所有の起点そのものを空にする初期化が
         /// これに当たり、ハンドルを必ず取り、確認を取らない。
         /// </summary>
         public ISet<string> HeldOnlyResettingTools(InventoryRecord inventory)
@@ -849,7 +849,7 @@ namespace PmxEditorMcp.SignatureDump
                 DangerousOperationRule.Classify(inventory.Signatures).Keys, StringComparer.Ordinal);
         }
 
-        /// <summary>型から接続の根へ至る経路。辿り着けない型は持たない。</summary>
+        /// <summary>型から接続の起点へ至る経路。辿り着けない型は持たない。</summary>
         public IDictionary<string, string> ConnectionPaths(InventoryRecord inventory)
         {
             if (inventory == null)

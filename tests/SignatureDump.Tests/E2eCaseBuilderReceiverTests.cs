@@ -400,10 +400,6 @@ namespace PmxEditorMcp.SignatureDump.Tests
             Assert.Equal(Lent(made.Produces), removing.Borrowed.Values.Single());
         }
 
-        /// <summary>
-        /// 親の並びに1つも無い要素は並びへ加えられない。外す相手を用意する段は、根に近い親から
-        /// 順に加える。
-        /// </summary>
         [Fact]
         public void TheSetupAddsTheParentBeforeTheElementItHolds()
         {

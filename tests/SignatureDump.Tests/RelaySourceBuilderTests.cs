@@ -293,7 +293,7 @@ namespace PmxEditorMcp.SignatureDump.Tests
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(
                 () => Receivers("Sdk.View", "Sdk.Root", string.Empty));
 
-            Assert.StartsWith("受け手を得られない接続の根:", error.Message, StringComparison.Ordinal);
+            Assert.StartsWith("受け手を得られない接続の起点:", error.Message, StringComparison.Ordinal);
         }
 
         private static string Receivers(string type, string root, string steps)
