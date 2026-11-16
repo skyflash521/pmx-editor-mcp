@@ -27,7 +27,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheCloserAVertexIsToTheTargetTheMoreItsWeightMovesToTheTargetWeight()
         {
-            IList<IPXBone> bones = Bones("根", "先");
+            IList<IPXBone> bones = Bones("腕", "ひじ");
             Rooted(0f, 0f, 0f, bones[1]);
             FakeVertex near = Rooted(0.5f, 0f, 0f, bones[0]);
             FakeVertex middle = Rooted(1f, 0f, 0f, bones[0]);
@@ -51,7 +51,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void AVertexBeyondTheRadiusIsLeftAlone()
         {
-            IList<IPXBone> bones = Bones("根", "先");
+            IList<IPXBone> bones = Bones("腕", "ひじ");
             Rooted(0f, 0f, 0f, bones[1]);
             FakeVertex inside = Rooted(1f, 0f, 0f, bones[0]);
             FakeVertex outside = Rooted(3f, 0f, 0f, bones[0]);
@@ -72,7 +72,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void AVertexExactlyAtTheRadiusIsLeftAlone()
         {
-            IList<IPXBone> bones = Bones("根", "先");
+            IList<IPXBone> bones = Bones("腕", "ひじ");
             Rooted(0f, 0f, 0f, bones[1]);
             FakeVertex edge = Rooted(2f, 0f, 0f, bones[0]);
 
@@ -90,7 +90,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void AVertexWhoseRatioIsZeroKeepsWeightsThatDoNotAddUpToOne()
         {
-            IList<IPXBone> bones = Bones("根", "副", "先");
+            IList<IPXBone> bones = Bones("腕", "腕捩", "ひじ");
             Rooted(0f, 0f, 0f, bones[2]);
             FakeVertex outside = Rooted(3f, 0f, 0f, bones[0]);
             Weigh(outside, bones[0], 0.3f, bones[1], 0.2f);
@@ -107,7 +107,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void AMiddleVertexTakesTheBlendOfItsOwnWeightsAndTheTargetWeights()
         {
-            IList<IPXBone> bones = Bones("根", "副", "先", "先副");
+            IList<IPXBone> bones = Bones("腕", "腕捩", "ひじ", "手捩");
             FakeVertex target = Rooted(0f, 0f, 0f, bones[2]);
             Weigh(target, bones[2], 0.5f, bones[3], 0.5f);
             FakeVertex middle = Rooted(0.6f, 0.8f, 0f, bones[0]);
@@ -131,7 +131,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheNearestOfSeveralTargetsDecidesTheDistance()
         {
-            IList<IPXBone> bones = Bones("根", "先一", "先二");
+            IList<IPXBone> bones = Bones("腕", "ひじ", "手首");
             Rooted(0f, 0f, 0f, bones[1]);
             Rooted(1.5f, 0f, 0f, bones[2]);
             FakeVertex between = Rooted(1f, 0f, 0f, bones[0]);
@@ -150,7 +150,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void AVertexBeyondTheRadiusOfEveryTargetIsLeftAlone()
         {
-            IList<IPXBone> bones = Bones("根", "先一", "先二");
+            IList<IPXBone> bones = Bones("腕", "ひじ", "手首");
             Rooted(0f, 0f, 0f, bones[1]);
             Rooted(10f, 0f, 0f, bones[2]);
             FakeVertex between = Rooted(5f, 0f, 0f, bones[0]);
@@ -171,7 +171,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void OnlyThePickedVerticesAreChanged()
         {
-            IList<IPXBone> bones = Bones("根", "先");
+            IList<IPXBone> bones = Bones("腕", "ひじ");
             Rooted(0f, 0f, 0f, bones[1]);
             FakeVertex picked = Rooted(0.5f, 0f, 0f, bones[0]);
             FakeVertex left = Rooted(0.5f, 0f, 0f, bones[0]);
@@ -190,7 +190,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheTargetVerticesThemselvesAreNotChanged()
         {
-            IList<IPXBone> bones = Bones("根", "先");
+            IList<IPXBone> bones = Bones("腕", "ひじ");
             FakeVertex target = Rooted(0f, 0f, 0f, bones[1]);
             Rooted(0.5f, 0f, 0f, bones[0]);
 
@@ -207,7 +207,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheTargetsAreRequiredForTheRamp()
         {
-            IList<IPXBone> bones = Bones("根", "先");
+            IList<IPXBone> bones = Bones("腕", "ひじ");
             Rooted(0f, 0f, 0f, bones[1]);
             Rooted(0.5f, 0f, 0f, bones[0]);
             ComposedEditFixture.Value(
@@ -228,7 +228,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheRadiusIsRequiredForTheRamp()
         {
-            IList<IPXBone> bones = Bones("根", "先");
+            IList<IPXBone> bones = Bones("腕", "ひじ");
             Rooted(0f, 0f, 0f, bones[1]);
             Rooted(0.5f, 0f, 0f, bones[0]);
             ComposedEditFixture.Value(
@@ -249,7 +249,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ThePickedVerticesAreRequiredForTheRamp()
         {
-            IList<IPXBone> bones = Bones("根", "先");
+            IList<IPXBone> bones = Bones("腕", "ひじ");
             Rooted(0f, 0f, 0f, bones[1]);
             Rooted(0.5f, 0f, 0f, bones[0]);
             ComposedEditFixture.Value(
@@ -269,7 +269,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ARadiusThatIsNotPositiveIsRefused()
         {
-            IList<IPXBone> bones = Bones("根", "先");
+            IList<IPXBone> bones = Bones("腕", "ひじ");
             Rooted(0f, 0f, 0f, bones[1]);
             Rooted(0.5f, 0f, 0f, bones[0]);
             ComposedEditFixture.Value(
@@ -292,7 +292,7 @@ namespace PmxEditorMcp.Tests
         [InlineData(-1)]
         public void ATargetOutsideTheListIsRefused(int target)
         {
-            IList<IPXBone> bones = Bones("根", "先");
+            IList<IPXBone> bones = Bones("腕", "ひじ");
             Rooted(0f, 0f, 0f, bones[1]);
             Rooted(0.5f, 0f, 0f, bones[0]);
             ComposedEditFixture.Value(
@@ -313,7 +313,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ATargetThatIsNotAPositionIsRefusedAsInvalid()
         {
-            IList<IPXBone> bones = Bones("根", "先");
+            IList<IPXBone> bones = Bones("腕", "ひじ");
             Rooted(0f, 0f, 0f, bones[1]);
             Rooted(0.5f, 0f, 0f, bones[0]);
             ComposedEditFixture.Value(

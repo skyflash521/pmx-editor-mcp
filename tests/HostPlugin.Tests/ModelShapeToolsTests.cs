@@ -1308,8 +1308,8 @@ namespace PmxEditorMcp.Tests
 
         private void SdefAlongZ(IPXVertex vertex)
         {
-            FakeBone first = new FakeBone("根") { Position = new V3(0f, 0f, 0f) };
-            FakeBone second = new FakeBone("先") { Position = new V3(0f, 0f, 10f) };
+            FakeBone first = new FakeBone("腕") { Position = new V3(0f, 0f, 0f) };
+            FakeBone second = new FakeBone("ひじ") { Position = new V3(0f, 0f, 10f) };
             _fixture.Model.Bone.Add(first);
             _fixture.Model.Bone.Add(second);
             vertex.Bone1 = first;

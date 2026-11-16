@@ -166,7 +166,7 @@ namespace PmxEditorMcp.Tests
         public void SelectingEveryBoneTakesThemAllWhateverTheDisplayShows()
         {
             Vertices(2);
-            Bones("根", "子");
+            Bones("センター", "上半身");
             _fixture.View.SetVertexIndices(new[] { 0 });
 
             Select(
@@ -180,7 +180,7 @@ namespace PmxEditorMcp.Tests
         public void SelectingEverythingTakesEveryKindThatWasNamedInOneCall()
         {
             Vertices(2);
-            Bones("根");
+            Bones("センター");
 
             IDictionary<string, object> value = ComposedScreenFixture.Value(Select(
                 Operation(ViewSelectElements.All),
@@ -197,7 +197,7 @@ namespace PmxEditorMcp.Tests
         public void SelectingSeveralKindsSaysHowManyOfEachKindItTook()
         {
             Vertices(2);
-            Bones("根");
+            Bones("センター");
 
             IDictionary<string, object> value = ComposedScreenFixture.Value(Select(
                 Operation(ViewSelectElements.All),
@@ -218,7 +218,7 @@ namespace PmxEditorMcp.Tests
         public void InvertingSeveralKindsSwapsEachOfThemOnItsOwn()
         {
             Vertices(2);
-            Bones("根", "子");
+            Bones("センター", "上半身");
             _fixture.View.Selected[ElementKinds.Vertex] = new[] { 0 };
             _fixture.View.Selected[ElementKinds.Bone] = new[] { 1 };
 
@@ -350,7 +350,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheConnectedPartIsOnlyForVertices()
         {
-            Bones("根");
+            Bones("センター");
 
             IDictionary<string, object> envelope = Select(
                 Operation(ViewSelectElements.Connected),
@@ -376,7 +376,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void TheChildChainAddsEveryBoneBelowTheOnesThatWerePicked()
         {
-            IList<IPXBone> bones = Bones("根", "子", "孫");
+            IList<IPXBone> bones = Bones("上半身", "首", "頭");
             bones[1].Parent = bones[0];
             bones[2].Parent = bones[1];
             _fixture.View.Selected[ElementKinds.Bone] = new[] { 0 };

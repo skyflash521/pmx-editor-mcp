@@ -20,7 +20,7 @@ namespace PmxEditorMcp.Tests
         public void AHiddenMorphOnlyOnTheOtherNodesIsNotFound()
         {
             FakePmx model = new FakePmx();
-            FakeMorph onRoot = Morph(model, "根", 0);
+            FakeMorph onRoot = Morph(model, "Root枠", 0);
             FakeMorph onOther = Morph(model, "ほかの枠", 0);
             model.RootNode.Items.Add(new FakeMorphNodeItem(onRoot));
             FakeNode node = new FakeNode("枠");

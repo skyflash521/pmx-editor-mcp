@@ -188,15 +188,15 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void ABoneWithNoParentGetsOneAboveIt()
         {
-            Bones("根");
+            Bones("センター");
 
             IDictionary<string, object> value = ComposedEditFixture.Value(
                 Bone(Operation(ModelEditBones.AddRootParent)));
 
             Assert.Equal(2, _fixture.Model.Bone.Count);
-            IPXBone made = Named("根").Parent;
+            IPXBone made = Named("センター").Parent;
             Assert.NotNull(made);
-            Assert.NotSame(Named("根"), made);
+            Assert.NotSame(Named("センター"), made);
             Assert.Contains(made, _fixture.Model.Bone);
             Assert.Single((object[])value[ModelEditBones.AddedName]);
         }
@@ -448,7 +448,7 @@ namespace PmxEditorMcp.Tests
         [Fact]
         public void AnIkBoneIsAddedThatReachesForThePickedBone()
         {
-            IList<IPXBone> bones = Bones("根", "膝", "足首");
+            IList<IPXBone> bones = Bones("足", "ひざ", "足首");
             NowAll(bones)[1].Parent = NowAll(bones)[0];
             NowAll(bones)[2].Parent = NowAll(bones)[1];
 
