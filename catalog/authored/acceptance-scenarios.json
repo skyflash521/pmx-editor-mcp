@@ -26296,6 +26296,308 @@
           }
         }
       ]
+    },
+    {
+      "id": 44,
+      "title": "一周するチェーンの剛体を面に沿う箱へ合わせる",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "bone",
+            "operation": "new",
+            "count": 4
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 1
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 4
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bones",
+          "arguments": {
+            "indices": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "values": [
+              {
+                "position": [
+                  2,
+                  0,
+                  0
+                ],
+                "toOffset": [
+                  0,
+                  -2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  0,
+                  2
+                ],
+                "toOffset": [
+                  0,
+                  -2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  -2,
+                  0,
+                  0
+                ],
+                "toOffset": [
+                  0,
+                  -2,
+                  0
+                ]
+              },
+              {
+                "position": [
+                  0,
+                  0,
+                  -2
+                ],
+                "toOffset": [
+                  0,
+                  -2,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 4
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_create_physics",
+          "arguments": {
+            "operation": "bodyPhysics",
+            "indices": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "shape": "sphere"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "addedBodies",
+                "equals": [
+                  0,
+                  1,
+                  2,
+                  3
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_create_physics",
+          "arguments": {
+            "operation": "fitBodiesToChains",
+            "chains": [
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "closed": true,
+            "thickness": 0.25
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 4
+              },
+              {
+                "path": "addedBodies",
+                "equals": []
+              },
+              {
+                "path": "addedJoints",
+                "equals": []
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bodies",
+          "arguments": {
+            "indices": [
+              0,
+              1
+            ],
+            "fields": [
+              "position",
+              "rotation",
+              "boxSize"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2,
+                  -1,
+                  0
+                ],
+                "within": 0.0001
+              },
+              {
+                "path": "items.0.rotation",
+                "equals": [
+                  0,
+                  -1.5707963267948966,
+                  0
+                ],
+                "within": 0.0001
+              },
+              {
+                "path": "items.0.boxSize",
+                "equals": [
+                  1.4142135623730951,
+                  1,
+                  0.25
+                ],
+                "within": 0.0001
+              },
+              {
+                "path": "items.1.position",
+                "equals": [
+                  0,
+                  -1,
+                  2
+                ],
+                "within": 0.0001
+              },
+              {
+                "path": "items.1.boxSize",
+                "equals": [
+                  1.4142135623730951,
+                  1,
+                  0.25
+                ],
+                "within": 0.0001
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_bodies",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "position",
+              "rotation",
+              "boxSize"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.position",
+                "equals": [
+                  2,
+                  0,
+                  0
+                ],
+                "within": 0.0001
+              },
+              {
+                "path": "items.0.rotation",
+                "equals": [
+                  0,
+                  0,
+                  0
+                ],
+                "within": 0.0001
+              },
+              {
+                "path": "items.0.boxSize",
+                "equals": [
+                  0.5,
+                  0.5,
+                  0.5
+                ],
+                "within": 0.0001
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }
