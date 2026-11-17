@@ -244,6 +244,29 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void ASectionWhoseNeighbourLiesAlongASlantIsPassedOver()
+        {
+            IList<IPXBone> bones = Bones("斜め1", "斜め2");
+            ((FakeBone)bones[0]).Position = new V3(0f, 0f, 0f);
+            ((FakeBone)bones[1]).Position = new V3(1f, 1f, 0f);
+            ((FakeBone)bones[0]).ToOffset = new V3(-1f, -1f, 0f);
+            ((FakeBone)bones[1]).ToOffset = new V3(-1f, -1f, 0f);
+            IList<IList<IPXBone>> row = new List<IList<IPXBone>>
+            {
+                new List<IPXBone> { bones[0] },
+                new List<IPXBone> { bones[1] },
+            };
+            IList<FakeBody> bodies = Held(row);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(
+                Fit(row, ComposedEditFixture.Given(Thickness, 0.25)));
+
+            Kept(bodies[0]);
+            Kept(bodies[1]);
+            Assert.Equal(0, value[Changed]);
+        }
+
+        [Fact]
         public void ASectionWithANonFinitePointIsPassedOver()
         {
             IList<IList<IPXBone>> row = Row(0f, 1f, 3f);

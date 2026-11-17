@@ -13,6 +13,7 @@
     {"tool": "model_create_physics", "input": "indices[]", "of": "bone", "with": {"operation": "bodyFollowBone"}},
     {"tool": "model_create_physics", "input": "range", "of": "bone", "form": "range", "with": {"operation": "bodyFollowBone"}},
     {"tool": "model_create_physics", "input": "ranges[]", "of": "bone", "form": "range", "with": {"operation": "bodyFollowBone"}},
+    {"tool": "model_create_physics", "input": "chains[][]", "of": "bone", "with": {"operation": "fitBodiesToChains", "thickness": 1}},
     {"tool": "model_draw_uv_layout", "input": "indices[]", "of": "material"},
     {"tool": "model_draw_uv_layout", "input": "range", "of": "material", "form": "range"},
     {"tool": "model_draw_uv_layout", "input": "ranges[]", "of": "material", "form": "range"},

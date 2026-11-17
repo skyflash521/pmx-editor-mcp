@@ -27,6 +27,18 @@ namespace PmxEditorMcp
 
         public const string SplitBodies = "splitBodies";
 
+        public const string FitBodiesToChains = "fitBodiesToChains";
+
+        public const string ChainsName = "chains";
+
+        public const string ClosedName = "closed";
+
+        public const string CoverName = "cover";
+
+        public const string ThicknessName = "thickness";
+
+        public const string ChangedName = "changed";
+
         public const string ShapeName = "shape";
 
         public const string Sphere = "sphere";
@@ -44,7 +56,10 @@ namespace PmxEditorMcp
         {
             get
             {
-                return new[] { BodyFollowBone, BodyPhysics, Joint, BodyAndJoint, BodyAtVertices, SplitBodies };
+                return new[]
+                {
+                    BodyFollowBone, BodyPhysics, Joint, BodyAndJoint, BodyAtVertices, SplitBodies, FitBodiesToChains,
+                };
             }
         }
 
@@ -84,6 +99,10 @@ namespace PmxEditorMcp
                 TargetNames.Element.All,
                 TargetNames.Element.Selected,
                 ShapeName,
+                ChainsName,
+                ClosedName,
+                CoverName,
+                ThicknessName,
             };
             methods.Add(
                 ToolName, edit.Method(known, (context, pmx) => Run(context, pmx, builder)));
@@ -99,6 +118,37 @@ namespace PmxEditorMcp
             IList<int> chosen;
             if (!ComposedOperation.TryTake(
                     context, Operations, out operation, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            if (string.Equals(operation, FitBodiesToChains, StringComparison.Ordinal))
+            {
+                return Fitted(context, model);
+            }
+
+            float unused;
+            if (!TryNotChained(context, out code, out message)
+                || !ComposedInput.TryFloat(
+                    context,
+                    CoverName,
+                    operation,
+                    new[] { FitBodiesToChains },
+                    0f,
+                    ComposedInput.NoCeiling,
+                    out unused,
+                    out code,
+                    out message)
+                || !ComposedInput.TryFloat(
+                    context,
+                    ThicknessName,
+                    operation,
+                    new[] { FitBodiesToChains },
+                    0f,
+                    ComposedInput.NoCeiling,
+                    out unused,
+                    out code,
+                    out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -354,6 +404,327 @@ namespace PmxEditorMcp
             return Answer(
                 halves.Values.Select(half => model.Body.IndexOf(half)).ToList(),
                 added.Select(joint => model.Joint.IndexOf(joint)).ToList());
+        }
+
+        private static bool TryNotChained(McpMethodContext context, out string code, out string message)
+        {
+            code = null;
+            message = null;
+            foreach (string name in new[] { ChainsName, ClosedName })
+            {
+                if (context.Params.ContainsKey(name))
+                {
+                    code = ToolEnvelope.InvalidArgument;
+                    message = name + " を渡せるのは " + FitBodiesToChains + " のときだけである。";
+
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static ComposedEditResult Fitted(McpMethodContext context, IPXPmx model)
+        {
+            string[] targets =
+            {
+                TargetNames.Element.Indices,
+                TargetNames.Element.Range,
+                TargetNames.Element.Ranges,
+                TargetNames.Element.All,
+                TargetNames.Element.Selected,
+            };
+            if (targets.Any(context.Params.ContainsKey))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    FitBodiesToChains + " は " + ChainsName + " でボーンを指し、"
+                        + string.Join("・", targets) + " は渡さない。");
+            }
+
+            if (context.Params.ContainsKey(ShapeName))
+            {
+                return ComposedEditResult.Refuse(
+                    ToolEnvelope.InvalidArgument,
+                    ShapeName + " を " + FitBodiesToChains + " へ渡せない。剛体は箱にする。");
+            }
+
+            string code;
+            string message;
+            IList<IList<IPXBone>> chains;
+            bool closed;
+            float cover;
+            float thickness;
+            if (!TryChains(context, model, out chains, out code, out message)
+                || !TryClosed(context, out closed, out code, out message)
+                || !TryPositive(context, CoverName, 1f, out cover, out code, out message)
+                || !TryPositive(context, ThicknessName, null, out thickness, out code, out message))
+            {
+                return ComposedEditResult.Refuse(code, message);
+            }
+
+            double[][][] middles = chains
+                .Select(chain => Sections(chain).Select(section => Halfway(section[0], section[1])).ToArray())
+                .ToArray();
+            int changed = 0;
+            for (int at = 0; at < chains.Count; at++)
+            {
+                V3[][] sections = Sections(chains[at]);
+                for (int step = 0; step < sections.Length; step++)
+                {
+                    IPXBody body = Holding(model, chains[at][step]);
+                    double[] previous = Neighbour(middles, at - 1, step, closed);
+                    double[] next = Neighbour(middles, at + 1, step, closed);
+                    if (body != null
+                        && Fit(body, sections[step][0], sections[step][1], previous, next, cover, thickness))
+                    {
+                        changed++;
+                    }
+                }
+            }
+
+            return ComposedEditResult.Complete(
+                new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    { AddedBodiesName, new object[0] },
+                    { AddedJointsName, new object[0] },
+                    { ChangedName, changed },
+                });
+        }
+
+        private static bool TryChains(
+            McpMethodContext context,
+            IPXPmx model,
+            out IList<IList<IPXBone>> chains,
+            out string code,
+            out string message)
+        {
+            chains = null;
+            string shape = ChainsName + " は、ボーンの位置を根元から先端の順に並べた並びを、隣り合う順に2つ以上並べた並びでなければならない。";
+            object given;
+            context.Params.TryGetValue(ChainsName, out given);
+            object[] items = given as object[];
+            if (items == null)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = shape;
+
+                return false;
+            }
+
+            List<IList<IPXBone>> taken = new List<IList<IPXBone>>();
+            foreach (object item in items)
+            {
+                List<int> positions;
+                if (!PositionInput.TryMany(
+                    item, ChainsName, shape, model.Bone.Count, false, out positions, out code, out message))
+                {
+                    return false;
+                }
+
+                taken.Add(positions.Select(at => model.Bone[at]).ToList());
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            if (taken.Count < 2)
+            {
+                message = shape;
+
+                return false;
+            }
+
+            if (taken.SelectMany(chain => chain).Distinct(ReferenceComparer<IPXBone>.Instance).Count()
+                != taken.Sum(chain => chain.Count))
+            {
+                message = ChainsName + " に同じボーンが2度現れる。";
+
+                return false;
+            }
+
+            code = null;
+            message = null;
+            chains = taken;
+
+            return true;
+        }
+
+        private static bool TryClosed(McpMethodContext context, out bool closed, out string code, out string message)
+        {
+            closed = false;
+            code = null;
+            message = null;
+            object given;
+            if (!context.Params.TryGetValue(ClosedName, out given) || given == null)
+            {
+                return true;
+            }
+
+            if (!(given is bool))
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = ClosedName + " は真か偽でなければならない。";
+
+                return false;
+            }
+
+            closed = (bool)given;
+
+            return true;
+        }
+
+        /// <summary><paramref name="fallback"/> が空なら必須にする。</summary>
+        private static bool TryPositive(
+            McpMethodContext context,
+            string name,
+            float? fallback,
+            out float number,
+            out string code,
+            out string message)
+        {
+            number = fallback ?? 0f;
+            code = null;
+            message = null;
+            object given;
+            if ((!context.Params.TryGetValue(name, out given) || given == null) && fallback != null)
+            {
+                return true;
+            }
+
+            if (ValueInput.TrySingle(given, out number) && number > 0f)
+            {
+                return true;
+            }
+
+            code = ToolEnvelope.InvalidArgument;
+            message = name + " は " + FitBodiesToChains + " のときに渡す、正の有限の数である。";
+
+            return false;
+        }
+
+        private static V3[][] Sections(IList<IPXBone> chain)
+        {
+            return Enumerable.Range(0, chain.Count)
+                .Select(at => new[]
+                {
+                    chain[at].Position,
+                    at + 1 < chain.Count ? chain[at + 1].Position : Tip(chain[at]),
+                })
+                .ToArray();
+        }
+
+        private static V3 Tip(IPXBone bone)
+        {
+            return bone.ToBone != null
+                ? bone.ToBone.Position
+                : Vectors.Add(bone.Position, bone.ToOffset);
+        }
+
+        /// <summary>隣のチェーンの同じ段の中点。チェーンもその段も無いか、有限でなければ空。</summary>
+        private static double[] Neighbour(double[][][] middles, int at, int step, bool closed)
+        {
+            if (closed)
+            {
+                at = (at + middles.Length) % middles.Length;
+            }
+
+            if (at < 0 || at >= middles.Length || step >= middles[at].Length)
+            {
+                return null;
+            }
+
+            double[] middle = middles[at][step];
+
+            return middle.All(value => !double.IsNaN(value) && !double.IsInfinity(value)) ? middle : null;
+        }
+
+        private static bool Fit(
+            IPXBody body, V3 start, V3 end, double[] previous, double[] next, float cover, float thickness)
+        {
+            if (!Vectors.Finite(start) || !Vectors.Finite(end) || (previous == null && next == null))
+            {
+                return false;
+            }
+
+            double[] middle = Halfway(start, end);
+            double[] along = Difference(Spot(start), Spot(end));
+            double length = Length(along);
+            double[] across = Difference(next ?? middle, previous ?? middle);
+            double[] apart = Cross(across, along);
+            if (!(length > 0d) || apart.All(value => value == 0d))
+            {
+                return false;
+            }
+
+            double[] up = Scaled(along, 1d / length);
+            double[] side = Cross(along, apart);
+            side = Scaled(side, 1d / Length(side));
+            double[] normal = Cross(side, up);
+            double reach = new[] { previous, next }
+                .Where(spot => spot != null)
+                .Max(spot => Length(Difference(spot, middle)));
+            V3 rotation = RowMatrix.Rows(side, up, normal).ToEulerZxy();
+            V3 position = new V3((float)middle[0], (float)middle[1], (float)middle[2]);
+            V3 size = new V3((float)(reach / 2d * cover), (float)(length / 2d * cover), thickness);
+            if (!Vectors.Finite(rotation) || !Vectors.Finite(position) || !Vectors.Finite(size))
+            {
+                return false;
+            }
+
+            bool same = body.BoxKind == BodyBoxKind.Box
+                && Vectors.Same(body.Position, position)
+                && Vectors.Same(body.Rotation, rotation)
+                && Vectors.Same(body.BoxSize, size);
+            body.BoxKind = BodyBoxKind.Box;
+            body.Position = position;
+            body.Rotation = rotation;
+            body.BoxSize = size;
+
+            return !same;
+        }
+
+        private static double[] Spot(V3 given)
+        {
+            return new double[] { given.X, given.Y, given.Z };
+        }
+
+        private static double[] Halfway(V3 first, V3 second)
+        {
+            return new[]
+            {
+                ((double)first.X + second.X) / 2d,
+                ((double)first.Y + second.Y) / 2d,
+                ((double)first.Z + second.Z) / 2d,
+            };
+        }
+
+        private static double[] Difference(double[] to, double[] from)
+        {
+            return new[] { to[0] - from[0], to[1] - from[1], to[2] - from[2] };
+        }
+
+        private static double[] Scaled(double[] given, double by)
+        {
+            return new[] { given[0] * by, given[1] * by, given[2] * by };
+        }
+
+        private static double[] Cross(double[] left, double[] right)
+        {
+            return new[]
+            {
+                (left[1] * right[2]) - (left[2] * right[1]),
+                (left[2] * right[0]) - (left[0] * right[2]),
+                (left[0] * right[1]) - (left[1] * right[0]),
+            };
+        }
+
+        private static double Dot(double[] left, double[] right)
+        {
+            return (left[0] * right[0]) + (left[1] * right[1]) + (left[2] * right[2]);
+        }
+
+        private static double Length(double[] given)
+        {
+            return Math.Sqrt(Dot(given, given));
         }
 
         private static bool Below(IPXBody body, IPXBone root)

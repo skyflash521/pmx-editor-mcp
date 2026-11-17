@@ -21,6 +21,13 @@ namespace PmxEditorMcp
             return new RowMatrix(new double[,] { { x, 0d, 0d }, { 0d, y, 0d }, { 0d, 0d, z } });
         }
 
+        /// <summary>行に、ローカルの X・Y・Z 軸が向く先を並べた行列。</summary>
+        public static RowMatrix Rows(double[] x, double[] y, double[] z)
+        {
+            return new RowMatrix(
+                new double[,] { { x[0], x[1], x[2] }, { y[0], y[1], y[2] }, { z[0], z[1], z[2] } });
+        }
+
         /// <summary>
         /// SlimDX の Matrix.RotationYawPitchRoll と同じ行列。Z軸・X軸・Y軸の順に回す。角はラジアン。
         /// </summary>

@@ -5748,6 +5748,39 @@
               "origin": "hostInput",
               "shape": "text",
               "required": false
+            },
+            {
+              "name": "chains",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "element": {
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "bounds": {
+                    "minimum": 0
+                  }
+                }
+              }
+            },
+            {
+              "name": "closed",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
+            },
+            {
+              "name": "cover",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
+            },
+            {
+              "name": "thickness",
+              "origin": "hostInput",
+              "shape": "number",
+              "required": false
             }
           ],
           "choices": [
@@ -5759,7 +5792,7 @@
                 "ranges",
                 "selected"
               ],
-              "required": true
+              "required": false
             }
           ]
         }
@@ -5782,6 +5815,11 @@
               "origin": "hostOutput",
               "shape": "number"
             }
+          },
+          {
+            "name": "changed",
+            "origin": "hostOutput",
+            "shape": "number"
           }
         ]
       }
