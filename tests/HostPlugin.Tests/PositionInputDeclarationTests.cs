@@ -305,11 +305,24 @@ namespace PmxEditorMcp.Tests
             IDictionary<string, object> holder = arguments;
             for (int at = 0; at < parts.Length; at++)
             {
-                bool elements = parts[at].EndsWith("[]", StringComparison.Ordinal);
-                string name = elements ? parts[at].Substring(0, parts[at].Length - 2) : parts[at];
+                string name = parts[at];
+                int depth = 0;
+                while (name.EndsWith("[]", StringComparison.Ordinal))
+                {
+                    name = name.Substring(0, name.Length - 2);
+                    depth++;
+                }
+
+                bool elements = depth > 0;
                 if (at == parts.Length - 1)
                 {
-                    holder[name] = elements ? new object[] { value } : value;
+                    object nested = value;
+                    for (int level = 0; level < depth; level++)
+                    {
+                        nested = new object[] { nested };
+                    }
+
+                    holder[name] = nested;
 
                     return;
                 }

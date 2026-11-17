@@ -34,9 +34,7 @@ namespace PmxEditorMcp.Tests
         {
             get
             {
-                string last = Input.Split('.').Last();
-
-                return last.EndsWith("[]", StringComparison.Ordinal) ? last.Substring(0, last.Length - 2) : last;
+                return Bare(Input.Split('.').Last());
             }
         }
 
@@ -44,10 +42,18 @@ namespace PmxEditorMcp.Tests
         {
             get
             {
-                string first = Input.Split('.')[0];
-
-                return first.EndsWith("[]", StringComparison.Ordinal) ? first.Substring(0, first.Length - 2) : first;
+                return Bare(Input.Split('.')[0]);
             }
+        }
+
+        private static string Bare(string part)
+        {
+            while (part.EndsWith("[]", StringComparison.Ordinal))
+            {
+                part = part.Substring(0, part.Length - 2);
+            }
+
+            return part;
         }
     }
 

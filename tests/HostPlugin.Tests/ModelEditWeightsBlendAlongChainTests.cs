@@ -122,6 +122,20 @@ namespace PmxEditorMcp.Tests
         }
 
         [Fact]
+        public void AChainWithANonFinitePointIsNotChosen()
+        {
+            IList<IPXBone> bones = Chain();
+            ((FakeBone)bones[2]).ToOffset = new V3(float.NaN, 0f, 0f);
+            FakeVertex near = Placed(2f, 0f, 0f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(
+                Blend(Along(0, 1, 2), ComposedEditFixture.Given("indices", new object[] { 1 })));
+
+            Near(1.0, Share(near, bones[0]));
+            Assert.Equal(0, value[ModelEditWeights.ChangedName]);
+        }
+
+        [Fact]
         public void AVertexTakesTheNearestOfSeveralChains()
         {
             IList<IPXBone> bones = Bones("髪1", "髪2", "髪3", "髪4");

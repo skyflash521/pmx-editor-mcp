@@ -8059,6 +8059,21 @@
                   "minimum": 0
                 }
               }
+            },
+            {
+              "name": "chains",
+              "origin": "hostInput",
+              "required": false,
+              "element": {
+                "origin": "hostInput",
+                "element": {
+                  "origin": "hostInput",
+                  "shape": "number",
+                  "bounds": {
+                    "minimum": 0
+                  }
+                }
+              }
             }
           ],
           "choices": [

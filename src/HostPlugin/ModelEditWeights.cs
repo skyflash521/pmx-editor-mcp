@@ -37,7 +37,11 @@ namespace PmxEditorMcp
 
         public const string RampToward = "rampToward";
 
+        public const string BlendAlongChain = "blendAlongChain";
+
         public const string TargetIndicesName = "targetIndices";
+
+        public const string ChainsName = "chains";
 
         public const string FromBoneName = "fromBone";
 
@@ -99,6 +103,7 @@ namespace PmxEditorMcp
                     SmoothSpatial,
                     AverageNear,
                     RampToward,
+                    BlendAlongChain,
                 };
             }
         }
@@ -140,6 +145,7 @@ namespace PmxEditorMcp
                 IterationsName,
                 ThresholdName,
                 TargetIndicesName,
+                ChainsName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -237,7 +243,9 @@ namespace PmxEditorMcp
             }
 
             SurfaceInput surface;
-            if (!TrySurface(context, model, operation, out surface, out code, out message))
+            IList<IList<IPXBone>> chains;
+            if (!TrySurface(context, model, operation, out surface, out code, out message)
+                || !TryChains(context, model, operation, out chains, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -310,6 +318,10 @@ namespace PmxEditorMcp
                         VertexWeights.Write(one.Key, one.Value);
                     }
 
+                    break;
+
+                case BlendAlongChain:
+                    BlendedAlong(picked, chains);
                     break;
 
                 default:
@@ -1292,6 +1304,217 @@ namespace PmxEditorMcp
             }
 
             return made;
+        }
+
+        private static bool TryChains(
+            McpMethodContext context,
+            IPXPmx model,
+            string operation,
+            out IList<IList<IPXBone>> chains,
+            out string code,
+            out string message)
+        {
+            chains = null;
+            code = null;
+            message = null;
+            object given;
+            bool pointed = context.Params.TryGetValue(ChainsName, out given);
+            if (!string.Equals(operation, BlendAlongChain, StringComparison.Ordinal))
+            {
+                if (!pointed)
+                {
+                    return true;
+                }
+
+                code = ToolEnvelope.InvalidArgument;
+                message = ChainsName + " を渡せるのは " + BlendAlongChain + " のときだけである。";
+
+                return false;
+            }
+
+            string shape = ChainsName + " は、ボーンの位置を根元から先端の順に並べた並びを1つ以上並べた並びでなければならない。";
+            object[] items = given as object[];
+            if (items == null || items.Length == 0)
+            {
+                code = ToolEnvelope.InvalidArgument;
+                message = shape;
+
+                return false;
+            }
+
+            List<IList<IPXBone>> taken = new List<IList<IPXBone>>();
+            foreach (object item in items)
+            {
+                List<int> positions;
+                if (!PositionInput.TryMany(
+                    item, ChainsName, shape, model.Bone.Count, false, out positions, out code, out message))
+                {
+                    return false;
+                }
+
+                taken.Add(positions.Select(at => model.Bone[at]).ToList());
+            }
+
+            chains = taken;
+
+            return true;
+        }
+
+        private static void BlendedAlong(IEnumerable<IPXVertex> picked, IList<IList<IPXBone>> chains)
+        {
+            IList<ChainPath> paths = chains.Select(ChainPath.Of).Where(path => path != null).ToList();
+            foreach (IPXVertex vertex in picked)
+            {
+                if (!Vectors.Finite(vertex.Position))
+                {
+                    continue;
+                }
+
+                ChainPath nearest = null;
+                double best = double.PositiveInfinity;
+                double along = 0d;
+                foreach (ChainPath path in paths)
+                {
+                    double apart;
+                    double travelled;
+                    path.Project(vertex.Position, out apart, out travelled);
+                    if (apart < best)
+                    {
+                        best = apart;
+                        along = travelled;
+                        nearest = path;
+                    }
+                }
+
+                if (nearest == null)
+                {
+                    continue;
+                }
+
+                vertex.SDEF = false;
+                VertexWeights.Write(vertex, VertexWeights.Settled(nearest.Shares(along)));
+            }
+        }
+
+        private sealed class ChainPath
+        {
+            private ChainPath(IList<IPXBone> bones, V3[] points, double[] starts, double[] lengths)
+            {
+                Bones = bones;
+                Points = points;
+                Starts = starts;
+                Lengths = lengths;
+            }
+
+            private IList<IPXBone> Bones { get; }
+
+            private V3[] Points { get; }
+
+            private double[] Starts { get; }
+
+            private double[] Lengths { get; }
+
+            /// <summary>折れ線の点に有限でない座標があれば null を返す。</summary>
+            public static ChainPath Of(IList<IPXBone> bones)
+            {
+                V3[] points = bones.Select(bone => bone.Position)
+                    .Concat(new[] { Tip(bones[bones.Count - 1]) })
+                    .ToArray();
+                if (!points.All(Vectors.Finite))
+                {
+                    return null;
+                }
+
+                double[] lengths = Enumerable.Range(0, bones.Count)
+                    .Select(at => Length(points[at], points[at + 1]))
+                    .ToArray();
+                double[] starts = new double[bones.Count];
+                for (int at = 1; at < bones.Count; at++)
+                {
+                    starts[at] = starts[at - 1] + lengths[at - 1];
+                }
+
+                return new ChainPath(bones, points, starts, lengths);
+            }
+
+            /// <summary>
+            /// 点から折れ線までの最短の距離と、最も近い点の根元からの道のり。距離が等しければ根元に近い区間を採る。
+            /// </summary>
+            public void Project(V3 point, out double apart, out double travelled)
+            {
+                apart = double.PositiveInfinity;
+                travelled = 0d;
+                for (int at = 0; at < Bones.Count; at++)
+                {
+                    V3 from = Points[at];
+                    V3 to = Points[at + 1];
+                    double alongX = (double)to.X - from.X;
+                    double alongY = (double)to.Y - from.Y;
+                    double alongZ = (double)to.Z - from.Z;
+                    double awayX = (double)point.X - from.X;
+                    double awayY = (double)point.Y - from.Y;
+                    double awayZ = (double)point.Z - from.Z;
+                    double square = (alongX * alongX) + (alongY * alongY) + (alongZ * alongZ);
+                    double ratio = square > 0d
+                        ? ((awayX * alongX) + (awayY * alongY) + (awayZ * alongZ)) / square
+                        : 0d;
+                    ratio = ratio < 0d ? 0d : (ratio > 1d ? 1d : ratio);
+                    double offX = awayX - (alongX * ratio);
+                    double offY = awayY - (alongY * ratio);
+                    double offZ = awayZ - (alongZ * ratio);
+                    double distance = Math.Sqrt((offX * offX) + (offY * offY) + (offZ * offZ));
+                    if (distance < apart)
+                    {
+                        apart = distance;
+                        travelled = Starts[at] + (Lengths[at] * ratio);
+                    }
+                }
+            }
+
+            public IList<KeyValuePair<IPXBone, float>> Shares(double travelled)
+            {
+                int last = Bones.Count - 1;
+                double[] middles = Enumerable.Range(0, Bones.Count)
+                    .Select(at => Starts[at] + (Lengths[at] / 2d))
+                    .ToArray();
+                if (!(travelled > middles[0]))
+                {
+                    return Whole(Bones[0]);
+                }
+
+                if (!(travelled < middles[last]))
+                {
+                    return Whole(Bones[last]);
+                }
+
+                int lower = 0;
+                while (!(travelled < middles[lower + 1]))
+                {
+                    lower++;
+                }
+
+                double first = (middles[lower + 1] - travelled) / (middles[lower + 1] - middles[lower]);
+
+                return new List<KeyValuePair<IPXBone, float>>
+                {
+                    new KeyValuePair<IPXBone, float>(Bones[lower], (float)first),
+                    new KeyValuePair<IPXBone, float>(Bones[lower + 1], (float)(1d - first)),
+                };
+            }
+
+            private static double Length(V3 from, V3 to)
+            {
+                double x = (double)to.X - from.X;
+                double y = (double)to.Y - from.Y;
+                double z = (double)to.Z - from.Z;
+
+                return Math.Sqrt((x * x) + (y * y) + (z * z));
+            }
+
+            private static IList<KeyValuePair<IPXBone, float>> Whole(IPXBone bone)
+            {
+                return new List<KeyValuePair<IPXBone, float>> { new KeyValuePair<IPXBone, float>(bone, 1f) };
+            }
         }
 
         private static IEnumerable<KeyValuePair<IPXBone, float>> Weighted(
