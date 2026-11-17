@@ -26598,6 +26598,294 @@
           }
         }
       ]
+    },
+    {
+      "id": 45,
+      "title": "Jointの回転を接続剛体の回転から写す",
+      "steps": [
+        {
+          "kind": "tool",
+          "tool": "session_initialize_pmx",
+          "arguments": {
+            "confirm": true
+          },
+          "expect": {
+            "ok": true
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_insert_elements",
+          "arguments": {
+            "kind": "bone",
+            "operation": "new",
+            "count": 2
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "ranges.0.start",
+                "equals": 1
+              },
+              {
+                "path": "ranges.0.count",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_create_physics",
+          "arguments": {
+            "operation": "bodyPhysics",
+            "indices": [
+              1,
+              2
+            ],
+            "shape": "sphere"
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "addedBodies",
+                "equals": [
+                  0,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_update_bodies",
+          "arguments": {
+            "indices": [
+              0,
+              1
+            ],
+            "values": [
+              {
+                "rotation": [
+                  0,
+                  -0.2,
+                  0
+                ]
+              },
+              {
+                "rotation": [
+                  0,
+                  0.6,
+                  0
+                ]
+              }
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "updated",
+                "equals": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_create_physics",
+          "arguments": {
+            "operation": "joint",
+            "indices": [
+              0,
+              1
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "addedJoints",
+                "equals": [
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_copy_from_reference",
+          "arguments": {
+            "operation": "jointRotationFromBodyA",
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_joints",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "rotation"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.rotation",
+                "equals": [
+                  0,
+                  -0.2,
+                  0
+                ],
+                "within": 0.0001
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_copy_from_reference",
+          "arguments": {
+            "operation": "jointRotationFromBodyB",
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_joints",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "rotation"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.rotation",
+                "equals": [
+                  0,
+                  0.6,
+                  0
+                ],
+                "within": 0.0001
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_copy_from_reference",
+          "arguments": {
+            "operation": "jointRotationBetweenBodies",
+            "all": true
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "changed",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_joints",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "rotation"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.rotation",
+                "equals": [
+                  0,
+                  0.2,
+                  0
+                ],
+                "within": 0.0001
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "session_undo",
+          "arguments": {},
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "redoCount",
+                "equals": 1
+              }
+            ]
+          }
+        },
+        {
+          "kind": "tool",
+          "tool": "model_list_joints",
+          "arguments": {
+            "indices": [
+              0
+            ],
+            "fields": [
+              "rotation"
+            ]
+          },
+          "expect": {
+            "ok": true,
+            "values": [
+              {
+                "path": "items.0.rotation",
+                "equals": [
+                  0,
+                  0.6,
+                  0
+                ],
+                "within": 0.0001
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }

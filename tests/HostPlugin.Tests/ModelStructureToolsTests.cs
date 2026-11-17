@@ -18,6 +18,12 @@ namespace PmxEditorMcp.Tests
         /// <summary>小数の突き合わせで見る桁。</summary>
         private const int Digits = 4;
 
+        private const string RotationFromBodyA = "jointRotationFromBodyA";
+
+        private const string RotationFromBodyB = "jointRotationFromBodyB";
+
+        private const string RotationBetweenBodies = "jointRotationBetweenBodies";
+
         private const int ManyOffsets = 30000;
 
         private const int StripQuads = 5000;
@@ -831,6 +837,163 @@ namespace PmxEditorMcp.Tests
             Assert.Equal(ToolEnvelope.InvalidArgument, ComposedEditFixture.Code(envelope));
         }
 
+        [Theory]
+        [InlineData(RotationFromBodyA, 0.1f, 0.2f, 0.3f)]
+        [InlineData(RotationFromBodyB, 0.4f, 0.5f, 0.6f)]
+        public void AJointTakesTheTurnOfTheBodyItNames(string operation, float x, float y, float z)
+        {
+            FakeBody first = Body("一", null);
+            first.Rotation = new V3(0.1f, 0.2f, 0.3f);
+            FakeBody second = Body("二", null);
+            second.Rotation = new V3(0.4f, 0.5f, 0.6f);
+            FakeJoint joint = Joint("Joint", first, second);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Copy(
+                Operation(operation),
+                ComposedEditFixture.Given("all", true)));
+
+            Assert.Equal(new[] { x, y, z }, Three(Now(joint).Rotation));
+            Assert.Equal(1, value[ModelCopyFromReference.ChangedName]);
+        }
+
+        [Fact]
+        public void AJointBetweenTwoBodiesTurnsHalfwayAlongTheShortestArc()
+        {
+            FakeBody first = Body("一", null);
+            first.Rotation = new V3(0.4f, -0.3f, 0.2f);
+            FakeBody second = Body("二", null);
+            second.Rotation = new V3(-0.5f, 0.6f, 1.1f);
+            FakeJoint joint = Joint("Joint", first, second);
+
+            Copy(
+                Operation(RotationBetweenBodies),
+                ComposedEditFixture.Given("all", true));
+
+            double whole = TurnApart(first.Rotation, second.Rotation);
+            Near(whole / 2d, TurnApart(first.Rotation, Now(joint).Rotation));
+            Near(whole / 2d, TurnApart(Now(joint).Rotation, second.Rotation));
+        }
+
+        [Theory]
+        [InlineData(-10.0, 30.0, 10.0)]
+        [InlineData(170.0, -170.0, 180.0)]
+        public void TheHalfwayTurnDoesNotAverageTheAnglesOneByOne(double first, double second, double halfway)
+        {
+            FakeBody one = Body("一", null);
+            one.Rotation = new V3(0f, (float)Radians(first), 0f);
+            FakeBody two = Body("二", null);
+            two.Rotation = new V3(0f, (float)Radians(second), 0f);
+            FakeJoint joint = Joint("Joint", one, two);
+
+            Copy(
+                Operation(RotationBetweenBodies),
+                ComposedEditFixture.Given("all", true));
+
+            RowMatrix wanted = Turn(new V3(0f, (float)Radians(halfway), 0f));
+            RowMatrix found = Turn(Now(joint).Rotation);
+            foreach (V3 axis in new[] { new V3(1f, 0f, 0f), new V3(0f, 0f, 1f) })
+            {
+                float[] want = Three(wanted.Transform(axis));
+                float[] got = Three(found.Transform(axis));
+                for (int at = 0; at < 3; at++)
+                {
+                    Near(want[at], got[at]);
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData(RotationFromBodyA, true)]
+        [InlineData(RotationFromBodyB, false)]
+        [InlineData(RotationBetweenBodies, true)]
+        [InlineData(RotationBetweenBodies, false)]
+        public void AJointWithoutTheBodyToCopyFromKeepsItsTurn(string operation, bool firstMissing)
+        {
+            FakeBody body = Body("一", null);
+            body.Rotation = new V3(0.4f, 0.5f, 0.6f);
+            FakeJoint joint = Joint("Joint", firstMissing ? null : body, firstMissing ? body : null);
+            joint.Rotation = new V3(0.1f, 0.2f, 0.3f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Copy(
+                Operation(operation),
+                ComposedEditFixture.Given("all", true)));
+
+            Assert.Equal(new[] { 0.1f, 0.2f, 0.3f }, Three(Now(joint).Rotation));
+            Assert.Equal(0, value[ModelCopyFromReference.ChangedName]);
+        }
+
+        [Theory]
+        [InlineData(RotationFromBodyA, false)]
+        [InlineData(RotationFromBodyB, true)]
+        public void AJointTiedOnlyToTheBodyToCopyFromTakesItsTurn(string operation, bool firstMissing)
+        {
+            FakeBody body = Body("一", null);
+            body.Rotation = new V3(0.4f, 0.5f, 0.6f);
+            FakeJoint joint = Joint("Joint", firstMissing ? null : body, firstMissing ? body : null);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Copy(
+                Operation(operation),
+                ComposedEditFixture.Given("all", true)));
+
+            Assert.Equal(new[] { 0.4f, 0.5f, 0.6f }, Three(Now(joint).Rotation));
+            Assert.Equal(1, value[ModelCopyFromReference.ChangedName]);
+        }
+
+        [Theory]
+        [InlineData(RotationFromBodyA)]
+        [InlineData(RotationFromBodyB)]
+        [InlineData(RotationBetweenBodies)]
+        public void TakingTheTurnLeavesThePlaceTheLimitsAndTheSpringsAsTheyWere(string operation)
+        {
+            FakeBody first = Body("一", null);
+            first.Rotation = new V3(0.1f, 0.2f, 0.3f);
+            FakeBody second = Body("二", null);
+            second.Rotation = new V3(0.4f, 0.5f, 0.6f);
+            FakeJoint joint = Joint("Joint", first, second);
+            joint.Position = new V3(1f, 2f, 3f);
+            joint.Limit_MoveLow = new V3(-1f, -2f, -3f);
+            joint.Limit_MoveHigh = new V3(1f, 2f, 3f);
+            joint.Limit_AngleLow = new V3(-0.1f, -0.2f, -0.3f);
+            joint.Limit_AngleHigh = new V3(0.1f, 0.2f, 0.3f);
+            joint.SpringConst_Move = new V3(4f, 5f, 6f);
+            joint.SpringConst_Rotate = new V3(7f, 8f, 9f);
+
+            Copy(
+                Operation(operation),
+                ComposedEditFixture.Given("all", true));
+
+            IPXJoint now = Now(joint);
+            Assert.Equal(new[] { 1f, 2f, 3f }, Three(now.Position));
+            Assert.Equal(new[] { -1f, -2f, -3f }, Three(now.Limit_MoveLow));
+            Assert.Equal(new[] { 1f, 2f, 3f }, Three(now.Limit_MoveHigh));
+            Assert.Equal(new[] { -0.1f, -0.2f, -0.3f }, Three(now.Limit_AngleLow));
+            Assert.Equal(new[] { 0.1f, 0.2f, 0.3f }, Three(now.Limit_AngleHigh));
+            Assert.Equal(new[] { 4f, 5f, 6f }, Three(now.SpringConst_Move));
+            Assert.Equal(new[] { 7f, 8f, 9f }, Three(now.SpringConst_Rotate));
+            Assert.Same(Now(first), now.BodyA);
+            Assert.Same(Now(second), now.BodyB);
+        }
+
+        [Theory]
+        [InlineData(RotationFromBodyA)]
+        [InlineData(RotationFromBodyB)]
+        [InlineData(RotationBetweenBodies)]
+        public void AJointAlreadyHoldingTheTurnIsNotCounted(string operation)
+        {
+            FakeBody first = Body("一", null);
+            first.Rotation = new V3(0.1f, 0.2f, 0.3f);
+            FakeBody second = Body("二", null);
+            second.Rotation = new V3(0.1f, 0.2f, 0.3f);
+            FakeJoint joint = Joint("Joint", first, second);
+            joint.Rotation = new V3(0.1f, 0.2f, 0.3f);
+
+            IDictionary<string, object> value = ComposedEditFixture.Value(Copy(
+                Operation(operation),
+                ComposedEditFixture.Given("all", true)));
+
+            Assert.Equal(0, value[ModelCopyFromReference.ChangedName]);
+        }
+
         [Fact]
         public void AddingOffsetsPutsOneOffsetPerTargetIntoEveryMorphThatWasPicked()
         {
@@ -1427,6 +1590,26 @@ namespace PmxEditorMcp.Tests
         private static void Near(double wanted, double found)
         {
             Assert.Equal(wanted, found, Digits);
+        }
+
+        /// <summary>剛体とJointの回転の角が表す2つの向きの間の、回転の角度(ラジアン)。</summary>
+        private static double TurnApart(V3 first, V3 second)
+        {
+            RowMatrix relative = Turn(first).Transposed().Times(Turn(second));
+            V3[] axes = { new V3(1f, 0f, 0f), new V3(0f, 1f, 0f), new V3(0f, 0f, 1f) };
+            double trace = axes.Sum(axis => (double)Vectors.Dot(relative.Transform(axis), axis));
+
+            return Math.Acos(Math.Max(-1d, Math.Min(1d, (trace - 1d) / 2d)));
+        }
+
+        private static RowMatrix Turn(V3 rotation)
+        {
+            return RowMatrix.YawPitchRoll(rotation.Y, rotation.X, rotation.Z);
+        }
+
+        private static double Radians(double degrees)
+        {
+            return degrees * Math.PI / 180d;
         }
 
         private static float[] Four(V4 value)
