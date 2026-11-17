@@ -342,7 +342,7 @@
     {
       "tool": "model_copy_from_reference",
       "branching": false,
-      "duty": "剛体とJointへ、指している相手の名前や位置を写す。対象は indices・range・ranges・all・selected のどれか1つで指し、bodyNameFromBone は剛体を、それ以外はJointを指す。jointPositionFromSameNameBone は、Jointと同じ名前のボーンを探し、その位置をJointへ写す。写す元を指していない要素は変えない。changed に変えた要素の数を返す。"
+      "duty": "剛体とJointへ、指している相手の名前や位置を写す。対象は indices・range・ranges・all・selected のどれか1つで指し、bodyNameFromBone は剛体を、それ以外はJointを指す。jointPositionFromSameNameBone は、Jointと同じ名前のボーンを探し、その位置をJointへ写す。jointRotationFromBodyA と jointRotationFromBodyB は接続剛体 A・B の回転を、jointRotationBetweenBodies は A と B の回転を結ぶ最短の弧の中点の回転を、Jointの回転へ写す。中点は A と B の両方が要り、2つの回転が正反対で中点が一つに決まらないJointは変えない。位置・制限・バネ・接続剛体は変えない。写す元を指していない要素は変えない。changed に変えた要素の数を返す。"
     },
     {
       "tool": "model_create_physics",
