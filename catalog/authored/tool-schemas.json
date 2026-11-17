@@ -8112,6 +8112,18 @@
                   }
                 }
               }
+            },
+            {
+              "name": "closed",
+              "origin": "hostInput",
+              "shape": "boolean",
+              "required": false
+            },
+            {
+              "name": "curve",
+              "origin": "hostInput",
+              "shape": "text",
+              "required": false
             }
           ],
           "choices": [

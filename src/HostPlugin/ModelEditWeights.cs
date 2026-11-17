@@ -39,6 +39,12 @@ namespace PmxEditorMcp
 
         public const string BlendAlongChain = "blendAlongChain";
 
+        public const string BlendAcrossChains = "blendAcrossChains";
+
+        public const string ClosedName = "closed";
+
+        public const string CurveName = "curve";
+
         public const string TargetIndicesName = "targetIndices";
 
         public const string ChainsName = "chains";
@@ -104,6 +110,7 @@ namespace PmxEditorMcp
                     AverageNear,
                     RampToward,
                     BlendAlongChain,
+                    BlendAcrossChains,
                 };
             }
         }
@@ -146,6 +153,8 @@ namespace PmxEditorMcp
                 ThresholdName,
                 TargetIndicesName,
                 ChainsName,
+                ClosedName,
+                CurveName,
             };
             methods.Add(ToolName, edit.Method(known, Run));
         }
@@ -244,8 +253,11 @@ namespace PmxEditorMcp
 
             SurfaceInput surface;
             IList<IList<IPXBone>> chains;
+            bool closed;
+            bool smooth;
             if (!TrySurface(context, model, operation, out surface, out code, out message)
-                || !TryChains(context, model, operation, out chains, out code, out message))
+                || !TryChains(context, model, operation, out chains, out code, out message)
+                || !TryAcross(context, operation, out closed, out smooth, out code, out message))
             {
                 return ComposedEditResult.Refuse(code, message);
             }
@@ -322,6 +334,10 @@ namespace PmxEditorMcp
 
                 case BlendAlongChain:
                     BlendedAlong(picked, chains);
+                    break;
+
+                case BlendAcrossChains:
+                    BlendedAcross(picked, chains, closed, smooth);
                     break;
 
                 default:
@@ -1319,7 +1335,8 @@ namespace PmxEditorMcp
             message = null;
             object given;
             bool pointed = context.Params.TryGetValue(ChainsName, out given);
-            if (!string.Equals(operation, BlendAlongChain, StringComparison.Ordinal))
+            if (!string.Equals(operation, BlendAlongChain, StringComparison.Ordinal)
+                && !string.Equals(operation, BlendAcrossChains, StringComparison.Ordinal))
             {
                 if (!pointed)
                 {
@@ -1327,7 +1344,8 @@ namespace PmxEditorMcp
                 }
 
                 code = ToolEnvelope.InvalidArgument;
-                message = ChainsName + " を渡せるのは " + BlendAlongChain + " のときだけである。";
+                message = ChainsName + " を渡せるのは " + BlendAlongChain + "・" + BlendAcrossChains
+                    + " のときだけである。";
 
                 return false;
             }
@@ -1396,6 +1414,141 @@ namespace PmxEditorMcp
             }
         }
 
+        private static bool TryAcross(
+            McpMethodContext context,
+            string operation,
+            out bool closed,
+            out bool smooth,
+            out string code,
+            out string message)
+        {
+            closed = false;
+            smooth = false;
+            code = ToolEnvelope.InvalidArgument;
+            message = null;
+            object closedGiven;
+            object curveGiven;
+            bool closedPointed = context.Params.TryGetValue(ClosedName, out closedGiven);
+            bool curvePointed = context.Params.TryGetValue(CurveName, out curveGiven);
+            if (!string.Equals(operation, BlendAcrossChains, StringComparison.Ordinal))
+            {
+                if (closedPointed || curvePointed)
+                {
+                    message = (closedPointed ? ClosedName : CurveName) + " を渡せるのは " + BlendAcrossChains
+                        + " のときだけである。";
+
+                    return false;
+                }
+
+                code = null;
+
+                return true;
+            }
+
+            if (closedGiven != null && !(closedGiven is bool))
+            {
+                message = ClosedName + " は真か偽でなければならない。";
+
+                return false;
+            }
+
+            string curve = curveGiven == null ? ModelPlaceElements.LinearCurve : curveGiven as string;
+            if (!string.Equals(curve, ModelPlaceElements.LinearCurve, StringComparison.Ordinal)
+                && !string.Equals(curve, ModelPlaceElements.SmoothCurve, StringComparison.Ordinal))
+            {
+                message = CurveName + " は " + ModelPlaceElements.LinearCurve + "・"
+                    + ModelPlaceElements.SmoothCurve + " のどちらかでなければならない。";
+
+                return false;
+            }
+
+            closed = closedGiven != null && (bool)closedGiven;
+            smooth = string.Equals(curve, ModelPlaceElements.SmoothCurve, StringComparison.Ordinal);
+            code = null;
+
+            return true;
+        }
+
+        private static void BlendedAcross(
+            IEnumerable<IPXVertex> picked, IList<IList<IPXBone>> chains, bool closed, bool smooth)
+        {
+            IList<ChainPath> paths = chains.Select(ChainPath.Of).ToList();
+            foreach (IPXVertex vertex in picked)
+            {
+                if (!Vectors.Finite(vertex.Position))
+                {
+                    continue;
+                }
+
+                double[] apart = new double[paths.Count];
+                double[] along = new double[paths.Count];
+                double[][] nearest = new double[paths.Count][];
+                int chosen = -1;
+                for (int at = 0; at < paths.Count; at++)
+                {
+                    apart[at] = double.PositiveInfinity;
+                    if (paths[at] == null)
+                    {
+                        continue;
+                    }
+
+                    paths[at].Project(vertex.Position, out apart[at], out along[at], out nearest[at]);
+                    if (chosen < 0 || apart[at] < apart[chosen])
+                    {
+                        chosen = at;
+                    }
+                }
+
+                if (chosen < 0)
+                {
+                    continue;
+                }
+
+                int partner = -1;
+                foreach (int side in new[] { chosen - 1, chosen + 1 })
+                {
+                    int at = closed ? (side + paths.Count) % paths.Count : side;
+                    if (at >= 0 && at < paths.Count && at != chosen && paths[at] != null
+                        && (partner < 0 || apart[at] < apart[partner]))
+                    {
+                        partner = at;
+                    }
+                }
+
+                double share = partner < 0 ? 0d : Across(vertex.Position, nearest[chosen], nearest[partner]);
+                share = smooth ? (3d * share * share) - (2d * share * share * share) : share;
+                IEnumerable<KeyValuePair<IPXBone, float>> shares =
+                    Weighted(paths[chosen].Shares(along[chosen]), (float)(1d - share));
+                if (share > 0d)
+                {
+                    shares = shares.Concat(Weighted(paths[partner].Shares(along[partner]), (float)share));
+                }
+
+                vertex.SDEF = false;
+                VertexWeights.Write(vertex, VertexWeights.Settled(shares));
+            }
+        }
+
+        /// <summary>
+        /// 点を、最も近いチェーンの最寄り点から相手の最寄り点への線分へ射影した位置の割合を、0 から 1 に
+        /// 収めた値。2つの最寄り点が同じ点なら 0。
+        /// </summary>
+        private static double Across(V3 point, double[] from, double[] to)
+        {
+            double[] toward = { to[0] - from[0], to[1] - from[1], to[2] - from[2] };
+            double square = (toward[0] * toward[0]) + (toward[1] * toward[1]) + (toward[2] * toward[2]);
+            if (!(square > 0d))
+            {
+                return 0d;
+            }
+
+            double ratio = ((((double)point.X - from[0]) * toward[0])
+                + (((double)point.Y - from[1]) * toward[1])
+                + (((double)point.Z - from[2]) * toward[2])) / square;
+
+            return ratio < 0d ? 0d : (ratio > 1d ? 1d : ratio);
+        }
+
         private sealed class ChainPath
         {
             private ChainPath(IList<IPXBone> bones, V3[] points, double[] starts, double[] lengths)
@@ -1442,8 +1595,16 @@ namespace PmxEditorMcp
             /// </summary>
             public void Project(V3 point, out double apart, out double travelled)
             {
+                double[] nearest;
+                Project(point, out apart, out travelled, out nearest);
+            }
+
+            /// <summary><paramref name="nearest"/> は折れ線の上の最も近い点。</summary>
+            public void Project(V3 point, out double apart, out double travelled, out double[] nearest)
+            {
                 apart = double.PositiveInfinity;
                 travelled = 0d;
+                nearest = null;
                 for (int at = 0; at < Bones.Count; at++)
                 {
                     V3 from = Points[at];
@@ -1467,6 +1628,12 @@ namespace PmxEditorMcp
                     {
                         apart = distance;
                         travelled = Starts[at] + (Lengths[at] * ratio);
+                        nearest = new[]
+                        {
+                            from.X + (alongX * ratio),
+                            from.Y + (alongY * ratio),
+                            from.Z + (alongZ * ratio),
+                        };
                     }
                 }
             }
