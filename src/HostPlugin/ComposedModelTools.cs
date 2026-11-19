@@ -31,6 +31,7 @@ namespace PmxEditorMcp
             ModelEditNormals.AddTo(methods, edit);
             ModelEditWeights.AddTo(methods, edit);
             ModelSetDeformType.AddTo(methods, edit);
+            ModelSetPassGroups.AddTo(methods, edit);
             ModelEditBones.AddTo(methods, edit, builder);
             ModelCreatePhysics.AddTo(methods, edit, builder);
             ModelEditMorphs.AddTo(methods, edit, builder);

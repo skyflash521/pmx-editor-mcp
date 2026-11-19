@@ -495,6 +495,11 @@
       "duty": "指した頂点の変形方式を変え、SDEFの値を整える。頂点は indices・range・ranges・all・selected のどれか1つで指すか、代わりに materialIndices に材質の位置を渡して、その材質の面が使う頂点を指す。convert は deform を渡し、ウェイトが正の枠を重い順にその方式が使う数まで残して、残したウェイトの合計が1になるようそろえる。normalizeSdefC はSDEFのC値を2つのボーンの位置とウェイトから決め直し、repairInvalidSdef は2つのボーンを保てないSDEFの頂点からSDEFの指定を落とす。convert のあとは、並びに居ないボーンを指すウェイトが残っている祖先のボーンへ移る。changed に変えた頂点の数を返す。"
     },
     {
+      "tool": "model_set_pass_groups",
+      "branching": false,
+      "duty": "指した剛体か SoftBody の非衝突グループを書き換える。kind は body(既定)か softBody。対象は indices・range・ranges・all・selected のどれか1つで指し、selected は剛体のときだけ使える。passGroup と passGroups のどちらか一方を渡す。どちらも model_list_bodies・model_list_soft_bodies の passGroup と同じ16個の真偽の並びで、真はその位置のグループと衝突しないことを表す。passGroup は指した対象の全部へ同じ値を入れ、passGroups は対象の位置の小さい順に1件ずつ入れるので、件数を対象の数に揃える。非衝突グループのほかの値は変えない。changed に値が変わった対象の数を返す。"
+    },
+    {
       "tool": "model_validate_pmx",
       "branching": false,
       "duty": "エディタの「PMXデータの状態検証」と同じ項目を同じ判定で数えて返す。モデルは変えない。項目ごとのキーにエディタが表示する数を返す。badFaces・duplicateFaces は面の数、badFaceVertexReferences は不正な面の頂点参照の数、bonesInFramesTwice・morphsInFramesTwice は重ねた登録の数、softBodiesWithBadBody・softBodiesWithBadVertex・softBodiesPinnedOnAnchor・softBodiesOutsideMaterial は当たったアンカーや Pin の数で、badUvaCount・emptyModelName・emptyComment・noBones・boneInExpressionFrame・missingSystemFrames は1か0。エディタが範囲外の番号として数える参照は、null か並びに居ない要素を指すものとして数え、エディタが -1 を許す参照(親・付与親・表示先・剛体のボーン・材質モーフの材質・SoftBody の材質)は null を許す。テクスチャ・スフィア・Toon(toon0.bmp と toon01〜toon10.bmp は除く)のファイルは、モデルのファイルと同じフォルダから探す。ボーンは物理後でない・変形階層が小さい・並びが前の順に変形する。加えて、ウェイトのそろっていない頂点(0でない値が負かボーンを持たない・重い順でない(SDEFは問わない)・同じボーンが重なる・合計が1でない・ウェイトが全部0でボーンを持つ)の数 unnormalizedWeights と、panel が 0 のまま表情枠に登録されたモーフの数 hiddenMorphsInExpressionFrame を返す。後者は MMD で VMD のキーが当たると落ちることがある。found は全項目の数の和。runs に位置を持つ項目の名前を1つ渡すと、当たった要素の位置を start と count の区間で runs に返す。面は全材質を通した位置、表示枠は Root・表情枠・ほかの枠の順の位置で返す。offset と limit で切り出し、区間の総数を runsTotal、続きを nextOffset に返す。"
